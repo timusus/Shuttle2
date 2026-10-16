@@ -116,7 +116,7 @@ class Migration56To57Test {
     ) {
         val database =
             Room.databaseBuilder(InstrumentationRegistry.getInstrumentation().targetContext, MediaDatabase::class.java, TEST_DB)
-                .addMigrations(MIGRATION_57_58, MIGRATION_58_59)
+                .addMigrations(MIGRATION_57_58, MIGRATION_58_59, MIGRATION_59_60)
                 .allowMainThreadQueries()
                 .build()
         try {

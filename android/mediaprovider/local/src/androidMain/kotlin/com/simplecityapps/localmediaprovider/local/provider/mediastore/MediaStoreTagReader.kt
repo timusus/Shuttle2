@@ -129,6 +129,7 @@ internal fun Song.withFileTags(tags: FileTags): Song = copy(
     albumArtists = tags.albumArtists,
     artistsTag = tags.artistsTag,
     artistDisplay = tags.artistDisplay ?: artistDisplay,
+    albumArtistDisplay = tags.albumArtistDisplay,
     compilation = tags.compilation,
     mbTrackId = tags.mbTrackId,
     mbAlbumId = tags.mbAlbumId,

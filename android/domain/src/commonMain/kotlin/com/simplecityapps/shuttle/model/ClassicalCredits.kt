@@ -146,7 +146,7 @@ private fun List<Performer>.conductorFirst(): List<Performer> {
 private fun Song.untaggedCredits(): List<Performer> {
     if (!conductor.isNullOrBlank() || !performers.isNullOrEmpty() || !hasClassicalGenre(genres)) return emptyList()
     val composer = composer?.trim()?.takeIf { it.isNotEmpty() } ?: return emptyList()
-    val fromAlbumArtist = albumArtist.orEmpty().split(';').filter { it.isNotBlank() && !sameComposer(it.trim(), composer) }
+    val fromAlbumArtist = (albumArtistDisplay ?: albumArtist).orEmpty().split(';').filter { it.isNotBlank() && !sameComposer(it.trim(), composer) }
         .flatMap { it.split("/", " & ") }.flatMap(::splitCredit)
     return (artists + fromAlbumArtist).map { it.trim() }.filter { it.isNotEmpty() && !sameComposer(it, composer) }.distinct().map { Performer(it) }.conductorFirst()
 }

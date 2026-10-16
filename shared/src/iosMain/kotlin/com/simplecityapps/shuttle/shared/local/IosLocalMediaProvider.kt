@@ -155,6 +155,7 @@ internal fun IosLocalTags.toSong(file: IosLocalFileRef): Song {
         albumArtists = fileTags.albumArtists,
         artistsTag = fileTags.artistsTag,
         artistDisplay = fileTags.artistDisplay,
+        albumArtistDisplay = fileTags.albumArtistDisplay,
         compilation = fileTags.compilation,
         mbTrackId = fileTags.mbTrackId,
         mbAlbumId = fileTags.mbAlbumId,

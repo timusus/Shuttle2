@@ -2,8 +2,10 @@ package com.simplecityapps.localmediaprovider.local.provider.mediastore
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.simplecityapps.localmediaprovider.local.provider.FileTags
+import com.simplecityapps.localmediaprovider.local.provider.toFileTags
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.model.leadPerformer
 import io.kotest.matchers.shouldBe
 import kotlin.time.Instant
 import kotlinx.coroutines.flow.toList
@@ -55,6 +57,23 @@ class MediaStoreFileTagsTest {
         val result = runBlocking { createMediaStoreSong().copy(genres = listOf("Rock")).withFileTags(reader) }
 
         result.genres shouldBe listOf("Rock")
+    }
+
+    @Test
+    fun `Mahler's conductor shows from the tags as a file carries them`() {
+        val tags =
+            mapOf(
+                "TITLE" to listOf("Symphony no. 2 in C minor “Resurrection”: III. In ruhig fliessender Bewegung"),
+                "ARTIST" to listOf("Gustav Mahler"),
+                "ALBUMARTIST" to listOf("Mahler; Arleen Augér, Janet Baker, CBSO Chorus, City of Birmingham Symphony Orchestra, Simon Rattle"),
+                "COMPOSER" to listOf("Mahler, Gustav (1860 - 1911)"),
+                "GENRE" to listOf("Classical")
+            ).toFileTags()
+        val reader = MediaStoreTagReader { _, _ -> tags }
+
+        val result = runBlocking { createMediaStoreSong().withFileTags(reader) }
+
+        result.leadPerformer() shouldBe "Simon Rattle"
     }
 
     @Test

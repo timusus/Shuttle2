@@ -481,6 +481,7 @@ fun SongData.toSong(): Song = Song(
     albumArtists = albumArtists,
     artistsTag = artistsTag,
     artistDisplay = artistDisplay,
+    albumArtistDisplay = albumArtistDisplay,
     compilation = compilation,
     mbTrackId = mbTrackId,
     mbAlbumId = mbAlbumId,

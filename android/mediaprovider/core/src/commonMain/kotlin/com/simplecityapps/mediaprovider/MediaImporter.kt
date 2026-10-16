@@ -537,7 +537,7 @@ class MediaImporter(
          * 6: the classical fields of #1065. Local files whose path, size and modified date are unchanged keep their
          * stored tags, so only this re-import reads the new fields into them.
          */
-        const val SONG_TAGS_VERSION = 6
+        const val SONG_TAGS_VERSION = 7
 
         /** Whether [type]'s songs were last imported before [SONG_TAGS_VERSION]: recorded when its import is stored. */
         fun GeneralPreferenceManager.songTagsOutdated(type: MediaProviderType): Boolean = songTagsVersion(type.name) < SONG_TAGS_VERSION

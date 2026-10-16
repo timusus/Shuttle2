@@ -63,6 +63,7 @@ data class SongData(
     @ColumnInfo(name = "albumArtists") var albumArtists: List<String>? = null,
     @ColumnInfo(name = "artistsTag") var artistsTag: List<String>? = null,
     @ColumnInfo(name = "artistDisplay") var artistDisplay: String? = null,
+    @ColumnInfo(name = "albumArtistDisplay") var albumArtistDisplay: String? = null,
     @ColumnInfo(name = "compilation") var compilation: Boolean? = null,
     @ColumnInfo(name = "mbTrackId") var mbTrackId: String? = null,
     @ColumnInfo(name = "mbAlbumId") var mbAlbumId: String? = null,
@@ -126,6 +127,7 @@ fun Song.toSongData(mediaProviderType: MediaProviderType): SongData = SongData(
     albumArtists = albumArtists,
     artistsTag = artistsTag,
     artistDisplay = artistDisplay,
+    albumArtistDisplay = albumArtistDisplay,
     compilation = compilation,
     mbTrackId = mbTrackId,
     mbAlbumId = mbAlbumId,
@@ -180,7 +182,7 @@ const val SONG_COLUMNS =
         "artworkVersion, dateAdded, favouritedAt, albumArtists, artistsTag, artistDisplay, compilation, mbTrackId, " +
         "mbAlbumId, mbReleaseGroupId, mbArtistIds, mbAlbumArtistIds, serverAlbumId, serverArtistIds, " +
         "serverAlbumArtistIds, artworkItemId, composer, composerSort, conductor, arranger, work, movementName, " +
-        "movementNumber, movementTotal, showMovement, performers"
+        "movementNumber, movementTotal, showMovement, performers, albumArtistDisplay"
 
 /** [SONG_COLUMNS], each qualified by the `songs` table, for a join. */
 const val SONG_COLUMNS_QUALIFIED =
@@ -193,4 +195,4 @@ const val SONG_COLUMNS_QUALIFIED =
         "songs.compilation, songs.mbTrackId, songs.mbAlbumId, songs.mbReleaseGroupId, songs.mbArtistIds, " +
         "songs.mbAlbumArtistIds, songs.serverAlbumId, songs.serverArtistIds, songs.serverAlbumArtistIds, songs.artworkItemId, " +
         "songs.composer, songs.composerSort, songs.conductor, songs.arranger, songs.work, songs.movementName, " +
-        "songs.movementNumber, songs.movementTotal, songs.showMovement, songs.performers"
+        "songs.movementNumber, songs.movementTotal, songs.showMovement, songs.performers, songs.albumArtistDisplay"

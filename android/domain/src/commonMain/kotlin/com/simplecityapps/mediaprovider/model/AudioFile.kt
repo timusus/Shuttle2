@@ -31,6 +31,7 @@ data class AudioFile(
     val albumArtists: List<String> = emptyList(),
     val artistsTag: List<String> = emptyList(),
     val artistDisplay: String? = null,
+    val albumArtistDisplay: String? = null,
     val compilation: Boolean? = null,
     val mbTrackId: String? = null,
     val mbAlbumId: String? = null,

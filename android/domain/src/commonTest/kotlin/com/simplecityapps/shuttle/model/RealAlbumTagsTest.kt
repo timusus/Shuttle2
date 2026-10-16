@@ -141,13 +141,14 @@ class RealAlbumTagsTest {
             song(
                 id = index + 1L,
                 name = "Symphony no. 2 in C minor “Resurrection”: $movement",
-                albumArtist = albumArtist,
+                // The importer keeps the first artist of a combined tag as albumArtist and the whole tag in albumArtistDisplay
+                albumArtist = albumArtist.substringBefore(';').trim(),
                 artists = listOf("Gustav Mahler"),
                 album = "Symphony No. 2",
                 track = if (index == 0) 1 else index,
                 disc = if (index == 0) 1 else 2,
                 genres = listOf("Classical")
-            ).copy(composer = if (index == 0) "Mahler" else "Mahler, Gustav (1860 - 1911)")
+            ).copy(albumArtistDisplay = albumArtist, composer = if (index == 0) "Mahler" else "Mahler, Gustav (1860 - 1911)")
         }
     }
 

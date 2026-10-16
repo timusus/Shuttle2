@@ -60,6 +60,8 @@ data class Song(
     val artistsTag: List<String>? = null,
     // The raw ARTIST tag, unsplit ("A feat. B"): what a song row will show.
     val artistDisplay: String? = null,
+    // The raw ALBUMARTIST tag, unsplit: [albumArtist] keeps only its first artist, and untagged classical credits ("Mahler; Janet Baker, Simon Rattle") read the rest.
+    val albumArtistDisplay: String? = null,
     // COMPILATION (Vorbis), TCMP (ID3) or cpil (MP4); null when untagged.
     val compilation: Boolean? = null,
     // MusicBrainz ids: the recording (MUSICBRAINZ_TRACKID), the release, the release group, and the artists.

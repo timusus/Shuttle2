@@ -45,6 +45,7 @@ internal class LocalFileTagMerger(
         albumArtists = existing.albumArtists,
         artistsTag = existing.artistsTag,
         artistDisplay = existing.artistDisplay,
+        albumArtistDisplay = existing.albumArtistDisplay,
         compilation = existing.compilation,
         mbTrackId = existing.mbTrackId,
         mbAlbumId = existing.mbAlbumId,
