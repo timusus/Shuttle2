@@ -271,6 +271,13 @@ class LibraryScreenshotTest {
         phoneAlbumDetailScrolledBy(900f, "phone-album-detail-collapsed")
     }
 
+    /** The hero title starts below the viewport, so window-clipped bounds would read as collapsed at scroll 0. */
+    @Test
+    @Config(qualifiers = "w411dp-h300dp-xhdpi")
+    fun phoneAlbumDetailShortWindow() {
+        phoneAlbumDetailScrolledBy(0f, "phone-album-detail-short-window")
+    }
+
     private fun phoneAlbumDetailScrolledBy(px: Float, name: String) {
         val album = SampleLibrary.album("phase-garden")
         val base = album.songs.map { it.toSong() }

@@ -24,8 +24,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -45,7 +45,7 @@ val LocalDetailHeroTitleBottom = staticCompositionLocalOf<((Float) -> Unit)?> { 
 @Composable
 private fun Modifier.reportHeroTitleBottom(): Modifier {
     val report = LocalDetailHeroTitleBottom.current ?: return this
-    return onGloballyPositioned { report(it.boundsInWindow().bottom) }
+    return onGloballyPositioned { report(it.positionInWindow().y + it.size.height) }
 }
 
 /**
