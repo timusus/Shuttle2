@@ -7,6 +7,7 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.designsystem.component.S2WorkRibbon
@@ -29,6 +30,7 @@ internal fun WorkRibbonBar(
     modifier: Modifier = Modifier,
 ) {
     val ribbon = work.ribbon
+    val resources = LocalResources.current
     val second by remember(work) { derivedStateOf { progress().positionMs / 1000 } }
     val caption = stringResource(R.string.player_work_caption, work.ordinal, work.total, formatWorkRemaining(ribbon.remainingMs - second * 1000))
     S2WorkRibbon(
@@ -38,6 +40,8 @@ internal fun WorkRibbonBar(
         caption = caption,
         onSegmentClick = { segment -> player.items.getOrNull(ribbon.segmentStarts[segment])?.let { actions.skipToQueueItem(it.uid) } },
         onOpenList = { actions.showPanel(NowPlayingPanel.Queue) },
+        segmentLabel = { segment -> resources.getString(R.string.player_work_play_movement, work.ordinals.getOrElse(ribbon.segmentStarts[segment] - ribbon.segmentStarts.first()) { (segment + 1).toString() }) },
+        openListLabel = stringResource(R.string.player_work_show_queue),
         continuous = ribbon.continuous,
         modifier = modifier.padding(horizontal = S2Spacing.medium + S2Spacing.xsmall),
     )

@@ -18,7 +18,9 @@ data class NowPlayingWork(
     val ribbon: WorkProgress,
     /** "II" of "IV", numbered like the movements themselves. */
     val ordinal: String,
-    val total: String
+    val total: String,
+    /** The numeral of every movement of the work, in order; a ribbon segment (a movement or an act) is named by its first. */
+    val ordinals: List<String>
 )
 
 /** Null unless the song at [index] sits in a work block; [library] lets two composers sharing a surname show their full names. */
@@ -42,7 +44,8 @@ fun nowPlayingWork(queue: List<Song>, index: Int, library: Collection<ComposerNa
         miniSubtitle = listOfNotNull(label, song.leadPerformer()).joinToString(" · "),
         ribbon = ribbon,
         ordinal = position(block.numbering, ribbon.movementIndex + 1),
-        total = position(block.numbering, ribbon.movementCount)
+        total = position(block.numbering, ribbon.movementCount),
+        ordinals = List(ribbon.movementCount) { position(block.numbering, it + 1) }
     )
 }
 

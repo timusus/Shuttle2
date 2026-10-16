@@ -209,17 +209,27 @@ class PlayerViewModelTest {
     }
 
     @Test
+    fun `two pop songs sharing a work tag show no movement`() = runTest {
+        val viewModel = viewModel()
+        val pop = List(2) { createSong(id = it + 1L, name = "Hold On", albumArtist = "Wilson Phillips").copy(genres = listOf("Pop"), work = "Hold On") }
+
+        queueOperations.queueStateFlow.value = queueOf(pop, current = 1)
+        viewModel.uiState.value.player.work shouldBe null
+    }
+
+    @Test
     fun `a song in a work shows its movement and ribbon - a lone song nothing - and nothing when the setting is off`() = runTest {
         val viewModel = viewModel()
-        val first = createSong(id = 1, name = "Allegro", albumArtist = "Ines Varga", album = "Sonatas").copy(work = "Sonata No. 3", movementNumber = 1)
-        val second = createSong(id = 2, name = "Adagio", albumArtist = "Ines Varga", album = "Sonatas").copy(work = "Sonata No. 3", movementNumber = 2)
+        val first = createSong(id = 1, name = "Allegro", albumArtist = "Ines Varga", album = "Sonatas").copy(genres = listOf("Classical"), work = "Sonata No. 3", movementNumber = 1)
+        val second = createSong(id = 2, name = "Adagio", albumArtist = "Ines Varga", album = "Sonatas").copy(genres = listOf("Classical"), work = "Sonata No. 3", movementNumber = 2)
         val lone = createSong(id = 3, name = "Allegro", albumArtist = "Ines Varga", album = "Sonatas").copy(movementName = "Allegro")
         val queue = listOf(first, second, lone)
 
         queueOperations.queueStateFlow.value = queueOf(queue, current = 1)
-        viewModel.uiState.value.player.work?.movement shouldBe "2. Adagio"
+        viewModel.uiState.value.player.work?.movement shouldBe "II. Adagio"
         viewModel.uiState.value.player.work?.miniTitle shouldBe "Sonata No. 3"
         viewModel.uiState.value.player.work?.ribbon?.movementCount shouldBe 2
+        viewModel.uiState.value.player.work?.ordinals shouldBe listOf("I", "II")
 
         queueOperations.queueStateFlow.value = queueOf(queue, current = 2)
         viewModel.uiState.value.player.work shouldBe null

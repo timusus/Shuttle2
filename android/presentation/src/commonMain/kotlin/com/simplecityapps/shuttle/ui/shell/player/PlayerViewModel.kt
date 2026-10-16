@@ -247,7 +247,14 @@ class PlayerViewModel @AssistedInject constructor(
             state.copy(nowPlayingImage = image)
         }.combine(observeSetting(AppearanceSettings.ClassicalDisplay)) { state, enabled ->
             val index = state.items.indexOfFirst { it.position == QueuePosition.Current }
-            state.copy(work = if (enabled && index >= 0) nowPlayingWork(state.items.map { it.song }, index) else null)
+            // A view, not a copy: the work is found from the songs around the current one only.
+            val items = state.items
+            val songs = object : AbstractList<Song>() {
+                override val size get() = items.size
+
+                override fun get(index: Int) = items[index].song
+            }
+            state.copy(work = if (enabled && index >= 0) nowPlayingWork(songs, index) else null)
         }.combine(deliveredFormats.byPath) { state, delivered ->
             state.copy(delivered = state.current?.song?.path?.let(delivered::get))
         }.combine(lyrics) { state, lyrics ->
