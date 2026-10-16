@@ -181,7 +181,6 @@ private fun LazyListScope.classicalRows(
                 numeral = row.numeral,
                 name = row.name,
                 duration = formatDuration(row.song.duration.toLong()),
-                trackNumber = row.song.track,
                 playing = row.playing,
                 onClick = { onPlay(songs, row.playIndex) },
                 onLongClick = { onSongMore(row.song) },

@@ -129,8 +129,8 @@ private fun Modifier.workRule(accent: Boolean): Modifier {
 
 /**
  * One movement under a [WorkHeaderRow], indented along the work's rule: a [numeral] right-aligned in a fixed, tabular
- * column (blank for a movement that names itself), the [name], its [duration], a faint [trackNumber] and the ⋮ for
- * [onMore]. [playing] draws the playing mark beside the duration and the rule in the accent colour.
+ * column (blank for a movement that names itself), the [name], its [duration] and the ⋮ for [onMore], so durations
+ * line up with a track row's. [playing] draws the playing mark beside the duration and the rule in the accent colour.
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -140,7 +140,6 @@ fun MovementRow(
     duration: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    trackNumber: Int? = null,
     playing: Boolean = false,
     onLongClick: (() -> Unit)? = null,
     onMore: (() -> Unit)? = null,
@@ -180,14 +179,6 @@ fun MovementRow(
             style = tabular,
             color = if (playing) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
         )
-        if (trackNumber != null) {
-            Text(
-                text = trackNumber.toString(),
-                modifier = Modifier.width(28.dp).padding(start = S2Spacing.smallMedium),
-                style = tabular,
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-            )
-        }
         if (onMore != null) RowMoreButton(onClick = onMore)
     }
 }
@@ -198,9 +189,9 @@ private fun WorkRowsPreview() {
     S2Preview {
         Column {
             WorkHeaderRow(title = "Sonata No. 3", detail = "C minor · Op. 10", meta = "3 movements · 24:10", credits = "Ines Varga", otherRecordings = "Other recordings (2)", onPlay = {}, onClick = {})
-            MovementRow(numeral = "I", name = "Allegro", duration = "8:02", trackNumber = 1, onClick = {})
-            MovementRow(numeral = "II", name = "Adagio", duration = "9:30", trackNumber = 2, playing = true, onClick = {})
-            MovementRow(numeral = "III", name = "Finale", duration = "6:38", trackNumber = 3, onClick = {})
+            MovementRow(numeral = "I", name = "Allegro", duration = "8:02", onClick = {})
+            MovementRow(numeral = "II", name = "Adagio", duration = "9:30", playing = true, onClick = {})
+            MovementRow(numeral = "III", name = "Finale", duration = "6:38", onClick = {})
         }
     }
 }
