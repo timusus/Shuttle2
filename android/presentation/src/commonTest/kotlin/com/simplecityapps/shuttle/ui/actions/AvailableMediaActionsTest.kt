@@ -57,7 +57,7 @@ class AvailableMediaActionsTest {
             listOf(Play, Shuffle, PlayNext, AddToQueue, AddToPlaylist, StartRadio, GoToAlbum, GoToArtist, EditTags, SongInfo, Share, Exclude, Delete)
     }
 
-    private fun movement(id: Long) = createSong(id = id, name = "Movement $id", track = id.toInt()).copy(work = "Symphony No. 5", composer = "Beethoven")
+    private fun movement(id: Long) = createSong(id = id, name = "Movement $id", track = id.toInt()).copy(work = "Symphony No. 5", composer = "Beethoven", movementNumber = id.toInt())
 
     private fun playing(position: Int, vararg songs: Song) {
         val items = songs.mapIndexed { index, song -> QueueItem(uid = index.toLong(), song = song, isCurrent = index == position) }

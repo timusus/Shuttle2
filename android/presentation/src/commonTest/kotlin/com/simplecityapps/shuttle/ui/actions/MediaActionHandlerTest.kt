@@ -136,7 +136,7 @@ class MediaActionHandlerTest {
         handler.handle(MediaAction.Play(songs)) shouldBe Message(MediaActionMessage.PlaybackFailed("codec error"))
     }
 
-    private fun movements() = (1L..3L).map { createSong(id = 10 + it, name = "Movement $it").copy(work = "Sonata No. 3", composer = "Ludwig Harrow") }
+    private fun movements() = (1L..3L).map { createSong(id = 10 + it, name = "Movement $it").copy(work = "Sonata No. 3", composer = "Ludwig Harrow", movementNumber = it.toInt()) }
 
     @Test
     fun `shuffle works queues the songs in album order with an explicit order and plays`() = runTest {
@@ -210,7 +210,7 @@ class MediaActionHandlerTest {
         queueOperations.queueStateFlow.value = QueueState(items = items, currentItem = items[position], currentPosition = position)
     }
 
-    private fun movement(id: Long) = createSong(id = id, name = "Movement $id", track = id.toInt()).copy(work = "Symphony No. 5", composer = "Beethoven")
+    private fun movement(id: Long) = createSong(id = id, name = "Movement $id", track = id.toInt()).copy(work = "Symphony No. 5", composer = "Beethoven", movementNumber = id.toInt())
 
     /** Makes [PlaybackOperations.playNext] insert after the current song like the player does, optionally advancing first. */
     private fun insertsPlayNextAfterCurrent(advanceFirst: Boolean = false) {
