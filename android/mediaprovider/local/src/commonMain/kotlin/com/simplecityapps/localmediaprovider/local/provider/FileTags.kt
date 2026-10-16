@@ -58,14 +58,18 @@ data class FileTags(
  * Maps a TagLib property map (keyed by [TagLibProperty] keys, whatever the container: ID3, Vorbis comments, MP4 atoms or
  * Matroska tags) to [FileTags]. Android passes TagLib's own map; iOS passes FFmpeg's tags renamed by [ffmpegPropertyMap].
  */
-fun Map<String, List<String>>.toFileTags(): FileTags = mapValues { (_, values) -> values.map { it.decodeMisreadUtf8() } }.toFileTagsAsRead()
+fun Map<String, List<String>>.toFileTags(id3: Boolean = false): FileTags = mapValues { (_, values) -> values.map { it.decodeMisreadUtf8() } }.toFileTagsAsRead(id3)
 
-private fun Map<String, List<String>>.toFileTagsAsRead(): FileTags {
+private fun Map<String, List<String>>.toFileTagsAsRead(id3: Boolean): FileTags {
     fun first(property: TagLibProperty): String? = get(property.key)?.firstOrNull()
     val trackTag = first(TagLibProperty.Track)
     val discTag = first(TagLibProperty.Disc)
     // Vorbis writes the movement number as MOVEMENT, ID3's MVIN may be "n/total", MP4 counts with MOVEMENTCOUNT
     val movementTag = first(TagLibProperty.MovementNumber) ?: get(VORBIS_MOVEMENT)?.firstOrNull()
+    val movementName = first(TagLibProperty.MovementName)
+    val showMovement = (first(TagLibProperty.ShowMovement) ?: get(MP4_SHOW_WORK_MOVEMENT)?.firstOrNull())?.parseCompilation()
+    // ID3's TIT1 is a content group many taggers fill with a genre-like label, so on an MP3 it is only a work next to movement tags (#1065)
+    val isWork = !id3 || movementName != null || movementTag != null || showMovement == true
     return FileTags(
         title = first(TagLibProperty.Title),
         // TagLib passes tag names it doesn't know through unchanged, so a Matroska file tagged by ffmpeg has ALBUM_ARTIST.
@@ -110,13 +114,13 @@ private fun Map<String, List<String>>.toFileTagsAsRead(): FileTags {
         composerSort = first(TagLibProperty.ComposerSort),
         conductor = first(TagLibProperty.Conductor),
         arranger = first(TagLibProperty.Arranger),
-        work = first(TagLibProperty.Work),
-        movementName = first(TagLibProperty.MovementName),
+        work = first(TagLibProperty.Work)?.takeIf { isWork },
+        movementName = movementName,
         movementNumber = movementTag?.substringBefore('/')?.trim()?.toIntOrNull(),
         movementTotal =
             (first(TagLibProperty.MovementTotal) ?: get(MP4_MOVEMENT_COUNT)?.firstOrNull() ?: movementTag?.substringAfter('/', ""))
                 ?.trim()?.toIntOrNull(),
-        showMovement = (first(TagLibProperty.ShowMovement) ?: get(MP4_SHOW_WORK_MOVEMENT)?.firstOrNull())?.parseCompilation(),
+        showMovement = showMovement,
         performers = performers()
     )
 }

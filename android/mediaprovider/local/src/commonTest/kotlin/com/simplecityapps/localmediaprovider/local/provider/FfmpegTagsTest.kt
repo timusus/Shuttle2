@@ -185,6 +185,15 @@ class FfmpegTagsTest {
     }
 
     @Test
+    fun `an MP3's TIT1 without movement tags is not a work`() {
+        val tags = ffmpegPropertyMap(listOf("grouping" to "Favourites", "GRP1" to "Road trip", "composer" to "Mercury"), id3 = true).toFileTags(id3 = true)
+
+        tags.work shouldBe null
+        tags.grouping shouldBe "Road trip"
+        tags.composer shouldBe "Mercury"
+    }
+
+    @Test
     fun `an MP3 with only TIT1 has a work and no grouping`() {
         val tags = ffmpegPropertyMap(listOf("grouping" to "Symphony No. 5"), id3 = true).toFileTags()
 

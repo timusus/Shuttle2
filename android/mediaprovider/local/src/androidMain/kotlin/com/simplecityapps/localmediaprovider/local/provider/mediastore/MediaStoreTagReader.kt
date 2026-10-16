@@ -48,7 +48,7 @@ class KTagLibMediaStoreTagReader(
                 val fileName = file.path.substringAfterLast('/')
                 kTagLib.getMetadata(pfd.fd, fileName)?.let { metadata ->
                     val audio = metadata.audioProperties
-                    metadata.propertyMap?.toFileTags()?.let { tags ->
+                    metadata.propertyMap?.toFileTags(id3 = fileName.endsWith(".mp3", ignoreCase = true))?.let { tags ->
                         tags.copy(
                             // TagLib's property map has no Matroska segment title (#523)
                             title = tags.title ?: matroskaTitleOf(pfd.fd, fileName),

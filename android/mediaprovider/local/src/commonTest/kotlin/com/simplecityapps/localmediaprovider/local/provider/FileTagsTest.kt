@@ -374,6 +374,17 @@ class FileTagsTest {
     }
 
     @Test
+    fun `an MP3's work needs movement tags but another container's does not`() {
+        val work = mapOf("WORK" to listOf("Favourites"))
+
+        work.toFileTags(id3 = true).work shouldBe null
+        work.toFileTags(id3 = false).work shouldBe "Favourites"
+        (work + ("MOVEMENTNAME" to listOf("Allegro"))).toFileTags(id3 = true).work shouldBe "Favourites"
+        (work + ("MOVEMENTNUMBER" to listOf("2"))).toFileTags(id3 = true).work shouldBe "Favourites"
+        (work + ("SHOWWORKMOVEMENT" to listOf("1"))).toFileTags(id3 = true).work shouldBe "Favourites"
+    }
+
+    @Test
     fun `maps the classical frames of an ID3v2_4 file with TIT1 as the work and GRP1 as the grouping`() {
         val tags =
             mapOf(
