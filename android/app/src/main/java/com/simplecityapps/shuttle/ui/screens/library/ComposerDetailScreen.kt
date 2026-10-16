@@ -10,9 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -30,6 +28,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavKey
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.designsystem.component.ArtworkPlaceholder
+import com.simplecityapps.shuttle.designsystem.component.S2Icon
+import com.simplecityapps.shuttle.designsystem.component.S2Text
 import com.simplecityapps.shuttle.designsystem.component.SectionHeader
 import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
 import com.simplecityapps.shuttle.designsystem.theme.S2TouchTarget
@@ -120,9 +120,9 @@ private fun ComposerHero(name: String, subtitle: String, topInset: Dp) {
             .background(Brush.verticalGradient(listOf(colors.primaryContainer, colors.surface)))
             .padding(start = S2Spacing.medium, end = S2Spacing.medium, top = topInset + S2Spacing.large, bottom = S2Spacing.medium),
     ) {
-        Text(stringResource(R.string.composer_eyebrow).uppercase(), style = MaterialTheme.typography.labelLarge.copy(letterSpacing = 1.5.sp), color = colors.primary)
-        Text(name, style = MaterialTheme.typography.heroTitle, color = colors.onSurface)
-        Text(subtitle, style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant)
+        S2Text(stringResource(R.string.composer_eyebrow).uppercase(), style = MaterialTheme.typography.labelLarge.copy(letterSpacing = 1.5.sp), color = colors.primary)
+        S2Text(name, style = MaterialTheme.typography.heroTitle, color = colors.onSurface)
+        S2Text(subtitle, style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant)
     }
 }
 
@@ -137,9 +137,9 @@ private fun WorkRow(work: ComposerWork, onClick: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(Modifier.weight(1f)) {
-            Text(work.title, style = MaterialTheme.typography.rowTitle, color = MaterialTheme.colorScheme.onSurface, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            S2Text(work.title, style = MaterialTheme.typography.rowTitle, color = MaterialTheme.colorScheme.onSurface, maxLines = 2, overflow = TextOverflow.Ellipsis)
             val recordings = pluralString(R.plurals.composer_recordings, work.recordings.size)
-            Text(
+            S2Text(
                 listOfNotNull(work.catalogue, recordings).joinToString(" · "),
                 style = MaterialTheme.typography.rowSubtitle,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -147,7 +147,7 @@ private fun WorkRow(work: ComposerWork, onClick: () -> Unit) {
                 overflow = TextOverflow.Ellipsis,
             )
         }
-        Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        S2Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
