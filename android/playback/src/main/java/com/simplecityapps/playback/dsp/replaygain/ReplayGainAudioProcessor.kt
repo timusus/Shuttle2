@@ -2,16 +2,20 @@ package com.simplecityapps.playback.dsp.replaygain
 
 import androidx.core.math.MathUtils.clamp
 import androidx.media3.common.C
+import androidx.media3.common.Timeline
 import androidx.media3.common.audio.AudioProcessor
 import androidx.media3.common.audio.AudioProcessor.UnhandledAudioFormatException
 import androidx.media3.common.audio.BaseAudioProcessor
 import com.simplecityapps.playback.dsp.equalizer.fromDb
 import com.simplecityapps.playback.dsp.mediaItem
+import com.simplecityapps.playback.dsp.windowIndex
 import com.simplecityapps.playback.exoplayer.ByteUtils.Int24_MAX_VALUE
 import com.simplecityapps.playback.exoplayer.ByteUtils.Int24_MIN_VALUE
 import com.simplecityapps.playback.exoplayer.ByteUtils.getInt24
 import com.simplecityapps.playback.exoplayer.ByteUtils.putInt24
 import com.simplecityapps.playback.queue.QueueEntry
+import com.simplecityapps.playback.queue.queueEntry
+import com.simplecityapps.shuttle.model.Song
 import java.nio.ByteBuffer
 import timber.log.Timber
 
@@ -37,8 +41,18 @@ class ReplayGainAudioProcessor(
     /** The ReplayGain of the stream being processed. Only touched on the playback thread. */
     private var streamReplayGain: ReplayGain? = null
 
+    /**
+     * Whether Track mode gives the movements of a work their album gain (see [replayGainModeAt]). Set from the main
+     * thread (the Classical display setting); applies from the next stream.
+     */
+    @Volatile
+    var albumGainForWorks: Boolean = false
+
+    /** Whether the stream being processed is a movement of a work, decided when it started. Only touched on the playback thread. */
+    private var streamInWork = false
+
     private val gain: Double
-        get() = replayGainDb(mode, preAmpGain, streamReplayGain)
+        get() = replayGainDb(if (mode == ReplayGainMode.Track && streamInWork) ReplayGainMode.Album else mode, preAmpGain, streamReplayGain)
 
     override fun onConfigure(inputAudioFormat: AudioProcessor.AudioFormat): AudioProcessor.AudioFormat {
         if (inputAudioFormat.encoding != C.ENCODING_PCM_16BIT &&
@@ -94,10 +108,25 @@ class ReplayGainAudioProcessor(
         // doesn't identify an item (a bare flush()) keeps the current stream's gain.
         val item = streamMetadata.mediaItem() ?: return
         streamReplayGain = (item.localConfiguration?.tag as? QueueEntry)?.replayGain
+        streamInWork = albumGainForWorks && isWorkMovement(streamMetadata)
         Timber.d("ReplayGain for ${item.localConfiguration?.uri?.lastPathSegment}: $streamReplayGain, ${gain}dB")
     }
 
     override fun onReset() {
         streamReplayGain = null
+        streamInWork = false
+    }
+
+    // Neighbours come from the player's timeline (playlist order, so shuffle doesn't hide a work), not a copy of the queue.
+    private fun isWorkMovement(streamMetadata: AudioProcessor.StreamMetadata): Boolean {
+        val index = streamMetadata.windowIndex() ?: return false
+        val timeline = streamMetadata.timeline
+        val window = Timeline.Window()
+        val songs = object : AbstractList<Song>() {
+            override val size get() = timeline.windowCount
+
+            override fun get(index: Int) = timeline.getWindow(index, window).mediaItem.queueEntry.song
+        }
+        return replayGainModeAt(ReplayGainMode.Track, songs, index) == ReplayGainMode.Album
     }
 }

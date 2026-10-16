@@ -46,6 +46,7 @@ import com.simplecityapps.shuttle.di.ApplicationContext
 import com.simplecityapps.shuttle.downloads.di.DownloadCache
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.persistence.KeyValueStore
+import com.simplecityapps.shuttle.settings.AppearanceSettings
 import com.simplecityapps.shuttle.settings.EqualizerSettings
 import com.simplecityapps.shuttle.streaming.DeliveredFormats
 import dev.zacsweers.metro.AppScope
@@ -55,6 +56,7 @@ import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.SingleIn
 import java.util.Optional
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
 import timber.log.Timber
 
@@ -81,7 +83,13 @@ class PlaybackEngineModule {
 
     @SingleIn(AppScope::class)
     @Provides
-    fun provideReplayGainAudioProcessor(playbackSettings: PlaybackSettings): ReplayGainAudioProcessor = ReplayGainAudioProcessor(playbackSettings.replayGainMode.value, playbackSettings.preAmpGain.value.toDouble())
+    fun provideReplayGainAudioProcessor(
+        playbackSettings: PlaybackSettings,
+        appearanceSettings: AppearanceSettings,
+        @AppCoroutineScope appCoroutineScope: CoroutineScope
+    ): ReplayGainAudioProcessor = ReplayGainAudioProcessor(playbackSettings.replayGainMode.value, playbackSettings.preAmpGain.value.toDouble()).also { processor ->
+        appCoroutineScope.launch { appearanceSettings.classicalDisplay.flow.collect { processor.albumGainForWorks = it } }
+    }
 
     @Provides
     fun provideEqualizerFrequencyResponse(): EqualizerFrequencyResponse = DefaultEqualizerFrequencyResponse()
