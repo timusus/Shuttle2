@@ -38,6 +38,16 @@ class WorkTitleTest {
     }
 
     @Test
+    fun `number and catalogue abbreviations take their conventional case`() {
+        parseWorkTitle("Symphonie no. 5") shouldBe title("Symphonie No. 5")
+        parseWorkTitle("Symphony no. 2 in C minor, op. 67") shouldBe title("Symphony No. 2", key = "C minor", catalogue = "Op. 67")
+        parseWorkTitle("Piano Sonatas nos. 1-3") shouldBe title("Piano Sonatas Nos. 1-3")
+        parseWorkTitle("Cantata, bwv 140").catalogue shouldBe "BWV 140"
+        parseWorkTitle("Sonata in A, d. 959") shouldBe title("Sonata in A, d. 959")
+        parseWorkTitle("Piano Sonata, op. 10 no. 3").catalogue shouldBe "Op. 10 No. 3"
+    }
+
+    @Test
     fun `a comma tail is a nickname only when it is a single capitalised word`() {
         parseWorkTitle("Symphony No. 5, Part 1") shouldBe title("Symphony No. 5, Part 1")
         parseWorkTitle("Suite No. 2, Prelude") shouldBe title("Suite No. 2, Prelude")

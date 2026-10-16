@@ -10,7 +10,13 @@ data class WorkTitle(
 )
 
 // The single letters K, B and D are only a catalogue with their dot ("K. 466", "B. 12", "D. 850"), S with a dot or a space.
-private const val CATALOGUE_PREFIXES = "BuxWV|BWV|Hob|HWV|TWV|TrV|SWV|WAB|WoO|Sz|RV|FP|JW|Wq|Kk|KV|Op|K(?=\\.)|D(?=\\.)|B(?=\\.)|S(?=[.\\s])"
+private val catalogueNames = listOf("BuxWV", "BWV", "Hob", "HWV", "TWV", "TrV", "SWV", "WAB", "WoO", "Sz", "RV", "FP", "JW", "Wq", "Kk", "KV", "Op")
+private val CATALOGUE_PREFIXES = catalogueNames.joinToString("|") + "|K(?=\\.)|D(?=\\.)|B(?=\\.)|S(?=[.\\s])"
+
+// "no." and "nos." are written "No." and "Nos." in a work title, whatever the tagger typed.
+private val numberAbbreviation = Regex("""\b(no|nos)\.(?=\s*\d)""", RegexOption.IGNORE_CASE)
+
+private fun String.capitaliseNumberAbbreviations() = replace(numberAbbreviation) { it.groupValues[1].lowercase().replaceFirstChar(Char::uppercase) + "." }
 
 // Groups: 1 prefix, 2 Roman:number (Hob. XVI:52), 3 number with optional letter (BWV 1041a), 4 "No. 3" of "Op. 10 No. 3".
 private val catalogueRef = Regex(
@@ -54,7 +60,8 @@ private fun catalogueMatches(text: String): List<MatchResult> = catalogueRef.fin
 private fun MatchResult.display(): String {
     val prefix = groupValues[1]
     val dotted = value.getOrNull(prefix.length) == '.'
-    val shown = if (prefix.equals("op", ignoreCase = true)) "Op." else prefix + if (dotted) "." else ""
+    val canonical = catalogueNames.firstOrNull { it.equals(prefix, ignoreCase = true) }?.takeIf { it.length > 1 } ?: prefix
+    val shown = if (canonical == "Op") "Op." else canonical + if (dotted) "." else ""
     val number = groupValues[2].ifEmpty { groupValues[3] }.replace(Regex("""\s+"""), "")
     val sub = groupValues[4].takeIf { it.isNotEmpty() }?.let { " No. $it" }.orEmpty()
     return "$shown $number$sub"
@@ -106,7 +113,7 @@ fun parseWorkTitle(title: String): WorkTitle {
     }
 
     if (rest.isEmpty()) return unchanged
-    return WorkTitle(core = rest, nickname = nickname, key = key, catalogue = catalogue, arrangement = arrangement)
+    return WorkTitle(core = rest.capitaliseNumberAbbreviations(), nickname = nickname, key = key, catalogue = catalogue, arrangement = arrangement)
 }
 
 private fun MatchResult.searchKey(): String {
