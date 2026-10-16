@@ -27,27 +27,3 @@ class PrepareServerConnection @Inject constructor(
         serverConnections.clearRejectedCertificate(origin)
     }
 }
-
-/** Trusts the certificate with a fingerprint for one server alone. */
-class TrustServerCertificate @Inject constructor(
-    private val serverConnections: ServerConnectionStore,
-) {
-    operator fun invoke(
-        origin: ServerOrigin,
-        fingerprint: String,
-    ) = serverConnections.trustCertificate(origin, fingerprint)
-}
-
-/** The fingerprint of the certificate a server last presented that the platform refused, if it did. */
-class RejectedServerCertificate @Inject constructor(
-    private val serverConnections: ServerConnectionStore,
-) {
-    operator fun invoke(origin: ServerOrigin): String? = serverConnections.rejectedCertificate(origin)
-}
-
-/** Forgets a server's custom headers and trusted certificate. */
-class ForgetServerConnection @Inject constructor(
-    private val serverConnections: ServerConnectionStore,
-) {
-    operator fun invoke(origin: ServerOrigin) = serverConnections.forget(origin)
-}

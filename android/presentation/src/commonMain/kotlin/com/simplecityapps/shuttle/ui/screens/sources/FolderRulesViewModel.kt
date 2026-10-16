@@ -32,9 +32,7 @@ sealed interface FolderRulesEvent {
 class FolderRulesViewModel @Inject constructor(
     private val mediaSources: MediaSources,
     observeScannerFolders: ObserveScannerFolders,
-    private val addScannerFolder: AddScannerFolder,
-    private val removeScannerFolder: RemoveScannerFolder,
-    private val refreshScannerFolders: RefreshScannerFolders,
+    private val folderStore: ScannerFolderStore,
 ) : ViewModel() {
     private val events = PendingEvents<FolderRulesEvent>()
 
@@ -43,12 +41,12 @@ class FolderRulesViewModel @Inject constructor(
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), FolderRulesUiState())
 
     /** Re-reads each folder's access, for a grant revoked while the screen was away. */
-    fun onResume() = refreshScannerFolders()
+    fun onResume() = folderStore.refresh()
 
     /** The folder picker's result: null when it was cancelled. */
     fun onFolderPicked(kind: FolderKind, treeUri: String?) {
         if (treeUri == null) return
-        if (addScannerFolder(kind, treeUri)) {
+        if (folderStore.add(kind, treeUri)) {
             mediaSources.scan(foldersChanged = true)
         } else {
             events.post(FolderRulesEvent.FolderNotOnDevice)
@@ -56,7 +54,7 @@ class FolderRulesViewModel @Inject constructor(
     }
 
     fun onRemoveFolder(kind: FolderKind, folder: SourceFolder) {
-        removeScannerFolder(kind, folder)
+        folderStore.remove(kind, folder)
         mediaSources.scan(foldersChanged = true)
     }
 

@@ -10,6 +10,7 @@ import com.simplecityapps.mediaprovider.server.ServerLogin
 import com.simplecityapps.shuttle.entitlement.ObserveServerStreamingNeedsPro
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.server.CustomHeader
+import com.simplecityapps.shuttle.server.ServerConnectionStore
 import com.simplecityapps.shuttle.server.ServerOrigin
 import com.simplecityapps.shuttle.server.displayFingerprint
 import com.simplecityapps.shuttle.ui.actions.SongDownloader
@@ -153,9 +154,7 @@ class ServerSignInViewModel @AssistedInject constructor(
     private val localNetworkAccess: LocalNetworkAccess,
     private val readServerHeaders: ReadServerHeaders,
     private val prepareServerConnection: PrepareServerConnection,
-    private val trustServerCertificate: TrustServerCertificate,
-    private val rejectedServerCertificate: RejectedServerCertificate,
-    private val forgetServerConnection: ForgetServerConnection,
+    private val serverConnections: ServerConnectionStore,
 ) : ViewModel() {
     @AssistedFactory
     @ManualViewModelAssistedFactoryKey(Factory::class)
@@ -312,7 +311,7 @@ class ServerSignInViewModel @AssistedInject constructor(
     /** Trusts the certificate [ServerSignInStep.UntrustedCertificate] showed, for its server alone, and signs in again. */
     fun onTrustCertificate() {
         val untrusted = step.value as? ServerSignInStep.UntrustedCertificate ?: return
-        trustServerCertificate(untrusted.origin, untrusted.fingerprint)
+        serverConnections.trustCertificate(untrusted.origin, untrusted.fingerprint)
         step.value = ServerSignInStep.Form
         retryAfterTrust?.invoke()
     }
@@ -522,13 +521,13 @@ class ServerSignInViewModel @AssistedInject constructor(
     private fun forgetUnusedConnections(inUse: ServerOrigin? = null) {
         val saved = readServerLogin(type).address?.let(ServerOrigin::parse)
         val unused = touchedOrigins.filter { it != saved && it != inUse }
-        unused.forEach { forgetServerConnection(it) }
+        unused.forEach { serverConnections.forget(it) }
         touchedOrigins -= unused.toSet()
     }
 
     /** The step a failed sign-in to [origin] shows: the certificate to trust when it refused one, else [message]. */
     private fun failedStep(origin: ServerOrigin?, message: String): ServerSignInStep {
-        val fingerprint = origin?.let { rejectedServerCertificate(it) }
+        val fingerprint = origin?.let { serverConnections.rejectedCertificate(it) }
         return if (fingerprint != null) ServerSignInStep.UntrustedCertificate(origin, fingerprint, message) else ServerSignInStep.Failed(message)
     }
 

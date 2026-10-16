@@ -12,6 +12,7 @@ import com.simplecityapps.shuttle.playback.RecordResumePoints
 import com.simplecityapps.shuttle.playbackreporting.PlaybackReporting
 import com.simplecityapps.shuttle.scrobbling.PlaybackScrobbling
 import com.simplecityapps.shuttle.scrobbling.flush.InProcessScrobbleFlushScheduler
+import com.simplecityapps.shuttle.server.ServerConnectionStore
 import com.simplecityapps.shuttle.shared.artwork.ArtworkUrls
 import com.simplecityapps.shuttle.shared.downloads.OfflineDownloads
 import com.simplecityapps.shuttle.shared.downloads.UrlSessionDownloads
@@ -62,7 +63,6 @@ import com.simplecityapps.shuttle.ui.screens.sources.SourcesViewModel
 import com.simplecityapps.shuttle.ui.screens.sources.servers.PrepareServerConnection
 import com.simplecityapps.shuttle.ui.screens.sources.servers.ReadServerLogin
 import com.simplecityapps.shuttle.ui.screens.sources.servers.ServerSignInViewModel
-import com.simplecityapps.shuttle.ui.screens.sources.servers.TrustServerCertificate
 import com.simplecityapps.shuttle.ui.screens.tageditor.TagEditorViewModel
 import com.simplecityapps.shuttle.ui.shell.ShellViewModel
 import com.simplecityapps.shuttle.ui.shell.player.PlayerViewModel
@@ -162,7 +162,7 @@ interface IosAppGraph : ViewModelGraph {
 
     /** Saves a server's custom headers, and trusts a certificate for it: the sign-in's, and what tests seed [serverRequestPolicy] with. */
     val prepareServerConnection: PrepareServerConnection
-    val trustServerCertificate: TrustServerCertificate
+    val serverConnections: ServerConnectionStore
 
     /** The playlists and plays Siri, Shortcuts and Spotlight's App Intents offer (#758). */
     val appIntentLibrary: AppIntentLibrary

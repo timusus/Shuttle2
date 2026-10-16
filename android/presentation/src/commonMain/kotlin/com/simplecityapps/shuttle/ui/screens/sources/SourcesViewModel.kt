@@ -78,7 +78,7 @@ val ServerTypes = listOf(MediaProviderType.Jellyfin, MediaProviderType.Emby, Med
 class SourcesViewModel @Inject constructor(
     private val mediaSources: MediaSources,
     observeScannerFolders: ObserveScannerFolders,
-    private val refreshScannerFolders: RefreshScannerFolders,
+    private val folderStore: ScannerFolderStore,
     importState: SongImportStateProvider,
     private val tryAddServer: TryAddServer,
     observeAddServerResumes: ObserveAddServerResumes,
@@ -117,7 +117,7 @@ class SourcesViewModel @Inject constructor(
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SourcesUiState())
 
     /** Re-reads the folders' access, which the This device card flags when a grant was revoked. */
-    fun onResume() = refreshScannerFolders()
+    fun onResume() = folderStore.refresh()
 
     fun onThisDeviceChange(enabled: Boolean) {
         if (enabled) {

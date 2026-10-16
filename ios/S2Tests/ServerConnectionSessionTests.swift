@@ -29,7 +29,7 @@ struct ServerConnectionSessionTests {
             let origin = CoreServerOrigin.companion.of(host: host, port: 8920)
             graph.prepareServerConnection.invoke(origin: origin, headers: headers)
             if let certificate {
-                graph.trustServerCertificate.invoke(origin: origin, fingerprint: Self.fingerprint(of: certificate))
+                graph.serverConnections.trustCertificate(origin: origin, fingerprint: Self.fingerprint(of: certificate))
             }
             policy = KotlinServerConnectionPolicy(graph.serverRequestPolicy)
         }
