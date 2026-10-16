@@ -1,18 +1,27 @@
 package com.simplecityapps.playback.mediasession
 
+import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
+import androidx.media3.common.DeviceInfo
 import androidx.media3.common.ForwardingPlayer
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
+import androidx.media3.common.Metadata
+import androidx.media3.common.PlaybackException
+import androidx.media3.common.PlaybackParameters
 import androidx.media3.common.Player
+import androidx.media3.common.Timeline
+import androidx.media3.common.TrackSelectionParameters
+import androidx.media3.common.Tracks
+import androidx.media3.common.VideoSize
+import androidx.media3.common.text.Cue
+import androidx.media3.common.text.CueGroup
 import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.queue.QueueItem
 import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.playback.queue.ShuffleMode
 import com.simplecityapps.playback.queue.queueEntryOrNull
 import com.simplecityapps.playback.queue.toRepeatMode
-import java.lang.reflect.InvocationTargetException
-import java.lang.reflect.Proxy
 import java.util.IdentityHashMap
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -77,25 +86,102 @@ class SessionPlayer(
     private fun refreshMetadata() {
         cachedQueue = null
         val metadata = mediaMetadata
-        listeners.keys.toList().forEach { it.onMediaMetadataChanged(metadata) }
+        val added = synchronized(listeners) { listeners.keys.toList() }
+        added.forEach { it.onMediaMetadataChanged(metadata) }
     }
 
     override fun addListener(listener: Player.Listener) {
-        super.addListener(listeners.getOrPut(listener) { withOwnMetadata(listener) })
+        val wrapper = synchronized(listeners) { listeners.getOrPut(listener) { MetadataListener(listener) } }
+        super.addListener(wrapper)
     }
 
     override fun removeListener(listener: Player.Listener) {
-        super.removeListener(listeners.remove(listener) ?: listener)
+        val wrapper = synchronized(listeners) { listeners.remove(listener) } ?: listener
+        super.removeListener(wrapper)
     }
 
-    // A proxy because Kotlin's `by` skips the Java default methods of Player.Listener, which is every one of them.
-    private fun withOwnMetadata(delegate: Player.Listener): Player.Listener = Proxy.newProxyInstance(Player.Listener::class.java.classLoader, arrayOf(Player.Listener::class.java)) { _, method, args ->
-        try {
-            if (method.name == "onMediaMetadataChanged") delegate.onMediaMetadataChanged(mediaMetadata) else method.invoke(delegate, *args.orEmpty())
-        } catch (e: InvocationTargetException) {
-            throw e.targetException
-        }
-    } as Player.Listener
+    // Written out because Kotlin's `by` skips the Java default methods of Player.Listener, which is every one of them.
+    // Modelled on ForwardingPlayer.ForwardingListener, except that metadata is ours.
+    @Suppress("DEPRECATION")
+    private inner class MetadataListener(private val delegate: Player.Listener) : Player.Listener {
+        override fun onEvents(player: Player, events: Player.Events) = delegate.onEvents(player, events)
+
+        override fun onTimelineChanged(timeline: Timeline, reason: Int) = delegate.onTimelineChanged(timeline, reason)
+
+        override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) = delegate.onMediaItemTransition(mediaItem, reason)
+
+        override fun onTracksChanged(tracks: Tracks) = delegate.onTracksChanged(tracks)
+
+        override fun onMediaMetadataChanged(mediaMetadata: MediaMetadata) = delegate.onMediaMetadataChanged(this@SessionPlayer.mediaMetadata)
+
+        override fun onPlaylistMetadataChanged(mediaMetadata: MediaMetadata) = delegate.onPlaylistMetadataChanged(mediaMetadata)
+
+        override fun onIsLoadingChanged(isLoading: Boolean) = delegate.onIsLoadingChanged(isLoading)
+
+        override fun onLoadingChanged(isLoading: Boolean) = delegate.onLoadingChanged(isLoading)
+
+        override fun onAvailableCommandsChanged(availableCommands: Player.Commands) = delegate.onAvailableCommandsChanged(availableCommands)
+
+        override fun onTrackSelectionParametersChanged(parameters: TrackSelectionParameters) = delegate.onTrackSelectionParametersChanged(parameters)
+
+        override fun onPlayerStateChanged(playWhenReady: Boolean, playbackState: Int) = delegate.onPlayerStateChanged(playWhenReady, playbackState)
+
+        override fun onPlaybackStateChanged(playbackState: Int) = delegate.onPlaybackStateChanged(playbackState)
+
+        override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) = delegate.onPlayWhenReadyChanged(playWhenReady, reason)
+
+        override fun onPlaybackSuppressionReasonChanged(playbackSuppressionReason: Int) = delegate.onPlaybackSuppressionReasonChanged(playbackSuppressionReason)
+
+        override fun onIsPlayingChanged(isPlaying: Boolean) = delegate.onIsPlayingChanged(isPlaying)
+
+        override fun onRepeatModeChanged(repeatMode: Int) = delegate.onRepeatModeChanged(repeatMode)
+
+        override fun onShuffleModeEnabledChanged(shuffleModeEnabled: Boolean) = delegate.onShuffleModeEnabledChanged(shuffleModeEnabled)
+
+        override fun onPlayerError(error: PlaybackException) = delegate.onPlayerError(error)
+
+        override fun onPlayerErrorChanged(error: PlaybackException?) = delegate.onPlayerErrorChanged(error)
+
+        override fun onPositionDiscontinuity(reason: Int) = delegate.onPositionDiscontinuity(reason)
+
+        override fun onPositionDiscontinuity(oldPosition: Player.PositionInfo, newPosition: Player.PositionInfo, reason: Int) = delegate.onPositionDiscontinuity(oldPosition, newPosition, reason)
+
+        override fun onPlaybackParametersChanged(playbackParameters: PlaybackParameters) = delegate.onPlaybackParametersChanged(playbackParameters)
+
+        override fun onSeekBackIncrementChanged(seekBackIncrementMs: Long) = delegate.onSeekBackIncrementChanged(seekBackIncrementMs)
+
+        override fun onSeekForwardIncrementChanged(seekForwardIncrementMs: Long) = delegate.onSeekForwardIncrementChanged(seekForwardIncrementMs)
+
+        override fun onMaxSeekToPreviousPositionChanged(maxSeekToPreviousPositionMs: Long) = delegate.onMaxSeekToPreviousPositionChanged(maxSeekToPreviousPositionMs)
+
+        override fun onAudioSessionIdChanged(audioSessionId: Int) = delegate.onAudioSessionIdChanged(audioSessionId)
+
+        override fun onAudioAttributesChanged(audioAttributes: AudioAttributes) = delegate.onAudioAttributesChanged(audioAttributes)
+
+        override fun onVolumeChanged(volume: Float) = delegate.onVolumeChanged(volume)
+
+        override fun onSkipSilenceEnabledChanged(skipSilenceEnabled: Boolean) = delegate.onSkipSilenceEnabledChanged(skipSilenceEnabled)
+
+        override fun onDeviceInfoChanged(deviceInfo: DeviceInfo) = delegate.onDeviceInfoChanged(deviceInfo)
+
+        override fun onDeviceVolumeChanged(volume: Int, muted: Boolean) = delegate.onDeviceVolumeChanged(volume, muted)
+
+        override fun onVideoSizeChanged(videoSize: VideoSize) = delegate.onVideoSizeChanged(videoSize)
+
+        override fun onSurfaceSizeChanged(width: Int, height: Int) = delegate.onSurfaceSizeChanged(width, height)
+
+        override fun onRenderedFirstFrame() = delegate.onRenderedFirstFrame()
+
+        override fun onCues(cues: List<Cue>) = delegate.onCues(cues)
+
+        override fun onCues(cueGroup: CueGroup) = delegate.onCues(cueGroup)
+
+        override fun onMetadata(metadata: Metadata) = delegate.onMetadata(metadata)
+
+        override fun equals(other: Any?): Boolean = this === other || (other is MetadataListener && delegate == other.delegate)
+
+        override fun hashCode(): Int = delegate.hashCode()
+    }
 
     override fun play() {
         playbackOperations.play()

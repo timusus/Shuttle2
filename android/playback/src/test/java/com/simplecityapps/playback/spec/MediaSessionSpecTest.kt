@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.provider.MediaStore
 import androidx.core.os.bundleOf
 import androidx.media3.common.MediaItem
+import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
 import androidx.media3.session.CommandButton
 import androidx.media3.session.MediaBrowser
@@ -243,6 +244,28 @@ class MediaSessionSpecTest {
 
         harness.classicalDisplay.value = false
         harness.playback.runUntil { browser.mediaMetadata.title == plain }
+    }
+
+    @Test
+    fun `RS-45d a listener that was removed no longer hears the metadata change`() {
+        val harness = sessionHarness()
+        val player = harness.session.player
+        var heard = 0
+        val listener =
+            object : Player.Listener {
+                override fun onMediaMetadataChanged(mediaMetadata: MediaMetadata) {
+                    heard++
+                }
+            }
+        player.addListener(listener)
+
+        harness.classicalDisplay.value = true
+        harness.playback.runUntil { heard == 1 }
+
+        player.removeListener(listener)
+        harness.classicalDisplay.value = false
+        harness.playback.runUntil { true }
+        heard shouldBe 1
     }
 
     @Test
