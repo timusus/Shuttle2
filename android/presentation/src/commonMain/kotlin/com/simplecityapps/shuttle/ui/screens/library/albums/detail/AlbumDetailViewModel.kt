@@ -154,14 +154,35 @@ class AlbumDetailViewModel @AssistedInject constructor(
         toggledWorks.update { if (firstSongId in it) it - firstSongId else it + firstSongId }
     }
 
-    private class Extras(val moreByArtist: List<Album>, val moreByArtistNames: List<String>, val classical: Boolean, val toggled: Set<Long>)
+    private class Extras(val moreByArtist: List<Album>, val moreByArtistNames: List<String>, val classical: Boolean, val rows: AlbumRows?)
+
+    private val classicalDisplay = observeSetting(AppearanceSettings.ClassicalDisplay)
+
+    /** The grouping, worked out once per change to the songs, album or settings; a song change in the player leaves it alone. */
+    private val groupedRows: Flow<AlbumRows?> = combine(songs, album, classicalDisplay, toggledWorks) { songs, album, classical, toggled ->
+        if (classical) buildAlbumRows(songs, album?.albumArtist ?: album?.friendlyArtistName, null, toggled) else null
+    }
+
+    private fun AlbumRows.withPlaying(songId: Long?): AlbumRows {
+        if (songId == null) return this
+        return copy(
+            rows = rows.map { row ->
+                when (row) {
+                    is AlbumRow.Track -> row.copy(playing = row.song.id == songId)
+                    is AlbumRow.Movement -> row.copy(playing = row.song.id == songId)
+                    is AlbumRow.WorkHeader -> row.copy(playing = row.songs.any { it.id == songId })
+                    else -> row
+                }
+            }
+        )
+    }
 
     val uiState: StateFlow<AlbumDetailUiState> = combine(
         songs,
         album,
         observeCurrentSong(),
         observeArtworkSeed(songs.map { it.firstOrNull() }),
-        combine(moreByArtist, moreByArtistNames, observeSetting(AppearanceSettings.ClassicalDisplay), toggledWorks, ::Extras),
+        combine(moreByArtist, moreByArtistNames, classicalDisplay, groupedRows, ::Extras),
     ) { songs, album, currentSong, seed, extras ->
         AlbumDetailUiState(
             album = album,
@@ -177,7 +198,7 @@ class AlbumDetailViewModel @AssistedInject constructor(
             // A credited key with no artist row or a blank name resolves to nothing: fall back to the raw tag
             moreByArtistNames = extras.moreByArtistNames.ifEmpty { listOfNotNull(album?.albumArtist?.takeIf { it.isNotBlank() }) },
             classical = extras.classical,
-            rows = if (extras.classical) buildAlbumRows(songs, album?.albumArtist ?: album?.friendlyArtistName, currentSong?.id, extras.toggled) else null,
+            rows = extras.rows?.withPlaying(currentSong?.id),
         )
     }.stateIn(
         scope = viewModelScope,
