@@ -20,8 +20,13 @@ data class NowPlayingWork(
     val ordinal: String,
     val total: String,
     /** The numeral of every track of the work, in order; a ribbon segment (a movement or an act) is named by its first. */
-    val ordinals: List<String>
+    val ordinals: List<String>,
+    /** One entry per track of the work, in queue order from the work's first track: the movement list's rows. */
+    val tracks: List<WorkTrack> = emptyList()
 )
+
+/** A track of a work as the movement list shows it: its [numeral] ("II"), [name] and length. */
+data class WorkTrack(val numeral: String, val name: String, val durationMs: Long)
 
 /** Null unless the song at [index] sits in a work block; [library] lets two composers sharing a surname show their full names. */
 fun nowPlayingWork(queue: List<Song>, index: Int, library: Collection<ComposerName> = emptyList()): NowPlayingWork? {
@@ -47,7 +52,8 @@ fun nowPlayingWork(queue: List<Song>, index: Int, library: Collection<ComposerNa
         ribbon = ribbon,
         ordinal = position(block.numbering, movement.number),
         total = position(block.numbering, block.movementTotal),
-        ordinals = block.movements.map { position(block.numbering, it.number) }
+        ordinals = block.movements.map { position(block.numbering, it.number) },
+        tracks = block.movements.map { WorkTrack(position(block.numbering, it.number), it.name.ifEmpty { it.song.name.orEmpty() }, it.song.duration.toLong()) }
     )
 }
 

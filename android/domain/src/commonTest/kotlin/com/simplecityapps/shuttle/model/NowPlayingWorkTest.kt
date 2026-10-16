@@ -25,6 +25,14 @@ class NowPlayingWorkTest {
     }
 
     @Test
+    fun `every track of the work is listed with its numeral name and length`() {
+        val tracks = nowPlayingWork(symphony(), 1)!!.tracks
+        tracks.map { it.numeral } shouldBe listOf("I", "II", "III", "IV")
+        tracks.map { it.name } shouldBe listOf("Allegro con brio", "Andante con moto", "Scherzo", "Allegro")
+        tracks.map { it.durationMs } shouldBe List(4) { 60_000L }
+    }
+
+    @Test
     fun `a song outside a work block has no work model`() {
         nowPlayingWork(listOf(movement(1, "Moonlight Sonata", "Adagio")), 0) shouldBe null
         nowPlayingWork(listOf(song(id = 1, name = "Hello"), song(id = 2, name = "World")), 0) shouldBe null

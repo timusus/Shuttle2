@@ -1,7 +1,10 @@
 package com.simplecityapps.shuttle.ui.shell.player
 
 import androidx.activity.ComponentActivity
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
 import androidx.test.core.app.ApplicationProvider
 import com.github.takahirom.roborazzi.ExperimentalRoborazziApi
 import com.github.takahirom.roborazzi.captureScreenRoboImage
@@ -108,6 +111,15 @@ class PlayerExtrasScreenshotTest {
         nowPlaying(ArtworkCovers[0])
         robot.setQueue(classicalShellQueue(movements = 30, playing = 12))
         shot("now-playing-classical-30-movements")
+    }
+
+    @Test
+    fun classicalMovementList() {
+        nowPlaying(ArtworkCovers[0])
+        robot.setQueue(classicalShellQueue())
+        composeTestRule.onNodeWithText("II of IV", substring = true).performClick()
+        composeTestRule.onNodeWithText("Scherzo").assertIsDisplayed()
+        shot("now-playing-classical-movements")
     }
 
     @Test

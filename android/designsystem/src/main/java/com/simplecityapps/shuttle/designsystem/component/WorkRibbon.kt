@@ -44,7 +44,7 @@ private val SegmentGap = 2.dp
  * [currentSegment] filling with [currentFill] and earlier ones full. With [continuous] (many movements) the segments
  * merge into one bar with tick marks above at the boundaries. A tap on a segment at least 24 dp wide calls
  * [onSegmentClick]; a tap on a thinner one, or anywhere on a continuous bar too fine to aim at, calls [onOpenList].
- * [caption] sits under the bar. [segmentLabel] and [openListLabel] name those two targets for accessibility.
+ * [caption] sits under the bar and also calls [onOpenList]. [segmentLabel] and [openListLabel] name those targets for accessibility.
  */
 @Composable
 fun S2WorkRibbon(
@@ -92,7 +92,9 @@ fun S2WorkRibbon(
             text = caption,
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(top = S2Spacing.xsmall),
+            modifier = Modifier
+                .clickable(onClickLabel = openListLabel, role = Role.Button, onClick = onOpenList)
+                .padding(top = S2Spacing.xsmall),
         )
     }
 }
