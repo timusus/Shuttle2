@@ -136,6 +136,7 @@ class MediaActionHandler @Inject constructor(
         songs == null -> handle(action)
         action is MediaAction.Play -> play(action, songs)
         action is MediaAction.Shuffle -> shuffle(action, songs)
+        action is MediaAction.ShuffleWorks -> shuffleWorks(action, songs)
         else -> handle(action)
     }
 

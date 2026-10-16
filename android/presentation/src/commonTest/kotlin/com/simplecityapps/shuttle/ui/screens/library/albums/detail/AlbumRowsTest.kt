@@ -2,6 +2,8 @@ package com.simplecityapps.shuttle.ui.screens.library.albums.detail
 
 import com.simplecityapps.createSong
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.ui.text.PluralKey
+import com.simplecityapps.shuttle.ui.text.UiText
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import kotlin.test.Test
@@ -26,8 +28,7 @@ class AlbumRowsTest {
         val header = rows[0].shouldBeInstanceOf<AlbumRow.WorkHeader>()
         header.title shouldBe "Sonata No. 3"
         header.detail shouldBe "C minor · Op. 10"
-        header.count shouldBe 3
-        header.unit shouldBe WorkUnit.Movements
+        header.count shouldBe UiText.Plural(PluralKey.WORK_MOVEMENTS, 3)
         rows.drop(1).map { (it as AlbumRow.Movement).numeral to it.name } shouldBe listOf("I" to "Allegro", "II" to "Adagio", "III" to "Finale")
     }
 
@@ -88,8 +89,70 @@ class AlbumRowsTest {
 
         val rows = buildAlbumRows(songs, albumArtist = "Ines Varga", currentSongId = null, toggled = emptySet())!!.rows
 
-        rows.map { it::class.simpleName } shouldBe listOf("DiscDivider", "WorkHeader", "Movement", "Movement", "DiscDivider", "Movement")
-        (rows[4] as AlbumRow.DiscDivider).disc shouldBe 2
+        rows.map { it::class.simpleName } shouldBe listOf("WorkHeader", "Movement", "Movement", "DiscDivider", "Movement")
+        (rows[3] as AlbumRow.DiscDivider).disc shouldBe 2
+        (rows[3] as AlbumRow.DiscDivider).inWork shouldBe true
+    }
+
+    @Test
+    fun `a movement after a disc split plays from its index in the album`() {
+        val songs = listOf(
+            movement("Sonata No. 3 in C minor, Op. 10", "I. Allegro", track = 1, disc = 1),
+            movement("Sonata No. 3 in C minor, Op. 10", "II. Adagio", track = 2, disc = 1),
+            movement("Sonata No. 3 in C minor, Op. 10", "III. Finale", track = 1, disc = 2),
+        )
+
+        val rows = buildAlbumRows(songs, albumArtist = "Ines Varga", currentSongId = null, toggled = emptySet())!!.rows
+
+        rows.filterIsInstance<AlbumRow.Movement>().map { it.playIndex } shouldBe listOf(0, 1, 2)
+    }
+
+    @Test
+    fun `a collapsed work hides its movements and its header plays the whole work`() {
+        val songs = (1..21).map { n -> movement("Suite No. 1", "Part $n", track = n) } + (1..21).map { n -> movement("Suite No. 2", "Part $n", track = n) }
+
+        val rows = buildAlbumRows(songs, albumArtist = null, currentSongId = null, toggled = emptySet())!!.rows
+
+        rows.size shouldBe 2
+        val header = rows[0].shouldBeInstanceOf<AlbumRow.WorkHeader>()
+        header.tap shouldBe WorkTap.ToggleCollapse
+        header.songs.map { it.id } shouldBe songs.take(21).map { it.id }
+    }
+
+    @Test
+    fun `a short work taps to play`() {
+        val header = buildAlbumRows(sonata(), albumArtist = null, currentSongId = null, toggled = emptySet())!!.rows[0].shouldBeInstanceOf<AlbumRow.WorkHeader>()
+
+        header.tap shouldBe WorkTap.Play
+    }
+
+    @Test
+    fun `a plain song among the works removes the eyebrow`() {
+        val songs = sonata() + movement(null, "Encore", composer = null)
+
+        buildAlbumRows(songs, albumArtist = "Ines Varga", currentSongId = null, toggled = emptySet())!!.eyebrow shouldBe null
+    }
+
+    @Test
+    fun `a classical plain track keeps its movement label`() {
+        val songs = sonata() + movement(null, "Encore", composer = null).copy(movementName = "Allegro", movementNumber = 4)
+
+        val track = buildAlbumRows(songs, albumArtist = "Ines Varga", currentSongId = null, toggled = emptySet())!!.rows.last().shouldBeInstanceOf<AlbumRow.Track>()
+
+        track.title shouldBe "IV. Allegro"
+        track.playIndex shouldBe 3
+    }
+
+    @Test
+    fun `an album starting with a work on disc one has no leading disc divider`() {
+        val songs = sonata() + listOf(
+            movement("Prelude in D", "I. Slow", track = 1, disc = 2),
+            movement("Prelude in D", "II. Fast", track = 2, disc = 2),
+        )
+
+        val rows = buildAlbumRows(songs, albumArtist = "Ines Varga", currentSongId = null, toggled = emptySet())!!.rows
+
+        rows.map { it::class.simpleName } shouldBe listOf("WorkHeader", "Movement", "Movement", "Movement", "DiscDivider", "WorkHeader", "Movement", "Movement")
     }
 
     @Test

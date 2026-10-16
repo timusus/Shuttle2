@@ -129,11 +129,19 @@ class AlbumDetailScreenTest {
     }
 
     @Test
+    fun `an album of one composer shows the composer as an eyebrow`() {
+        robot.setAlbum(symphonyCycleAlbumDetail())
+
+        robot.assertTextDisplayed("HARROW")
+    }
+
+    @Test
     fun `a classical album groups its movements under the work with the composer`() {
         robot.setAlbum(classicalAlbumDetail())
 
         robot.assertTextDisplayed("Sonata No. 3")
-        robot.assertTextDisplayed("HARROW")
+        // The untagged encore means the album isn't all one composer's
+        robot.assertTextNotDisplayed("HARROW")
         robot.assertTextDisplayed("Allegro")
         robot.assertTextDisplayed("Adagio")
         robot.assertTextDisplayed("Presto")

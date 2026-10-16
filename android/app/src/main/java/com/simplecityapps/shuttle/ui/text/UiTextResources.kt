@@ -241,4 +241,7 @@ val PluralKey.resId: Int
         PluralKey.MEDIA_ACTION_DOWNLOAD_QUEUED -> R.plurals.media_action_download_queued
         PluralKey.MEDIA_ACTION_DOWNLOAD_FAILED -> R.plurals.media_action_download_failed
         PluralKey.MEDIA_ACTION_DOWNLOAD_REMOVED -> R.plurals.media_action_download_removed
+        PluralKey.WORK_MOVEMENTS -> R.plurals.work_movements
+        PluralKey.WORK_PARTS -> R.plurals.work_parts
+        PluralKey.WORK_SONGS -> R.plurals.work_songs
     }

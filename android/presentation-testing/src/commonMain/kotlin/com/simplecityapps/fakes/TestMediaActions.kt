@@ -76,7 +76,7 @@ class TestMediaActions(
     val resolveSongs = ResolveSongs(songRepository, genreRepository, playlistRepository, queueOperations, ResolveFolderSongs(songRepository), offline.statusSource)
     val playSongs = PlaySongs(queueOperations, playbackOperations)
     val shuffleSongs = ShuffleSongs(playbackOperations)
-    val shuffleWorks = ShuffleWorks(playSongs)
+    val shuffleWorks = ShuffleWorks(queueOperations, playbackOperations)
 
     /** The providers radio asks for similar songs; none by default, so a radio is built from the library. */
     val similarSongsProviders = mutableSetOf<SimilarSongsProvider>()

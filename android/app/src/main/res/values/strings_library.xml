@@ -25,6 +25,11 @@
         <item quantity="one"><xliff:g example="1" id="count">%1$d</xliff:g>&#160;part</item>
         <item quantity="other"><xliff:g example="8" id="count">%1$d</xliff:g>&#160;parts</item>
     </plurals>
+    <!-- The number of songs in a classical work that is not in movements or parts, such as a song cycle -->
+    <plurals name="work_songs">
+        <item quantity="one"><xliff:g example="1" id="count">%1$d</xliff:g>&#160;song</item>
+        <item quantity="other"><xliff:g example="12" id="count">%1$d</xliff:g>&#160;songs</item>
+    </plurals>
     <!-- Title for the list of genres -->
     <string name="genres">Genres</string>
     <!-- Shown when the folder list finishes loading, and there are no songs on the device -->

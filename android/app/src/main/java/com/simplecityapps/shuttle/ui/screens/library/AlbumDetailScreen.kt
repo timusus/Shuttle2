@@ -21,6 +21,7 @@ import com.simplecityapps.shuttle.designsystem.component.S2Action
 import com.simplecityapps.shuttle.designsystem.component.SectionHeader
 import com.simplecityapps.shuttle.designsystem.component.SectionHeaderStyle
 import com.simplecityapps.shuttle.designsystem.component.SongRow
+import com.simplecityapps.shuttle.designsystem.component.WorkDiscDivider
 import com.simplecityapps.shuttle.designsystem.component.WorkHeaderRow
 import com.simplecityapps.shuttle.designsystem.theme.ArtworkTheme
 import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
@@ -42,9 +43,10 @@ import com.simplecityapps.shuttle.ui.common.utils.rememberMinutesFormat
 import com.simplecityapps.shuttle.ui.screens.library.albums.detail.AlbumDetailUiState
 import com.simplecityapps.shuttle.ui.screens.library.albums.detail.AlbumDetailViewModel
 import com.simplecityapps.shuttle.ui.screens.library.albums.detail.AlbumRow
-import com.simplecityapps.shuttle.ui.screens.library.albums.detail.WorkUnit
+import com.simplecityapps.shuttle.ui.screens.library.albums.detail.WorkTap
 import com.simplecityapps.shuttle.ui.shell.AlbumRoute
 import com.simplecityapps.shuttle.ui.shell.albumArtworkKey
+import com.simplecityapps.shuttle.ui.text.stringResource
 import dev.zacsweers.metrox.viewmodel.assistedMetroViewModel
 
 /** Album detail (inventory §1): the album's songs by disc, Play / Shuffle, the album's actions in the overflow, and More by the artist's other albums. */
@@ -82,7 +84,7 @@ fun AlbumDetailScreen(
         LibraryDetailScaffold(
             state = state,
             title = album?.name ?: stringResource(com.simplecityapps.core.R.string.unknown),
-            subtitle = album?.let { if (uiState.rows != null) it.year?.toString() else albumSubtitle(it, uiState.performers) },
+            subtitle = album?.let { if (uiState.rows != null) albumSubtitle(it, performers = null, withArtist = false) else albumSubtitle(it, uiState.performers) },
             eyebrow = uiState.rows?.eyebrow,
             credits = uiState.rows?.credits,
             artwork = album,
@@ -159,29 +161,27 @@ private fun LazyListScope.classicalRows(
 
             is AlbumRow.ActHeader -> SectionHeader(title = row.label, style = SectionHeaderStyle.Label)
 
-            is AlbumRow.DiscDivider -> SectionHeader(title = stringResource(R.string.album_detail_disc, row.disc))
-
-            is AlbumRow.WorkHeader -> {
-                val unit = pluralString(
-                    when (row.unit) {
-                        WorkUnit.Movements -> R.plurals.work_movements
-                        WorkUnit.Parts -> R.plurals.work_parts
-                        WorkUnit.Songs -> R.plurals.songsPlural
-                    },
-                    row.count,
-                )
-                WorkHeaderRow(
-                    title = row.title,
-                    detail = row.detail,
-                    meta = "$unit · ${formatDuration(row.durationMs)}",
-                    credits = row.credits,
-                    collapsed = if (row.collapsible) row.collapsed else null,
-                    playing = row.playing,
-                    onPlay = { onPlayWork(row.songs) },
-                    onClick = { if (row.collapsible) onToggleWork(row.songs.first().id) else onPlayWork(row.songs) },
-                    onLongClick = { onWorkMore(row.title, row.songs) },
-                )
+            is AlbumRow.DiscDivider -> {
+                val label = stringResource(R.string.album_detail_disc, row.disc)
+                if (row.inWork) WorkDiscDivider(label) else SectionHeader(title = label)
             }
+
+            is AlbumRow.WorkHeader -> WorkHeaderRow(
+                title = row.title,
+                detail = row.detail,
+                meta = "${stringResource(row.count)} · ${formatDuration(row.durationMs)}",
+                credits = row.credits,
+                collapsed = if (row.collapsible) row.collapsed else null,
+                playing = row.playing,
+                onPlay = { onPlayWork(row.songs) },
+                onClick = {
+                    when (row.tap) {
+                        WorkTap.ToggleCollapse -> onToggleWork(row.songs.first().id)
+                        WorkTap.Play -> onPlayWork(row.songs)
+                    }
+                },
+                onLongClick = { onWorkMore(row.title, row.songs) },
+            )
 
             is AlbumRow.Movement -> MovementRow(
                 numeral = row.numeral,
@@ -189,14 +189,15 @@ private fun LazyListScope.classicalRows(
                 duration = formatDuration(row.song.duration.toLong()),
                 trackNumber = row.song.track,
                 playing = row.playing,
-                onClick = { onPlay(songs, songs.indexOf(row.song)) },
+                onClick = { onPlay(songs, row.playIndex) },
                 onLongClick = { onSongMore(row.song) },
+                onMore = { onSongMore(row.song) },
             )
 
             is AlbumRow.Track -> SongRow(
-                title = row.song.name ?: stringResource(com.simplecityapps.core.R.string.unknown),
+                title = row.title ?: stringResource(com.simplecityapps.core.R.string.unknown),
                 subtitle = row.song.artistUnlessAlbumArtist(album),
-                onClick = { onPlay(songs, songs.indexOf(row.song)) },
+                onClick = { onPlay(songs, row.playIndex) },
                 trackNumber = row.song.track,
                 duration = formatDuration(row.song.duration.toLong()),
                 playing = row.playing,
@@ -219,17 +220,18 @@ internal fun albumMoreTarget(album: Album, goToAlbumLabel: String, onOpen: () ->
     extraActions = listOf(S2Action(goToAlbumLabel, onOpen, Icons.Rounded.Album)),
 )
 
-/** "Artist · year · N songs · duration". The separator's dot stays with the item before it, so a wrapped line never starts on one. */
+/** "Artist · year · N songs · duration", without the artist on a classical page, whose credits line names them. */
 @Composable
 private fun albumSubtitle(
     album: Album,
     performers: String?,
+    withArtist: Boolean = true,
 ): String {
     val formatMinutes = rememberMinutesFormat()
     // Whole minutes, rounded down; an album under a minute shows no runtime.
     val minutes = (album.duration.toLong() / 60_000).toInt()
     return listOfNotNull(
-        album.friendlyArtistName,
+        album.friendlyArtistName.takeIf { withArtist },
         performers,
         album.year?.toString(),
         pluralString(R.plurals.songsPlural, album.songCount),

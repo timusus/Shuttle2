@@ -95,11 +95,11 @@ fun DetailHero(
                 Text(eyebrow.uppercase(), style = MaterialTheme.typography.labelLarge.copy(letterSpacing = 1.5.sp), color = colors.primary)
             }
             Text(title, style = MaterialTheme.typography.heroTitle, color = colors.onSurface)
-            if (subtitle != null) {
-                Text(subtitle, style = MaterialTheme.typography.heroSubtitle, color = colors.onSurfaceVariant)
-            }
             if (credits != null) {
                 Text(credits, style = MaterialTheme.typography.heroSubtitle, color = colors.onSurfaceVariant)
+            }
+            if (subtitle != null) {
+                Text(subtitle, style = MaterialTheme.typography.heroSubtitle, color = colors.onSurfaceVariant)
             }
             Box(Modifier.padding(top = S2Spacing.smallMedium)) { actions() }
             extra()

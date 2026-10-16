@@ -229,6 +229,9 @@ enum class PluralKey {
     MEDIA_ACTION_DOWNLOAD_QUEUED,
     MEDIA_ACTION_DOWNLOAD_FAILED,
     MEDIA_ACTION_DOWNLOAD_REMOVED,
+    WORK_MOVEMENTS,
+    WORK_PARTS,
+    WORK_SONGS,
     ;
 
     /** The catalogue key: the Android resource name and the iOS `.stringsdict` key. */

@@ -9,6 +9,7 @@ import com.simplecityapps.fakes.FakePlaylistRepository
 import com.simplecityapps.fakes.FakeQueueOperations
 import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.fakes.TestMediaActions
+import com.simplecityapps.playback.queue.ShuffleMode
 import com.simplecityapps.shuttle.entitlement.Entitlement
 import com.simplecityapps.shuttle.entitlement.ProFeature
 import com.simplecityapps.shuttle.model.MediaProviderType
@@ -130,6 +131,45 @@ class MediaActionHandlerTest {
         playbackOperations.loadResult = Result.failure(Exception("codec error"))
 
         handler.handle(MediaAction.Play(songs)) shouldBe Message(MediaActionMessage.PlaybackFailed("codec error"))
+    }
+
+    private fun movements() = (1L..3L).map { createSong(id = 10 + it, name = "Movement $it").copy(work = "Sonata No. 3", composer = "Ludwig Harrow") }
+
+    @Test
+    fun `shuffle works queues the songs in album order with an explicit order and plays`() = runTest {
+        val sonata = movements()
+
+        handler.handle(MediaAction.ShuffleWorks(MediaSelection.Songs(sonata))) shouldBe MediaActionResult.None
+
+        queueOperations.lastSetQueue shouldBe sonata
+        queueOperations.lastSetShuffleQueue shouldBe sonata
+        queueOperations.shuffleModeFlow.value shouldBe ShuffleMode.On
+        playbackOperations.loadedPlayWhenReady shouldBe listOf(true)
+    }
+
+    @Test
+    fun `a resume with nothing to carry on from shuffles works with the songs it read`() = runTest {
+        val sonata = movements()
+        val resume = MediaAction.Resume(MediaAction.ShuffleWorks(MediaSelection.Songs(sonata)), PlayContext.None)
+
+        handler.handle(resume) shouldBe MediaActionResult.None
+
+        queueOperations.lastSetShuffleQueue shouldBe sonata
+        queueOperations.shuffleModeFlow.value shouldBe ShuffleMode.On
+    }
+
+    @Test
+    fun `shuffle works with an empty selection says there are no songs`() = runTest {
+        handler.handle(MediaAction.ShuffleWorks(MediaSelection.Songs(emptyList()))) shouldBe Message(MediaActionMessage.NoSongs)
+    }
+
+    @Test
+    fun `shuffle works reports a load failure and a queue that could not be set`() = runTest {
+        playbackOperations.loadResult = Result.failure(Exception("codec error"))
+        handler.handle(MediaAction.ShuffleWorks(MediaSelection.Songs(movements()))) shouldBe Message(MediaActionMessage.PlaybackFailed("codec error"))
+
+        queueOperations.setQueueResult = false
+        handler.handle(MediaAction.ShuffleWorks(MediaSelection.Songs(movements()))) shouldBe Message(MediaActionMessage.PlaybackFailed(null))
     }
 
     @Test

@@ -163,7 +163,6 @@ class AlbumDetailViewModel @AssistedInject constructor(
         observeArtworkSeed(songs.map { it.firstOrNull() }),
         combine(moreByArtist, moreByArtistNames, observeSetting(AppearanceSettings.ClassicalDisplay), toggledWorks, ::Extras),
     ) { songs, album, currentSong, seed, extras ->
-        val (moreByArtist, moreByArtistNames, classical) = Triple(extras.moreByArtist, extras.moreByArtistNames, extras.classical)
         AlbumDetailUiState(
             album = album,
             songs = songs,
@@ -174,11 +173,11 @@ class AlbumDetailViewModel @AssistedInject constructor(
                 AlbumDetailUiState.LoadingState.Ready
             },
             seed = seed,
-            moreByArtist = moreByArtist,
+            moreByArtist = extras.moreByArtist,
             // A credited key with no artist row or a blank name resolves to nothing: fall back to the raw tag
-            moreByArtistNames = moreByArtistNames.ifEmpty { listOfNotNull(album?.albumArtist?.takeIf { it.isNotBlank() }) },
-            classical = classical,
-            rows = if (classical) buildAlbumRows(songs, album?.albumArtist ?: album?.friendlyArtistName, currentSong?.id, extras.toggled) else null,
+            moreByArtistNames = extras.moreByArtistNames.ifEmpty { listOfNotNull(album?.albumArtist?.takeIf { it.isNotBlank() }) },
+            classical = extras.classical,
+            rows = if (extras.classical) buildAlbumRows(songs, album?.albumArtist ?: album?.friendlyArtistName, currentSong?.id, extras.toggled) else null,
         )
     }.stateIn(
         scope = viewModelScope,
