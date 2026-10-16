@@ -121,9 +121,19 @@ private fun Performer.voice(): String? {
 }
 
 // A singer leads the credits, ahead of the accompanist.
-private fun Song.soloists() = performers.orEmpty().filter { !it.isConductor() && !it.isEnsemble() && it.name.isNotBlank() }.sortedBy { if (it.voice() != null) 0 else 1 }
+// Taggers that only write ARTIST and ALBUMARTIST put the performers after the composer ("Mahler; Janet Baker, Simon Rattle"), with no roles.
+private fun Song.untaggedCredits(): List<Performer> {
+    if (!conductor.isNullOrBlank() || !performers.isNullOrEmpty() || !hasClassicalGenre(genres)) return emptyList()
+    val composer = composer?.trim()?.takeIf { it.isNotEmpty() } ?: return emptyList()
+    val fromAlbumArtist = albumArtist.orEmpty().split(';').filter { it.isNotBlank() && !sameComposer(it.trim(), composer) }.flatMap { it.split(',') }
+    return (artists + fromAlbumArtist).map { it.trim() }.filter { it.isNotEmpty() && !sameComposer(it, composer) }.distinct().map { Performer(it) }
+}
 
-private fun Song.ensembles() = performers.orEmpty().filter { !it.isConductor() && it.isEnsemble() && it.name.isNotBlank() }
+private fun Song.credited() = performers.orEmpty().ifEmpty { untaggedCredits() }
+
+private fun Song.soloists() = credited().filter { !it.isConductor() && !it.isEnsemble() && it.name.isNotBlank() }.sortedBy { if (it.voice() != null) 0 else 1 }
+
+private fun Song.ensembles() = credited().filter { !it.isConductor() && it.isEnsemble() && it.name.isNotBlank() }
 
 private fun Song.conductorName() = conductor?.trim()?.takeIf { it.isNotEmpty() } ?: performers.orEmpty().firstOrNull { it.isConductor() }?.name?.trim()?.takeIf { it.isNotEmpty() }
 

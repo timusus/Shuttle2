@@ -157,7 +157,7 @@ class RealAlbumTagsTest {
     fun `Kleiber is two symphonies of four movements`() {
         val blocks = blocks(kleiber())
         blocks.map { it.movementCount } shouldBe listOf(4, 4)
-        blocks.map { it.title.core } shouldBe listOf("Symphony no. 5", "Symphony no. 7")
+        blocks.map { it.title.core } shouldBe listOf("Symphony No. 5", "Symphony No. 7")
         blocks.forEach { it.numbering shouldBe WorkNumbering(NumeralStyle.Roman, "movements") }
         blocks.first().movements.map { it.label } shouldBe listOf("I. Allegro con brio", "II. Andante con moto", "III. Scherzo. Allegro", "IV. Allegro")
         blocks.last().movements.map { it.numeral } shouldBe listOf("I", "II", "III", "IV")
@@ -182,7 +182,7 @@ class RealAlbumTagsTest {
     fun `Mahler is one symphony whatever the composer spelling`() {
         val blocks = blocks(mahler())
         blocks.map { it.movementCount } shouldBe listOf(11)
-        blocks.single().title.core shouldBe "Symphony no. 2"
+        blocks.single().title.core shouldBe "Symphony No. 2"
         blocks.single().movements.map { it.numeral } shouldBe listOf("I", "II", "III", "IV", "V") + List(6) { null }
         blocks.single().movements.map { it.number } shouldBe listOf(1, 2, 3, 4, 5, 5, 5, 5, 5, 5, 5)
     }
@@ -192,6 +192,21 @@ class RealAlbumTagsTest {
         val blocks = blocks(mahler(albumArtist = "Gustav Mahler"))
         blocks.map { it.movementCount } shouldBe listOf(11)
         blocks.single().discBreaks.map { it.disc } shouldBe listOf(2)
+    }
+
+    @Test
+    fun `Mahler credits come from the album artist when no conductor or performer is tagged`() {
+        val songs = mahler()
+        val expected = "Arleen Augér · Janet Baker · CBSO Chorus · City of Birmingham Symphony Orchestra · Simon Rattle"
+        albumCreditsLine(songs) shouldBe expected
+        nowPlayingWork(songs, 2)!!.performers shouldBe expected
+        nowPlayingWork(songs, 2)!!.miniSubtitle shouldBe "III. In ruhig fliessender Bewegung · Arleen Augér"
+    }
+
+    @Test
+    fun `an artist tag other than the composer is the credit when the album artist is the composer`() {
+        val songs = mahler(albumArtist = "Gustav Mahler").map { it.copy(artists = listOf("Gustav Mahler", "Simon Rattle")) }
+        albumCreditsLine(songs) shouldBe "Simon Rattle"
     }
 
     @Test
