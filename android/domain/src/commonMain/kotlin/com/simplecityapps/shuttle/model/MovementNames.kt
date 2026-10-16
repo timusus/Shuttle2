@@ -29,6 +29,16 @@ private fun numeralValue(token: String): Int? = token.toIntOrNull() ?: token.tak
     }.sum()
 }
 
+private val structuralPrefix = Regex("""^(?:Act|Akt|Part|Teil|Disc|CD|Book|Scene)\b""", RegexOption.IGNORE_CASE)
+
+// "Act 2: 5. Chorus" labels a section; only a prefix that names the work ("Winterreise, D. 911: 1. ...") is dropped.
+private fun namesWork(candidate: String, work: String?): Boolean {
+    val text = candidate.trim()
+    if (structuralPrefix.containsMatchIn(text)) return false
+    if (work != null && (text.equals(work, ignoreCase = true) || text.equals(parseWorkTitle(work).core, ignoreCase = true))) return true
+    return catalogueSearchKeys(text).isNotEmpty() || formWords.containsMatchIn(text)
+}
+
 /** The name split into its clean form and the leading numeral token ("" when it has none). */
 private fun splitMovementName(name: String, work: String?): Pair<String, String> {
     val trimmed = name.trim()
@@ -42,7 +52,9 @@ private fun splitMovementName(name: String, work: String?): Pair<String, String>
             stripped = true
         }
     }
-    if (!stripped) prefixBeforeNumeral.find(rest)?.let { rest = rest.substring(it.range.last + 1).trim() }
+    if (!stripped) {
+        prefixBeforeNumeral.find(rest)?.takeIf { namesWork(rest.substringBefore(':'), prefix) }?.let { rest = rest.substring(it.range.last + 1).trim() }
+    }
     val numeral = leadingNumeral.find(rest)
     var token = ""
     if (numeral != null && numeral.value.isNotBlank()) {

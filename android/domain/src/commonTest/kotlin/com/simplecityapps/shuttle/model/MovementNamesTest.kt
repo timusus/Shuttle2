@@ -36,6 +36,23 @@ class MovementNamesTest {
     }
 
     @Test
+    fun `a structural prefix before a numbered name is kept`() {
+        listOf("Act 2: 5. Chorus", "Part 1: 3. Gloria", "Disc 2: 4. Foo", "Akt I: 2. Arie", "Book 1: 3. Prelude").forEach {
+            cleanMovementName(it) shouldBe it
+            cleanMovementName(it, work = "Mass in B minor") shouldBe it
+            movementNumberIn(it) shouldBe null
+        }
+    }
+
+    @Test
+    fun `a work prefix before a numbered name is stripped when it names a work`() {
+        cleanMovementName("Winterreise, D. 911: 1. Gute Nacht") shouldBe "Gute Nacht"
+        cleanMovementName("Cello Suite No. 1: 2. Allemande") shouldBe "Allemande"
+        cleanMovementName("Die Winterreise: 3. Gefrorne Tränen", work = "Die Winterreise, D. 911") shouldBe "Gefrorne Tränen"
+        cleanMovementName("Some Words: 5. Chorus") shouldBe "Some Words: 5. Chorus"
+    }
+
+    @Test
     fun `names with their own label hide the numeral`() {
         listOf("Var. 13", "Variation 3", "No. 4 Gavotte", "Nr. 2 Walzer", "Aria", "Thema", "Coda", "Act 2", "Akt I", "Scene 1", "Aria da capo").forEach {
             hasOwnLabel(it) shouldBe true

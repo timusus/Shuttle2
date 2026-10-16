@@ -77,8 +77,8 @@ private fun runKey(song: Song): String? {
     return if (composer.isEmpty() && !isStrongWorkPrefix(listOf(song), prefix)) null else "i:${prefix.normalised()}|$composer"
 }
 
-private val formWords = Regex(
-    """\b(?:Symphon(?:y|ie)|Sonata|Concerto|Suite|Quartet|Trio|Partita|Mass|Requiem|Variations|Preludes|Études|Etudes|Cantata|Overture|Serenade)\b""",
+internal val formWords = Regex(
+    """\b(?:Symphon(?:y|ie)|Sonata|Concerto|Suite|Quartet|Trio|Partita|Mass|Requiem|Variations|Preludes|Études|Etudes|Cantata|Overture|Serenade|Toccata|Fugue|Fantasia|Chaconne)\b""",
     RegexOption.IGNORE_CASE
 )
 
