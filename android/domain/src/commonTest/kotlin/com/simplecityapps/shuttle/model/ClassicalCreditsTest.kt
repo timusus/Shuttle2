@@ -50,6 +50,20 @@ class ClassicalCreditsTest {
     }
 
     @Test
+    fun `a multi-word surname before the comma is one composer with the forename first spelling`() {
+        sameComposer("Vaughan Williams, Ralph", "Ralph Vaughan Williams") shouldBe true
+        composerSurnameKey("Vaughan Williams, Ralph") shouldBe "vaughan williams"
+        composerDisplayName(ComposerName("Vaughan Williams, Ralph (1872 - 1958)", null)) shouldBe "Vaughan Williams"
+        composerSurnameKey("Mahler, Gustav (1860 - 1911)") shouldBe "mahler"
+    }
+
+    @Test
+    fun `two bare names around a comma are not reordered`() {
+        listOf("Jagger, Richards", "Page, Plant").forEach { composerDisplayName(ComposerName(it, null)) shouldBe it }
+        composerSurnameKey("Jagger, Richards") shouldBe "richards"
+    }
+
+    @Test
     fun `a comma name that is not surname and forenames is shown unchanged`() {
         composerDisplayName(ComposerName("Lennon, McCartney", null)) shouldBe "Lennon, McCartney"
         composerDisplayName(ComposerName("Lennon & McCartney, Paul", null)) shouldBe "Lennon & McCartney, Paul"

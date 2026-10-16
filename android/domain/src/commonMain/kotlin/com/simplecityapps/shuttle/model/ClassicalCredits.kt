@@ -18,14 +18,17 @@ private class NameParts(val surname: String, val forenames: String?, val suffix:
     fun display(): String = if (forenames != null && plain.contains(',')) listOf(forenames, surname, suffix).filter { it.isNotEmpty() }.joinToString(" ") else plain
 }
 
-// Only "Surname, Forenames" counts as a comma name: not "Lennon, McCartney" or "Lennon & McCartney, Paul".
-private fun looksLikeSurnameComma(text: String): Boolean {
+// Only "Surname, Forenames" counts as a comma name: not "Lennon, McCartney", "Jagger, Richards" or "Lennon & McCartney, Paul".
+// Two bare words around a comma are two surnames unless the name carries a lifespan or the surname itself has several words.
+private fun looksLikeSurnameComma(text: String, hasLifespan: Boolean): Boolean {
     if (text.count { it == ',' } != 1) return false
     val (surname, forenames) = text.split(',').map { it.trim() }
-    if (surname.isEmpty() || forenames.isEmpty() || forenames.contains('&') || forenames.split(' ').any { it.equals("and", ignoreCase = true) }) return false
+    if (surname.isEmpty() || forenames.isEmpty()) return false
+    val joiner = { word: String -> word == "&" || word.equals("and", ignoreCase = true) }
+    if (forenames.split(' ').any(joiner) || surname.split(' ').any(joiner)) return false
     if (surnamePrefixed.containsMatchIn(forenames)) return false
-    val words = surname.split(' ')
-    return words.size == 1 || words.first().lowercase() in surnameParticles
+    val forenameWords = forenames.split(' ')
+    return hasLifespan || forenameWords.size >= 2 || forenameWords.any { it.lowercase() in surnameParticles } || surname.contains(' ')
 }
 
 private fun nameParts(name: String): NameParts {
@@ -33,7 +36,7 @@ private fun nameParts(name: String): NameParts {
     val suffixMatch = generationSuffix.find(bare)
     val core = if (suffixMatch != null) bare.substring(0, suffixMatch.range.first).trim() else bare
     val suffix = suffixMatch?.value?.trim(' ', ',').orEmpty()
-    if (looksLikeSurnameComma(core)) {
+    if (looksLikeSurnameComma(core, lifespan.containsMatchIn(name))) {
         val (surname, forenames) = core.split(',').map { it.trim() }
         return NameParts(surname, forenames, suffix, bare)
     }
@@ -51,6 +54,10 @@ internal fun sameComposer(a: String?, b: String?): Boolean {
     if (a.isNullOrBlank() || b.isNullOrBlank()) return a.isNullOrBlank() && b.isNullOrBlank()
     val first = nameParts(a)
     val second = nameParts(b)
+
+    // "Mahler, Gustav" without a lifespan is not reordered, but still names Gustav Mahler.
+    fun String.wordSet() = normalisedName().split(' ').toSet()
+    if (a.wordSet() == b.wordSet()) return true
     if (first.surname.normalisedName() != second.surname.normalisedName()) return false
     if (first.forenames == null || second.forenames == null) return true
     fun NameParts.full() = listOfNotNull(forenames, surname).joinToString(" ").normalisedName()
@@ -58,7 +65,7 @@ internal fun sameComposer(a: String?, b: String?): Boolean {
 }
 
 private fun ComposerName.surname(): String? {
-    val comma = sort?.takeIf { it.contains(',') } ?: name.replace(lifespan, "").trim().takeIf(::looksLikeSurnameComma)
+    val comma = sort?.takeIf { it.contains(',') } ?: name.replace(lifespan, "").trim().takeIf { looksLikeSurnameComma(it, lifespan.containsMatchIn(name)) }
     return comma?.substringBefore(',')?.trim()?.takeIf { it.isNotEmpty() }
 }
 
