@@ -4,7 +4,6 @@ import com.simplecityapps.createPlaylist
 import com.simplecityapps.createSong
 import com.simplecityapps.fakes.FakePlaylistRepository
 import com.simplecityapps.shuttle.ui.actions.ObservePlaylistCovers
-import com.simplecityapps.shuttle.ui.actions.ObservePlaylists
 import io.kotest.matchers.shouldBe
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -33,7 +32,7 @@ class PlaylistDetailCoversViewModelTest {
 
     private val playlistRepository = FakePlaylistRepository()
 
-    private fun viewModel(playlistId: Long) = PlaylistDetailCoversViewModel(playlistId, ObservePlaylists(playlistRepository), ObservePlaylistCovers(playlistRepository))
+    private fun viewModel(playlistId: Long) = PlaylistDetailCoversViewModel(playlistId, playlistRepository, ObservePlaylistCovers(playlistRepository))
 
     // #652
     @Test

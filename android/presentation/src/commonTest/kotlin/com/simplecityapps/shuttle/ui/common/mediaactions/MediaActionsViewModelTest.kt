@@ -48,7 +48,7 @@ class MediaActionsViewModelTest {
     private fun TestScope.viewModel() = MediaActionsViewModel(
         actions.handler,
         AvailableMediaActions(actions.resolveSongs, FakeSongDownloader(), createPlatformFeatures(), FakeQueueOperations(), ObserveSetting(SettingsStore(InMemoryKeyValueStore()))),
-        actions.observePlaylists,
+        playlistRepository,
     ).also { viewModel -> backgroundScope.launch { viewModel.uiState.collect {} } }
 
     @Test

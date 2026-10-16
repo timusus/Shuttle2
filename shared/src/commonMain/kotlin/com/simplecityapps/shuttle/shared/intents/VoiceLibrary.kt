@@ -1,10 +1,11 @@
 package com.simplecityapps.shuttle.shared.intents
 
+import com.simplecityapps.mediaprovider.repository.playlists.PlaylistQuery
+import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
 import com.simplecityapps.shuttle.ui.actions.MediaAction
 import com.simplecityapps.shuttle.ui.actions.MediaSelection
 import com.simplecityapps.shuttle.ui.actions.ObserveAlbums
 import com.simplecityapps.shuttle.ui.actions.ObserveArtists
-import com.simplecityapps.shuttle.ui.actions.ObservePlaylists
 import com.simplecityapps.shuttle.ui.screens.search.SearchCategory
 import com.simplecityapps.shuttle.ui.screens.search.SearchLibrary
 import dev.zacsweers.metro.Inject
@@ -40,7 +41,7 @@ class VoiceLibrary(
     private val searchLibrary: SearchLibrary,
     private val observeAlbums: ObserveAlbums,
     private val observeArtists: ObserveArtists,
-    private val observePlaylists: ObservePlaylists,
+    private val playlistRepository: PlaylistRepository,
 ) {
     /**
      * The library items of [kinds] matching [query], best first: the kind of the best hit overall leads, within a kind
@@ -80,7 +81,7 @@ class VoiceLibrary(
      * How the library stands, again whenever it changes, so Siri's context and vocabulary follow it. The song count is
      * the albums' counts summed, so no song list is loaded.
      */
-    fun state(): Flow<VoiceLibraryState> = combine(observeAlbums(), observePlaylists(), observeArtists()) { albums, playlists, artists ->
+    fun state(): Flow<VoiceLibraryState> = combine(observeAlbums(), playlistRepository.getPlaylists(PlaylistQuery.All(mediaProviderType = null)), observeArtists()) { albums, playlists, artists ->
         VoiceLibraryState(albums.sumOf { it.songCount }, playlists.size, artists.size)
     }.distinctUntilChanged()
 
@@ -91,7 +92,7 @@ class VoiceLibrary(
         .take(limit)
 
     /** The names of the playlists, biggest first (they carry no play count), for Siri's vocabulary. */
-    suspend fun topPlaylistNames(limit: Int): List<String> = observePlaylists().first()
+    suspend fun topPlaylistNames(limit: Int): List<String> = playlistRepository.getPlaylists(PlaylistQuery.All(mediaProviderType = null)).first()
         .sortedByDescending { it.songCount }
         .map { it.name }
         .take(limit)

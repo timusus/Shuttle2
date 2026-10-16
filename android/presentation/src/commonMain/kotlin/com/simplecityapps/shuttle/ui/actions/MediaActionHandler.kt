@@ -1,5 +1,6 @@
 package com.simplecityapps.shuttle.ui.actions
 
+import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
 import com.simplecityapps.shuttle.entitlement.ProFeature
 import com.simplecityapps.shuttle.entitlement.TryUseProFeature
 import com.simplecityapps.shuttle.model.Song
@@ -36,7 +37,7 @@ class MediaActionHandler @Inject constructor(
     private val excludeSongs: ExcludeSongs,
     private val deleteSongs: DeleteSongs,
     private val downloadSongs: DownloadSongs,
-    private val removeFromPlaylist: RemoveFromPlaylist,
+    private val playlistRepository: PlaylistRepository,
     private val restorePlaylistSongs: RestorePlaylistSongs,
     private val tryUseProFeature: TryUseProFeature,
 ) {
@@ -87,7 +88,7 @@ class MediaActionHandler @Inject constructor(
         }
 
         is MediaAction.RemoveFromPlaylist -> {
-            removeFromPlaylist(action.playlist, action.entries)
+            playlistRepository.removeFromPlaylist(action.playlist, action.entries)
             Message(
                 MediaActionMessage.RemovedFromPlaylist(action.playlist.name, action.entries.size),
                 SnackbarAction(SnackbarAction.Label.Undo, MediaAction.RestoreToPlaylist(action.playlist, action.entries, action.before)),

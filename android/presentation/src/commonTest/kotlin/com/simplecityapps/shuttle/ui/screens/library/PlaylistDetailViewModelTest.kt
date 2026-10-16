@@ -7,16 +7,9 @@ import com.simplecityapps.fakes.FakeQueueOperations
 import com.simplecityapps.mediaprovider.M3uWriter
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.sorting.PlaylistSongSortOrder
-import com.simplecityapps.shuttle.ui.actions.ClearPlaylist
-import com.simplecityapps.shuttle.ui.actions.DeletePlaylist
 import com.simplecityapps.shuttle.ui.actions.ExportPlaylist
 import com.simplecityapps.shuttle.ui.actions.ObserveCurrentSong
-import com.simplecityapps.shuttle.ui.actions.ObservePlaylistSongs
-import com.simplecityapps.shuttle.ui.actions.ObservePlaylists
 import com.simplecityapps.shuttle.ui.actions.PlaylistFileWriter
-import com.simplecityapps.shuttle.ui.actions.RenamePlaylist
-import com.simplecityapps.shuttle.ui.actions.ReorderPlaylistSongs
-import com.simplecityapps.shuttle.ui.actions.UpdatePlaylistSortOrder
 import io.kotest.matchers.shouldBe
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -54,13 +47,7 @@ class PlaylistDetailViewModelTest {
 
     private fun createViewModel(playlistId: Long): PlaylistDetailViewModel = PlaylistDetailViewModel(
         playlistId,
-        ObservePlaylists(playlistRepository),
-        ObservePlaylistSongs(playlistRepository),
-        UpdatePlaylistSortOrder(playlistRepository),
-        ReorderPlaylistSongs(playlistRepository),
-        RenamePlaylist(playlistRepository),
-        ClearPlaylist(playlistRepository),
-        DeletePlaylist(playlistRepository),
+        playlistRepository,
         exportPlaylist,
         ObserveCurrentSong(FakeQueueOperations()),
     )

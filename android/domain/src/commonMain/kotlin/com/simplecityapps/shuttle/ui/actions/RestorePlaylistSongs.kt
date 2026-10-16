@@ -7,7 +7,7 @@ import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.flow.first
 
 /**
- * Re-adds [removed] to [playlist] and restores the order [before] had — the Undo for [RemoveFromPlaylist]. The
+ * Re-adds [removed] to [playlist] and restores the order [before] had — the Undo for a playlist removal. The
  * repository appends re-added songs with fresh entry ids, so each current entry is matched back to its old position
  * by song; entries added since go last.
  */

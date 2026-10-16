@@ -5,7 +5,6 @@ import com.simplecityapps.fakes.FakePlaylistRepository
 import com.simplecityapps.shuttle.query.SongQuery
 import com.simplecityapps.shuttle.ui.actions.MediaAction
 import com.simplecityapps.shuttle.ui.actions.MediaSelection
-import com.simplecityapps.shuttle.ui.actions.ObservePlaylists
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import kotlin.test.Test
@@ -13,7 +12,7 @@ import kotlinx.coroutines.test.runTest
 
 class AppIntentLibraryTest {
     private val repository = FakePlaylistRepository()
-    private val library = AppIntentLibrary(ObservePlaylists(repository))
+    private val library = AppIntentLibrary(repository)
 
     private val mix = createPlaylist(id = 1, name = "Mix")
     private val focus = createPlaylist(id = 2, name = "Focus")

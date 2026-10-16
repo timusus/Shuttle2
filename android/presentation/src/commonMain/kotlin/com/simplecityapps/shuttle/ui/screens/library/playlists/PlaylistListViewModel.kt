@@ -4,15 +4,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.simplecityapps.mediaprovider.SongImportState
 import com.simplecityapps.mediaprovider.SongImportStateProvider
+import com.simplecityapps.mediaprovider.repository.playlists.PlaylistQuery
+import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistSortOrder
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.SmartPlaylistId
-import com.simplecityapps.shuttle.ui.actions.ClearPlaylist
 import com.simplecityapps.shuttle.ui.actions.CreatePlaylist
-import com.simplecityapps.shuttle.ui.actions.DeletePlaylist
 import com.simplecityapps.shuttle.ui.actions.ObservePlaylistCovers
-import com.simplecityapps.shuttle.ui.actions.ObservePlaylists
-import com.simplecityapps.shuttle.ui.actions.RenamePlaylist
 import com.simplecityapps.shuttle.ui.screens.library.LibraryViewSetting
 import com.simplecityapps.shuttle.ui.screens.library.ReadLibraryViewSetting
 import com.simplecityapps.shuttle.ui.screens.library.SaveLibraryViewSetting
@@ -35,11 +33,8 @@ import kotlinx.coroutines.launch
 @ViewModelKey(PlaylistListViewModel::class)
 @ContributesIntoMap(AppScope::class)
 class PlaylistListViewModel @Inject constructor(
-    observePlaylists: ObservePlaylists,
+    private val playlistRepository: PlaylistRepository,
     private val createPlaylist: CreatePlaylist,
-    private val renamePlaylist: RenamePlaylist,
-    private val clearPlaylist: ClearPlaylist,
-    private val deletePlaylist: DeletePlaylist,
     readSetting: ReadLibraryViewSetting,
     private val saveSetting: SaveLibraryViewSetting,
     mediaImportObserver: SongImportStateProvider,
@@ -49,7 +44,7 @@ class PlaylistListViewModel @Inject constructor(
     private val _sortOrder = MutableStateFlow(readSetting(LibraryViewSetting.PlaylistSort))
 
     /** The playlists with their covers; the list shows first and the covers follow as they load. */
-    private val playlistsWithCovers = observePlaylists().flatMapLatest { playlists ->
+    private val playlistsWithCovers = playlistRepository.getPlaylists(PlaylistQuery.All(mediaProviderType = null)).flatMapLatest { playlists ->
         observePlaylistCovers(playlists).map { covers -> playlists to covers }.onStart { emit(playlists to emptyMap()) }
     }
 
@@ -83,19 +78,19 @@ class PlaylistListViewModel @Inject constructor(
 
     fun onDelete(playlist: Playlist) {
         viewModelScope.launch {
-            deletePlaylist(playlist)
+            playlistRepository.deletePlaylist(playlist)
         }
     }
 
     fun onClear(playlist: Playlist) {
         viewModelScope.launch {
-            clearPlaylist(playlist)
+            playlistRepository.clearPlaylist(playlist)
         }
     }
 
     fun onRename(playlist: Playlist, name: String) {
         viewModelScope.launch {
-            renamePlaylist(playlist, name)
+            playlistRepository.renamePlaylist(playlist, name)
         }
     }
 

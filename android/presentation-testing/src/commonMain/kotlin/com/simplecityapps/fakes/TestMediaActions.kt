@@ -17,9 +17,7 @@ import com.simplecityapps.shuttle.entitlement.ServerAccessGate
 import com.simplecityapps.shuttle.entitlement.TryDownloadFromServer
 import com.simplecityapps.shuttle.entitlement.TryUseProFeature
 import com.simplecityapps.shuttle.ui.actions.AddToPlaylist
-import com.simplecityapps.shuttle.ui.actions.ClearPlaylist
 import com.simplecityapps.shuttle.ui.actions.CreatePlaylist
-import com.simplecityapps.shuttle.ui.actions.DeletePlaylist
 import com.simplecityapps.shuttle.ui.actions.DeleteSongs
 import com.simplecityapps.shuttle.ui.actions.DownloadSongs
 import com.simplecityapps.shuttle.ui.actions.EnqueueSongs
@@ -33,15 +31,9 @@ import com.simplecityapps.shuttle.ui.actions.ObserveAlbums
 import com.simplecityapps.shuttle.ui.actions.ObserveArtistAlbums
 import com.simplecityapps.shuttle.ui.actions.ObserveArtists
 import com.simplecityapps.shuttle.ui.actions.ObserveGenres
-import com.simplecityapps.shuttle.ui.actions.ObservePlaylistSongs
-import com.simplecityapps.shuttle.ui.actions.ObservePlaylists
 import com.simplecityapps.shuttle.ui.actions.ObserveSongs
-import com.simplecityapps.shuttle.ui.actions.ObserveSongsForGenre
 import com.simplecityapps.shuttle.ui.actions.PlayAfterWork
 import com.simplecityapps.shuttle.ui.actions.PlaySongs
-import com.simplecityapps.shuttle.ui.actions.RemoveFromPlaylist
-import com.simplecityapps.shuttle.ui.actions.RenamePlaylist
-import com.simplecityapps.shuttle.ui.actions.ReorderPlaylistSongs
 import com.simplecityapps.shuttle.ui.actions.ResolveSongs
 import com.simplecityapps.shuttle.ui.actions.RestorePlaylistSongs
 import com.simplecityapps.shuttle.ui.actions.ResumeContext
@@ -50,7 +42,6 @@ import com.simplecityapps.shuttle.ui.actions.ShuffleSongs
 import com.simplecityapps.shuttle.ui.actions.ShuffleWorks
 import com.simplecityapps.shuttle.ui.actions.SongFileDeleter
 import com.simplecityapps.shuttle.ui.actions.StartRadio
-import com.simplecityapps.shuttle.ui.actions.UpdatePlaylistSortOrder
 import com.simplecityapps.shuttle.ui.screens.library.folders.ResolveFolderSongs
 import kotlinx.coroutines.flow.MutableStateFlow
 
@@ -58,7 +49,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 class TestMediaActions(
     songRepository: SongRepository = FakeSongRepository(),
     genreRepository: GenreRepository = FakeGenreRepository(),
-    playlistRepository: PlaylistRepository = FakePlaylistRepository(),
+    val playlistRepository: PlaylistRepository = FakePlaylistRepository(),
     queueOperations: QueueOperations = FakeQueueOperations(),
     playbackOperations: PlaybackOperations = FakePlaybackOperations(),
     albumRepository: AlbumRepository = FakeAlbumRepository(),
@@ -108,22 +99,13 @@ class TestMediaActions(
     }
     val findGoToTarget = FindGoToTarget(albumRepository, albumArtistRepository)
     val shareSongs = ShareSongs(resolveSongs)
-    val removeFromPlaylist = RemoveFromPlaylist(playlistRepository)
     val restorePlaylistSongs = RestorePlaylistSongs(playlistRepository)
-    val renamePlaylist = RenamePlaylist(playlistRepository)
-    val clearPlaylist = ClearPlaylist(playlistRepository)
-    val deletePlaylist = DeletePlaylist(playlistRepository)
     val favouriteSongs = FavouriteSongs(songRepository, resolveSongs)
     val observeSongs = ObserveSongs(songRepository, offline.filter)
     val observeAlbums = ObserveAlbums(albumRepository, offline.groups(songRepository))
     val observeArtists = ObserveArtists(albumArtistRepository, offline.groups(songRepository))
     val observeArtistAlbums = ObserveArtistAlbums(albumRepository, songRepository)
     val observeGenres = ObserveGenres(genreRepository, offline.groups(songRepository))
-    val observeSongsForGenre = ObserveSongsForGenre(genreRepository)
-    val observePlaylists = ObservePlaylists(playlistRepository)
-    val observePlaylistSongs = ObservePlaylistSongs(playlistRepository)
-    val updatePlaylistSortOrder = UpdatePlaylistSortOrder(playlistRepository)
-    val reorderPlaylistSongs = ReorderPlaylistSongs(playlistRepository)
     val handler = MediaActionHandler(
         resolveSongs = resolveSongs,
         filterPlayableSongs = filterPlayableSongs,
@@ -142,7 +124,7 @@ class TestMediaActions(
         excludeSongs = excludeSongs,
         deleteSongs = deleteSongs,
         downloadSongs = downloadSongs,
-        removeFromPlaylist = removeFromPlaylist,
+        playlistRepository = playlistRepository,
         restorePlaylistSongs = restorePlaylistSongs,
         tryUseProFeature = tryUseProFeature,
     )

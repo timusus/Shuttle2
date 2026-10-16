@@ -24,7 +24,7 @@ failing.
 | `NEXT` / `PREV` | | `skipToNext()` / `skipToPrev()` (`PREV` restarts the track past 2 s, as the UI does) |
 | `SEEK` | `--el ms 20000` | `seekTo(ms)` |
 | `REMOVE_QUEUE_ITEM` | `--ei position N` | `PlaybackOperations.removeQueueItem`, the queue screen's "Remove from Queue" path. N indexes the queue in its displayed (shuffle-aware) order |
-| `REMOVE_PLAYLIST_SONG` | `--es playlist NAME --es song TITLE` | `PlaylistRepository.removeFromPlaylist`, the playlist detail screen's per-row "Remove" path (the `RemoveFromPlaylist` use case) |
+| `REMOVE_PLAYLIST_SONG` | `--es playlist NAME --es song TITLE` | `PlaylistRepository.removeFromPlaylist`, the playlist detail screen's per-row "Remove" path |
 | `REORDER_QUEUE` | `--ei from N --ei to N` | `QueueOperations.move(from, to)`, the queue screen's drag-to-reorder path. Both indices are in the displayed (shuffle-aware) order |
 | `TAP_START` | `[--es name NAME]` | Start recording what `CrossfadeMixer` outputs (before the equalizer) to `<externalFilesDir>/crossfade-tap/NAME.wav` (default `crossfade-tap`); replies with the path. See below |
 | `TAP_STOP` | | Finish the WAV; replies with path, format and duration |

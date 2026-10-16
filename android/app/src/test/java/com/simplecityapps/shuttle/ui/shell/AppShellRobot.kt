@@ -74,6 +74,7 @@ import androidx.test.ext.junit.rules.ActivityScenarioRule
 import androidx.window.core.layout.WindowSizeClass
 import androidx.window.core.layout.computeWindowSizeClass
 import com.simplecityapps.createSong
+import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainMode
 import com.simplecityapps.shuttle.designsystem.theme.S2Theme
 import com.simplecityapps.shuttle.model.Playlist
@@ -85,7 +86,6 @@ import com.simplecityapps.shuttle.ui.actions.MediaActionResult
 import com.simplecityapps.shuttle.ui.actions.MediaActionType
 import com.simplecityapps.shuttle.ui.actions.MediaSelection
 import com.simplecityapps.shuttle.ui.actions.NavigationTarget
-import com.simplecityapps.shuttle.ui.actions.ObservePlaylists
 import com.simplecityapps.shuttle.ui.common.PendingEvents
 import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsViewModel
 import com.simplecityapps.shuttle.ui.preview.sampleSongs
@@ -364,9 +364,9 @@ class AppShellRobot(
         }
         val available = mockk<AvailableMediaActions>()
         every { available(any()) } answers { flowOf(actions.songActions) }
-        val observePlaylists = mockk<ObservePlaylists>()
-        every { observePlaylists(any()) } answers { flowOf(actions.playlists) }
-        MediaActionsViewModel(handler, available, observePlaylists)
+        val playlistRepository = mockk<PlaylistRepository>()
+        every { playlistRepository.getPlaylists(any()) } answers { flowOf(actions.playlists) }
+        MediaActionsViewModel(handler, available, playlistRepository)
     }
 
     val calls: List<String> get() = actions.calls

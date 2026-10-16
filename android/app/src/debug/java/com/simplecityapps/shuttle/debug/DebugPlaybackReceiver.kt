@@ -152,7 +152,7 @@ class DebugPlaybackReceiver : BroadcastReceiver() {
             val playlistSong = playlistRepository.getSongsForPlaylist(playlist).firstOrNull()
                 ?.firstOrNull { it.song.name == songTitle }
                 ?: throw IllegalArgumentException("no song titled '$songTitle' in playlist '$playlistName'")
-            // The playlist screen's per-row "Remove" path (the RemoveFromPlaylist use case).
+            // The playlist screen's per-row "Remove" path.
             playlistRepository.removeFromPlaylist(playlist, listOf(playlistSong))
             "removed '$songTitle' from '$playlistName'"
         }

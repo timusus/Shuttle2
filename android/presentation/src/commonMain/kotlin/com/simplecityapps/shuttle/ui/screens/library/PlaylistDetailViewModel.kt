@@ -3,21 +3,15 @@ package com.simplecityapps.shuttle.ui.screens.library
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistQuery
+import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
 import com.simplecityapps.shuttle.model.PlayContext
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.PlaylistSong
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.model.playContext
 import com.simplecityapps.shuttle.sorting.PlaylistSongSortOrder
-import com.simplecityapps.shuttle.ui.actions.ClearPlaylist
-import com.simplecityapps.shuttle.ui.actions.DeletePlaylist
 import com.simplecityapps.shuttle.ui.actions.ExportPlaylist
 import com.simplecityapps.shuttle.ui.actions.ObserveCurrentSong
-import com.simplecityapps.shuttle.ui.actions.ObservePlaylistSongs
-import com.simplecityapps.shuttle.ui.actions.ObservePlaylists
-import com.simplecityapps.shuttle.ui.actions.RenamePlaylist
-import com.simplecityapps.shuttle.ui.actions.ReorderPlaylistSongs
-import com.simplecityapps.shuttle.ui.actions.UpdatePlaylistSortOrder
 import com.simplecityapps.shuttle.ui.common.PendingEvent
 import com.simplecityapps.shuttle.ui.common.PendingEvents
 import dev.zacsweers.metro.AppScope
@@ -80,13 +74,7 @@ sealed interface PlaylistDetailEvent {
 @OptIn(ExperimentalCoroutinesApi::class)
 class PlaylistDetailViewModel @AssistedInject constructor(
     @Assisted playlistId: Long,
-    observePlaylists: ObservePlaylists,
-    private val observePlaylistSongs: ObservePlaylistSongs,
-    private val updatePlaylistSortOrder: UpdatePlaylistSortOrder,
-    private val reorderPlaylistSongs: ReorderPlaylistSongs,
-    private val renamePlaylist: RenamePlaylist,
-    private val clearPlaylist: ClearPlaylist,
-    private val deletePlaylist: DeletePlaylist,
+    private val playlistRepository: PlaylistRepository,
     private val exportPlaylist: ExportPlaylist,
     observeCurrentSong: ObserveCurrentSong,
 ) : ViewModel() {
@@ -104,11 +92,11 @@ class PlaylistDetailViewModel @AssistedInject constructor(
     /** The order the user is dragging into, shown until the repository emits the persisted order. */
     private val draggedOrder = MutableStateFlow<List<PlaylistSong>?>(null)
 
-    private val playlist = observePlaylists(PlaylistQuery.PlaylistId(playlistId)).map { it.firstOrNull() }
+    private val playlist = playlistRepository.getPlaylists(PlaylistQuery.PlaylistId(playlistId)).map { it.firstOrNull() }
 
     private val songs = playlist
         .distinctUntilChanged { old, new -> old?.id == new?.id && old?.sortOrder == new?.sortOrder && old?.sortDescending == new?.sortDescending }
-        .flatMapLatest { playlist -> playlist?.let { observePlaylistSongs(it) } ?: flowOf(emptyList()) }
+        .flatMapLatest { playlist -> playlist?.let { playlistRepository.getSongsForPlaylist(it) } ?: flowOf(emptyList()) }
         .onEach { draggedOrder.value = null }
 
     val uiState: StateFlow<PlaylistDetailUiState> = combine(
@@ -139,13 +127,13 @@ class PlaylistDetailViewModel @AssistedInject constructor(
     fun onSortOrderSelected(sortOrder: PlaylistSongSortOrder) {
         val playlist = uiState.value.playlist ?: return
         if (playlist.sortOrder == sortOrder) return
-        viewModelScope.launch { updatePlaylistSortOrder(playlist, sortOrder, playlist.sortDescending) }
+        viewModelScope.launch { playlistRepository.updatePlaylistSortOder(playlist, sortOrder, playlist.sortDescending) }
     }
 
     fun onSortDescendingChanged(descending: Boolean) {
         val playlist = uiState.value.playlist ?: return
         if (playlist.sortDescending == descending) return
-        viewModelScope.launch { updatePlaylistSortOrder(playlist, playlist.sortOrder, descending) }
+        viewModelScope.launch { playlistRepository.updatePlaylistSortOder(playlist, playlist.sortOrder, descending) }
     }
 
     /** Moves the entry keyed [fromId] to where [toId] sits, on screen only; [onMoveFinished] persists the order. */
@@ -162,23 +150,23 @@ class PlaylistDetailViewModel @AssistedInject constructor(
         val order = draggedOrder.value ?: return
         val renumbered = order.mapIndexed { index, entry -> PlaylistSong(entry.id, index.toLong(), entry.song) }
         draggedOrder.value = renumbered
-        viewModelScope.launch { reorderPlaylistSongs(playlist, renumbered) }
+        viewModelScope.launch { playlistRepository.updatePlaylistSongsSortOder(playlist, renumbered) }
     }
 
     fun onRename(name: String) {
         val playlist = uiState.value.playlist ?: return
-        viewModelScope.launch { renamePlaylist(playlist, name) }
+        viewModelScope.launch { playlistRepository.renamePlaylist(playlist, name) }
     }
 
     fun onClear() {
         val playlist = uiState.value.playlist ?: return
-        viewModelScope.launch { clearPlaylist(playlist) }
+        viewModelScope.launch { playlistRepository.clearPlaylist(playlist) }
     }
 
     fun onDelete() {
         val playlist = uiState.value.playlist ?: return
         viewModelScope.launch {
-            deletePlaylist(playlist)
+            playlistRepository.deletePlaylist(playlist)
             events.post(PlaylistDetailEvent.Deleted)
         }
     }

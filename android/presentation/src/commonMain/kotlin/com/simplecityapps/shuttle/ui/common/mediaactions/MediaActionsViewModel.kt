@@ -2,6 +2,8 @@ package com.simplecityapps.shuttle.ui.common.mediaactions
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.simplecityapps.mediaprovider.repository.playlists.PlaylistQuery
+import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.ui.actions.AvailableMediaActions
 import com.simplecityapps.shuttle.ui.actions.MediaAction
@@ -9,7 +11,6 @@ import com.simplecityapps.shuttle.ui.actions.MediaActionHandler
 import com.simplecityapps.shuttle.ui.actions.MediaActionResult
 import com.simplecityapps.shuttle.ui.actions.MediaActionType
 import com.simplecityapps.shuttle.ui.actions.MediaSelection
-import com.simplecityapps.shuttle.ui.actions.ObservePlaylists
 import com.simplecityapps.shuttle.ui.common.PendingEvent
 import com.simplecityapps.shuttle.ui.common.PendingEvents
 import dev.zacsweers.metro.AppScope
@@ -45,7 +46,7 @@ data class MediaActionsUiState(
 class MediaActionsViewModel @Inject constructor(
     private val handler: MediaActionHandler,
     private val availableMediaActions: AvailableMediaActions,
-    observePlaylists: ObservePlaylists,
+    playlistRepository: PlaylistRepository,
 ) : ViewModel() {
     private val playlistPickerShown = MutableStateFlow(false)
 
@@ -53,7 +54,7 @@ class MediaActionsViewModel @Inject constructor(
 
     val uiState: StateFlow<MediaActionsUiState> = combine(
         // Observed only while the picker shows, so every destination doesn't keep a playlist query running.
-        playlistPickerShown.flatMapLatest { shown -> if (shown) observePlaylists() else flowOf(emptyList()) },
+        playlistPickerShown.flatMapLatest { shown -> if (shown) playlistRepository.getPlaylists(PlaylistQuery.All(mediaProviderType = null)) else flowOf(emptyList()) },
         events.flow,
     ) { playlists, events -> MediaActionsUiState(playlists, events) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), MediaActionsUiState())

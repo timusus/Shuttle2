@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.simplecityapps.mediaprovider.repository.albums.AlbumQuery
 import com.simplecityapps.mediaprovider.repository.genres.GenreQuery
+import com.simplecityapps.mediaprovider.repository.genres.GenreRepository
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.Genre
 import com.simplecityapps.shuttle.model.PlayContext
@@ -13,7 +14,6 @@ import com.simplecityapps.shuttle.query.SongQuery
 import com.simplecityapps.shuttle.ui.actions.ObserveAlbums
 import com.simplecityapps.shuttle.ui.actions.ObserveCurrentSong
 import com.simplecityapps.shuttle.ui.actions.ObserveGenres
-import com.simplecityapps.shuttle.ui.actions.ObserveSongsForGenre
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
@@ -47,7 +47,7 @@ data class GenreDetailUiState(
 class GenreDetailViewModel @AssistedInject constructor(
     @Assisted genreName: String,
     observeGenres: ObserveGenres,
-    observeSongsForGenre: ObserveSongsForGenre,
+    genreRepository: GenreRepository,
     observeAlbums: ObserveAlbums,
     observeCurrentSong: ObserveCurrentSong,
 ) : ViewModel() {
@@ -58,7 +58,7 @@ class GenreDetailViewModel @AssistedInject constructor(
         fun create(genreName: String): GenreDetailViewModel
     }
 
-    private val songsAndAlbums = observeSongsForGenre(genreName, SongQuery.All())
+    private val songsAndAlbums = genreRepository.getSongsForGenre(genreName, SongQuery.All())
         .flatMapLatest { songs ->
             val keys = songs.map { it.albumGroupKey }.distinct()
             if (keys.isEmpty()) {

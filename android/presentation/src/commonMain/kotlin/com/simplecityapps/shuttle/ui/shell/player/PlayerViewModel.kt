@@ -5,6 +5,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
+import com.simplecityapps.mediaprovider.repository.playlists.PlaylistQuery
+import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
 import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainMode
 import com.simplecityapps.playback.persistence.NowPlayingSnapshot
@@ -28,7 +30,6 @@ import com.simplecityapps.shuttle.ui.actions.MediaActionHandler
 import com.simplecityapps.shuttle.ui.actions.MediaActionType
 import com.simplecityapps.shuttle.ui.actions.MediaSelection
 import com.simplecityapps.shuttle.ui.actions.ObserveFavouriteSongIds
-import com.simplecityapps.shuttle.ui.actions.ObservePlaylists
 import com.simplecityapps.shuttle.ui.actions.ToggleFavourite
 import com.simplecityapps.shuttle.ui.common.PendingEvents
 import com.simplecityapps.shuttle.ui.screens.home.HomeItem
@@ -99,7 +100,7 @@ class PlayerViewModel @AssistedInject constructor(
     private val editQueue: EditQueue,
     observeFavouriteSongIds: ObserveFavouriteSongIds,
     private val setFavourite: ToggleFavourite,
-    private val observePlaylists: ObservePlaylists,
+    private val playlistRepository: PlaylistRepository,
     private val controlSleepTimer: ControlSleepTimer,
     private val readSleepTimeRemaining: ReadSleepTimeRemaining,
     observeSleepTimerAtEndOfWork: ObserveSleepTimerAtEndOfWork,
@@ -395,7 +396,7 @@ class PlayerViewModel @AssistedInject constructor(
 
     override fun songActions(song: Song): Flow<List<MediaActionType>> = availableMediaActions(MediaSelection.Songs(song)).map { types -> types.filter { it in PlayerSongActions } }
 
-    override fun playlists(): Flow<List<Playlist>> = observePlaylists()
+    override fun playlists(): Flow<List<Playlist>> = playlistRepository.getPlaylists(PlaylistQuery.All(mediaProviderType = null))
 
     override fun onMediaAction(action: MediaAction) {
         viewModelScope.launch { events.post(PlayerUiEvent.MediaActionDone(mediaActionHandler.handle(action))) }

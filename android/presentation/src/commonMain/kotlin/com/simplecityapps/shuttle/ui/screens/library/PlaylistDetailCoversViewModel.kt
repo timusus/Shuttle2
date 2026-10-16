@@ -3,9 +3,9 @@ package com.simplecityapps.shuttle.ui.screens.library
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistQuery
+import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.ui.actions.ObservePlaylistCovers
-import com.simplecityapps.shuttle.ui.actions.ObservePlaylists
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
@@ -30,7 +30,7 @@ import kotlinx.coroutines.flow.stateIn
 @OptIn(ExperimentalCoroutinesApi::class)
 class PlaylistDetailCoversViewModel @AssistedInject constructor(
     @Assisted playlistId: Long,
-    observePlaylists: ObservePlaylists,
+    playlistRepository: PlaylistRepository,
     observePlaylistCovers: ObservePlaylistCovers,
 ) : ViewModel() {
     @AssistedFactory
@@ -40,7 +40,7 @@ class PlaylistDetailCoversViewModel @AssistedInject constructor(
         fun create(playlistId: Long): PlaylistDetailCoversViewModel
     }
 
-    val uiState: StateFlow<List<Song>> = observePlaylists(PlaylistQuery.PlaylistId(playlistId))
+    val uiState: StateFlow<List<Song>> = playlistRepository.getPlaylists(PlaylistQuery.PlaylistId(playlistId))
         .map { it.firstOrNull() }
         .distinctUntilChanged { old, new -> old?.id == new?.id }
         .flatMapLatest { playlist ->

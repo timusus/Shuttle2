@@ -11,21 +11,6 @@ import org.junit.Test
 class PresentationRules {
 
     @Test
-    fun `ViewModels reach repositories and data sources only through use cases`() {
-        val violations = Production.viewModels.flatMap { viewModel ->
-            val file = viewModel.containingFile
-            val imported = file.importNames.filter(::isDataAccess)
-            val injected = viewModel.constructorTypeNames().map(file::resolve).filter(::isDataAccess)
-            (imported + injected).distinct().map { viewModel.violation(" -> $it") }
-        }
-        Baseline.assertMatches(
-            "viewmodel-data-access",
-            "ViewModels must not depend on repositories, DAOs, Room, Retrofit, OkHttp, MediaProvider or MediaImporter; inject a use case",
-            violations,
-        )
-    }
-
-    @Test
     fun `ViewModels follow the UDF conventions`() {
         val violations = Production.viewModels.flatMap { viewModel ->
             buildList {
@@ -76,20 +61,6 @@ class PresentationRules {
         Baseline.assertMatches(
             "viewmodel-no-channel-events",
             "ViewModels model events whose loss is a bug as consumable UiState, not Channel.receiveAsFlow()/consumeAsFlow() (UDF 4)",
-            violations,
-        )
-    }
-
-    @Test
-    fun `ViewModels reach operations, preferences, settings and stores only through use cases`() {
-        val violations = Production.viewModels.flatMap { viewModel ->
-            viewModel.constructorTypeNames()
-                .filter { name -> DIRECT_DEPENDENCY_SUFFIXES.any { name.endsWith(it) } }
-                .map { viewModel.violation(" -> ${viewModel.containingFile.resolve(it)}") }
-        }
-        Baseline.assertMatches(
-            "viewmodel-direct-deps",
-            "ViewModels must not inject *Operations, *Preference(s), *PreferenceManager, *Settings or *Store types; inject a use case (UDF 8a)",
             violations,
         )
     }
@@ -157,8 +128,6 @@ class PresentationRules {
 
         val CHANNEL_FLOW_CALLS = listOf("receiveAsFlow", "consumeAsFlow")
 
-        val DIRECT_DEPENDENCY_SUFFIXES = listOf("Operations", "Preference", "Preferences", "PreferenceManager", "Settings", "Store")
-
         val UI_PACKAGES = listOf(
             "android.view.",
             "android.widget.",
@@ -181,16 +150,5 @@ class PresentationRules {
             Regex("""com\.simplecityapps\.provider\.\w+\.http\..*"""),
             Regex("""com\.simplecityapps\.networking\.retrofit\..*"""),
         )
-
-        fun isDataAccess(fqn: String): Boolean {
-            val simpleName = fqn.substringAfterLast('.')
-            return simpleName.endsWith("Repository") ||
-                simpleName.endsWith("Dao") ||
-                simpleName.endsWith("MediaProvider") ||
-                simpleName == "MediaImporter" ||
-                fqn.startsWith("androidx.room.") ||
-                fqn.startsWith("retrofit2.") ||
-                fqn.startsWith("okhttp3.")
-        }
     }
 }

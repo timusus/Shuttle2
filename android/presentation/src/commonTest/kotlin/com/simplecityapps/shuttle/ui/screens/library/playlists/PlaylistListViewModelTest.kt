@@ -49,11 +49,8 @@ class PlaylistListViewModelTest {
     private val actions = TestMediaActions(playlistRepository = playlistRepository)
 
     private fun viewModel(): PlaylistListViewModel = PlaylistListViewModel(
-        observePlaylists = actions.observePlaylists,
+        playlistRepository = playlistRepository,
         createPlaylist = actions.createPlaylist,
-        renamePlaylist = actions.renamePlaylist,
-        clearPlaylist = actions.clearPlaylist,
-        deletePlaylist = actions.deletePlaylist,
         readSetting = ReadLibraryViewSetting(preferences),
         saveSetting = SaveLibraryViewSetting(preferences),
         mediaImportObserver = importState,

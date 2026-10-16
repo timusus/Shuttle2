@@ -13,7 +13,6 @@ import com.simplecityapps.playback.queue.toQueueItem
 import com.simplecityapps.shuttle.ui.actions.ObserveAlbums
 import com.simplecityapps.shuttle.ui.actions.ObserveCurrentSong
 import com.simplecityapps.shuttle.ui.actions.ObserveGenres
-import com.simplecityapps.shuttle.ui.actions.ObserveSongsForGenre
 import io.kotest.matchers.shouldBe
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -51,7 +50,7 @@ class GenreDetailViewModelTest {
         genreRepository.setSongsForGenre("Jazz", songs)
         albumRepository.setAlbums(listOf(createAlbum(name = "Zebra"), createAlbum(name = "apple")))
 
-        val viewModel = GenreDetailViewModel("Jazz", ObserveGenres(genreRepository, FakeOfflineSongs().groups(FakeSongRepository())), ObserveSongsForGenre(genreRepository), ObserveAlbums(albumRepository, FakeOfflineSongs().groups(FakeSongRepository())), ObserveCurrentSong(queueOperations))
+        val viewModel = GenreDetailViewModel("Jazz", ObserveGenres(genreRepository, FakeOfflineSongs().groups(FakeSongRepository())), genreRepository, ObserveAlbums(albumRepository, FakeOfflineSongs().groups(FakeSongRepository())), ObserveCurrentSong(queueOperations))
         backgroundScope.launch { viewModel.uiState.collect {} }
         advanceUntilIdle()
 
@@ -67,7 +66,7 @@ class GenreDetailViewModelTest {
         genreRepository.setGenres(listOf(createGenre(name = "Empty")))
         albumRepository.setAlbums(listOf(createAlbum(name = "Unrelated")))
 
-        val viewModel = GenreDetailViewModel("Empty", ObserveGenres(genreRepository, FakeOfflineSongs().groups(FakeSongRepository())), ObserveSongsForGenre(genreRepository), ObserveAlbums(albumRepository, FakeOfflineSongs().groups(FakeSongRepository())), ObserveCurrentSong(queueOperations))
+        val viewModel = GenreDetailViewModel("Empty", ObserveGenres(genreRepository, FakeOfflineSongs().groups(FakeSongRepository())), genreRepository, ObserveAlbums(albumRepository, FakeOfflineSongs().groups(FakeSongRepository())), ObserveCurrentSong(queueOperations))
         backgroundScope.launch { viewModel.uiState.collect {} }
         advanceUntilIdle()
 
@@ -83,7 +82,7 @@ class GenreDetailViewModelTest {
         val item = song.toQueueItem(true)
         queueOperations.queueStateFlow.value = QueueState(listOf(item), item, 0)
 
-        val viewModel = GenreDetailViewModel("Jazz", ObserveGenres(genreRepository, FakeOfflineSongs().groups(FakeSongRepository())), ObserveSongsForGenre(genreRepository), ObserveAlbums(albumRepository, FakeOfflineSongs().groups(FakeSongRepository())), ObserveCurrentSong(queueOperations))
+        val viewModel = GenreDetailViewModel("Jazz", ObserveGenres(genreRepository, FakeOfflineSongs().groups(FakeSongRepository())), genreRepository, ObserveAlbums(albumRepository, FakeOfflineSongs().groups(FakeSongRepository())), ObserveCurrentSong(queueOperations))
         backgroundScope.launch { viewModel.uiState.collect {} }
         advanceUntilIdle()
 

@@ -48,7 +48,6 @@ import com.simplecityapps.shuttle.ui.actions.MediaActionResult
 import com.simplecityapps.shuttle.ui.actions.MediaActionType
 import com.simplecityapps.shuttle.ui.actions.MediaSelection
 import com.simplecityapps.shuttle.ui.actions.ObserveFavouriteSongIds
-import com.simplecityapps.shuttle.ui.actions.ObservePlaylists
 import com.simplecityapps.shuttle.ui.actions.OnlineLyricsSource
 import com.simplecityapps.shuttle.ui.actions.ToggleFavourite
 import com.simplecityapps.shuttle.ui.screens.home.HomeItem
@@ -141,7 +140,7 @@ class PlayerViewModelTest {
             editQueue = EditQueue(playbackOperations, queueOperations),
             observeFavouriteSongIds = ObserveFavouriteSongIds(songRepository),
             setFavourite = ToggleFavourite(songRepository),
-            observePlaylists = ObservePlaylists(playlistRepository),
+            playlistRepository = playlistRepository,
             controlSleepTimer = ControlSleepTimer(sleepTimer, preferenceManager),
             readSleepTimeRemaining = ReadSleepTimeRemaining(sleepTimer),
             observeSleepTimerAtEndOfWork = ObserveSleepTimerAtEndOfWork(sleepTimer),

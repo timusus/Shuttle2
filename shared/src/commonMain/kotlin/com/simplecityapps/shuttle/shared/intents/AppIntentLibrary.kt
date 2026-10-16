@@ -1,10 +1,11 @@
 package com.simplecityapps.shuttle.shared.intents
 
+import com.simplecityapps.mediaprovider.repository.playlists.PlaylistQuery
+import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.query.SongQuery
 import com.simplecityapps.shuttle.ui.actions.MediaAction
 import com.simplecityapps.shuttle.ui.actions.MediaSelection
-import com.simplecityapps.shuttle.ui.actions.ObservePlaylists
 import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.flow.first
 
@@ -15,10 +16,10 @@ import kotlinx.coroutines.flow.first
  */
 @Inject
 class AppIntentLibrary(
-    private val observePlaylists: ObservePlaylists,
+    private val playlistRepository: PlaylistRepository,
 ) {
     /** Every provider's playlists as they are now. */
-    suspend fun playlists(): List<Playlist> = observePlaylists().first()
+    suspend fun playlists(): List<Playlist> = playlistRepository.getPlaylists(PlaylistQuery.All(mediaProviderType = null)).first()
 
     /** Shuffles the whole library, resolved as it plays, as Home's Shuffle All does. */
     fun shuffleAll(): MediaAction = MediaAction.Shuffle(MediaSelection.SongsMatching(SongQuery.All()))
