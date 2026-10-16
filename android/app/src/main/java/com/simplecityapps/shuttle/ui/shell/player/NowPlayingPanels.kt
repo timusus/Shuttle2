@@ -141,7 +141,7 @@ private fun RunningSleepTimer(
     val counting = (remaining ?: 0) > 0
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
-            text = remaining?.let { if (it > 0) DateUtils.formatElapsedTime(it / 1000) else stringResource(R.string.sleep_timer_waiting_track_end) }.orEmpty(),
+            text = remaining?.let { if (it > 0) DateUtils.formatElapsedTime(it / 1000) else stringResource(if (player.sleepTimerAtEndOfWork) R.string.sleep_timer_waiting_work_end else R.string.sleep_timer_waiting_track_end) }.orEmpty(),
             style = if (counting) MaterialTheme.typography.displayMedium else MaterialTheme.typography.titleLarge,
         )
         if (counting && player.sleepTimerPlayToEnd) {
@@ -210,6 +210,15 @@ private fun NewSleepTimer(
             size = S2ButtonSize.Medium,
             icon = Icons.Rounded.Bedtime,
             modifier = Modifier.weight(1f),
+        )
+    }
+    if (player.work != null) {
+        S2Button(
+            text = stringResource(R.string.player_sleep_timer_work_end),
+            onClick = actions::startSleepTimerAtEndOfWork,
+            style = S2ButtonStyle.Tonal,
+            size = S2ButtonSize.Medium,
+            modifier = Modifier.fillMaxWidth(),
         )
     }
 }

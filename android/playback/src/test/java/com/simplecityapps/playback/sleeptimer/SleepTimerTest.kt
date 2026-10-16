@@ -1,6 +1,11 @@
 package com.simplecityapps.playback.sleeptimer
 
+import com.simplecityapps.fakes.FakeQueueOperations
 import com.simplecityapps.playback.fakes.FakePlaybackOperations
+import com.simplecityapps.playback.fakes.testSong
+import com.simplecityapps.playback.queue.QueueItem
+import com.simplecityapps.playback.queue.QueueState
+import com.simplecityapps.shuttle.model.Song
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -17,6 +22,7 @@ import org.junit.Test
 @OptIn(ExperimentalCoroutinesApi::class)
 class SleepTimerTest {
     private val playbackOperations = FakePlaybackOperations()
+    private val queueOperations = FakeQueueOperations()
 
     /** The number of pauses the timer asked for. */
     private fun pauses() = playbackOperations.pauses
@@ -29,6 +35,7 @@ class SleepTimerTest {
 
     private fun TestScope.sleepTimer() = SleepTimer(
         playbackOperations = playbackOperations,
+        queueOperations = queueOperations,
         appCoroutineScope = backgroundScope,
         context = StandardTestDispatcher(testScheduler),
         elapsedRealtime = { testScheduler.currentTime }
@@ -155,5 +162,83 @@ class SleepTimerTest {
 
         endTrack()
         pauses() shouldBe 0
+    }
+
+    private fun movement(id: Long) = testSong(id, name = "Movement $id").copy(work = "Sonata No. 3", composer = "Ludwig Harrow", conductor = "Ada Quill")
+
+    private fun play(
+        songs: List<Song>,
+        position: Int
+    ) {
+        val items = songs.mapIndexed { index, song -> QueueItem(uid = song.id, song = song, isCurrent = index == position) }
+        queueOperations.queueStateFlow.value = QueueState(items = items, currentItem = items[position], currentPosition = position)
+    }
+
+    private val sonata get() = listOf(movement(1), movement(2), movement(3))
+
+    @Test
+    fun `end of work pauses when the last movement ends`() = runTest {
+        play(sonata, position = 0)
+        sleepTimer().startTimerAtEndOfWork()
+        runCurrent()
+
+        endTrack()
+        pauses() shouldBe 0
+        play(sonata, position = 1)
+        runCurrent()
+        endTrack()
+        pauses() shouldBe 0
+        play(sonata, position = 2)
+        runCurrent()
+        endTrack()
+        pauses() shouldBe 1
+    }
+
+    @Test
+    fun `end of work follows a queue that grows past the work`() = runTest {
+        play(sonata, position = 2)
+        sleepTimer().startTimerAtEndOfWork()
+        runCurrent()
+
+        play(sonata + testSong(9), position = 2)
+        runCurrent()
+        endTrack()
+        pauses() shouldBe 1
+    }
+
+    @Test
+    fun `end of work on a lone song pauses at its end`() = runTest {
+        play(listOf(testSong(9)), position = 0)
+        sleepTimer().startTimerAtEndOfWork()
+        runCurrent()
+
+        endTrack()
+        pauses() shouldBe 1
+    }
+
+    @Test
+    fun `a stopped end of work timer never pauses`() = runTest {
+        play(sonata, position = 2)
+        val sleepTimer = sleepTimer()
+        sleepTimer.startTimerAtEndOfWork()
+        runCurrent()
+
+        sleepTimer.stopTimer()
+        runCurrent()
+        endTrack()
+        pauses() shouldBe 0
+        sleepTimer.timeRemaining() shouldBe null
+    }
+
+    @Test
+    fun `end of work reports waiting while it runs and off after pausing`() = runTest {
+        play(sonata, position = 2)
+        val sleepTimer = sleepTimer()
+        sleepTimer.startTimerAtEndOfWork()
+        runCurrent()
+        sleepTimer.timeRemaining() shouldBe 0L
+
+        endTrack()
+        sleepTimer.timeRemaining() shouldBe null
     }
 }

@@ -139,6 +139,7 @@ class PlayerViewModel @AssistedInject constructor(
     /** Bumped when the sleep timer is started or stopped here. */
     private val sleepTimerChanges = MutableStateFlow(0)
     private val sleepTimerPlayToEnd = MutableStateFlow(readSleepTimerPlayToEnd())
+    private val sleepTimerAtEndOfWork = MutableStateFlow(false)
 
     private val events = PendingEvents<PlayerUiEvent>()
 
@@ -219,10 +220,10 @@ class PlayerViewModel @AssistedInject constructor(
             favouriteIds,
             seed,
             sleepTimerActive,
-            sleepTimerPlayToEnd,
+            combine(sleepTimerPlayToEnd, sleepTimerAtEndOfWork, ::Pair),
             observeSetting(replayGainModeSetting.setting()),
-        ) { favourites, seed, sleeping, playToEnd, replayGainMode ->
-            Extras(favourites, seed, sleeping, playToEnd, replayGainMode)
+        ) { favourites, seed, sleeping, (playToEnd, atEndOfWork), replayGainMode ->
+            Extras(favourites, seed, sleeping, playToEnd, atEndOfWork, replayGainMode)
         }
 
     private val player: Flow<PlayerUiState> =
@@ -235,6 +236,7 @@ class PlayerViewModel @AssistedInject constructor(
                 favourite = queue.currentItem?.song?.id?.let { it in extras.favouriteIds } ?: false,
                 sleepTimerActive = extras.sleepTimerActive,
                 sleepTimerPlayToEnd = extras.sleepTimerPlayToEnd,
+                sleepTimerAtEndOfWork = extras.sleepTimerAtEndOfWork,
                 castAvailable = castAvailable,
                 castDevice = playback.castDevice,
                 seed = extras.seed,
@@ -318,11 +320,19 @@ class PlayerViewModel @AssistedInject constructor(
     ) {
         controlSleepTimer(SleepTimerCommand.Start(durationMs, playToEnd))
         sleepTimerPlayToEnd.value = playToEnd
+        sleepTimerAtEndOfWork.value = false
+        sleepTimerChanges.value++
+    }
+
+    override fun startSleepTimerAtEndOfWork() {
+        controlSleepTimer(SleepTimerCommand.StartAtEndOfWork)
+        sleepTimerAtEndOfWork.value = true
         sleepTimerChanges.value++
     }
 
     override fun stopSleepTimer() {
         controlSleepTimer(SleepTimerCommand.Stop)
+        sleepTimerAtEndOfWork.value = false
         sleepTimerChanges.value++
     }
 
@@ -413,6 +423,7 @@ class PlayerViewModel @AssistedInject constructor(
         val seed: ArtworkSeed,
         val sleepTimerActive: Boolean,
         val sleepTimerPlayToEnd: Boolean,
+        val sleepTimerAtEndOfWork: Boolean,
         val replayGainMode: ReplayGainMode,
     )
 

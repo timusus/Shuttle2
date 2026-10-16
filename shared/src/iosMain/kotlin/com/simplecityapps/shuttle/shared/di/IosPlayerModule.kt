@@ -2,6 +2,7 @@ package com.simplecityapps.shuttle.shared.di
 
 import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
+import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.playback.settings.PlaybackSettings
 import com.simplecityapps.playback.sleeptimer.SleepTimer
 import com.simplecityapps.shuttle.di.AppCoroutineScope
@@ -37,6 +38,7 @@ object IosPlayerModule {
     @SingleIn(AppScope::class)
     fun provideSleepTimer(
         playbackOperations: PlaybackOperations,
+        queueOperations: QueueOperations,
         @AppCoroutineScope appCoroutineScope: CoroutineScope
-    ): SleepTimer = SleepTimer(playbackOperations, appCoroutineScope)
+    ): SleepTimer = SleepTimer(playbackOperations, queueOperations, appCoroutineScope)
 }

@@ -84,6 +84,7 @@ dependencies {
 
     // Testing
     testImplementation libs.junit
+    testImplementation(project(':android:presentation-testing'))
     testImplementation libs.kotest
     testImplementation(libs.mockk)
     testImplementation(libs.kotlinx.coroutinesTest)

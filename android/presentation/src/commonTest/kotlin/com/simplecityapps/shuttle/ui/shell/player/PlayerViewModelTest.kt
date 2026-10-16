@@ -124,7 +124,7 @@ class PlayerViewModelTest {
     private var entitlement: Entitlement = Entitlement.Pro(ProSource.Lifetime)
 
     private fun TestScope.viewModel(savedStateHandle: SavedStateHandle = SavedStateHandle()): PlayerViewModel {
-        val sleepTimer = SleepTimer(playbackOperations, backgroundScope, UnconfinedTestDispatcher(testScheduler)) { testScheduler.currentTime }
+        val sleepTimer = SleepTimer(playbackOperations, queueOperations, backgroundScope, UnconfinedTestDispatcher(testScheduler)) { testScheduler.currentTime }
         val mediaActions = TestMediaActions(songRepository = songRepository, playlistRepository = playlistRepository, queueOperations = queueOperations, playbackOperations = playbackOperations)
         mediaActions.entitlement.value = entitlement
         return PlayerViewModel(
@@ -778,6 +778,29 @@ class PlayerViewModelTest {
         viewModel.stopSleepTimer()
         viewModel.uiState.value.player.sleepTimerActive shouldBe false
         viewModel.sleepTimerRemaining().first() shouldBe null
+    }
+
+    @Test
+    fun `an end of work sleep timer shows as running and waiting until stopped`() = runTest {
+        val viewModel = viewModel()
+        val movements = listOf(
+            createSong(id = 1, name = "Allegro", albumArtist = "Ines Varga", album = "Sonatas").copy(genres = listOf("Classical"), work = "Sonata No. 3", movementNumber = 1),
+            createSong(id = 2, name = "Adagio", albumArtist = "Ines Varga", album = "Sonatas").copy(genres = listOf("Classical"), work = "Sonata No. 3", movementNumber = 2),
+        )
+        queueOperations.queueStateFlow.value = queueOf(movements, current = 0)
+
+        viewModel.startSleepTimerAtEndOfWork()
+        viewModel.uiState.value.player.sleepTimerActive shouldBe true
+        viewModel.uiState.value.player.sleepTimerAtEndOfWork shouldBe true
+        viewModel.sleepTimerRemaining().first() shouldBe 0
+
+        viewModel.startSleepTimer(durationMs = 5_000, playToEnd = false)
+        viewModel.uiState.value.player.sleepTimerAtEndOfWork shouldBe false
+
+        viewModel.startSleepTimerAtEndOfWork()
+        viewModel.stopSleepTimer()
+        viewModel.uiState.value.player.sleepTimerActive shouldBe false
+        viewModel.uiState.value.player.sleepTimerAtEndOfWork shouldBe false
     }
 
     @Test

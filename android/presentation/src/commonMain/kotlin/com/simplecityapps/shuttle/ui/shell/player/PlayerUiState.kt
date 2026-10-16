@@ -55,6 +55,7 @@ data class PlayerUiState(
     val favourite: Boolean = false,
     val sleepTimerActive: Boolean = false,
     val sleepTimerPlayToEnd: Boolean = false,
+    val sleepTimerAtEndOfWork: Boolean = false,
     val castAvailable: Boolean = false,
     /** The Cast device playback plays on, or null while it plays on this one. */
     val castDevice: CastDevice? = null,
@@ -146,6 +147,9 @@ interface PlayerActions {
         durationMs: Long,
         playToEnd: Boolean,
     )
+
+    /** Pauses when the last movement of the work playing ends. */
+    fun startSleepTimerAtEndOfWork()
 
     fun stopSleepTimer()
 

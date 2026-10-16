@@ -2,6 +2,8 @@
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <!-- Shown when the sleep timer has ended, but playback won't be paused until the current track ends -->
     <string name="sleep_timer_waiting_track_end">Waiting for track to end…</string>
+    <!-- Shown while the sleep timer waits for the last movement of the classical work now playing to end before pausing playback -->
+    <string name="sleep_timer_waiting_work_end">Waiting for work to end…</string>
     <!-- Sleep timer option to wait for a song to end before pausing playback -->
     <string name="sleep_timer_play_to_track_end">Play last song to end</string>
     <!-- Button to stop the sleep timer -->

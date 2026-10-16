@@ -237,6 +237,12 @@ class RecordingPlayerActions(
         state.value = state.value.copy(sleepTimerActive = true, sleepTimerPlayToEnd = playToEnd)
     }
 
+    override fun startSleepTimerAtEndOfWork() {
+        calls += "startSleepTimerAtEndOfWork"
+        sleepTimerRemaining.value = 0
+        state.value = state.value.copy(sleepTimerActive = true, sleepTimerAtEndOfWork = true)
+    }
+
     override fun stopSleepTimer() {
         calls += "stopSleepTimer"
         sleepTimerRemaining.value = null

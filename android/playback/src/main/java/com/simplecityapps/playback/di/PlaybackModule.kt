@@ -118,6 +118,7 @@ class PlaybackModule {
     @Provides
     fun provideSleepTimer(
         playbackOperations: PlaybackOperations,
+        queueOperations: QueueOperations,
         @AppCoroutineScope appCoroutineScope: CoroutineScope
-    ): SleepTimer = SleepTimer(playbackOperations, appCoroutineScope, elapsedRealtime = SystemClock::elapsedRealtime)
+    ): SleepTimer = SleepTimer(playbackOperations, queueOperations, appCoroutineScope, elapsedRealtime = SystemClock::elapsedRealtime)
 }

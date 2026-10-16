@@ -11,6 +11,9 @@ sealed interface SleepTimerCommand {
         val playToEnd: Boolean,
     ) : SleepTimerCommand
 
+    /** Pauses when the last movement of the work playing ends. */
+    data object StartAtEndOfWork : SleepTimerCommand
+
     data object Stop : SleepTimerCommand
 }
 
@@ -25,6 +28,8 @@ class ControlSleepTimer @Inject constructor(
                 preferenceManager.sleepTimerPlayToEnd = command.playToEnd
                 sleepTimer.startTimer(command.durationMs, command.playToEnd)
             }
+
+            SleepTimerCommand.StartAtEndOfWork -> sleepTimer.startTimerAtEndOfWork()
 
             SleepTimerCommand.Stop -> sleepTimer.stopTimer()
         }

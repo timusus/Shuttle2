@@ -53,6 +53,8 @@
     <string name="player_sleep_timer_extend">Add %1$s</string>
     <!-- The running sleep timer's countdown once its time is up and it waits for the song to finish -->
     <string name="player_sleep_timer_track_end">End of song</string>
+    <!-- Button that starts the sleep timer to pause after the last movement of the classical work now playing; shown only while a work plays -->
+    <string name="player_sleep_timer_work_end">End of work</string>
     <!-- Title of the playback speed slider in Playback & sound -->
     <string name="player_speed">Speed</string>
     <!-- Chip in Playback & sound that reveals a ruler for a speed between the preset chips -->

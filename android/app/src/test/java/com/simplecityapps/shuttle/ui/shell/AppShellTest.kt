@@ -918,6 +918,25 @@ class AppShellTest {
     }
 
     @Test
+    fun `End of work is not offered outside a work`() {
+        robot.setContent()
+        robot.tapMiniPlayer()
+        robot.tapPanelButton(NowPlayingPanel.SleepTimer)
+        robot.assertTextDisplayed("End of song")
+        robot.assertTextNotDisplayed("End of work")
+    }
+
+    @Test
+    fun `End of work starts a timer that waits for the work to end`() {
+        robot.setContent(queue = classicalShellQueue())
+        robot.tapMiniPlayer()
+        robot.tapPanelButton(NowPlayingPanel.SleepTimer)
+        robot.tapText("End of work")
+
+        robot.calls shouldContain "startSleepTimerAtEndOfWork"
+    }
+
+    @Test
     fun `a running sleep timer counts down in the bar until it stops`() {
         robot.actions.sleepTimerRemaining.value = 754_000
         robot.setContent(queue = shellQueue("First song").copy(sleepTimerActive = true))
