@@ -46,10 +46,10 @@ import com.simplecityapps.shuttle.designsystem.theme.rowTitle
 
 /**
  * The numeral ends where a track row's number slot does (16dp row inset + 40dp small artwork slot, from the screen
- * edge), and the name starts where a track title does (16dp after it), so the rail sits inside the slot.
+ * edge), and the name starts where a track title does (12dp after it), so the rail sits inside the slot.
  */
 private val NumeralColumn = 56.dp - (24.dp + 2.dp + S2Spacing.xsmall)
-private val TitleGap = S2Spacing.medium
+private val TitleGap = S2Spacing.smallMedium
 
 /**
  * A classical work on an album page: its [title], a [detail] line (key, catalogue, arrangement), an optional [credits]
