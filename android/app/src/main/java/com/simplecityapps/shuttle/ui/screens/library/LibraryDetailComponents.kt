@@ -74,6 +74,8 @@ fun LibraryDetailScaffold(
     heroArtwork: (@Composable (Modifier) -> Unit)? = null,
     eyebrow: String? = null,
     credits: String? = null,
+    onEyebrowClick: (() -> Unit)? = null,
+    eyebrowLabel: String? = null,
     listState: LazyListState = rememberLazyListState(),
     actions: @Composable RowScope.() -> Unit = {},
     header: @Composable () -> Unit = {},
@@ -119,6 +121,8 @@ fun LibraryDetailScaffold(
                         columnHeight = columnHeight,
                         eyebrow = eyebrow,
                         credits = credits,
+                        onEyebrowClick = onEyebrowClick,
+                        eyebrowLabel = eyebrowLabel,
                     )
                 }
             },

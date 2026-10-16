@@ -1,5 +1,6 @@
 package com.simplecityapps.shuttle.ui.screens.library
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
@@ -15,6 +16,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavKey
 import com.simplecityapps.shuttle.R
@@ -66,6 +70,7 @@ fun AlbumDetailScreen(
     onToggleWork: (firstSongId: Long) -> Unit = {},
     onWorkMore: (title: String, songs: List<Song>) -> Unit = { _, _ -> },
     onOtherRecordings: (firstSongId: Long) -> Unit = {},
+    onOpenComposer: (composer: String) -> Unit = {},
 ) {
     val album = uiState.album
     val state = when {
@@ -88,6 +93,8 @@ fun AlbumDetailScreen(
             title = album?.name ?: stringResource(com.simplecityapps.core.R.string.unknown),
             subtitle = album?.let { if (uiState.rows != null) albumSubtitle(it, performers = null, withArtist = false) else albumSubtitle(it, uiState.performers) },
             eyebrow = uiState.rows?.eyebrow,
+            onEyebrowClick = uiState.rows?.eyebrowComposer?.let { composer -> { onOpenComposer(composer) } },
+            eyebrowLabel = uiState.rows?.eyebrow?.let { stringResource(R.string.composer_open, it) },
             credits = uiState.rows?.credits,
             artwork = album,
             placeholder = ArtworkPlaceholder.Album,
@@ -102,7 +109,7 @@ fun AlbumDetailScreen(
         ) {
             val rows = uiState.rows
             if (rows != null) {
-                classicalRows(rows.rows, album, songs, onPlay, onPlayWork, onToggleWork, onWorkMore, onOtherRecordings, onSongMore)
+                classicalRows(rows.rows, album, songs, onPlay, onPlayWork, onToggleWork, onWorkMore, onOtherRecordings, onSongMore, onOpenComposer)
             } else {
                 val discs = songs.groupBy { it.disc ?: 1 }.toSortedMap()
                 discs.forEach { (disc, discSongs) ->
@@ -150,10 +157,22 @@ private fun LazyListScope.classicalRows(
     onWorkMore: (title: String, songs: List<Song>) -> Unit,
     onOtherRecordings: (firstSongId: Long) -> Unit,
     onSongMore: (Song) -> Unit,
+    onOpenComposer: (composer: String) -> Unit,
 ) {
     items(rows, key = { it.key }, contentType = { it::class }) { row ->
         when (row) {
-            is AlbumRow.ComposerHeading -> SectionHeader(title = row.name)
+            is AlbumRow.ComposerHeading -> {
+                val composer = row.composer
+                val label = stringResource(R.string.composer_open, row.name)
+                SectionHeader(
+                    title = row.name,
+                    modifier = if (composer == null) {
+                        Modifier
+                    } else {
+                        Modifier.clickable(role = Role.Button) { onOpenComposer(composer) }.semantics { contentDescription = label }
+                    },
+                )
+            }
 
             is AlbumRow.ActHeader -> SectionHeader(title = row.label, style = SectionHeaderStyle.Label)
 
@@ -279,6 +298,7 @@ fun AlbumDetailDestination(
                 actions.showActions(MediaActionsTarget(title, null, MediaSelection.Songs(songs), ArtworkPlaceholder.Album, extraActions = extraActions))
             },
             onOtherRecordings = { recordingsOf = it },
+            onOpenComposer = { composer -> onOpen(ComposerRoute(composer)) },
             onAlbumMore = { album -> actions.showActions(MediaActionsTarget(album.name.orEmpty(), album.friendlyArtistName, MediaSelection.Albums(album), ArtworkPlaceholder.Album)) },
             onSongMore = { song -> actions.showActions(MediaActionsTarget(song.name.orEmpty(), song.rowSubtitle, MediaSelection.Songs(song), ArtworkPlaceholder.Song)) },
             onOpenAlbum = { album -> onOpen(album.route) },

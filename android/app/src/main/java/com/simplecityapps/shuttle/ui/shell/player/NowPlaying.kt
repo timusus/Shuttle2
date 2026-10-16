@@ -36,6 +36,8 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -61,7 +63,7 @@ import com.simplecityapps.shuttle.designsystem.theme.S2TouchTarget
 import com.simplecityapps.shuttle.designsystem.theme.artworkRole
 import com.simplecityapps.shuttle.designsystem.theme.isLargeText
 import com.simplecityapps.shuttle.model.NowPlayingWork
-import com.simplecityapps.shuttle.ui.shell.AlbumRoute
+import com.simplecityapps.shuttle.ui.screens.library.ComposerRoute
 
 /** The name of the Cast device playback plays on, or null while it plays on this one. */
 @Composable
@@ -149,7 +151,7 @@ internal fun NowPlayingTitle(
         Column(Modifier.weight(1f)) {
             val work = player.work
             if (work != null && current != null) {
-                ClassicalTitle(work, onComposerClick = { onOpenRoute(current.song.albumGroupKey.let { AlbumRoute(it.key, it.albumArtistGroupKey?.key, it.identity) }) })
+                ClassicalTitle(work, onComposerClick = { current.song.composer?.let { onOpenRoute(ComposerRoute(it)) } })
             } else {
                 Text(text = current?.title.orEmpty(), style = titleStyle, maxLines = if (largeText) 2 else 1, overflow = TextOverflow.Ellipsis)
                 Text(
@@ -196,13 +198,17 @@ private fun ClassicalTitle(
 ) {
     val muted = MaterialTheme.colorScheme.onSurfaceVariant
     work.composer?.let { composer ->
+        val openComposer = stringResource(R.string.composer_open, composer)
         S2Text(
             text = composer.uppercase(),
             style = MaterialTheme.typography.labelLarge.copy(letterSpacing = ComposerLetterSpacing),
             color = MaterialTheme.colorScheme.primary,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.clickable(role = Role.Button, onClick = onComposerClick).padding(bottom = S2Spacing.xsmall),
+            modifier = Modifier
+                .clickable(role = Role.Button, onClick = onComposerClick)
+                .semantics { contentDescription = openComposer }
+                .padding(bottom = S2Spacing.xsmall),
         )
     }
     S2Text(text = work.work, style = MaterialTheme.typography.headlineMediumEmphasized, maxLines = 2, overflow = TextOverflow.Ellipsis)

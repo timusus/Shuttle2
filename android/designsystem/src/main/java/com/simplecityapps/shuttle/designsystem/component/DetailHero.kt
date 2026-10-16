@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.designsystem.component
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -23,6 +24,9 @@ import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -52,6 +56,8 @@ fun DetailHero(
     columnHeight: Dp = Dp.Unspecified,
     eyebrow: String? = null,
     credits: String? = null,
+    onEyebrowClick: (() -> Unit)? = null,
+    eyebrowLabel: String? = null,
 ) {
     val colors = MaterialTheme.colorScheme
     if (columnHeight != Dp.Unspecified) {
@@ -92,7 +98,12 @@ fun DetailHero(
             verticalArrangement = Arrangement.spacedBy(S2Spacing.xsmall),
         ) {
             if (eyebrow != null) {
-                Text(eyebrow.uppercase(), style = MaterialTheme.typography.labelLarge.copy(letterSpacing = 1.5.sp), color = colors.primary)
+                val tap = if (onEyebrowClick == null) {
+                    Modifier
+                } else {
+                    Modifier.clickable(role = Role.Button, onClick = onEyebrowClick).semantics { eyebrowLabel?.let { contentDescription = it } }
+                }
+                Text(eyebrow.uppercase(), style = MaterialTheme.typography.labelLarge.copy(letterSpacing = 1.5.sp), color = colors.primary, modifier = tap)
             }
             Text(title, style = MaterialTheme.typography.heroTitle, color = colors.onSurface)
             if (credits != null) {

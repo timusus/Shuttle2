@@ -25,7 +25,7 @@ sealed interface AlbumRow {
     val key: String
 
     /** Shown where the composer changes between works, as on a recital. */
-    data class ComposerHeading(val name: String, val firstSongId: Long) : AlbumRow {
+    data class ComposerHeading(val name: String, val firstSongId: Long, val composer: String? = null) : AlbumRow {
         override val key get() = "composer-$firstSongId"
     }
 
@@ -72,6 +72,8 @@ data class AlbumRows(
     /** The one composer of every song on the album, for the header's eyebrow; null on a recital or a mixed album. */
     val eyebrow: String?,
     val credits: String?,
+    /** The eyebrow composer's tag as written, which a composer page matches on (the eyebrow is only a surname). */
+    val eyebrowComposer: String? = null,
 )
 
 /**
@@ -116,7 +118,7 @@ fun buildAlbumRows(songs: List<Song>, albumArtist: String?, currentSongId: Long?
                 val block = item.block
                 val first = block.songs.first()
                 if (headings) {
-                    block.composerName()?.takeIf { it != lastComposer }?.let { rows += AlbumRow.ComposerHeading(it, first.id) }
+                    block.composerName()?.takeIf { it != lastComposer }?.let { rows += AlbumRow.ComposerHeading(it, first.id, block.songs.firstNotNullOfOrNull { s -> s.composerName() }?.name) }
                     lastComposer = block.composerName()
                 }
                 discDivider(first, beforeWork = true)
@@ -158,5 +160,6 @@ fun buildAlbumRows(songs: List<Song>, albumArtist: String?, currentSongId: Long?
     // Bonus tracks carry no composer tag, so they don't break "one composer"; the album artist being that composer doesn't hide it.
     val tagged = songs.mapNotNull { it.composerDisplayName() }
     val eyebrow = tagged.firstOrNull()?.takeIf { composer -> tagged.size >= 2 && !songs.isNonClassical() && tagged.all { it == composer } }
-    return AlbumRows(rows, eyebrow = eyebrow, credits = albumCreditsLine(songs))
+    val eyebrowComposer = eyebrow?.let { songs.firstNotNullOfOrNull { s -> s.composerName() }?.name }
+    return AlbumRows(rows, eyebrow = eyebrow, credits = albumCreditsLine(songs), eyebrowComposer = eyebrowComposer)
 }

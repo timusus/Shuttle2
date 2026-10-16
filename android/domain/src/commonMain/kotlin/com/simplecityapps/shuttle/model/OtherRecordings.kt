@@ -72,7 +72,7 @@ class FindOtherRecordings {
     }
 }
 
-private class WorkIdentity(work: String) {
+internal class WorkIdentity(work: String) {
     private val keys = catalogueSearchKeys(work).toSet()
     private val catalogue = parseWorkTitle(work).catalogue?.normalised()
     private val title = work.foldDiacritics().normalised()

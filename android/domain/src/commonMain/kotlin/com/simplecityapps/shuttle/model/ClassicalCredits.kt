@@ -70,7 +70,7 @@ private fun ComposerName.surname(): String? {
 }
 
 // The fullest "Forename Surname" the tags give, preferring the name over the sort tag.
-private fun ComposerName.fullName(): String {
+fun ComposerName.fullName(): String {
     val own = nameParts(name)
     if (own.forenames != null) return own.display()
     val fromSort = sort?.takeIf { it.contains(',') }?.let(::nameParts)?.takeIf { it.forenames != null }

@@ -142,6 +142,23 @@
         <item quantity="one">Other recordings (<xliff:g example="1" id="count">%1$d</xliff:g>)</item>
         <item quantity="other">Other recordings (<xliff:g example="3" id="count">%1$d</xliff:g>)</item>
     </plurals>
+    <!-- Composer page: a work's recording count, and the header's totals -->
+    <plurals name="composer_recordings">
+        <item quantity="one"><xliff:g example="1" id="count">%1$d</xliff:g> recording</item>
+        <item quantity="other"><xliff:g example="3" id="count">%1$d</xliff:g> recordings</item>
+    </plurals>
+    <plurals name="composer_works">
+        <item quantity="one"><xliff:g example="1" id="count">%1$d</xliff:g> work</item>
+        <item quantity="other"><xliff:g example="4" id="count">%1$d</xliff:g> works</item>
+    </plurals>
+    <plurals name="composer_albums">
+        <item quantity="one"><xliff:g example="1" id="count">%1$d</xliff:g> album</item>
+        <item quantity="other"><xliff:g example="3" id="count">%1$d</xliff:g> albums</item>
+    </plurals>
+    <string name="composer_works_header">Works</string>
+    <string name="composer_albums_header">Albums</string>
+    <!-- Accessibility label for a composer's name that opens their page -->
+    <string name="composer_open">Open composer <xliff:g example="Beethoven" id="composer">%1$s</xliff:g></string>
     <!-- Other recordings list: an album's line under its title, the lead performer then the release year, such as "Ines Varga · 1998" -->
     <string name="album_detail_other_recording_credit"><xliff:g example="Ines Varga" id="performer">%1$s</xliff:g> · <xliff:g example="1998" id="year">%2$s</xliff:g></string>
     <!-- Detail screen action: shuffle the artist's albums in album order -->

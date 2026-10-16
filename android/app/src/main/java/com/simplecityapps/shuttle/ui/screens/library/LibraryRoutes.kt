@@ -26,6 +26,12 @@ data class GenreRoute(
     val genreName: String,
 ) : NavKey
 
+/** [composer] is the tag as written, which the page matches on like work grouping does. */
+@Serializable
+data class ComposerRoute(
+    val composer: String,
+) : NavKey
+
 @Serializable
 data class PlaylistRoute(
     val playlistId: Long,
