@@ -105,6 +105,6 @@
     ]
   },
   "worktree": {
-    "baseRef": "head"
+    "baseRef": "fresh"
   }
 }
