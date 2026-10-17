@@ -43,8 +43,8 @@ struct ContentView: View {
             .observingDownloadBadges(services.graph.offlineDownloads)
             .nowPlayingPresentation(isPresented: $showNowPlaying, tier: tier) {
                 // Go to Album/Artist closes Now Playing and pushes onto the selected root.
-                NowPlayingView(onOpen: { route in navigator.open(route) })
-                    .playerArtworkTint()
+                NowPlayingView(binding: services.playerBinding, onOpen: { route in navigator.open(route) })
+                    .playerArtworkTint(services.playerBinding)
                     .environment(\.nowPlayingNamespace, nowPlayingNamespace)
                     .serverSignOutAlert(navigator: navigator)
             }

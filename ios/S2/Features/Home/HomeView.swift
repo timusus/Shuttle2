@@ -32,17 +32,17 @@ struct HomeView: View {
                 state: state,
                 importStatus: ImportStatus(importState),
                 onShuffleAll: {
-                    if let action = models.home.shuffleAll() { models.actions.send(action) }
-                },
+                    if let action = models.home.shuffleAll() { models.actions.send(action, intent: services.playIntent) }
+    },
                 onPlaySection: { models.home.playSection(id: $0) },
                 onOpen: { item in navigator.open(Self.route(item)) },
-                onAction: { models.actions.send($0) },
+                onAction: { models.actions.send($0, intent: services.playIntent) },
                 pendingPlayKey: intent.loadingKey,
-                onPlay: { item, action in models.actions.send(action, key: item.key) }
+                onPlay: { item, action in models.actions.send(action, key: item.key, intent: services.playIntent) }
             )
             .mediaActionResults(actions.events, handled: { models.actions.onEventHandled(id: $0) })
             .consumeEvents((state as? HomeUiStateContent)?.events ?? [], handled: { models.home.onEventHandled(id: $0) }) { event in
-                if let shelf = event as? HomeEventPlayShelf { models.actions.send(shelf.action) }
+                if let shelf = event as? HomeEventPlayShelf { models.actions.send(shelf.action, intent: services.playIntent) }
             }
             .warmsUpSearch(once: !(state is HomeUiStateLoading))
         }

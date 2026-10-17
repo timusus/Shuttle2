@@ -30,29 +30,29 @@ struct AlbumDetailView: View {
                 state: state,
                 isPlaying: services.playerBinding.isPlaying,
                 onPlay: { index in
-                    models.actions.send(MediaActionPlay(selection: MediaSelectionSongs(songs: state.songs), position: Int32(index), context: state.playContext))
+                    models.actions.send(MediaActionPlay(selection: MediaSelectionSongs(songs: state.songs), position: Int32(index), context: state.playContext), intent: services.playIntent)
                 },
                 onShuffle: {
-                    models.actions.send(MediaActionShuffle(selection: MediaSelectionSongs(songs: state.songs), context: state.playContext))
+                    models.actions.send(MediaActionShuffle(selection: MediaSelectionSongs(songs: state.songs), context: state.playContext), intent: services.playIntent)
                 },
                 onPlayNext: { songs in
-                    models.actions.send(MediaActionPlayNext(selection: MediaSelectionSongs(songs: songs)))
+                    models.actions.send(MediaActionPlayNext(selection: MediaSelectionSongs(songs: songs)), intent: services.playIntent)
                 },
                 onAddToQueue: { songs in
-                    models.actions.send(MediaActionAddToQueue(selection: MediaSelectionSongs(songs: songs)))
+                    models.actions.send(MediaActionAddToQueue(selection: MediaSelectionSongs(songs: songs)), intent: services.playIntent)
                 },
-                onPlayAlbumNext: { models.actions.send(MediaActionPlayNext(selection: MediaSelectionAlbums(album: $0))) },
-                onAddAlbumToQueue: { models.actions.send(MediaActionAddToQueue(selection: MediaSelectionAlbums(album: $0))) },
+                onPlayAlbumNext: { models.actions.send(MediaActionPlayNext(selection: MediaSelectionAlbums(album: $0)), intent: services.playIntent) },
+                onAddAlbumToQueue: { models.actions.send(MediaActionAddToQueue(selection: MediaSelectionAlbums(album: $0)), intent: services.playIntent) },
                 onGoToArtist: state.album.flatMap(AlbumArtistLink.init).map { link in
                     { navigator.openAsserting(link.route) }
                 },
                 onAlbumTap: { navigator.openAsserting(.album($0)) },
                 albumActions: DetailAlbumActions(
-                    onPlay: { models.actions.send(MediaActionPlay(selection: MediaSelectionAlbums(album: $0), position: 0)) },
-                    onPlayNext: { models.actions.send(MediaActionPlayNext(selection: MediaSelectionAlbums(album: $0))) },
-                    onAddToQueue: { models.actions.send(MediaActionAddToQueue(selection: MediaSelectionAlbums(album: $0))) }
+                    onPlay: { models.actions.send(MediaActionPlay(selection: MediaSelectionAlbums(album: $0), position: 0), intent: services.playIntent) },
+                    onPlayNext: { models.actions.send(MediaActionPlayNext(selection: MediaSelectionAlbums(album: $0)), intent: services.playIntent) },
+                    onAddToQueue: { models.actions.send(MediaActionAddToQueue(selection: MediaSelectionAlbums(album: $0)), intent: services.playIntent) }
                 ),
-                downloads: DetailDownloads(actions: models.actions, downloads: services.graph.offlineDownloads)
+                downloads: DetailDownloads(actions: models.actions, intent: services.playIntent, downloads: services.graph.offlineDownloads)
             )
             .mediaActionResults(actions.events, handled: { models.actions.onEventHandled(id: $0) })
         }

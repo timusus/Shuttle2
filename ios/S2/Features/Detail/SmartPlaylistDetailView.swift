@@ -19,23 +19,23 @@ struct SmartPlaylistDetailView: View {
                 state: state,
                 isPlaying: services.playerBinding.isPlaying,
                 onPlay: { index in
-                    models.actions.send(MediaActionPlay(selection: MediaSelectionSongs(songs: state.songs), position: Int32(index), context: state.playContext))
+                    models.actions.send(MediaActionPlay(selection: MediaSelectionSongs(songs: state.songs), position: Int32(index), context: state.playContext), intent: services.playIntent)
                 },
                 onShuffle: {
-                    models.actions.send(MediaActionShuffle(selection: MediaSelectionSongs(songs: state.songs), context: state.playContext))
+                    models.actions.send(MediaActionShuffle(selection: MediaSelectionSongs(songs: state.songs), context: state.playContext), intent: services.playIntent)
                 },
                 onPlayNext: { song in
-                    models.actions.send(MediaActionPlayNext(selection: MediaSelectionSongs(song: song)))
+                    models.actions.send(MediaActionPlayNext(selection: MediaSelectionSongs(song: song)), intent: services.playIntent)
                 },
                 onAddToQueue: { song in
-                    models.actions.send(MediaActionAddToQueue(selection: MediaSelectionSongs(song: song)))
+                    models.actions.send(MediaActionAddToQueue(selection: MediaSelectionSongs(song: song)), intent: services.playIntent)
                 },
                 onExclude: { song in
-                    models.actions.send(MediaActionExclude(selection: MediaSelectionSongs(song: song)))
+                    models.actions.send(MediaActionExclude(selection: MediaSelectionSongs(song: song)), intent: services.playIntent)
                 },
-                downloads: DetailDownloads(actions: models.actions, downloads: services.graph.offlineDownloads)
+                downloads: DetailDownloads(actions: models.actions, intent: services.playIntent, downloads: services.graph.offlineDownloads)
             )
-            .mediaActionResults(actions.events, handled: { models.actions.onEventHandled(id: $0) }, send: { models.actions.send($0) })
+            .mediaActionResults(actions.events, handled: { models.actions.onEventHandled(id: $0) }, send: { models.actions.send($0, intent: services.playIntent) })
         }
     }
 }

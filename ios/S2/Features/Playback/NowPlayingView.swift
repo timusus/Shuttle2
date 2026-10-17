@@ -21,10 +21,9 @@ struct NowPlayingView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var notice: PlayerNotice?
 
-    /// `binding` defaults to the same `PlayerBinding` `MiniPlayerView` uses (`AppGraph.dependencies.playerBinding`),
-    /// so the two always show the same state. `onOpen` gets the route a song action opens, once Now Playing has
-    /// been asked to close.
-    init(binding: PlayerBinding = AppGraph.dependencies.playerBinding, onOpen: @escaping (Route) -> Void = { _ in }) {
+    /// `binding` is the same `PlayerBinding` `MiniPlayerView` uses, so the two always show the same state. `onOpen`
+    /// gets the route a song action opens, once Now Playing has been asked to close.
+    init(binding: PlayerBinding, onOpen: @escaping (Route) -> Void = { _ in }) {
         self.binding = binding
         self.onOpen = onOpen
     }

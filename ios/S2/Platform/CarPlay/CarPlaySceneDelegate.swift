@@ -585,7 +585,7 @@ final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegat
     }
 
     private func play(_ action: any MediaAction, key: String? = nil) {
-        actions?.send(action, key: key)
+        actions?.send(action, key: key, intent: AppGraph.dependencies.playIntent)
         showNowPlaying()
     }
 

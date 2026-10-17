@@ -93,10 +93,12 @@ private struct OptionalMiniPlayerInset: ViewModifier {
     let showNowPlaying: Binding<Bool>
     let isEnabled: Bool
 
+    @Environment(\.appServices) private var appServices
+
     @ViewBuilder
     func body(content: Content) -> some View {
         if isEnabled {
-            content.miniPlayerInset(showNowPlaying: showNowPlaying)
+            content.miniPlayerInset(showNowPlaying: showNowPlaying, binding: appServices.required.playerBinding)
         } else {
             content
         }

@@ -22,14 +22,14 @@ struct DownloadsView: View {
                     // One that failed in an earlier launch has its song loaded from the library again first
                     Task {
                         guard let song = try? await downloads.loadRequestedSong(path: path) else { return }
-                        models.actions.send(MediaActionDownload(selection: MediaSelectionSongs(songs: [song])))
+                        models.actions.send(MediaActionDownload(selection: MediaSelectionSongs(songs: [song])), intent: services.playIntent)
                     }
                 },
                 onDismiss: { downloads.dismissFailed(path: $0) },
                 onRemoveAll: { downloads.removeEverything() },
                 canRetry: { downloads.canRetry(path: $0) }
             )
-            .mediaActionResults(actions.events, handled: { models.actions.onEventHandled(id: $0) }, send: { models.actions.send($0) })
+            .mediaActionResults(actions.events, handled: { models.actions.onEventHandled(id: $0) }, send: { models.actions.send($0, intent: services.playIntent) })
         }
     }
 }

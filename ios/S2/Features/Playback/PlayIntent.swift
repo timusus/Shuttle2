@@ -246,12 +246,11 @@ extension MediaActionsViewModel {
     /// Dispatches `action`. One that plays (`PlayIntent.plays`) is the listener's intent from this call, until the
     /// player takes it up (`PlayIntent.begin`); `key` names what it plays, for a spinner on that item.
     @MainActor
-    func send(_ action: any MediaAction, key: String? = nil, intent: PlayIntent? = nil) {
+    func send(_ action: any MediaAction, key: String? = nil, intent: PlayIntent) {
         guard PlayIntent.plays(action) else {
             dispatch(action: action)
             return
         }
-        let intent = intent ?? AppGraph.dependencies.playIntent
         let ticket = intent.begin(key: key)
         // Kotlin hands the result back on the main thread.
         dispatch(action: action) { result in

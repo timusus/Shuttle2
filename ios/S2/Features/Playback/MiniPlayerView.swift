@@ -20,13 +20,12 @@ struct MiniPlayerView: View {
     let placement: MiniPlayerPlacement
     @Binding var showNowPlaying: Bool
 
-    /// `binding` defaults to the app's single `PlayerBinding`, built once in `IosAppDependencies`: a view
-    /// struct like this one is re-initialised on every parent body, so a fresh binding per init
-    /// would restart its flows every time (`.claude/rules/ios.md`).
+    /// `binding` is the app's single `PlayerBinding` (`AppServices.playerBinding`): a view struct like this one is
+    /// re-initialised on every parent body, so a fresh binding per init would restart its flows every time.
     init(
         showNowPlaying: Binding<Bool>,
         placement: MiniPlayerPlacement = .inset,
-        binding: PlayerBinding = AppGraph.dependencies.playerBinding
+        binding: PlayerBinding
     ) {
         self.binding = binding
         self.placement = placement
@@ -84,7 +83,7 @@ extension View {
     /// Provides the playing song's artwork tint (`\.artworkTint`) to the player surfaces: the mini player and Now
     /// Playing. Scoped to them rather than set above the whole shell, so a library placeholder isn't recoloured by
     /// whatever happens to be playing.
-    func playerArtworkTint(_ binding: PlayerBinding = AppGraph.dependencies.playerBinding) -> some View {
+    func playerArtworkTint(_ binding: PlayerBinding) -> some View {
         modifier(PlayerArtworkTintModifier(binding: binding))
     }
 }
@@ -353,7 +352,7 @@ extension View {
     /// player (`\.miniPlayerInAccessory`), the inset is empty.
     func miniPlayerInset(
         showNowPlaying: Binding<Bool>,
-        binding: PlayerBinding = AppGraph.dependencies.playerBinding
+        binding: PlayerBinding
     ) -> some View {
         modifier(MiniPlayerInsetModifier(showNowPlaying: showNowPlaying, binding: binding))
     }
@@ -404,7 +403,7 @@ private struct MiniPlayerInsetModifier: ViewModifier {
 @available(iOS 26.1, *)
 struct MiniPlayerAccessoryModifier: ViewModifier {
     @Binding var showNowPlaying: Bool
-    var binding: PlayerBinding = AppGraph.dependencies.playerBinding
+    let binding: PlayerBinding
 
     // The system animates the accessory in and out itself; an `.animation` here would animate the whole tab view.
     func body(content: Content) -> some View {

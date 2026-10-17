@@ -32,11 +32,11 @@ struct DetailDownloads {
 }
 
 extension DetailDownloads {
-    /// Reads the graph's downloads and sends the actions through `actions`. Its screen observes
+    /// Reads the graph's downloads and sends the actions through `actions`, with `intent`. Its screen observes
     /// `OfflineDownloads.downloads`, so it's redrawn, and the summary read again, as a download moves on.
     @MainActor
-    init(actions: MediaActionsViewModel, downloads: OfflineDownloads) {
-        self.init(downloads: downloads, send: { actions.send($0) })
+    init(actions: MediaActionsViewModel, intent: PlayIntent, downloads: OfflineDownloads) {
+        self.init(downloads: downloads, send: { actions.send($0, intent: intent) })
     }
 
     /// The same, sending the actions through `send`, for a screen that has no `MediaActionsViewModel` of its own (Search).
