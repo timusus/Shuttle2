@@ -5,7 +5,7 @@ import Shared
 ///
 /// Adapted from Shuttle Podcasts' `ViewModelCache`. There, Metro hands out a new view model on every
 /// graph access, and a SwiftUI view struct is re-initialised whenever its parent's body runs, so a view
-/// that stored `AppGraph.shared.xViewModel` replaced its view model (and every flow `Observing` was keyed
+/// that stored `graph.xViewModel` replaced its view model (and every flow `Observing` was keyed
 /// on) on each re-init. Screen view models therefore come from this cache, keyed by screen and argument.
 protocol ClearableViewModel: AnyObject {
     func clear()

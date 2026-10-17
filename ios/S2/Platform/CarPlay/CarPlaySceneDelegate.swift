@@ -92,9 +92,9 @@ final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegat
         interfaceController.delegate = self
         // The car can launch the app on its own, with no phone scene; S2App.init has built the graph by then, but
         // building it here too costs nothing (it's idempotent) and a CarPlay-only launch never sees an empty graph.
-        AppGraph.initialize()
-        dependencies = AppGraph.dependencies
-        let locked = AppGraph.shared.carPlayAccess.locked
+        let built = AppGraph.initialize()
+        dependencies = built
+        let locked = built.graph.carPlayAccess.locked
         showAccess(locked: locked.value.boolValue)
         accessTask?.cancel()
         accessTask = Task { [weak self] in

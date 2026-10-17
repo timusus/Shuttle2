@@ -3,31 +3,19 @@ import S2Playback
 import Shared
 import SwiftUI
 
-/// Central access point for the Kotlin dependency graph (the Metro `IosAppGraph` in :shared's iosMain) and
-/// the platform objects it runs on, built once by `initialize()` at launch (as in Shuttle Podcasts).
+/// Builds the Kotlin dependency graph (the Metro `IosAppGraph` in :shared's iosMain) and the platform objects it
+/// runs on, once at launch. The launch roots take the result from `initialize()` and pass it on.
 enum AppGraph {
-    private static var _dependencies: IosAppDependencies?
-
-    /// Everything the app built at launch. Crashes if read before `initialize()`.
-    static var dependencies: IosAppDependencies {
-        guard let dependencies = _dependencies else {
-            fatalError("AppGraph.initialize() must be called before AppGraph is used")
-        }
-        return dependencies
-    }
-
-    /// The Kotlin graph.
-    static var shared: IosAppGraph {
-        dependencies.graph
-    }
+    private static var built: IosAppDependencies?
 
     /// Builds the graph, applies the crash reporting choice before anything else runs, then starts the playback system,
-    /// the recording of plays, their reporting to the server and their scrobbling to Last.fm. Call once, from
-    /// `S2App.init`. Analytics waits for the first frame (`startAfterFirstFrame()`) and the search index for the first
-    /// content (`SearchWarmUp`), so neither holds up the launch.
+    /// the recording of plays, their reporting to the server and their scrobbling to Last.fm. Idempotent: later calls
+    /// return the first call's dependencies. Analytics waits for the first frame (`startAfterFirstFrame()`) and the
+    /// search index for the first content (`SearchWarmUp`), so neither holds up the launch.
     @MainActor
-    static func initialize() {
-        guard _dependencies == nil else { return }
+    @discardableResult
+    static func initialize() -> IosAppDependencies {
+        if let built { return built }
         OsLogLoggerKt.installNativeLogging(sink: Self.kotlinLogSink)
         // Each step's time goes to the Startup log (`StartupTrace`, docs/performance/ios-startup.md)
         let dependencies = StartupTrace.step("dependencies") { IosAppDependencies() }
@@ -54,7 +42,8 @@ enum AppGraph {
         // Siri, Shortcuts, widgets and controls run their intents through the app (#758)
         IntentPerformers.playback = dependencies.intentPerformer
         IntentPerformers.library = dependencies.intentPerformer
-        _dependencies = dependencies
+        built = dependencies
+        return dependencies
     }
 
     private static let kotlinLogSink = KotlinLogSink()
@@ -66,7 +55,8 @@ enum AppGraph {
     static func startAfterFirstFrame() {
         guard !startedAfterFirstFrame else { return }
         startedAfterFirstFrame = true
-        StartupTrace.step("analyticsStartup") { shared.telemetryStartup.startAnalytics() }
+        guard let built else { return }
+        StartupTrace.step("analyticsStartup") { built.graph.telemetryStartup.startAnalytics() }
     }
 }
 
