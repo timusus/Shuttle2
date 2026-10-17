@@ -135,6 +135,7 @@
 		A5FC469E9A6B7236B4187BA6 /* SearchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 158B1F52DF06F29C91362AA1 /* SearchView.swift */; };
 		A63A662503830912A4762A65 /* EmptyState.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7647069B7F0DC85EE4B35DB /* EmptyState.swift */; };
 		A7677505BD6ABB9546620C0D /* Route.swift in Sources */ = {isa = PBXBuildFile; fileRef = 102211043771B638F9DEBB28 /* Route.swift */; };
+		AC22037D6AE51277EEAB4650 /* AppServices.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FDCC446E9B1DF249DE5EBCF /* AppServices.swift */; };
 		ACCCD2E8586E770E2C07D096 /* AlbumDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26298475CFBDD52FD92166E6 /* AlbumDetailView.swift */; };
 		ACDB6D9649523BDFD87FE392 /* BackgroundRefresh.swift in Sources */ = {isa = PBXBuildFile; fileRef = 556730A5C2CEEAB7679BA948 /* BackgroundRefresh.swift */; };
 		AD30CBCBD32BA3F24F6B355E /* CombineFlowBridgeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E1633C34A912D4852F34CC2 /* CombineFlowBridgeTests.swift */; };
@@ -260,6 +261,7 @@
 		0E8D9DB18D7662E94052AB35 /* ProSettingsSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProSettingsSection.swift; sourceTree = "<group>"; };
 		0F7B25219533CE12C48913F7 /* SearchPerformanceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchPerformanceTests.swift; sourceTree = "<group>"; };
 		0F9E1D8D3A0A6B81450ACB9D /* S2Widgets.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = S2Widgets.entitlements; sourceTree = "<group>"; };
+		0FDCC446E9B1DF249DE5EBCF /* AppServices.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppServices.swift; sourceTree = "<group>"; };
 		102211043771B638F9DEBB28 /* Route.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Route.swift; sourceTree = "<group>"; };
 		104B0330AE77C6FD6B180FC7 /* PlaylistDetailTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaylistDetailTests.swift; sourceTree = "<group>"; };
 		10A6ADEACA55D27E692A2C22 /* NavigatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavigatorTests.swift; sourceTree = "<group>"; };
@@ -950,6 +952,7 @@
 			isa = PBXGroup;
 			children = (
 				7E5961F296B2738309AF66BC /* AppGraph.swift */,
+				0FDCC446E9B1DF249DE5EBCF /* AppServices.swift */,
 				071E70571E51743974A5AC4F /* CombineFlowBridge.swift */,
 				7D100B2699FDBBA93E472ED3 /* ConsumeEvents.swift */,
 				93A7435F3E54B803C6E2C542 /* KotlinServerConnectionPolicy.swift */,
@@ -1143,6 +1146,7 @@
 				DE3C1474FB4F0D0A5163FCC8 /* AlbumSectionHeader.swift in Sources */,
 				85CD36E6527CD8C02C94C68E /* AppGraph.swift in Sources */,
 				BF51CC3EE780B523F4F14FA6 /* AppIntentPerformer.swift in Sources */,
+				AC22037D6AE51277EEAB4650 /* AppServices.swift in Sources */,
 				624E2C6798581CD66B607606 /* ArtworkBackground.swift in Sources */,
 				FC765588CFC3B367E0D2CFB0 /* ArtworkColorExtractor.swift in Sources */,
 				73304BDD0F5F554C34287560 /* ArtworkImage.swift in Sources */,

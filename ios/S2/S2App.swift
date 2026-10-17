@@ -21,6 +21,7 @@ struct S2App: App {
     var body: some Scene {
         WindowGroup {
             ContentView(startTab: startTab)
+                .environment(\.appServices, AppGraph.dependencies.services)
                 .tint(.s2Accent)
                 .task {
                     StartupTrace.step("libraryImportAtLaunch") { LibraryImport.atLaunch() }

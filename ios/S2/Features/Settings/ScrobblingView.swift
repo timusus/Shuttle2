@@ -5,8 +5,11 @@ import SwiftUI
 /// row (`Route.scrobbling`). Sign-in opens last.fm in the browser; coming back to the app finishes it, and the "I've
 /// approved it" button is there for when that didn't happen on its own.
 struct ScrobblingView: View {
+    @Environment(\.appServices) private var appServices
+    private var services: AppServices { appServices.required }
+
     var body: some View {
-        let viewModel = ViewModelCache.shared.viewModel(Route.scrobbling.cacheKey) { AppGraph.shared.scrobblingViewModel }
+        let viewModel = services.viewModels.viewModel(Route.scrobbling.cacheKey) { services.graph.scrobblingViewModel }
         Observing(viewModel.uiState) { state in
             ScrobblingContent(
                 state: ScrobblingState(state),

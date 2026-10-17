@@ -14,10 +14,12 @@ struct SettingsView: View {
     var cacheKey = Navigator.settingsCacheKey
     var destinations: Set<SettingsDestination>?
     var title = String(localized: "settings_title", table: "Settings")
+    @Environment(\.appServices) private var appServices
+    private var services: AppServices { appServices.required }
 
     var body: some View {
-        let viewModel = ViewModelCache.shared.viewModel(cacheKey) { AppGraph.shared.settingsViewModel }
-        let catalog = AppGraph.shared.settingsCatalog
+        let viewModel = services.viewModels.viewModel(cacheKey) { services.graph.settingsViewModel }
+        let catalog = services.graph.settingsCatalog
         Observing(viewModel.uiState) { state in
             SettingsEventsHost(events: state.events, handled: { viewModel.onEventHandled(id: $0) }) { rescanStarted in
                 SettingsContent(

@@ -116,6 +116,12 @@ final class IosAppDependencies {
     /// Tells Siri about the library: its size, and the artists and playlists to listen for.
     let siriContext: SiriLibraryContext
 
+    /// What views read from the environment; shares `ViewModelCache.shared` with `Navigator`.
+    lazy var services = AppServices(
+        graph: graph, viewModels: .shared, playerBinding: playerBinding, playIntent: playIntent,
+        storeKit: storeKit, localLibrary: localLibrary
+    )
+
     init() {
         // The player opens items through the graph, which is built over the player: the closure reads it once it's there.
         var builtGraph: IosAppGraph!

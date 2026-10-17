@@ -12,6 +12,8 @@ struct ContentView: View {
     /// Shared by the mini player's cover and Now Playing's, so opening the player grows one into the other.
     @Namespace private var nowPlayingNamespace
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @Environment(\.appServices) private var appServices
+    private var services: AppServices { appServices.required }
     /// Measured here, never read from `UIScreen`: Split View and Stage Manager resize the window
     /// without touching the screen.
     @State private var containerSize: CGSize = .zero
@@ -32,13 +34,13 @@ struct ContentView: View {
     var body: some View {
         let _ = StartupTrace.mark("contentViewBody")
         let tier = LayoutTier.resolve(horizontalSizeClass: horizontalSizeClass, containerWidth: containerSize.width)
-        AppShell(tier: tier, navigator: navigator, showNowPlaying: $showNowPlaying)
+        AppShell(tier: tier, navigator: navigator, showNowPlaying: $showNowPlaying, playerBinding: services.playerBinding)
             .environment(\.layoutTier, tier)
             .environment(\.rootContainerSize, containerSize)
             .environment(\.nowPlayingNamespace, nowPlayingNamespace)
             // For screens that push without a `NavigationLink`, such as Sources after its type picker closes.
             .environment(navigator)
-            .observingDownloadBadges(AppGraph.shared.offlineDownloads)
+            .observingDownloadBadges(services.graph.offlineDownloads)
             .nowPlayingPresentation(isPresented: $showNowPlaying, tier: tier) {
                 // Go to Album/Artist closes Now Playing and pushes onto the selected root.
                 NowPlayingView(onOpen: { route in navigator.open(route) })
@@ -110,7 +112,7 @@ struct AppShell: View {
         container: ShellContainer? = nil,
         navigator: Navigator,
         showNowPlaying: Binding<Bool>,
-        playerBinding: PlayerBinding = AppGraph.dependencies.playerBinding
+        playerBinding: PlayerBinding
     ) {
         self.tier = tier
         self.container = container ?? .resolve(for: tier)

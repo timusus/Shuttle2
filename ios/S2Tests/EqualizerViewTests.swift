@@ -78,6 +78,11 @@ struct EqualizerViewTests {
         #expect(moved?.1 == 6)
     }
 
+    @Test func theScreenReadsItsViewModelFromTheEnvironmentServices() throws {
+        let sut = EqualizerView().environment(\.appServices, makeTestServices())
+        _ = try sut.inspect().find(EqualizerContent.self)
+    }
+
     @Test func movingThePreampReportsIt() throws {
         var preamp: Float?
         let sut = EqualizerContent(state: state(), onPreampChange: { preamp = $0 })

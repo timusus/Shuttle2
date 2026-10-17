@@ -5,10 +5,13 @@ import SwiftUI
 /// or failed, with Retry. Reads `OfflineDownloads` (docs/architecture/downloads.md); the files are the record, so the
 /// size is the files' own.
 struct DownloadsView: View {
+    @Environment(\.appServices) private var appServices
+    private var services: AppServices { appServices.required }
+
     var body: some View {
-        let downloads = AppGraph.shared.offlineDownloads
-        let models = ViewModelCache.shared.viewModel(Route.downloads.cacheKey) {
-            DownloadsModels(graph: AppGraph.shared)
+        let downloads = services.graph.offlineDownloads
+        let models = services.viewModels.viewModel(Route.downloads.cacheKey) {
+            DownloadsModels(graph: services.graph)
         }
         Observing(downloads.downloads, models.actions.uiState) { current, actions in
             DownloadsStorage(

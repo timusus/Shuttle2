@@ -5,8 +5,11 @@ import SwiftUI
 /// (`Route.equalizer`). Each change plays straight away through `IosEqualizer`, which designs the bands at the engine's
 /// fixed 48 kHz and hands their coefficients to the engine.
 struct EqualizerView: View {
+    @Environment(\.appServices) private var appServices
+    private var services: AppServices { appServices.required }
+
     var body: some View {
-        let viewModel = ViewModelCache.shared.viewModel(Route.equalizer.cacheKey) { AppGraph.shared.equalizerViewModel }
+        let viewModel = services.viewModels.viewModel(Route.equalizer.cacheKey) { services.graph.equalizerViewModel }
         Observing(viewModel.uiState) { state in
             EqualizerContent(
                 state: EqualizerState(state),

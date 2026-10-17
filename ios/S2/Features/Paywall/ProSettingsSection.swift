@@ -4,9 +4,12 @@ import SwiftUI
 /// Settings' Shuttle Music Pro section: the user's standing, which opens the paywall, and Restore Purchases. Debug
 /// builds add the entitlement override.
 struct ProSettingsSection: View {
+    @Environment(\.appServices) private var appServices
+    private var services: AppServices { appServices.required }
+
     var body: some View {
-        Observing(AppGraph.shared.storeEntitlements.entitlement) { entitlement in
-            ProSettingsRows(store: AppGraph.dependencies.storeKit, status: ProStatus(entitlement))
+        Observing(services.graph.storeEntitlements.entitlement) { entitlement in
+            ProSettingsRows(store: services.storeKit, status: ProStatus(entitlement))
         }
     }
 }
@@ -66,6 +69,7 @@ enum DebugEntitlement {
 #if DEBUG
 private struct DebugEntitlementPicker: View {
     @AppStorage(DebugEntitlement.defaultsKey) private var override = "None"
+    @Environment(\.appServices) private var appServices
 
     var body: some View {
         Picker("Debug entitlement", selection: $override) {
@@ -74,7 +78,7 @@ private struct DebugEntitlementPicker: View {
             }
         }
         .onChange(of: override) { _, name in
-            AppGraph.shared.storeEntitlements.setDebugOverrideNamed(name: name)
+            appServices.required.graph.storeEntitlements.setDebugOverrideNamed(name: name)
         }
         .accessibilityIdentifier("settings.debugEntitlement")
     }

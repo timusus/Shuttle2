@@ -52,6 +52,21 @@ func makeTestGraph(audioPlayer: IosAudioPlayer) -> IosAppGraph {
     return IosAppGraphKt.createIosAppGraph(audioPlayer: audioPlayer, isolatedStorage: suite, localFiles: IosLocalFilesNone.shared)
 }
 
+/// What views read from the environment, over `graph` and a view model cache of its own.
+@MainActor
+func makeTestServices(graph givenGraph: IosAppGraph? = nil) -> AppServices {
+    let graph = givenGraph ?? makeTestGraph()
+    let intent = PlayIntent(following: graph.playerController)
+    return AppServices(
+        graph: graph,
+        viewModels: ViewModelCache(),
+        playerBinding: PlayerBinding(viewModel: IosAppGraphKt.createPlayerViewModel(graph), intent: intent),
+        playIntent: intent,
+        storeKit: StoreKitManager(entitlements: graph.storeEntitlements, analytics: graph.monetisationAnalytics),
+        localLibrary: LocalLibrary()
+    )
+}
+
 /// The system surfaces over `rig`'s player and `graph`'s controller, publishing to `info` and `commands` in place of the
 /// system's centres. Not started.
 @MainActor
