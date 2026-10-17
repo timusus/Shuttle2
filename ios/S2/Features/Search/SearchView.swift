@@ -442,10 +442,10 @@ struct SearchResultItems {
     init(_ results: SearchResults) {
         let interval = Self.signposter.beginInterval("Search results")
         defer { Self.signposter.endInterval("Search results", interval) }
-        artists = results.artists.map { $0.item! }
-        albums = results.albums.map { $0.item! }
-        songs = results.songs.map { $0.item! }
-        genres = results.genres.map { $0.item! }
-        playlists = results.playlists.map { $0.item! }
+        artists = results.artists.compactMap { $0.item }
+        albums = results.albums.compactMap { $0.item }
+        songs = results.songs.compactMap { $0.item }
+        genres = results.genres.compactMap { $0.item }
+        playlists = results.playlists.compactMap { $0.item }
     }
 }
