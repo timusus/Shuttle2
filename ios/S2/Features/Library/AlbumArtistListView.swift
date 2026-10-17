@@ -7,10 +7,13 @@ import SwiftUI
 /// shared `MediaAction`s. Shuffle heads the list or grid; there's no per-artist shuffle on the ViewModel, so it dispatches
 /// `MediaActionShuffle` over every artist, as over a multi-selection. The playing artist is marked.
 struct AlbumArtistListView: View {
+    @Environment(\.appServices) private var appServices
+    private var services: AppServices { appServices.required }
+
     var body: some View {
         let _ = StartupTrace.mark(.albumArtists, .body)
-        let models = ViewModelCache.shared.viewModel(Route.libraryCategory(.albumArtists).cacheKey) {
-            AlbumArtistListModels(graph: AppGraph.shared)
+        let models = services.viewModels.viewModel(Route.libraryCategory(.albumArtists).cacheKey) {
+            AlbumArtistListModels(graph: services.graph)
         }
         LibraryNowPlayingReader { nowPlaying in
             Observing(models.albumArtists.uiState, models.actions.uiState) { state, actions in

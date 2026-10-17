@@ -7,10 +7,13 @@ import SwiftUI
 /// Shuffle heads the list or grid and is the ViewModel's own (a random album's songs). The playing album is marked.
 /// Pull to refresh imports.
 struct AlbumListView: View {
+    @Environment(\.appServices) private var appServices
+    private var services: AppServices { appServices.required }
+
     var body: some View {
         let _ = StartupTrace.mark(.albums, .body)
-        let models = ViewModelCache.shared.viewModel(Route.libraryCategory(.albums).cacheKey) {
-            AlbumListModels(graph: AppGraph.shared)
+        let models = services.viewModels.viewModel(Route.libraryCategory(.albums).cacheKey) {
+            AlbumListModels(graph: services.graph)
         }
         LibraryNowPlayingReader { nowPlaying in
             Observing(models.albums.uiState, models.actions.uiState) { state, actions in

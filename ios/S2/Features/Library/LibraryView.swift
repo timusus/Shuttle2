@@ -13,11 +13,14 @@ import SwiftUI
 struct LibraryView: View {
     let navigator: Navigator
 
+    @Environment(\.appServices) private var appServices
     @AppStorage("library.category") private var storedCategory: String = ""
+
+    private var services: AppServices { appServices.required }
 
     var body: some View {
         let _ = StartupTrace.mark(.library, .body)
-        let models = ViewModelCache.shared.viewModel(AppTab.library.cacheKey) { LibraryRootModels(graph: AppGraph.shared) }
+        let models = services.viewModels.viewModel(AppTab.library.cacheKey) { LibraryRootModels(graph: services.graph) }
         Observing(models.library.uiState, models.empty.uiState, models.importState) { library, availability, importStatus in
             let _ = StartupTrace.content(.library, loaded: LibraryRootAvailability(availability) != .loading)
             LibraryRootContent(
@@ -469,8 +472,10 @@ struct LibraryNowPlaying: Equatable {
 struct LibraryNowPlayingReader<Content: View>: View {
     @ViewBuilder let content: (LibraryNowPlaying) -> Content
 
+    @Environment(\.appServices) private var appServices
+
     var body: some View {
-        let player = AppGraph.shared.playerController
+        let player = appServices.required.graph.playerController
         Observing(player.queueOperations.queueStateFlow, player.playbackStateFlow) { queue, playback in
             content(LibraryNowPlaying(queue: queue, playback: playback))
         }

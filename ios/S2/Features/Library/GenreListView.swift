@@ -6,10 +6,13 @@ import SwiftUI
 /// #643), which fill in after the list shows. A Shuffle row heads the list, shuffling every genre. Context menu plays
 /// or queues through the shared `MediaAction`s.
 struct GenreListView: View {
+    @Environment(\.appServices) private var appServices
+    private var services: AppServices { appServices.required }
+
     var body: some View {
         let _ = StartupTrace.mark(.genres, .body)
-        let models = ViewModelCache.shared.viewModel(Route.libraryCategory(.genres).cacheKey) {
-            GenreListModels(graph: AppGraph.shared)
+        let models = services.viewModels.viewModel(Route.libraryCategory(.genres).cacheKey) {
+            GenreListModels(graph: services.graph)
         }
         Observing(models.genres.uiState, models.covers.uiState, models.actions.uiState) { state, covers, actions in
             let _ = StartupTrace.content(.genres, loaded: state.loadingState != .loading)

@@ -16,11 +16,12 @@ struct AppShellTests {
         playerBinding = PlayerBinding(viewModel: IosAppGraphKt.createPlayerViewModel(graph), intent: PlayIntent(following: graph.playerController))
     }
 
-    private func makeShell(tier: LayoutTier, container: ShellContainer? = nil) -> AppShell {
+    private func makeShell(tier: LayoutTier, container: ShellContainer? = nil) -> some View {
         AppShell(
             tier: tier, container: container, navigator: Navigator(), showNowPlaying: .constant(false),
             playerBinding: playerBinding
         )
+        .environment(\.appServices, makeTestServices(graph: graph))
     }
 
     /// Queues the demo songs and loads the first, so a song is current.

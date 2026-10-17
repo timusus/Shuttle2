@@ -134,6 +134,7 @@
 		A5AAD4F27D13FC392AD6BD4E /* DetailRows.swift in Sources */ = {isa = PBXBuildFile; fileRef = EAF6FC8389810EC57EEB07F1 /* DetailRows.swift */; };
 		A5FC469E9A6B7236B4187BA6 /* SearchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 158B1F52DF06F29C91362AA1 /* SearchView.swift */; };
 		A63A662503830912A4762A65 /* EmptyState.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7647069B7F0DC85EE4B35DB /* EmptyState.swift */; };
+		A74B99DF2F7793B9237AFBB2 /* SearchWarmUp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88C7376431FF07B6FFA8E7C5 /* SearchWarmUp.swift */; };
 		A7677505BD6ABB9546620C0D /* Route.swift in Sources */ = {isa = PBXBuildFile; fileRef = 102211043771B638F9DEBB28 /* Route.swift */; };
 		AC22037D6AE51277EEAB4650 /* AppServices.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FDCC446E9B1DF249DE5EBCF /* AppServices.swift */; };
 		ACCCD2E8586E770E2C07D096 /* AlbumDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26298475CFBDD52FD92166E6 /* AlbumDetailView.swift */; };
@@ -387,6 +388,7 @@
 		82D8F50EA0F4508C11C2A23D /* AlbumDetailTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlbumDetailTests.swift; sourceTree = "<group>"; };
 		8477763CCDC4966B330DC086 /* Shimmer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Shimmer.swift; sourceTree = "<group>"; };
 		87263640816D52C273CCC216 /* Typography.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Typography.swift; sourceTree = "<group>"; };
+		88C7376431FF07B6FFA8E7C5 /* SearchWarmUp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchWarmUp.swift; sourceTree = "<group>"; };
 		89689E4CDFC9350CB0EFB888 /* Navigator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Navigator.swift; sourceTree = "<group>"; };
 		8AC73FE52C2CA57301083158 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.stringsdict; name = "zh-Hans"; path = "zh-Hans.lproj/Localizable.stringsdict"; sourceTree = "<group>"; };
 		8AF5539EB283E0AE27A0C878 /* nl */ = {isa = PBXFileReference; lastKnownFileType = text.plist.stringsdict; name = nl; path = nl.lproj/Localizable.stringsdict; sourceTree = "<group>"; };
@@ -956,6 +958,7 @@
 				071E70571E51743974A5AC4F /* CombineFlowBridge.swift */,
 				7D100B2699FDBBA93E472ED3 /* ConsumeEvents.swift */,
 				93A7435F3E54B803C6E2C542 /* KotlinServerConnectionPolicy.swift */,
+				88C7376431FF07B6FFA8E7C5 /* SearchWarmUp.swift */,
 				9F59DA1BBF939E0071AED4F2 /* ViewModelCache.swift */,
 				214D546417D1085A1C2B5F67 /* ViewModelGroup.swift */,
 			);
@@ -1235,6 +1238,7 @@
 				EC2BF4B5861028DC6B620F8C /* ScrobbleFlush.swift in Sources */,
 				93DD15E62C41B25164D1E3B0 /* ScrobblingView.swift in Sources */,
 				A5FC469E9A6B7236B4187BA6 /* SearchView.swift in Sources */,
+				A74B99DF2F7793B9237AFBB2 /* SearchWarmUp.swift in Sources */,
 				2A319BAAFA3AE125057BF8AC /* SectionHeader.swift in Sources */,
 				E474D28282907B36813EA024 /* SentryCrashReporter.swift in Sources */,
 				0E0B027A3870445B18FC5012 /* Separator.swift in Sources */,

@@ -314,6 +314,8 @@ extension View {
 struct RootToolbar: ViewModifier {
     let navigator: Navigator
 
+    @Environment(\.appServices) private var appServices
+
     /// The import activity's Open Sources: pushes Sources onto the stack the button sits on (Home's, Library's or a
     /// library category's), as the empty states' Add a Source does. It used to open the Settings sheet at Sources, but
     /// that presented while the activity's popover was still dismissing, which UIKit refuses, so nothing opened (#645).
@@ -322,7 +324,7 @@ struct RootToolbar: ViewModifier {
     }
 
     func body(content: Content) -> some View {
-        Observing(ImportActivity.state) { state in
+        Observing(appServices.required.importState) { state in
             let status = ImportStatus(state)
             content.toolbar {
                 ToolbarItem(placement: .topBarTrailing) {

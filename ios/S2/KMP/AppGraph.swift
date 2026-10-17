@@ -24,7 +24,7 @@ enum AppGraph {
     /// Builds the graph, applies the crash reporting choice before anything else runs, then starts the playback system,
     /// the recording of plays, their reporting to the server and their scrobbling to Last.fm. Call once, from
     /// `S2App.init`. Analytics waits for the first frame (`startAfterFirstFrame()`) and the search index for the first
-    /// content (`warmUpSearch()`), so neither holds up the launch.
+    /// content (`SearchWarmUp`), so neither holds up the launch.
     @MainActor
     static func initialize() {
         guard _dependencies == nil else { return }
@@ -59,7 +59,6 @@ enum AppGraph {
 
     private static let kotlinLogSink = KotlinLogSink()
     private static var startedAfterFirstFrame = false
-    private static var searchWarmUpStarted = false
 
     /// Sets PostHog up and applies the analytics choice. Call once the first frame is on screen (`ContentView`):
     /// PostHog's set-up takes tens of milliseconds on the main thread, and events sent before it are dropped anyway.
@@ -68,25 +67,6 @@ enum AppGraph {
         guard !startedAfterFirstFrame else { return }
         startedAfterFirstFrame = true
         StartupTrace.step("analyticsStartup") { shared.telemetryStartup.startAnalytics() }
-    }
-
-    /// Starts building the search index in the background, once: when Home or a Library list first shows its content,
-    /// or when Search opens, whichever is first. Started at launch it competed with that first content for the
-    /// library's songs; a search opened before it has run builds the index itself.
-    @MainActor
-    static func warmUpSearch() {
-        guard !searchWarmUpStarted else { return }
-        searchWarmUpStarted = true
-        StartupTrace.step("searchIndexWarmUp") { shared.librarySearchIndex.warmUp() }
-    }
-}
-
-extension View {
-    /// Starts the search index's warm-up (`AppGraph.warmUpSearch()`) once [loaded], this screen's first content, is up.
-    func warmsUpSearch(once loaded: Bool) -> some View {
-        onChange(of: loaded, initial: true) { _, loaded in
-            if loaded { AppGraph.warmUpSearch() }
-        }
     }
 }
 
@@ -115,11 +95,15 @@ final class IosAppDependencies {
     let siriPlayer: SiriMediaPlayer
     /// Tells Siri about the library: its size, and the artists and playlists to listen for.
     let siriContext: SiriLibraryContext
+    /// The library import's state, one flow for every root's toolbar: built once, so `Observing` keeps one
+    /// collection rather than restarting on each render.
+    let importState: SkieSwiftStateFlow<SongImportState>
+    let searchWarmUp: SearchWarmUp
 
     /// What views read from the environment; shares `ViewModelCache.shared` with `Navigator`.
     lazy var services = AppServices(
         graph: graph, viewModels: .shared, playerBinding: playerBinding, playIntent: playIntent,
-        storeKit: storeKit, localLibrary: localLibrary
+        storeKit: storeKit, localLibrary: localLibrary, importState: importState, searchWarmUp: searchWarmUp
     )
 
     init() {
@@ -170,5 +154,7 @@ final class IosAppDependencies {
         intentPerformer = AppIntentPerformer(graph: graph, intent: playIntent)
         siriPlayer = SiriMediaPlayer(graph: graph, performer: intentPerformer)
         siriContext = SiriLibraryContext(graph: graph)
+        importState = graph.songImportStateProvider.songImportState
+        searchWarmUp = SearchWarmUp(index: graph.librarySearchIndex)
     }
 }

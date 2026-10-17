@@ -78,8 +78,8 @@ struct LibraryViewTests {
     }
 
     @Test func theRootOnItsViewModelsListsTheCategoriesOrTheEmptyState() throws {
-        // Renders through `Observing` from the shared ViewModels' current values: the host app's library.
-        let sut = LibraryView(navigator: Navigator())
+        // Renders through `Observing` from the shared ViewModels' current values: an empty in-memory library.
+        let sut = LibraryView(navigator: Navigator()).environment(\.appServices, makeTestServices())
         #expect(try sut.inspect().find(LibraryRootContent<RouteDestinationView>.self) != nil)
     }
 
@@ -100,7 +100,8 @@ struct LibraryViewTests {
         // The chip's short title fits the rail.
         #expect((try? sut.categoryRail.inspect().find(text: "Artists")) != nil)
         // The root doesn't repeat the chips as cards, nor offer a way back to them (#643).
-        #expect((try? sut.inspect().find(viewWithAccessibilityIdentifier: "libraryCategory.albums")) == nil)
+        let withServices = sut.environment(\.appServices, makeTestServices())
+        #expect((try? withServices.inspect().find(viewWithAccessibilityIdentifier: "libraryCategory.albums")) == nil)
         #expect((try? sut.categoryRail.inspect().find(viewWithAccessibilityIdentifier: "libraryChip.all")) == nil)
     }
 

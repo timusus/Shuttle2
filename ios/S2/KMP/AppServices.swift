@@ -13,6 +13,8 @@ struct AppServices {
     let storeKit: StoreKitManager
     // codehealth-ignore arch-layer-direction: composition root, not a view (SwiftUI is imported only for the Environment entry)
     let localLibrary: LocalLibrary
+    let importState: SkieSwiftStateFlow<SongImportState>
+    let searchWarmUp: SearchWarmUp
 }
 
 extension EnvironmentValues {

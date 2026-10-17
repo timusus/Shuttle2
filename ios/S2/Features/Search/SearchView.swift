@@ -12,13 +12,16 @@ import SwiftUI
 struct SearchView: View {
     let navigator: Navigator
 
+    @Environment(\.appServices) private var appServices
     @State private var query = ""
     @State private var isSearchPresented = false
 
+    private var services: AppServices { appServices.required }
+
     var body: some View {
         let _ = StartupTrace.mark(.search, .body)
-        let models = ViewModelCache.shared.viewModel(AppTab.search.cacheKey) {
-            SearchModels(graph: AppGraph.shared)
+        let models = services.viewModels.viewModel(AppTab.search.cacheKey) {
+            SearchModels(graph: services.graph)
         }
         LibraryNowPlayingReader { nowPlaying in
             Observing(models.search.uiState, models.actions.uiState) { state, actions in
@@ -45,7 +48,7 @@ struct SearchView: View {
         }
         .onAppear { StartupTrace.mark(.search, .appear) }
         // A search opened before the warm-up has run builds the index itself; this only starts it sooner
-        .onAppear { AppGraph.warmUpSearch() }
+        .onAppear { services.searchWarmUp.start() }
         .navigationTitle(AppTab.search.title)
         .searchable(text: $query, isPresented: $isSearchPresented, placement: .navigationBarDrawer(displayMode: .always), prompt: "Artists, Albums, Songs")
         .onSubmit(of: .search) { models.search.onSearch() }

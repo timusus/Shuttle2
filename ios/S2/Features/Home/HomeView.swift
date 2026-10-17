@@ -14,15 +14,18 @@ import SwiftUI
 struct HomeView: View {
     let navigator: Navigator
 
+    @Environment(\.appServices) private var appServices
     @Environment(\.scenePhase) private var scenePhase
     @State private var appeared = false
 
+    private var services: AppServices { appServices.required }
+
     var body: some View {
         let _ = StartupTrace.mark(.home, .body)
-        let models = ViewModelCache.shared.viewModel(AppTab.home.cacheKey) {
-            HomeModels(graph: AppGraph.shared)
+        let models = services.viewModels.viewModel(AppTab.home.cacheKey) {
+            HomeModels(graph: services.graph)
         }
-        let intent = AppGraph.dependencies.playIntent
+        let intent = services.playIntent
         Observing(models.home.uiState, models.actions.uiState, models.importState) { state, actions, importState in
             let _ = StartupTrace.content(.home, loaded: !(state is HomeUiStateLoading))
             HomeContent(

@@ -441,8 +441,8 @@ struct HomeViewTests {
     }
 
     @Test func theRootOnItsViewModelsRendersThroughObserving() throws {
-        // Renders through `Observing` from the shared ViewModels' current values: the host app's library.
-        let sut = HomeView(navigator: Navigator())
+        // Renders through `Observing` from the shared ViewModels' current values: an empty in-memory library.
+        let sut = HomeView(navigator: Navigator()).environment(\.appServices, makeTestServices())
         #expect(throws: Never.self) { try sut.inspect().find(HomeContent.self) }
     }
 }

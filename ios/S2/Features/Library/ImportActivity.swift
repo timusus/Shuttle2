@@ -1,13 +1,6 @@
 import Shared
 import SwiftUI
 
-/// The library import's state, one flow for every root's toolbar (`RootToolbar`): read once, so `Observing` keeps
-/// one collection rather than restarting on each render.
-@MainActor
-enum ImportActivity {
-    static let state: SkieSwiftStateFlow<SongImportState> = AppGraph.shared.songImportStateProvider.songImportState
-}
-
 /// The import's activity outside the setup (#624): a small ring filling as the library imports, or a warning once an
 /// import failed, beside Settings' gear on the Home and Library roots. Tapping it shows what's importing and a way to
 /// Sources; nothing blocks while it runs. Hidden while idle.

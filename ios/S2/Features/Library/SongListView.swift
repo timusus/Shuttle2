@@ -5,10 +5,13 @@ import SwiftUI
 /// through the shared `MediaAction.Play`, as Android's `MediaActionsHost` does; the context menu queues one song.
 /// Shuffle is a toolbar button (#676). Pull to refresh imports.
 struct SongListView: View {
+    @Environment(\.appServices) private var appServices
+    private var services: AppServices { appServices.required }
+
     var body: some View {
         let _ = StartupTrace.mark(.songs, .body)
-        let models = ViewModelCache.shared.viewModel(Route.libraryCategory(.songs).cacheKey) {
-            SongListModels(graph: AppGraph.shared)
+        let models = services.viewModels.viewModel(Route.libraryCategory(.songs).cacheKey) {
+            SongListModels(graph: services.graph)
         }
         LibraryNowPlayingReader { nowPlaying in
             Observing(models.songs.uiState, models.actions.uiState) { state, actions in

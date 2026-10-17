@@ -6,10 +6,13 @@ import SwiftUI
 /// the HIG; delete is a destructive swipe with a confirmation. Context menu plays or queues through the shared
 /// `MediaAction`s, same as the other library lists. A Shuffle row heads the list while there are playlists to shuffle.
 struct PlaylistListView: View {
+    @Environment(\.appServices) private var appServices
+    private var services: AppServices { appServices.required }
+
     var body: some View {
         let _ = StartupTrace.mark(.playlists, .body)
-        let models = ViewModelCache.shared.viewModel(Route.libraryCategory(.playlists).cacheKey) {
-            PlaylistListModels(graph: AppGraph.shared)
+        let models = services.viewModels.viewModel(Route.libraryCategory(.playlists).cacheKey) {
+            PlaylistListModels(graph: services.graph)
         }
         Observing(models.playlists.uiState, models.actions.uiState) { state, actions in
             let _ = StartupTrace.content(.playlists, loaded: state.loadingState != .loading)

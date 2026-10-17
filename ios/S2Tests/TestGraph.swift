@@ -63,7 +63,9 @@ func makeTestServices(graph givenGraph: IosAppGraph? = nil) -> AppServices {
         playerBinding: PlayerBinding(viewModel: IosAppGraphKt.createPlayerViewModel(graph), intent: intent),
         playIntent: intent,
         storeKit: StoreKitManager(entitlements: graph.storeEntitlements, analytics: graph.monetisationAnalytics),
-        localLibrary: LocalLibrary()
+        localLibrary: LocalLibrary(),
+        importState: graph.songImportStateProvider.songImportState,
+        searchWarmUp: SearchWarmUp(index: graph.librarySearchIndex)
     )
 }
 
