@@ -39,7 +39,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
@@ -63,6 +62,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.mediarouter.app.SystemOutputSwitcherDialogController
 import androidx.navigation3.runtime.NavKey
 import com.simplecityapps.shuttle.R
@@ -277,7 +277,7 @@ internal fun NowPlayingBar(
             val openSleepTimer = { onPanel(NowPlayingPanel.SleepTimer) }
             val sleepTimerOpen = selected == NowPlayingPanel.SleepTimer
             if (player.sleepTimerActive) {
-                val remaining by remember(actions) { actions.sleepTimerRemaining() }.collectAsState(initial = null)
+                val remaining by remember(actions) { actions.sleepTimerRemaining() }.collectAsStateWithLifecycle(initialValue = null)
                 val left = remaining?.let { if (it > 0) DateUtils.formatElapsedTime(it / 1000) else stringResource(R.string.player_sleep_timer_track_end) }.orEmpty()
                 // The label's node hides the button's text, so TalkBack hears the time left in the description, as with the speed
                 val description = listOf(stringResource(R.string.player_sleep_timer_on), left).filter { it.isNotEmpty() }.joinToString(", ")

@@ -31,7 +31,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -63,6 +62,7 @@ import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.core.os.ConfigurationCompat
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavKey
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainMode
 import com.simplecityapps.shuttle.R
@@ -136,7 +136,7 @@ private fun RunningSleepTimer(
     player: PlayerUiState,
     actions: PlayerActions,
 ) {
-    val remaining by remember(actions) { actions.sleepTimerRemaining() }.collectAsState(initial = null)
+    val remaining by remember(actions) { actions.sleepTimerRemaining() }.collectAsStateWithLifecycle(initialValue = null)
     val formatMinutes = rememberMinutesFormat()
     val counting = (remaining ?: 0) > 0
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
