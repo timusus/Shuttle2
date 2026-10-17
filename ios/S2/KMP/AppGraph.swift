@@ -138,6 +138,7 @@ final class IosAppDependencies {
             MediaProviderType.signInTypes.contains { StreamWarmUp.address(graph.readServerLogin.invoke(type: $0).address, isAt: origin) }
         }
         DispatchQueue.global(qos: .utility).async { StreamStore.prepareAtLaunch() }
+        ArtworkLoader.shared.bind(requests: graph.artworkUrls, localArtwork: { localLibrary.artwork(forArtworkURL: $0) })
         playIntent = PlayIntent(following: graph.playerController)
         playbackSystem = PlaybackSystemCoordinator(
             playback: graph.playerController,

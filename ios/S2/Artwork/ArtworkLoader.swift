@@ -1,5 +1,6 @@
 import Foundation
 import ImageIO
+import os
 import S2Playback
 import UIKit
 
@@ -43,7 +44,15 @@ actor ArtworkLoader {
         return cache
     }()
 
+    /// What the composition root supplies once at launch; unset (tests, previews), graph-backed sources have no
+    /// candidates and a local url has no file. A lock, not actor state, so `bind` is synchronous and lands before the first frame.
+    struct Bindings: Sendable {
+        var requests: (any ArtworkRequests)?
+        var localArtwork: (@Sendable (URL) async -> Data?)?
+    }
+
     private let fetch: Fetch
+    private nonisolated let bindings: OSAllocatedUnfairLock<Bindings>
     #if DEBUG
     /// Reads the debug "Use generated artwork" switch. Injected so a test turns the branch on for its own
     /// loader rather than flipping the process-global `UserDefaults` flag every other loader reads.
@@ -73,24 +82,34 @@ actor ArtworkLoader {
         uncachedConfiguration.urlCache = nil
         uncachedConfiguration.requestCachePolicy = .reloadIgnoringLocalCacheData
         let uncachedSession = URLSession(configuration: uncachedConfiguration, delegate: PlexTokenRedirectGuard(), delegateQueue: nil)
+        let bindings = OSAllocatedUnfairLock(initialState: Bindings())
         self.init(fetch: { request in
             // This device's songs (#590): the picture in the file, or an image beside it.
             if let url = request.url, url.scheme == LocalLibrary.scheme {
-                let library = await MainActor.run { AppGraph.dependencies.localLibrary }
-                guard let data = library.artwork(forArtworkURL: url) else { throw URLError(.fileDoesNotExist) }
+                guard let read = bindings.withLock({ $0.localArtwork }), let data = await read(url) else { throw URLError(.fileDoesNotExist) }
                 return (data, URLResponse(url: url, mimeType: nil, expectedContentLength: data.count, textEncodingName: nil))
             }
             let bypassesCache = request.cachePolicy == .reloadIgnoringLocalCacheData
             return try await (bypassesCache ? uncachedSession : session).data(for: request)
-        }, diskCache: diskCache)
+        }, diskCache: diskCache, bindings: bindings)
     }
 
-    init(fetch: @escaping Fetch, diskCache: URLCache? = nil, isGeneratedArtworkEnabled: @escaping @Sendable () -> Bool = { DebugArtwork.isEnabled }) {
+    init(
+        fetch: @escaping Fetch,
+        diskCache: URLCache? = nil,
+        isGeneratedArtworkEnabled: @escaping @Sendable () -> Bool = { DebugArtwork.isEnabled },
+        bindings: OSAllocatedUnfairLock<Bindings> = OSAllocatedUnfairLock(initialState: Bindings())
+    ) {
         self.fetch = fetch
         self.diskCache = diskCache
+        self.bindings = bindings
         #if DEBUG
         self.isGeneratedArtworkEnabled = isGeneratedArtworkEnabled
         #endif
+    }
+
+    nonisolated func bind(requests: any ArtworkRequests, localArtwork: @escaping @Sendable (URL) async -> Data?) {
+        bindings.withLock { $0 = Bindings(requests: requests, localArtwork: localArtwork) }
     }
 
     // MARK: - Reading
@@ -121,7 +140,8 @@ actor ArtworkLoader {
         }
         #endif
         if let hit = cached(source, maxPixelSize: maxPixelSize) { return hit }
-        guard let candidates = try? await source.candidates(), !candidates.isEmpty else { return nil }
+        let requests = bindings.withLock { $0.requests } ?? NoArtworkRequests()
+        guard let candidates = try? await source.candidates(requests), !candidates.isEmpty else { return nil }
         return await image(for: candidates, cacheKey: Self.key(source, maxPixelSize), maxPixelSize: maxPixelSize)
     }
 

@@ -146,8 +146,8 @@ struct DesignSystemTests {
     }
 
     @Test func anArtistsPictureIsACircleWhateverTheRole() {
-        let artist = ArtworkSource(id: "radiohead", isArtist: true) { [] }
-        let album = ArtworkSource(id: "ok-computer") { [] }
+        let artist = ArtworkSource(id: "radiohead", isArtist: true) { _ in [] }
+        let album = ArtworkSource(id: "ok-computer") { _ in [] }
         #expect(S2Shape.artwork(.artworkRow, for: artist) == .artist)
         #expect(S2Shape.artwork(.artworkHero, for: artist) == .artist)
         #expect(S2Shape.artwork(.artworkTile, for: album) == .artworkTile)
@@ -161,7 +161,7 @@ struct DesignSystemTests {
     }
 
     @Test func anArtistRowDrawsACircle() throws {
-        let sut = MediaRow("Radiohead", artwork: ArtworkSource(id: "radiohead", isArtist: true) { [] })
+        let sut = MediaRow("Radiohead", artwork: ArtworkSource(id: "radiohead", isArtist: true) { _ in [] })
         #expect(try sut.inspect().find(viewWithAccessibilityIdentifier: "mediaRow.artwork").clipShape(S2Shape.self) == .artist)
     }
 

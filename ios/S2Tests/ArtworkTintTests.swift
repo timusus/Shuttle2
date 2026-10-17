@@ -135,13 +135,13 @@ struct ArtworkTintTests {
             loads += 1
             return Self.image([.init(0x20_80_40)])
         }
-        _ = await extractor.color(for: ArtworkSource(id: "a", cacheKey: ArtworkSource.itemKey("album", "a", version: "1")) { [] })
-        _ = await extractor.color(for: ArtworkSource(id: "a", cacheKey: ArtworkSource.itemKey("album", "a", version: "2")) { [] })
+        _ = await extractor.color(for: ArtworkSource(id: "a", cacheKey: ArtworkSource.itemKey("album", "a", version: "1")) { _ in [] })
+        _ = await extractor.color(for: ArtworkSource(id: "a", cacheKey: ArtworkSource.itemKey("album", "a", version: "2")) { _ in [] })
         #expect(loads == 2)
     }
 
     static func source(_ id: String) -> ArtworkSource {
-        ArtworkSource(id: id) { [ArtworkCandidate(url: URL(string: "https://example.com/\(id).jpg")!)] }
+        ArtworkSource(id: id) { _ in [ArtworkCandidate(url: URL(string: "https://example.com/\(id).jpg")!)] }
     }
 
     // MARK: Helpers

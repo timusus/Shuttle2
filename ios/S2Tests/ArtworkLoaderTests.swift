@@ -1,4 +1,5 @@
 import Foundation
+import Shared
 import Testing
 import UIKit
 @testable import S2
@@ -84,7 +85,7 @@ struct ArtworkLoaderTests {
     }
 
     @Test func cachedIsNilBeforeAnythingWasLoaded() {
-        let source = ArtworkSource(id: "unloaded-\(UUID())") { [] }
+        let source = ArtworkSource(id: "unloaded-\(UUID())") { _ in [] }
         #expect(ArtworkLoader.shared.cached(source, maxPixelSize: 64) == nil)
     }
 
@@ -188,7 +189,7 @@ struct ArtworkLoaderTests {
         let fetcher = StubFetcher(responses: [Self.s2: (200, Self.pngData(width: 40, height: 40))])
         let loader = ArtworkLoader(fetch: fetcher.fetch)
         var lookups = 0
-        let source = ArtworkSource(id: "cached-\(UUID())") {
+        let source = ArtworkSource(id: "cached-\(UUID())") { _ in
             lookups += 1
             return [ArtworkCandidate(url: Self.s2)]
         }
@@ -212,7 +213,7 @@ struct ArtworkLoaderTests {
         let id = "versioned-\(UUID())"
         var lookups = 0
         func source(version: String) -> ArtworkSource {
-            ArtworkSource(id: id, cacheKey: ArtworkSource.itemKey("album", id, version: version)) {
+            ArtworkSource(id: id, cacheKey: ArtworkSource.itemKey("album", id, version: version)) { _ in
                 lookups += 1
                 return [ArtworkCandidate(url: Self.s2)]
             }
@@ -237,9 +238,23 @@ struct ArtworkLoaderTests {
         #expect(await fetcher.requests.count == 4)
     }
 
+    @MainActor @Test func aBoundLoaderResolvesAGraphBackedSourceThroughTheBoundLookups() async {
+        let fetcher = StubFetcher(responses: [Self.server: (200, Self.pngData(width: 40, height: 40))])
+        let loader = ArtworkLoader(fetch: fetcher.fetch)
+        let source = ArtworkSource.song(TestSongs.demo[0])
+
+        #expect(await loader.image(for: source, maxPixelSize: 64) == nil)
+        #expect(await fetcher.requests.isEmpty)
+
+        loader.bind(requests: StubArtworkRequests(url: Self.server), localArtwork: { _ in nil })
+
+        #expect(await loader.image(for: source, maxPixelSize: 64) != nil)
+        #expect(await fetcher.requests.map(\.url) == [Self.server])
+    }
+
     @MainActor @Test func aSourceWithOneUrlHasOneCandidateAndNoneForNil() async throws {
-        #expect(try await ArtworkSource(id: 1) { "https://example.com/a.jpg" }.candidates() == [ArtworkCandidate(url: URL(string: "https://example.com/a.jpg")!)])
-        #expect(try await ArtworkSource(id: 1) { nil }.candidates().isEmpty)
+        #expect(try await ArtworkSource(id: 1) { "https://example.com/a.jpg" }.candidates(StubArtworkRequests(url: Self.server)) == [ArtworkCandidate(url: URL(string: "https://example.com/a.jpg")!)])
+        #expect(try await ArtworkSource(id: 1) { nil }.candidates(StubArtworkRequests(url: Self.server)).isEmpty)
     }
 
     // MARK: - Callers that draw a source's cover
@@ -292,10 +307,23 @@ struct ArtworkLoaderTests {
     private static let s2 = URL(string: "https://api.shuttlemusicplayer.app/v1/artwork?artist=A&album=B")!
 
     private static func source(_ candidates: [ArtworkCandidate]) -> ArtworkSource {
-        ArtworkSource(id: UUID()) { candidates }
+        ArtworkSource(id: UUID()) { _ in candidates }
     }
 
     /// Answers each url with a canned status and body, and records the requests it was sent.
+    struct StubArtworkRequests: ArtworkRequests {
+        let url: URL
+
+        private var found: [ArtworkRequest] {
+            [ArtworkRequest(url: url.absoluteString, authorization: nil, unmeteredOnly: false, headers: [:], minimumSize: 0, cacheKey: url.absoluteString)]
+        }
+
+        func requests(song: Song) async throws -> [ArtworkRequest] { found }
+        func requests(album: Album) async throws -> [ArtworkRequest] { found }
+        func requests(albumArtist: AlbumArtist) async throws -> [ArtworkRequest] { found }
+        func requests(hero: ArtistHeroArtwork) async throws -> [ArtworkRequest] { found }
+    }
+
     actor StubFetcher {
         let responses: [URL: (Int, Data)]
         private(set) var requests: [URLRequest] = []

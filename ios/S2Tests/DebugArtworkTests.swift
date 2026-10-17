@@ -10,7 +10,7 @@ import UIKit
 struct DebugArtworkTests {
 
     private func source(_ id: String, key: String) -> ArtworkSource {
-        ArtworkSource(id: id, cacheKey: key) { throw URLError(.notConnectedToInternet) }
+        ArtworkSource(id: id, cacheKey: key) { _ in throw URLError(.notConnectedToInternet) }
     }
 
     private func pixels(_ image: UIImage?) -> Data? { image?.pngData() }
@@ -36,7 +36,7 @@ struct DebugArtworkTests {
     }
 
     @Test func glyphFollowsTheItemsKind() {
-        #expect(DebugArtwork.symbol(for: ArtworkSource(id: "a", cacheKey: "artist:a", isArtist: true) { [] }) == "music.mic")
+        #expect(DebugArtwork.symbol(for: ArtworkSource(id: "a", cacheKey: "artist:a", isArtist: true) { _ in [] }) == "music.mic")
         #expect(DebugArtwork.symbol(for: source("a", key: "album:a")) == "square.stack")
         #expect(DebugArtwork.symbol(for: source("a", key: "song:1")) == "music.note")
     }

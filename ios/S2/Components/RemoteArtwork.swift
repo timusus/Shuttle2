@@ -38,11 +38,11 @@ extension RemoteArtwork where Placeholder == ArtworkPlaceholder {
 struct ArtworkSource: Equatable {
     let id: AnyHashable
     let cacheKey: String
-    let candidates: () async throws -> [ArtworkCandidate]
+    let candidates: (any ArtworkRequests) async throws -> [ArtworkCandidate]
     /// An artist's picture, which is always a circle (`S2Shape.artwork(_:for:)`).
     let isArtist: Bool
 
-    init(id: AnyHashable, cacheKey: String? = nil, isArtist: Bool = false, candidates: @escaping () async throws -> [ArtworkCandidate]) {
+    init(id: AnyHashable, cacheKey: String? = nil, isArtist: Bool = false, candidates: @escaping (any ArtworkRequests) async throws -> [ArtworkCandidate]) {
         self.id = id
         self.cacheKey = cacheKey ?? "\(id)"
         self.isArtist = isArtist
@@ -60,22 +60,22 @@ struct ArtworkSource: Equatable {
     }
 
     static func song(_ song: Song) -> ArtworkSource {
-        ArtworkSource(id: song.id, cacheKey: itemKey("song", "\(song.id)", version: song.artworkVersion)) {
-            try await AppGraph.shared.artworkUrls.requests(song: song).compactMap(ArtworkCandidate.init)
+        ArtworkSource(id: song.id, cacheKey: itemKey("song", "\(song.id)", version: song.artworkVersion)) { lookups in
+            try await lookups.requests(song: song).compactMap(ArtworkCandidate.init)
         }
     }
 
     static func album(_ album: Album) -> ArtworkSource {
-        ArtworkSource(id: album.stableId, cacheKey: itemKey("album", album.stableId, version: album.artworkVersion)) {
-            try await AppGraph.shared.artworkUrls.requests(album: album).compactMap(ArtworkCandidate.init)
+        ArtworkSource(id: album.stableId, cacheKey: itemKey("album", album.stableId, version: album.artworkVersion)) { lookups in
+            try await lookups.requests(album: album).compactMap(ArtworkCandidate.init)
         }
     }
 
     /// An artist's row, tile or search result: the hero's rule (#823), which `requests(albumArtist:)` resolves from
     /// their library, so the row shows what their page does.
     static func albumArtist(_ albumArtist: AlbumArtist) -> ArtworkSource {
-        ArtworkSource(id: albumArtist.stableId, cacheKey: itemKey("artist", albumArtist.stableId, version: albumArtist.artworkVersion), isArtist: true) {
-            try await AppGraph.shared.artworkUrls.requests(albumArtist: albumArtist).compactMap(ArtworkCandidate.init)
+        ArtworkSource(id: albumArtist.stableId, cacheKey: itemKey("artist", albumArtist.stableId, version: albumArtist.artworkVersion), isArtist: true) { lookups in
+            try await lookups.requests(albumArtist: albumArtist).compactMap(ArtworkCandidate.init)
         }
     }
 }
@@ -86,8 +86,8 @@ extension ArtworkSource {
         let artist = itemKey("artist", hero.artist.stableId, version: hero.artist.artworkVersion)
         let album = hero.fallbackAlbum.map { itemKey("album", $0.stableId, version: $0.artworkVersion) } ?? "none"
         let key = "artistHero:\(artist)|online=\(hero.onlineLookup)|\(album)"
-        return ArtworkSource(id: key, cacheKey: key) {
-            try await AppGraph.shared.artworkUrls.requests(hero: hero).compactMap(ArtworkCandidate.init)
+        return ArtworkSource(id: key, cacheKey: key) { lookups in
+            try await lookups.requests(hero: hero).compactMap(ArtworkCandidate.init)
         }
     }
 }
