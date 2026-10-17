@@ -1,4 +1,5 @@
 import Foundation
+import Observation
 import Shared
 import StoreKit
 
@@ -9,7 +10,8 @@ import StoreKit
 /// another device, Ask to Buy approval, a refund). Each purchase and restore is recorded in the shared monetisation
 /// funnel (`MonetisationAnalytics`, #776).
 @MainActor
-final class StoreKitManager: ObservableObject {
+@Observable
+final class StoreKitManager {
     enum PurchaseOutcome: Equatable {
         case purchased
         case cancelled
@@ -29,14 +31,14 @@ final class StoreKitManager: ObservableObject {
     }
 
     /// The products the App Store returned, by id. Empty until they load, or if the App Store can't be reached.
-    @Published private(set) var products: [String: Product] = [:]
+    private(set) var products: [String: Product] = [:]
     /// The product being bought, or nil.
-    @Published private(set) var purchasing: String?
-    @Published private(set) var isRestoring = false
+    private(set) var purchasing: String?
+    private(set) var isRestoring = false
 
-    private let entitlements: StoreEntitlements
-    private let analytics: MonetisationAnalytics
-    private var updates: Task<Void, Never>?
+    @ObservationIgnored private let entitlements: StoreEntitlements
+    @ObservationIgnored private let analytics: MonetisationAnalytics
+    @ObservationIgnored private var updates: Task<Void, Never>?
 
     init(entitlements: StoreEntitlements, analytics: MonetisationAnalytics) {
         self.entitlements = entitlements
@@ -69,7 +71,7 @@ final class StoreKitManager: ObservableObject {
     #if DEBUG
     /// The store screenshots' stand-in for the products loading: StoreKit's test configuration only applies under
     /// Xcode, so a capture would otherwise show "Loading price…" (`ScreenshotHooks`' `paywall` action).
-    @Published private(set) var screenshotPrice: String?
+    private(set) var screenshotPrice: String?
 
     func showScreenshotPrice(_ price: String?) {
         screenshotPrice = price

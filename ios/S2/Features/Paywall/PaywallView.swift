@@ -69,7 +69,7 @@ enum ProStatus: Equatable {
 /// The Shuttle Music Pro paywall (#609): opened by a gated action (`PaywallPresenter`) or from Settings. It observes
 /// the Kotlin entitlement and buys through the app's `StoreKitManager`. Each showing is a `PaywallVisit`.
 struct PaywallView: View {
-    @ObservedObject var store: StoreKitManager
+    let store: StoreKitManager
     /// What opened it, for the shown and dismissed events.
     let source: PaywallSource
     /// Set when the paywall is presented on its own, so it can close itself once the user has Pro.
@@ -123,7 +123,7 @@ final class PaywallVisit {
 
 /// Runs the paywall's purchases and restores, and reports their outcome.
 private struct PaywallActions: View {
-    @ObservedObject var store: StoreKitManager
+    let store: StoreKitManager
     let status: ProStatus
     let onClose: (() -> Void)?
     let onConverted: () -> Void

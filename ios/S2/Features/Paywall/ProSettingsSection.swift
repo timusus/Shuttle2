@@ -12,7 +12,7 @@ struct ProSettingsSection: View {
 }
 
 private struct ProSettingsRows: View {
-    @ObservedObject var store: StoreKitManager
+    let store: StoreKitManager
     let status: ProStatus
     @State private var alert: String?
 
