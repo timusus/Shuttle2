@@ -14,19 +14,21 @@ struct AlbumDetailView: View {
     var albumIdentity: String? = nil
 
     @Environment(Navigator.self) private var navigator: Navigator?
+    @Environment(\.appServices) private var appServices
+    private var services: AppServices { appServices.required }
 
     var body: some View {
         let route = Route.album(albumKey: albumKey, albumArtistKey: albumArtistKey, albumIdentity: albumIdentity)
-        let models = ViewModelCache.shared.viewModel(route.cacheKey) {
+        let models = services.viewModels.viewModel(route.cacheKey) {
             AlbumDetailModels(
-                graph: AppGraph.shared,
+                graph: services.graph,
                 groupKey: AlbumGroupKey(key: albumKey, albumArtistGroupKey: albumArtistKey.map { AlbumArtistGroupKey(key: $0) }, identity: albumIdentity)
             )
         }
-        Observing(models.album.uiState, models.actions.uiState, AppGraph.shared.offlineDownloads.downloads) { state, actions, _ in
+        Observing(models.album.uiState, models.actions.uiState, services.graph.offlineDownloads.downloads) { state, actions, _ in
             AlbumDetailContent(
                 state: state,
-                isPlaying: AppGraph.dependencies.playerBinding.isPlaying,
+                isPlaying: services.playerBinding.isPlaying,
                 onPlay: { index in
                     models.actions.send(MediaActionPlay(selection: MediaSelectionSongs(songs: state.songs), position: Int32(index), context: state.playContext))
                 },
@@ -50,7 +52,7 @@ struct AlbumDetailView: View {
                     onPlayNext: { models.actions.send(MediaActionPlayNext(selection: MediaSelectionAlbums(album: $0))) },
                     onAddToQueue: { models.actions.send(MediaActionAddToQueue(selection: MediaSelectionAlbums(album: $0))) }
                 ),
-                downloads: DetailDownloads(actions: models.actions)
+                downloads: DetailDownloads(actions: models.actions, downloads: services.graph.offlineDownloads)
             )
             .mediaActionResults(actions.events, handled: { models.actions.onEventHandled(id: $0) })
         }

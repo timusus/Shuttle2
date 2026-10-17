@@ -7,17 +7,19 @@ struct GenreDetailView: View {
     let name: String
 
     @Environment(Navigator.self) private var navigator: Navigator?
+    @Environment(\.appServices) private var appServices
+    private var services: AppServices { appServices.required }
 
     var body: some View {
         let route = Route.genre(name: name)
-        let models = ViewModelCache.shared.viewModel(route.cacheKey) {
-            GenreDetailModels(graph: AppGraph.shared, genreName: name)
+        let models = services.viewModels.viewModel(route.cacheKey) {
+            GenreDetailModels(graph: services.graph, genreName: name)
         }
         Observing(models.genre.uiState, models.covers.uiState, models.actions.uiState) { state, covers, actions in
             GenreDetailContent(
                 state: state,
                 covers: covers,
-                isPlaying: AppGraph.dependencies.playerBinding.isPlaying,
+                isPlaying: services.playerBinding.isPlaying,
                 onPlay: { index in
                     models.actions.send(MediaActionPlay(selection: MediaSelectionSongs(songs: state.songs), position: Int32(index), context: state.playContext))
                 },
@@ -33,7 +35,7 @@ struct GenreDetailView: View {
                 onExclude: { song in
                     models.actions.send(MediaActionExclude(selection: MediaSelectionSongs(song: song)))
                 },
-                downloads: DetailDownloads(actions: models.actions),
+                downloads: DetailDownloads(actions: models.actions, downloads: services.graph.offlineDownloads),
                 onAlbumTap: { navigator.openAsserting(.album($0)) }
             )
             .mediaActionResults(actions.events, handled: { models.actions.onEventHandled(id: $0) }, send: { models.actions.send($0) })

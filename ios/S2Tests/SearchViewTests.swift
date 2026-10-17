@@ -89,6 +89,7 @@ struct SearchViewTests {
             top: .artists
         )
         let sut = SearchContentView(state: state(SearchContentResults(query: "radio", results: results)), onPlay: { _ in })
+            .environment(\.appServices, makeTestServices())
         for header in ["Top Result", "Artists", "Albums", "Songs"] {
             #expect((try? sut.inspect().find(text: header)) != nil)
         }
@@ -102,6 +103,7 @@ struct SearchViewTests {
     @Test func seeAllExpandsACappedSection() throws {
         let albums = ["A", "B", "C", "D"].map { album($0) }
         let sut = SearchResultList(query: "a", results: results(albums: albums, songs: [TestSongs.demo[0]]), onOpen: { _ in }, onPlaySong: { _ in }, onPlay: { _ in }, onAction: { _ in })
+            .environment(\.appServices, makeTestServices())
         #expect((try? sut.inspect().find(text: "D")) == nil)
         #expect((try? sut.inspect().find(button: "See All")) != nil)
     }
@@ -115,6 +117,7 @@ struct SearchViewTests {
             results: results(artists: [radiohead], albums: [okComputer]),
             onOpen: { opened.append($0) }, onPlaySong: { _ in }, onPlay: { _ in }, onAction: { _ in }
         )
+        .environment(\.appServices, makeTestServices())
         try sut.inspect().find(text: "Radiohead").find(ViewType.Button.self, relation: .parent).tap()
         try sut.inspect().find(text: "OK Computer").find(ViewType.Button.self, relation: .parent).tap()
         #expect(opened == [.albumArtist(radiohead), .album(okComputer)])
@@ -126,6 +129,7 @@ struct SearchViewTests {
             query: "radio", results: results(songs: TestSongs.demo, top: .songs),
             onOpen: { _ in }, onPlaySong: { played = $0 }, onPlay: { _ in }, onAction: { _ in }
         )
+        .environment(\.appServices, makeTestServices())
         try sut.inspect().find(text: "Hyperballad").find(ViewType.Button.self, relation: .parent).tap()
         #expect(played == 1)
         try sut.inspect().find(text: "Paranoid Android").find(ViewType.Button.self, relation: .parent).tap()
@@ -140,6 +144,7 @@ struct SearchViewTests {
             query: "radio", results: results(artists: [artist("Radiohead", albums: 3, songs: 42)], top: .artists),
             onOpen: { _ in opened += 1 }, onPlaySong: { played = $0 }, onPlay: { selections.append($0) }, onAction: { _ in }
         )
+        .environment(\.appServices, makeTestServices())
         try artistResults.inspect().find(ViewType.Button.self, where: { (try? $0.accessibilityIdentifier()) == "search.topResult.play" }).tap()
         #expect(selections.count == 1)
         #expect(played == nil)
@@ -147,6 +152,7 @@ struct SearchViewTests {
             query: "radio", results: results(songs: TestSongs.demo, top: .songs),
             onOpen: { _ in opened += 1 }, onPlaySong: { played = $0 }, onPlay: { selections.append($0) }, onAction: { _ in }
         )
+        .environment(\.appServices, makeTestServices())
         try songResults.inspect().find(ViewType.Button.self, where: { (try? $0.accessibilityIdentifier()) == "search.topResult.play" }).tap()
         #expect(played == 0)
         #expect(selections.count == 1)

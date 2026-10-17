@@ -13,16 +13,18 @@ struct AlbumArtistDetailView: View {
     let albumArtistKey: String?
 
     @Environment(Navigator.self) private var navigator: Navigator?
+    @Environment(\.appServices) private var appServices
+    private var services: AppServices { appServices.required }
 
     var body: some View {
         let route = Route.albumArtist(albumArtistKey: albumArtistKey)
-        let models = ViewModelCache.shared.viewModel(route.cacheKey) {
-            AlbumArtistDetailModels(graph: AppGraph.shared, groupKey: AlbumArtistGroupKey(key: albumArtistKey))
+        let models = services.viewModels.viewModel(route.cacheKey) {
+            AlbumArtistDetailModels(graph: services.graph, groupKey: AlbumArtistGroupKey(key: albumArtistKey))
         }
         Observing(models.artist.uiState, models.actions.uiState) { state, actions in
             AlbumArtistDetailContent(
                 state: state,
-                isPlaying: AppGraph.dependencies.playerBinding.isPlaying,
+                isPlaying: services.playerBinding.isPlaying,
                 onPlay: { songs, index, context in
                     models.actions.send(MediaActionPlay(selection: MediaSelectionSongs(songs: songs), position: Int32(index), context: context))
                 },

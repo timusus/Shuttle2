@@ -20,13 +20,15 @@ extension View {
 struct SongInfoSheet: View {
     let songID: Int64
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.appServices) private var appServices
+    private var services: AppServices { appServices.required }
     /// Keeps the view model live while the sheet is up (`Navigator.songInfoPresented`); nil in previews.
     @Environment(Navigator.self) private var navigator: Navigator?
 
     var body: some View {
         let key = Navigator.songInfoCacheKey(songID)
         let viewModel = ViewModelCache.shared.viewModel(key) {
-            AppGraph.shared.songInfoViewModelFactory.create(songId: songID)
+            services.graph.songInfoViewModelFactory.create(songId: songID)
         }
         NavigationStack {
             Observing(viewModel.uiState) { state in

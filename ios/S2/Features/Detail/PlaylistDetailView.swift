@@ -10,18 +10,21 @@ import SwiftUI
 struct PlaylistDetailView: View {
     let id: Int64
 
+    @Environment(\.appServices) private var appServices
+    private var services: AppServices { appServices.required }
+
     var body: some View {
         let route = Route.playlist(id: id)
-        let models = ViewModelCache.shared.viewModel(route.cacheKey) {
-            PlaylistDetailModels(graph: AppGraph.shared, playlistId: id)
+        let models = services.viewModels.viewModel(route.cacheKey) {
+            PlaylistDetailModels(graph: services.graph, playlistId: id)
         }
         Observing(models.playlist.uiState, models.covers.uiState, models.actions.uiState) { state, covers, actions in
             // Redrawn as a download moves on, so the hero and menus read the songs' downloads again
-            Observing(AppGraph.shared.offlineDownloads.downloads) { _ in
+            Observing(services.graph.offlineDownloads.downloads) { _ in
             PlaylistDetailContent(
                 state: state,
                 covers: covers,
-                isPlaying: AppGraph.dependencies.playerBinding.isPlaying,
+                isPlaying: services.playerBinding.isPlaying,
                 onPlay: { index in
                     models.actions.send(MediaActionPlay(selection: MediaSelectionSongs(songs: state.songs.map(\.song)), position: Int32(index), context: state.playContext))
                 },
@@ -47,7 +50,7 @@ struct PlaylistDetailView: View {
                 },
                 onRename: { name in models.playlist.onRename(name: name) },
                 onDelete: { models.playlist.onDelete() },
-                downloads: DetailDownloads(actions: models.actions)
+                downloads: DetailDownloads(actions: models.actions, downloads: services.graph.offlineDownloads)
             )
             }
             .mediaActionResults(actions.events, handled: { models.actions.onEventHandled(id: $0) }, send: { models.actions.send($0) })

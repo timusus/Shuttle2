@@ -31,7 +31,7 @@ struct SongListView: View {
                     onExclude: { song in
                         models.actions.send(MediaActionExclude(selection: MediaSelectionSongs(song: song)))
                     },
-                    downloads: DetailDownloads(actions: models.actions),
+                    downloads: DetailDownloads(actions: models.actions, downloads: services.graph.offlineDownloads),
                     onShuffle: { songs in
                         models.actions.send(MediaActionShuffle(selection: MediaSelectionSongs(songs: songs)))
                     },

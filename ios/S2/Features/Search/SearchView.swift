@@ -250,7 +250,9 @@ struct SearchResultList: View {
 
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     /// Download and Remove Download in a song result's menu, sent through `onAction`.
-    private var downloads: DetailDownloads { DetailDownloads(send: onAction) }
+    private var downloads: DetailDownloads { DetailDownloads(downloads: services.graph.offlineDownloads, send: onAction) }
+    @Environment(\.appServices) private var appServices
+    private var services: AppServices { appServices.required }
     @State private var expanded: SearchCategory?
     @State private var songInfo: SongInfoTarget?
     /// The song download badges, read in each song's menu so Download and Remove Download follow it.
