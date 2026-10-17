@@ -53,9 +53,8 @@ enum AppGraph {
     /// PostHog's set-up takes tens of milliseconds on the main thread, and events sent before it are dropped anyway.
     @MainActor
     static func startAfterFirstFrame() {
-        guard !startedAfterFirstFrame else { return }
+        guard !startedAfterFirstFrame, let built else { return }
         startedAfterFirstFrame = true
-        guard let built else { return }
         StartupTrace.step("analyticsStartup") { built.graph.telemetryStartup.startAnalytics() }
     }
 }

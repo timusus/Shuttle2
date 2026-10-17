@@ -176,6 +176,6 @@ on compact and a form sheet otherwise, presented from `ContentView`.
 - SourceKit shows "No such module 'Testing'" and "AVAudioSession is unavailable in macOS" for these files; xcodebuild is
   the truth.
 - **S2Tests play on AudioPlaybackKit's `PlayerTestRig`.** `makeTestGraph()` / `makeTestGraph(rig:)` (`TestGraph.swift`)
-  build `KitAudioPlayer` over a rig and queue `TestSongs.demo`; `AppGraph.shared` is the host app's, with a real
+  build `KitAudioPlayer` over a rig and queue `TestSongs.demo`; the graph `AppGraph.initialize()` builds is the host app's, with a real
   `Player`. Decodes run only when the rig is pumped (`rig.pump { ... }`, `rig.run(for:)`), and Kotlin work arrives on
   the main queue after the call returns, so await it with `waitUntil { ... }`.
