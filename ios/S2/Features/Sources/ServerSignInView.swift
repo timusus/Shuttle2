@@ -15,10 +15,12 @@ struct ServerSignInView: View {
     let onFinished: () -> Void
 
     @Environment(\.openURL) private var openURL
+    @Environment(\.appServices) private var appServices
+    private var services: AppServices { appServices.required }
 
     var body: some View {
-        let signIn = ViewModelCache.shared.viewModel(cacheKey) {
-            AppGraph.shared.serverSignInViewModelFactory.create(type: type)
+        let signIn = services.viewModels.viewModel(cacheKey) {
+            services.graph.serverSignInViewModelFactory.create(type: type)
         }
         Observing(signIn.uiState) { state in
             ServerSignInContent(state: ServerSignInState(state), actions: ServerSignInActions(signIn, openURL: open))

@@ -50,7 +50,7 @@ enum AppGraph {
         }
         #endif
         StartupTrace.step("storeKit") { dependencies.storeKit.start() }
-        StartupTrace.step("paywallPresenter") { dependencies.paywallPresenter.start() }
+        StartupTrace.step("paywallPresenter") { dependencies.paywallPresenter.start { $0.appServices = dependencies.services } }
         // Siri, Shortcuts, widgets and controls run their intents through the app (#758)
         IntentPerformers.playback = dependencies.intentPerformer
         IntentPerformers.library = dependencies.intentPerformer

@@ -10,13 +10,15 @@ struct ServerDetailView: View {
 
     @Environment(Navigator.self) private var navigator: Navigator?
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.appServices) private var appServices
+    private var services: AppServices { appServices.required }
     /// The setup sheet, open at this server's sign-in while it's up.
     @State private var setup: SourceSetupStart?
     @State private var login = ServerLogin()
 
     var body: some View {
         if let type = MediaProviderType.server(named: typeName) {
-            let models = SourcesModels.cached()
+            let models = SourcesModels.cached(services)
             Observing(models.sources.uiState, models.importState) { state, importState in
                 let sources = SourcesState(state, importStatus: ImportStatus(importState))
                 ServerDetailContent(
@@ -34,10 +36,10 @@ struct ServerDetailView: View {
                     }
                 )
             }
-            .sheet(item: $setup, onDismiss: { login = ServerLogin.readAll()[type] ?? ServerLogin() }) { start in
+            .sheet(item: $setup, onDismiss: { login = ServerLogin.readAll(graph: services.graph)[type] ?? ServerLogin() }) { start in
                 SourceSetupFlow(start: start, navigator: navigator, onClose: { setup = nil })
             }
-            .onAppear { login = ServerLogin.readAll()[type] ?? ServerLogin() }
+            .onAppear { login = ServerLogin.readAll(graph: services.graph)[type] ?? ServerLogin() }
             .navigationTitle(type.title)
             .navigationBarTitleDisplayMode(.inline)
         } else {

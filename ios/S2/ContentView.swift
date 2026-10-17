@@ -87,7 +87,7 @@ struct ContentView: View {
     /// Opens the source setup's welcome, already in place rather than sliding up over the shell, when there's no
     /// server and the setup was never finished or skipped (`SourceSetupUiState.firstRun`, #624).
     private func openFirstRunIfNeeded(tier: LayoutTier) {
-        guard SourceSetupModels.cached().setup.uiState.value.firstRun else { return }
+        guard SourceSetupModels.cached(services).setup.uiState.value.firstRun else { return }
         firstRunFullScreen = tier == .compact
         var transaction = Transaction()
         transaction.disablesAnimations = true

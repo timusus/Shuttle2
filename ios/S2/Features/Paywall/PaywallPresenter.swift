@@ -11,14 +11,17 @@ final class PaywallPresenter {
     private let requests: ObservePaywallRequests
     private let store: StoreKitManager
     private var task: Task<Void, Never>?
+    /// The hosting controller sits outside the SwiftUI tree, so the root hands its environment in.
+    private var environment: ((inout EnvironmentValues) -> Void)?
 
     init(requests: ObservePaywallRequests, store: StoreKitManager) {
         self.requests = requests
         self.store = store
     }
 
-    func start() {
+    func start(environment: @escaping (inout EnvironmentValues) -> Void) {
         guard task == nil else { return }
+        self.environment = environment
         task = Task { [weak self] in
             guard let flow = self?.requests.invoke() else { return }
             for await source in flow {
@@ -28,8 +31,8 @@ final class PaywallPresenter {
     }
 
     private func present(_ source: PaywallSource) {
-        guard let top = Self.topViewController(), !(top is PaywallHostingController) else { return }
-        let controller = PaywallHostingController(store: store, source: source)
+        guard let top = Self.topViewController(), !(top is PaywallHostingController), let environment else { return }
+        let controller = PaywallHostingController(store: store, source: source, environment: environment)
         top.present(controller, animated: true)
     }
 
@@ -49,7 +52,7 @@ final class PaywallPresenter {
 
 /// The paywall in its own navigation stack, with a Close button.
 private final class PaywallHostingController: UIHostingController<AnyView> {
-    init(store: StoreKitManager, source: PaywallSource) {
+    init(store: StoreKitManager, source: PaywallSource, environment: @escaping (inout EnvironmentValues) -> Void) {
         weak var weakSelf: PaywallHostingController?
         super.init(
             rootView: AnyView(
@@ -57,6 +60,7 @@ private final class PaywallHostingController: UIHostingController<AnyView> {
                     PaywallView(store: store, source: source, onClose: { weakSelf?.dismiss(animated: true) })
                 }
                 .tint(.s2Accent)
+                .transformEnvironment(\.self, transform: environment)
             )
         )
         weakSelf = self

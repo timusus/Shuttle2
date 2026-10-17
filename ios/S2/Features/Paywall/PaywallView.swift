@@ -75,13 +75,15 @@ struct PaywallView: View {
     /// Set when the paywall is presented on its own, so it can close itself once the user has Pro.
     var onClose: (() -> Void)?
     @State private var visit: PaywallVisit?
+    @Environment(\.appServices) private var appServices
+    private var services: AppServices { appServices.required }
 
     var body: some View {
-        Observing(AppGraph.shared.storeEntitlements.entitlement) { entitlement in
+        Observing(services.graph.storeEntitlements.entitlement) { entitlement in
             PaywallActions(store: store, status: ProStatus(entitlement), onClose: onClose, onConverted: { visit?.converted() })
         }
         .onAppear {
-            let visit = visit ?? PaywallVisit(source: source, analytics: AppGraph.shared.monetisationAnalytics)
+            let visit = visit ?? PaywallVisit(source: source, analytics: services.graph.monetisationAnalytics)
             self.visit = visit
             visit.appeared()
         }

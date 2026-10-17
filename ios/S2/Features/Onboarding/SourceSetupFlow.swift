@@ -34,9 +34,11 @@ struct SourceSetupFlow: View {
     let onClose: () -> Void
 
     @State private var path: [SourceSetupStep] = []
+    @Environment(\.appServices) private var appServices
+    private var services: AppServices { appServices.required }
 
     var body: some View {
-        let models = SourceSetupModels.cached()
+        let models = SourceSetupModels.cached(services)
         NavigationStack(path: $path) {
             root(models)
                 .navigationDestination(for: SourceSetupStep.self) { step in
@@ -128,8 +130,8 @@ final class SourceSetupModels: ViewModelGroup {
     var members: [Lifecycle_viewmodelViewModel] { [setup] }
 
     @MainActor
-    static func cached() -> SourceSetupModels {
-        ViewModelCache.shared.viewModel(Navigator.sourceSetupCacheKey) { SourceSetupModels(graph: AppGraph.shared) }
+    static func cached(_ services: AppServices) -> SourceSetupModels {
+        services.viewModels.viewModel(Navigator.sourceSetupCacheKey) { SourceSetupModels(graph: services.graph) }
     }
 }
 
@@ -561,8 +563,8 @@ struct ServerSignOutPrompt: Equatable {
 /// servers' sessions for as long as the app runs.
 @MainActor
 enum ShellModels {
-    static func cached() -> ShellViewModel {
-        ViewModelCache.shared.viewModel(Navigator.shellCacheKey) { AppGraph.shared.shellViewModel }
+    static func cached(_ services: AppServices) -> ShellViewModel {
+        services.viewModels.viewModel(Navigator.shellCacheKey) { services.graph.shellViewModel }
     }
 }
 
@@ -570,9 +572,10 @@ enum ShellModels {
 /// the app's root for as long as it runs; `ServerSignOutAlertModifier` shows the prompts.
 private struct ServerSignOutModifier: ViewModifier {
     let navigator: Navigator
+    @Environment(\.appServices) private var appServices
 
     func body(content: Content) -> some View {
-        let shell = ShellModels.cached()
+        let shell = ShellModels.cached(appServices.required)
         Observing(shell.uiState) { state in
             content
                 .consumeEvents(state.events, handled: { shell.onEventHandled(id: $0) }) { event in

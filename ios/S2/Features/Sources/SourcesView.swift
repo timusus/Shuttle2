@@ -13,19 +13,21 @@ import UniformTypeIdentifiers
 struct SourcesView: View {
     /// Absent only outside the shell (previews); every stack in `AppShell` has it.
     @Environment(Navigator.self) private var navigator: Navigator?
+    @Environment(\.appServices) private var appServices
+    private var services: AppServices { appServices.required }
     /// Where the setup sheet opens, while it's up.
     @State private var setup: SourceSetupStart?
     /// Each server's saved address and user, read when the screen shows and after the setup closes.
     @State private var logins: [MediaProviderType: ServerLogin] = [:]
 
     var body: some View {
-        let models = SourcesModels.cached()
+        let models = SourcesModels.cached(services)
         Observing(models.sources.uiState, models.importState) { state, importState in
             SourcesContent(
                 state: SourcesState(state, importStatus: ImportStatus(importState), logins: logins),
                 onThisDeviceChange: { models.sources.onThisDeviceChange(enabled: $0) },
                 onAddFolder: { url in
-                    let picked = AppGraph.dependencies.localLibrary.stage(url)
+                    let picked = services.localLibrary.stage(url)
                     models.folderRules.onFolderPicked(kind: .extra, treeUri: picked)
                 },
                 onRemoveFolder: { folder in
@@ -39,12 +41,12 @@ struct SourcesView: View {
                 onRescan: { models.sources.onRescan() }
             )
         }
-        .sheet(item: $setup, onDismiss: { logins = ServerLogin.readAll() }) { start in
+        .sheet(item: $setup, onDismiss: { logins = ServerLogin.readAll(graph: services.graph) }) { start in
             SourceSetupFlow(start: start, navigator: navigator, onClose: { setup = nil })
         }
         .onAppear {
-            logins = ServerLogin.readAll()
-            SourcesModels.cached().sources.onResume()
+            logins = ServerLogin.readAll(graph: services.graph)
+            SourcesModels.cached(services).sources.onResume()
         }
         .navigationTitle("Sources")
     }
@@ -73,8 +75,8 @@ final class SourcesModels: ViewModelGroup {
 
     /// Sources' group, shared with a server's detail pushed on top of it.
     @MainActor
-    static func cached() -> SourcesModels {
-        ViewModelCache.shared.viewModel(Route.sources.cacheKey) { SourcesModels(graph: AppGraph.shared) }
+    static func cached(_ services: AppServices) -> SourcesModels {
+        services.viewModels.viewModel(Route.sources.cacheKey) { SourcesModels(graph: services.graph) }
     }
 }
 
@@ -92,7 +94,7 @@ struct ServerLogin: Equatable {
 
     /// Every server type iOS signs in to, read from the Keychain (`ReadServerLogin`).
     @MainActor
-    static func readAll(graph: IosAppGraph = AppGraph.shared) -> [MediaProviderType: ServerLogin] {
+    static func readAll(graph: IosAppGraph) -> [MediaProviderType: ServerLogin] {
         Dictionary(uniqueKeysWithValues: MediaProviderType.signInTypes.map { type in
             let saved = graph.readServerLogin.invoke(type: type)
             return (type, ServerLogin(address: saved.address, username: saved.username))
