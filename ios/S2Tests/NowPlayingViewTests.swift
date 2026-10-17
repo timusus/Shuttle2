@@ -139,7 +139,8 @@ struct NowPlayingViewTests {
     }
 
     @Test func theAudioSheetPushesEqualizerAndPlaybackSettings() throws {
-        let sut = NowPlayingAudioSheet(speed: 1) { _ in }
+        // The link's destination, EqualizerView, reads its services from the environment.
+        let sut = NowPlayingAudioSheet(speed: 1) { _ in }.environment(\.appServices, makeTestServices())
         #expect((try? sut.inspect().find(ViewType.NavigationLink.self)) != nil)
         #expect((try? sut.inspect().find(text: "Equalizer & Playback Settings")) != nil)
     }

@@ -9,7 +9,9 @@ struct AppServices {
     let viewModels: ViewModelCache
     let playerBinding: PlayerBinding
     let playIntent: PlayIntent
+    // codehealth-ignore arch-layer-direction: composition root, not a view (SwiftUI is imported only for the Environment entry)
     let storeKit: StoreKitManager
+    // codehealth-ignore arch-layer-direction: composition root, not a view (SwiftUI is imported only for the Environment entry)
     let localLibrary: LocalLibrary
 }
 
