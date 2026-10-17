@@ -11,6 +11,7 @@ import dev.zacsweers.metro.BindingContainer
 import dev.zacsweers.metro.Binds
 import dev.zacsweers.metro.ContributesTo
 import dev.zacsweers.metro.Inject
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 import timber.log.Timber
@@ -23,6 +24,8 @@ class SafSongFileDeleter @Inject constructor(
     override suspend fun delete(song: Song): Boolean = withContext(ioDispatcher) {
         try {
             DocumentFile.fromSingleUri(context, song.path.toUri())?.delete() == true
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Timber.e(e, "Failed to delete ${song.path}")
             false

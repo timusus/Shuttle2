@@ -7,8 +7,10 @@ import com.simplecityapps.fakes.FakeQueueOperations
 import com.simplecityapps.fakes.TestMediaActions
 import com.simplecityapps.playback.queue.QueueState
 import com.simplecityapps.playback.queue.toQueueItem
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 
@@ -78,5 +80,14 @@ class AddToPlaylistTest {
         val result = addToPlaylist(playlist, MediaSelection.Songs(createSong(id = 1)))
 
         result shouldBe AddToPlaylist.Result.Failure("disk full")
+    }
+
+    @Test
+    fun `cancellation propagates instead of failing`() = runTest {
+        fakePlaylistRepository.failure = CancellationException("cancelled")
+
+        shouldThrow<CancellationException> {
+            addToPlaylist(playlist, MediaSelection.Songs(createSong(id = 1)))
+        }
     }
 }

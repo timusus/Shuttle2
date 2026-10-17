@@ -4,6 +4,7 @@ import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
 import dev.zacsweers.metro.Inject
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.firstOrNull
 
 /**
@@ -50,6 +51,8 @@ class AddToPlaylist(
         return try {
             playlistRepository.addToPlaylist(playlist, songs)
             Result.Success(playlist, songs)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Result.Failure(e.message)
         }
