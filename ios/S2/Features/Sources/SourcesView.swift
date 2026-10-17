@@ -35,10 +35,7 @@ struct SourcesView: View {
                     )
                 },
                 onAddServer: { setup = .chooseSource },
-                onRemove: {
-                    models.sources.onRemoveServer(type: $0)
-                    StreamWarmUp.shared.forget()
-                },
+                onRemove: { models.removeServer($0) },
                 onRescan: { models.sources.onRescan() }
             )
         }
@@ -67,6 +64,12 @@ final class SourcesModels: ViewModelGroup {
     }
 
     var members: [Lifecycle_viewmodelViewModel] { [sources, folderRules] }
+
+    /// Removes the server and forgets the warm streams of its origin.
+    func removeServer(_ type: MediaProviderType) {
+        sources.onRemoveServer(type: type)
+        StreamWarmUp.shared.forget()
+    }
 
     /// Sources' group, shared with a server's detail pushed on top of it.
     @MainActor
