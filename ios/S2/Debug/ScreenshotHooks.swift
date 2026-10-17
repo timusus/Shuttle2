@@ -31,6 +31,7 @@ enum ScreenshotState {
 struct ScreenshotHooksModifier: ViewModifier {
     let navigator: Navigator
     @Binding var showNowPlaying: Bool
+    @Environment(\.appServices) private var appServices
 
     private static let log = Logger(subsystem: "com.simplecityapps.shuttle2", category: "screenshot-hooks")
 
@@ -82,7 +83,7 @@ struct ScreenshotHooksModifier: ViewModifier {
             NowPlayingPresentationStyle.forcesFullScreenCover = query["fullScreen"] == "1"
             showNowPlaying = query["open"] == "1"
         case "paywall":
-            AppGraph.dependencies.storeKit.showScreenshotPrice(query["price"])
+            appServices.required.storeKit.showScreenshotPrice(query["price"])
         case "miniplayer":
             ScreenshotState.hidesMiniPlayer = query["hidden"] == "1"
         case "reset":
@@ -90,7 +91,7 @@ struct ScreenshotHooksModifier: ViewModifier {
             NowPlayingPresentationStyle.forcesFullScreenCover = false
             navigator.showsSettings = false
             navigator.selection = navigator.selection
-            AppGraph.dependencies.storeKit.showScreenshotPrice(nil)
+            appServices.required.storeKit.showScreenshotPrice(nil)
             ScreenshotState.hidesMiniPlayer = false
         default:
             Self.log.error("unknown hook \(url.absoluteString, privacy: .public)")

@@ -48,7 +48,7 @@ struct HomeView: View {
         }
         .refreshable {
             models.home.refresh()
-            LibraryImport.refresh()
+            LibraryImport.refresh(graph: services.graph)
         }
         .onAppear {
             appeared = true

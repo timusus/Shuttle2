@@ -27,7 +27,7 @@ enum BackgroundRefresh {
 
     /// The task: asks for the next run, then syncs. SwiftUI cancels it when the system ends the task's time, which
     /// cancels the sync.
-    static func run(graph: IosAppGraph = AppGraph.shared) async {
+    static func run(graph: IosAppGraph) async {
         schedule()
         do {
             try await graph.backgroundSync.run()

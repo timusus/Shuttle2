@@ -27,14 +27,18 @@ struct ContentView: View {
     @SceneStorage("nav.search") private var searchStorage = Navigator.StoredPath()
     @SceneStorage("nav.libraryCategories") private var categoryStorage = Navigator.StoredCategoryPaths()
 
-    init(startTab: AppTab) {
+    /// Called after the first frame is on screen; the caller makes it idempotent.
+    let onFirstFrame: () -> Void
+
+    init(startTab: AppTab, onFirstFrame: @escaping () -> Void) {
         _navigator = State(initialValue: Navigator(startTab: startTab))
+        self.onFirstFrame = onFirstFrame
     }
 
     var body: some View {
         let _ = StartupTrace.mark("contentViewBody")
         let tier = LayoutTier.resolve(horizontalSizeClass: horizontalSizeClass, containerWidth: containerSize.width)
-        AppShell(tier: tier, navigator: navigator, showNowPlaying: $showNowPlaying, playerBinding: services.playerBinding)
+        AppShell(tier: tier, navigator: navigator, showNowPlaying: $showNowPlaying, playerBinding: services.playerBinding, onFirstFrame: onFirstFrame)
             .environment(\.layoutTier, tier)
             .environment(\.rootContainerSize, containerSize)
             .environment(\.nowPlayingNamespace, nowPlayingNamespace)
@@ -106,14 +110,17 @@ struct AppShell: View {
     @Binding var showNowPlaying: Bool
     /// The player the mini player shows, and whose current song decides whether it shows at all.
     let playerBinding: PlayerBinding
+    let onFirstFrame: () -> Void
 
     init(
         tier: LayoutTier,
         container: ShellContainer? = nil,
         navigator: Navigator,
         showNowPlaying: Binding<Bool>,
-        playerBinding: PlayerBinding
+        playerBinding: PlayerBinding,
+        onFirstFrame: @escaping () -> Void = {}
     ) {
+        self.onFirstFrame = onFirstFrame
         self.tier = tier
         self.container = container ?? .resolve(for: tier)
         self.navigator = navigator
@@ -142,7 +149,7 @@ struct AppShell: View {
         .onAppear {
             StartupTrace.mark("firstFrame")
             // After this frame is committed, not before it
-            DispatchQueue.main.async { AppGraph.startAfterFirstFrame() }
+            DispatchQueue.main.async { onFirstFrame() }
         }
     }
 

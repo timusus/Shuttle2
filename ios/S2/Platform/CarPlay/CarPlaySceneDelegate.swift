@@ -13,6 +13,8 @@ import UIKit
 @MainActor
 final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegate, CPInterfaceControllerDelegate {
     private var interfaceController: CPInterfaceController?
+    /// Read from the locator once, on connect; nil until then.
+    private var dependencies: IosAppDependencies?
     private var nowPlaying: CarPlayNowPlayingController?
     private var actions: MediaActionsViewModel?
     private var home: HomeViewModel?
@@ -91,6 +93,7 @@ final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegat
         // The car can launch the app on its own, with no phone scene; S2App.init has built the graph by then, but
         // building it here too costs nothing (it's idempotent) and a CarPlay-only launch never sees an empty graph.
         AppGraph.initialize()
+        dependencies = AppGraph.dependencies
         let locked = AppGraph.shared.carPlayAccess.locked
         showAccess(locked: locked.value.boolValue)
         accessTask?.cancel()
@@ -117,7 +120,8 @@ final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegat
     }
 
     private func startLibrary(_ interfaceController: CPInterfaceController) {
-        let graph = AppGraph.shared
+        guard let dependencies else { return }
+        let graph = dependencies.graph
         let tabs: [(CPListTemplate, String, String)] = [
             (homeTemplate, CarPlayText.home, "house"),
             (playlistsTemplate, CarPlayText.playlists, "music.note.list"),
@@ -136,7 +140,7 @@ final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegat
         let tabBar = CPTabBarTemplate(templates: Array(tabs.map(\.0).prefix(CPTabBarTemplate.maximumTabCount)))
         interfaceController.setRootTemplate(tabBar, animated: true, completion: nil)
 
-        let nowPlaying = CarPlayNowPlayingController(binding: AppGraph.dependencies.playerBinding)
+        let nowPlaying = CarPlayNowPlayingController(binding: dependencies.playerBinding)
         nowPlaying.attach { [weak self] in self?.pushQueue() }
         self.nowPlaying = nowPlaying
         actions = graph.mediaActionsViewModel
@@ -323,7 +327,8 @@ final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegat
         guard inputs != playablePlaylistsInputs else { return }
         playablePlaylistsInputs = inputs
         playablePlaylistsTask?.cancel()
-        let flow = AppGraph.shared.observePlayablePlaylists.invoke(playlists: Array(playlists.values), downloadedPaths: downloaded)
+        guard let graph = dependencies?.graph else { return }
+        let flow = graph.observePlayablePlaylists.invoke(playlists: Array(playlists.values), downloadedPaths: downloaded)
         playablePlaylistsTask = Task { [weak self] in
             for await ids in flow {
                 guard let self else { return }
@@ -437,7 +442,8 @@ final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegat
     private func performHome(_ action: CarPlayRowAction) {
         switch action {
         case .shuffle:
-            play(AppGraph.shared.appIntentLibrary.shuffleAll())
+            guard let graph = dependencies?.graph else { return }
+            play(graph.appIntentLibrary.shuffleAll())
         case .play(let key):
             guard let item = homeItems[key] else { return }
             play(item.playAction(), key: key)
@@ -482,39 +488,40 @@ final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegat
             play(MediaActionPlay(selection: MediaSelectionAlbums(album: album), position: 0))
             return
         }
-        let viewModel = AppGraph.shared.albumDetailViewModelFactory.create(groupKey: groupKey)
+        guard let graph = dependencies?.graph else { return }
+        let viewModel = graph.albumDetailViewModelFactory.create(groupKey: groupKey)
         pushSongs(title: title, viewModel: viewModel, flow: viewModel.uiState) { state in
             SongList(songs: state.songs, context: state.playContext, currentSongId: state.currentSong?.id, loading: state.loadingState == .loading)
         }
     }
 
     private func performArtists(_ action: CarPlayRowAction) {
-        guard case .open(let id) = action, let artist = artists[id] else { return }
-        let viewModel = AppGraph.shared.albumArtistDetailViewModelFactory.create(groupKey: artist.groupKey)
+        guard case .open(let id) = action, let artist = artists[id], let graph = dependencies?.graph else { return }
+        let viewModel = graph.albumArtistDetailViewModelFactory.create(groupKey: artist.groupKey)
         pushSongs(title: artist.name ?? artist.friendlyArtistName ?? CarPlayText.unknown, viewModel: viewModel, flow: viewModel.uiState) { state in
             SongList(songs: state.songs, context: state.playContext, currentSongId: state.currentSong?.id, loading: state.loadingState == .loading)
         }
     }
 
     private func performGenres(_ action: CarPlayRowAction) {
-        guard case .open(let id) = action, let genre = genres[id] else { return }
-        let viewModel = AppGraph.shared.genreDetailViewModelFactory.create(genreName: genre.name)
+        guard case .open(let id) = action, let genre = genres[id], let graph = dependencies?.graph else { return }
+        let viewModel = graph.genreDetailViewModelFactory.create(genreName: genre.name)
         pushSongs(title: genre.name, viewModel: viewModel, flow: viewModel.uiState) { state in
             SongList(songs: state.songs, context: state.playContext, currentSongId: state.currentSong?.id, loading: state.loading)
         }
     }
 
     private func performPlaylists(_ action: CarPlayRowAction) {
-        guard case .open(let id) = action else { return }
+        guard case .open(let id) = action, let graph = dependencies?.graph else { return }
         if let smartPlaylist = smartPlaylists[id] {
-            let viewModel = AppGraph.shared.smartPlaylistDetailViewModelFactory.create(smartPlaylistId: smartPlaylist.id.id)
+            let viewModel = graph.smartPlaylistDetailViewModelFactory.create(smartPlaylistId: smartPlaylist.id.id)
             pushSongs(title: smartPlaylist.id.title, viewModel: viewModel, flow: viewModel.uiState) { state in
                 SongList(songs: state.songs, context: state.playContext, currentSongId: state.currentSong?.id, loading: state.loading)
             }
             return
         }
         guard let playlist = playlists[id] else { return }
-        let viewModel = AppGraph.shared.playlistDetailViewModelFactory.create(playlistId: playlist.id)
+        let viewModel = graph.playlistDetailViewModelFactory.create(playlistId: playlist.id)
         pushSongs(title: playlist.name, viewModel: viewModel, flow: viewModel.uiState) { state in
             SongList(songs: state.songs.map(\.song), context: state.playContext, currentSongId: state.currentSong?.id, loading: state.loading)
         }
@@ -571,8 +578,7 @@ final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegat
 
     /// Up Next on Now Playing: the queue from the current song, which plays the tapped one.
     private func pushQueue() {
-        guard let controller = interfaceController else { return }
-        let binding = AppGraph.dependencies.playerBinding
+        guard let controller = interfaceController, let binding = dependencies?.playerBinding else { return }
         let queue = binding.nowPlaying.queue
         let songs = queue.map { CarPlaySong(id: $0.id, title: $0.title, subtitle: $0.artist, artwork: $0.artwork) }
         let template = CPListTemplate(title: CarPlayText.upNext, sections: [])
@@ -585,7 +591,8 @@ final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegat
     }
 
     private func play(_ action: any MediaAction, key: String? = nil) {
-        actions?.send(action, key: key, intent: AppGraph.dependencies.playIntent)
+        guard let intent = dependencies?.playIntent else { return }
+        actions?.send(action, key: key, intent: intent)
         showNowPlaying()
     }
 

@@ -40,7 +40,7 @@ struct AlbumArtistListView: View {
                 .warmsUpSearch(once: state.loadingState != .loading)
             }
         }
-        .refreshable { LibraryImport.refresh() }
+        .refreshable { LibraryImport.refresh(graph: services.graph) }
         .onAppear { StartupTrace.mark(.albumArtists, .appear) }
         .navigationTitle(LibraryCategory.albumArtists.title)
     }

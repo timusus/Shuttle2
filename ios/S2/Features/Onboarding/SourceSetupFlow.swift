@@ -72,7 +72,7 @@ struct SourceSetupFlow: View {
             Observing(models.setup.uiState) { state in
                 SourceSetupImportPage(
                     state: SourceSetupImportState(state.serverImport),
-                    onRetry: { LibraryImport.refresh() },
+                    onRetry: { LibraryImport.refresh(graph: services.graph) },
                     onContinue: { close(models) }
                 )
             }

@@ -189,12 +189,16 @@ final class SiriMediaPlayer {
 
 /// The intent handler Siri gets from the app delegate: resolves in the app, then hands playback to the delegate.
 final class SiriMediaHandler: NSObject, INPlayMediaIntentHandling {
+    private let player: SiriMediaPlayer
+
     @MainActor
-    static let shared = SiriMediaHandler()
+    init(player: SiriMediaPlayer) {
+        self.player = player
+    }
 
     func resolveMediaItems(for intent: INPlayMediaIntent, with completion: @escaping ([INPlayMediaMediaItemResolutionResult]) -> Void) {
         Task { @MainActor in
-            completion(await AppGraph.dependencies.siriPlayer.resolve(intent))
+            completion(await player.resolve(intent))
         }
     }
 

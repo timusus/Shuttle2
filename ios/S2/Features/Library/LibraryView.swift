@@ -133,6 +133,7 @@ struct LibraryRootContent<CategoryContent: View>: View {
     @ViewBuilder let categoryContent: (LibraryCategory) -> CategoryContent
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.appServices) private var appServices
 
     init(
         categories: [LibraryCategory],
@@ -165,7 +166,7 @@ struct LibraryRootContent<CategoryContent: View>: View {
                     }
                     .containerRelativeFrame(.vertical)
                 }
-                .refreshable { LibraryImport.refresh() }
+                .refreshable { LibraryImport.refresh(graph: appServices.required.graph) }
             case .empty:
                 // The first import: its progress, under the (empty) rail, until there's music to show.
                 Color.clear

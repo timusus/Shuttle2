@@ -36,7 +36,7 @@ struct GenreListView: View {
             .mediaActionResults(actions.events, handled: { models.actions.onEventHandled(id: $0) })
             .warmsUpSearch(once: state.loadingState != .loading)
         }
-        .refreshable { LibraryImport.refresh() }
+        .refreshable { LibraryImport.refresh(graph: services.graph) }
         .onAppear { StartupTrace.mark(.genres, .appear) }
         .navigationTitle(LibraryCategory.genres.title)
     }

@@ -39,7 +39,7 @@ struct AlbumListView: View {
                 .warmsUpSearch(once: state.loadingState != .loading)
             }
         }
-        .refreshable { LibraryImport.refresh() }
+        .refreshable { LibraryImport.refresh(graph: services.graph) }
         .onAppear { StartupTrace.mark(.albums, .appear) }
         .navigationTitle(LibraryCategory.albums.title)
     }

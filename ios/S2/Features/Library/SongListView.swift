@@ -41,7 +41,7 @@ struct SongListView: View {
                 .warmsUpSearch(once: state.loadingState != .loading)
             }
         }
-        .refreshable { LibraryImport.refresh() }
+        .refreshable { LibraryImport.refresh(graph: services.graph) }
         .onAppear { StartupTrace.mark(.songs, .appear) }
         .navigationTitle(LibraryCategory.songs.title)
     }

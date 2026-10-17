@@ -12,7 +12,7 @@ import Shared
 /// `MediaSources.scan` outlives the screen that asked and is a no-op while an import runs, or with no source.
 @MainActor
 enum LibraryImport {
-    static func atLaunch(graph: IosAppGraph = AppGraph.shared) {
+    static func atLaunch(graph: IosAppGraph) {
         atLaunch(
             hasScanned: graph.mediaSources.hasScanned,
             songTagsOutdated: graph.mediaSources.songTagsOutdated,
@@ -26,10 +26,7 @@ enum LibraryImport {
         if !hasScanned || songTagsOutdated { scan() }
     }
 
-    static func whenLocalFilesChange(
-        graph: IosAppGraph = AppGraph.shared,
-        localLibrary: LocalLibrary = AppGraph.dependencies.localLibrary
-    ) async {
+    static func whenLocalFilesChange(graph: IosAppGraph, localLibrary: LocalLibrary) async {
         await whenLocalFilesChange(
             deviceEnabled: graph.mediaSources.enabledTypes.value.contains(.shuttle),
             changed: { await Task.detached(priority: .utility) { localLibrary.changedSinceLastImport() }.value },
@@ -44,11 +41,11 @@ enum LibraryImport {
     }
 
     /// At most every few minutes per server (`SyncPolicy`), and a no-op while an import runs.
-    static func syncIfStale(graph: IosAppGraph = AppGraph.shared) {
+    static func syncIfStale(graph: IosAppGraph) {
         graph.mediaSources.syncIfStale()
     }
 
-    static func refresh(graph: IosAppGraph = AppGraph.shared) {
+    static func refresh(graph: IosAppGraph) {
         graph.mediaSources.scan(foldersChanged: false)
     }
 }

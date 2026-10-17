@@ -20,18 +20,18 @@ struct S2App: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView(startTab: startTab)
+            ContentView(startTab: startTab, onFirstFrame: AppGraph.startAfterFirstFrame)
                 .environment(\.appServices, AppGraph.dependencies.services)
                 .tint(.s2Accent)
                 .task {
-                    StartupTrace.step("libraryImportAtLaunch") { LibraryImport.atLaunch() }
-                    LibraryImport.syncIfStale()
+                    StartupTrace.step("libraryImportAtLaunch") { LibraryImport.atLaunch(graph: AppGraph.shared) }
+                    LibraryImport.syncIfStale(graph: AppGraph.shared)
                     QuickActionRouter.shared.install()
                     // Siri and Spotlight learn the playlists' names for "Play <playlist> in Shuttle Music"
                     ShuttleShortcuts.updateAppShortcutParameters()
                     // ... and "Play <artist> on Shuttle Music" learns the library (#951)
                     AppGraph.dependencies.siriContext.start()
-                    await LibraryImport.whenLocalFilesChange()
+                    await LibraryImport.whenLocalFilesChange(graph: AppGraph.shared, localLibrary: AppGraph.dependencies.localLibrary)
                 }
                 .onChange(of: scenePhase) { _, phase in
                     switch phase {
@@ -39,8 +39,8 @@ struct S2App: App {
                         // The next tap's stream finds its server's connection open
                         StreamWarmUp.shared.warm()
                         SiriAuthorization.askIfDue()
-                        LibraryImport.syncIfStale()
-                        Task { await LibraryImport.whenLocalFilesChange() }
+                        LibraryImport.syncIfStale(graph: AppGraph.shared)
+                        Task { await LibraryImport.whenLocalFilesChange(graph: AppGraph.shared, localLibrary: AppGraph.dependencies.localLibrary) }
                         // Scrobbles queued while offline or suspended
                         AppGraph.shared.scrobbleFlushScheduler.scheduleFlush()
                     case .background:
@@ -52,16 +52,19 @@ struct S2App: App {
                 }
         }
         .backgroundTask(.appRefresh(BackgroundRefresh.identifier)) {
-            await BackgroundRefresh.run()
+            await BackgroundRefresh.run(graph: AppGraph.shared)
         }
         .backgroundTask(.appRefresh(ScrobbleFlush.identifier)) {
-            await ScrobbleFlush.run()
+            await ScrobbleFlush.run(graph: AppGraph.shared)
         }
     }
 }
 
 /// The UIKit callbacks SwiftUI has no modifier for.
 final class AppDelegate: NSObject, UIApplicationDelegate {
+    /// Kept for the app's life: iOS doesn't retain the handler it is given.
+    private lazy var siriHandler = SiriMediaHandler(player: AppGraph.dependencies.siriPlayer)
+
     /// iOS relaunched (or woke) the app because offline downloads' background session has events (#759): the session,
     /// recreated by `AppGraph.initialize()`, delivers them, then calls `completionHandler` so iOS can suspend the app
     /// again and refresh its snapshot.
@@ -95,7 +98,7 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
 
     /// Siri's "play <something>" (#951): the media intent is handled here, in the app's process.
     func application(_ application: UIApplication, handlerFor intent: INIntent) -> Any? {
-        intent is INPlayMediaIntent ? SiriMediaHandler.shared : nil
+        intent is INPlayMediaIntent ? siriHandler : nil
     }
 
     /// Siri resolved the request and the handler answered `.handleInApp`: start playing, with the app awake in the

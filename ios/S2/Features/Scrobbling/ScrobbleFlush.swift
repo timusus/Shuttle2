@@ -28,7 +28,7 @@ enum ScrobbleFlush {
 
     /// The task: sends the queue, and asks again if Last.fm couldn't be reached. A queue held for the user (signed
     /// out, or a rejected session) waits for the app. SwiftUI cancels it when the system ends the task's time.
-    static func run(graph: IosAppGraph = AppGraph.shared) async {
+    static func run(graph: IosAppGraph) async {
         do {
             if try await graph.scrobbleFlushScheduler.flush() == .retry { schedule() }
         } catch {
