@@ -26,7 +26,6 @@ import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.ContributesIntoMap
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metrox.viewmodel.ViewModelKey
-import kotlin.time.Instant
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -36,6 +35,10 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
+import kotlin.time.Clock
+import kotlin.time.Instant
 
 /** The stored value of every setting the catalog shows, keyed by preference key, and the confirmations still to show. */
 data class SettingsUiState(
@@ -96,7 +99,9 @@ class SettingsViewModel @Inject constructor(
     private val effects: SettingsEffects,
     catalog: SettingsCatalog,
     private val backupFlow: LibraryBackupFlow,
-    private val tryUseProFeature: TryUseProFeature
+    private val tryUseProFeature: TryUseProFeature,
+    private val clock: Clock = Clock.System,
+    private val timeZone: TimeZone = TimeZone.currentSystemDefault(),
 ) : ViewModel() {
     private val catalogSettings = catalog.settings
     private val lastFmConfigured = isLastFmConfigured()
@@ -159,7 +164,12 @@ class SettingsViewModel @Inject constructor(
                 events.post(SettingsUiEvent.RescanStarted)
             }
 
-            SettingsAction.ExportBackup -> events.post(SettingsUiEvent.BackupExportRequested(BACKUP_FILE_NAME))
+            SettingsAction.ExportBackup -> {
+                val today = clock.now().toLocalDateTime(timeZone).date
+                val backupFileName = "shuttle-library-backup-$today.json"
+
+                events.post(SettingsUiEvent.BackupExportRequested(backupFileName))
+            }
 
             SettingsAction.ImportBackup -> {
                 events.post(SettingsUiEvent.BackupImportPickerRequested)
@@ -250,7 +260,5 @@ class SettingsViewModel @Inject constructor(
         const val SLIDER_SETTLE_MILLIS = 300L
     }
 }
-
-private const val BACKUP_FILE_NAME = "shuttle-library-backup.json"
 
 private val logger = Logger.tagged("SettingsViewModel")
