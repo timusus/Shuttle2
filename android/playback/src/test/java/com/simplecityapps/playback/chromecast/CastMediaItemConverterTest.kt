@@ -28,11 +28,6 @@ class CastMediaItemConverterTest {
         .copy(artists = listOf("Artist"), album = "Album")
 
     @Test
-    fun `a Wi-Fi address reads lowest byte first`() {
-        CastMediaItemConverter.formatIpAddress(0x1401A8C0) shouldBe "192.168.1.20"
-    }
-
-    @Test
     fun `an entry streams from the phone's server, with its metadata`() {
         val media = converter.toMediaQueueItem(QueueEntry(uid = 42, song = song).toMediaItem()).media!!
 

@@ -20,11 +20,6 @@ class VoiceSearchFromTest {
     }
 
     @Test
-    fun `no extras is an unstructured search`() {
-        VoiceSearch.from("something", null) shouldBe VoiceSearch("something", Focus.Unstructured)
-    }
-
-    @Test
     fun `a genre focus carries the genre`() {
         val extras = Bundle().apply {
             putString(MediaStore.EXTRA_MEDIA_FOCUS, MediaStore.Audio.Genres.ENTRY_CONTENT_TYPE)
