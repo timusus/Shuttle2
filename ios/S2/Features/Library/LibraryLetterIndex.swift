@@ -252,7 +252,7 @@ private struct ScrollViewHalt: UIViewRepresentable {
 
     func updateUIView(_ view: UIView, context: Context) {
         // The background is a sibling of the scroll view, not an ancestor: search up to the first ancestor holding one.
-        DispatchQueue.main.async { [halt] in
+        Task { @MainActor [halt] in
             var ancestor = view.superview
             while let current = ancestor {
                 if let found = Self.largestScrollView(in: current) {

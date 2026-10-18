@@ -149,7 +149,7 @@ struct AppShell: View {
         .onAppear {
             StartupTrace.mark("firstFrame")
             // After this frame is committed, not before it
-            DispatchQueue.main.async { onFirstFrame() }
+            Task { @MainActor in onFirstFrame() }
         }
     }
 
