@@ -130,7 +130,7 @@ Why this over the alternatives:
 - Each data module has a `@ContributesTo(AppScope::class) @BindingContainer` that `@Binds` its
   implementations to domain interfaces (or the implementations use `@ContributesBinding`). Each
   provider module contributes its `MediaInfoProvider` as an `@IntoMap` entry keyed by
-  `@MediaProviderTypeKey`, and `playback/di/PlaybackEngineModule.kt` builds
+  `@MediaProviderTypeKey`, and `playback/di/MediaResolutionModule.kt` builds
   `AggregateMediaInfoProvider` from the map.
 - `:android:app` holds the only `@DependencyGraph` (`AppGraph`) and keeps `implementation` edges to
   every data module so the graph sees all their contributions. If presentation moves into

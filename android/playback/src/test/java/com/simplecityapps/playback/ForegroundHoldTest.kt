@@ -1,6 +1,6 @@
 package com.simplecityapps.playback
 
-import com.simplecityapps.playback.di.PlaybackEngineModule
+import com.simplecityapps.playback.di.PlaybackOperationsModule
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.CoroutineStart
@@ -20,7 +20,7 @@ import org.robolectric.Shadows.shadowOf
 class ForegroundHoldTest {
     private val context = RuntimeEnvironment.getApplication()
 
-    private val foregroundHold = PlaybackEngineModule().provideForegroundHold(context)
+    private val foregroundHold = PlaybackOperationsModule().provideForegroundHold(context)
 
     @Test
     fun `acquiring the hold starts the playback service in the foreground`() {

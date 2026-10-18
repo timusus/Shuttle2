@@ -1,6 +1,9 @@
 package com.simplecityapps.playback.exoplayer
 
 import com.simplecityapps.playback.OutputFormat
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.SingleIn
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -12,7 +15,8 @@ import kotlinx.coroutines.flow.asStateFlow
  * [format] keeps the last format once the player is released, so the next track in the same format can open
  * straight onto whatever output was chosen for it.
  */
-class AudioTrackMonitor {
+@SingleIn(AppScope::class)
+class AudioTrackMonitor @Inject constructor() {
     /** Something that has an AudioTrack open and can open a new one: the current player. */
     fun interface Owner {
         fun reopenAudioTrack()

@@ -4,6 +4,9 @@ import com.simplecityapps.playback.equalizer.EqualizerBandGain
 import com.simplecityapps.playback.equalizer.EqualizerFrequencyResponse
 import com.simplecityapps.playback.equalizer.EqualizerResponse
 import com.simplecityapps.playback.equalizer.FrequencyResponsePoint
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.ContributesBinding
+import dev.zacsweers.metro.Inject
 import kotlin.math.log10
 import kotlin.math.pow
 
@@ -16,6 +19,8 @@ internal const val FALLBACK_OUTPUT_SAMPLE_RATE_HZ = 48_000
  * the same function `EqualizerAudioProcessor` uses - plus the user's preamp, so the chart matches what actually
  * reaches the output (#312, #236).
  */
+@ContributesBinding(AppScope::class)
+@Inject
 class DefaultEqualizerFrequencyResponse : EqualizerFrequencyResponse {
     override fun invoke(
         bands: List<EqualizerBandGain>,

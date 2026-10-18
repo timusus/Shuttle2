@@ -70,7 +70,7 @@ with a `reason` (`CrossfadeSkip`). `Crossfade` works it out as the player moves 
 | `float_output` / `offload` | The fallbacks above |
 
 Seeks and skips aren't reported: they cut hard by design. `ExoPlayerFactory` takes the reporting callback;
-`PlaybackEngineModule` passes `Analytics.crossfadeSkipped`.
+`ExoPlayerModule` passes `Analytics.crossfadeSkipped`.
 
 ## The five risks
 
