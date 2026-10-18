@@ -2,6 +2,7 @@ package com.simplecityapps.shuttle.shared.local
 
 import com.simplecityapps.mediaprovider.FlowEvent
 import com.simplecityapps.mediaprovider.MediaImporter
+import com.simplecityapps.mediaprovider.SONG_TAGS_VERSION
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
@@ -74,7 +75,7 @@ class IosLocalMediaProviderTest {
     }
 
     private val localFiles = FakeLocalFiles()
-    private val preferences = GeneralPreferenceManager(InMemoryKeyValueStore()).apply { setSongTagsVersion(MediaProviderType.Shuttle.name, MediaImporter.SONG_TAGS_VERSION) }
+    private val preferences = GeneralPreferenceManager(InMemoryKeyValueStore()).apply { setSongTagsVersion(MediaProviderType.Shuttle.name, SONG_TAGS_VERSION) }
     private val provider = IosLocalMediaProvider(localFiles, preferences).apply { emptyFolderRecheckDelayMs = 0 }
 
     private suspend fun findSongs(existing: List<Song> = emptyList()): List<Song> = provider.findSongs(existing).filterIsInstance<FlowEvent.Success<List<Song>>>().first().result
@@ -155,7 +156,7 @@ class IosLocalMediaProviderTest {
         val existing = findSongs()
         localFiles.reads.clear()
 
-        preferences.setSongTagsVersion(MediaProviderType.Shuttle.name, MediaImporter.SONG_TAGS_VERSION - 1)
+        preferences.setSongTagsVersion(MediaProviderType.Shuttle.name, SONG_TAGS_VERSION - 1)
         localFiles.tags[file.path] = tags(title = "A, with every tag")
 
         findSongs(existing).single().name shouldBe "A, with every tag"

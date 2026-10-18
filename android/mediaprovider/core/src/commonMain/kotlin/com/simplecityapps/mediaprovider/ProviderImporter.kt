@@ -1,6 +1,5 @@
 package com.simplecityapps.mediaprovider
 
-import com.simplecityapps.mediaprovider.MediaImporter.SongImportResult
 import com.simplecityapps.shuttle.logging.Logger
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.persistence.SourceReachability

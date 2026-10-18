@@ -52,7 +52,7 @@ abstract class MediaImporterTestBase {
         Dispatchers.setMain(UnconfinedTestDispatcher())
         // The library has been imported under this build, so a sync has nothing waiting on the first import
         preferences.lastMediaImportDate = clock.time
-        preferences.songTagsRescanVersion = MediaImporter.SONG_TAGS_VERSION
+        preferences.songTagsRescanVersion = SONG_TAGS_VERSION
     }
 
     @AfterTest
@@ -115,7 +115,7 @@ class ServerProvider(
 
     /** The versions each playlist listing was told the stored playlists had, and the listing it answers with. */
     val knownVersionRequests = mutableListOf<Map<String, String>>()
-    var playlistListing: MediaImporter.PlaylistListing? = null
+    var playlistListing: PlaylistListing? = null
 
     /** Runs as each song listing begins, for a test to act while an import is running. */
     var duringListing: (suspend () -> Unit)? = null
@@ -162,7 +162,7 @@ class ServerProvider(
         failure?.let { emit(FlowEvent.Failure(it)) } ?: emit(FlowEvent.Success(found, missing))
     }
 
-    override fun findPlaylists(existingSongs: List<Song>, knownVersions: Map<String, String>): Flow<FlowEvent<MediaImporter.PlaylistListing, MessageProgress>> = flow {
+    override fun findPlaylists(existingSongs: List<Song>, knownVersions: Map<String, String>): Flow<FlowEvent<PlaylistListing, MessageProgress>> = flow {
         playlistRequests++
         knownVersionRequests += knownVersions
         playlistListing?.let { emit(FlowEvent.Success(it)) }
@@ -172,15 +172,15 @@ class ServerProvider(
 /** A playlist store holding the playlists of [storedIds], which records each listing it was asked to reconcile. */
 class FakePlaylistStore : ImportedPlaylistStore {
     var storedIds: Set<String> = emptySet()
-    val reconciled = mutableListOf<MediaImporter.PlaylistListing>()
+    val reconciled = mutableListOf<PlaylistListing>()
 
-    override suspend fun storePlaylist(playlist: MediaImporter.PlaylistUpdateData) = error("ImportedPlaylistStore.storePlaylist isn't faked")
+    override suspend fun storePlaylist(playlist: PlaylistUpdateData) = error("ImportedPlaylistStore.storePlaylist isn't faked")
 
     override suspend fun storedPlaylistIds(type: MediaProviderType): Set<String> = storedIds
 
     override suspend fun reconcilePlaylists(
         type: MediaProviderType,
-        listing: MediaImporter.PlaylistListing,
+        listing: PlaylistListing,
         listingComplete: Boolean,
         lastServerSongs: Map<String, Set<Long>>
     ) {
@@ -205,7 +205,7 @@ class IndexedProvider : IndexedMediaProvider {
         emit(FlowEvent.Success(emptyList()))
     }
 
-    override fun findPlaylists(existingSongs: List<Song>, knownVersions: Map<String, String>): Flow<FlowEvent<MediaImporter.PlaylistListing, MessageProgress>> = emptyFlow()
+    override fun findPlaylists(existingSongs: List<Song>, knownVersions: Map<String, String>): Flow<FlowEvent<PlaylistListing, MessageProgress>> = emptyFlow()
 }
 
 /**
@@ -243,7 +243,7 @@ class GatedProvider(
         stored.incrementAndFetch()
     }
 
-    override fun findPlaylists(existingSongs: List<Song>, knownVersions: Map<String, String>): Flow<FlowEvent<MediaImporter.PlaylistListing, MessageProgress>> = emptyFlow()
+    override fun findPlaylists(existingSongs: List<Song>, knownVersions: Map<String, String>): Flow<FlowEvent<PlaylistListing, MessageProgress>> = emptyFlow()
 }
 
 class FakeClock(var time: Instant) : Clock {

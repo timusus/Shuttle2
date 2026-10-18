@@ -71,7 +71,7 @@ class MediaImporterSyncTest : MediaImporterTestBase() {
     fun `a sync where every source was synced recently never says it started`() = runBlocking<Unit> {
         importer.mediaProviders -= provider
         importer.mediaProviders += server
-        preferences.setSongTagsVersion(server.type.name, MediaImporter.SONG_TAGS_VERSION)
+        preferences.setSongTagsVersion(server.type.name, SONG_TAGS_VERSION)
         preferences.setLastSyncStart(server.type.name, clock.time - 1.minutes)
         preferences.setLastFullSyncStart(server.type.name, clock.time - 1.minutes)
         var started = 0
@@ -166,7 +166,7 @@ class MediaImporterSyncTest : MediaImporterTestBase() {
     fun `a sync on return to the app asks a server only for what changed since its last sync - and leaves this device alone`() = runBlocking<Unit> {
         importer.mediaProviders += server
         songRepository.stored = listOf(song())
-        preferences.setSongTagsVersion(server.type.name, MediaImporter.SONG_TAGS_VERSION)
+        preferences.setSongTagsVersion(server.type.name, SONG_TAGS_VERSION)
         preferences.setLastSyncStart(server.type.name, clock.time - 1.hours)
         preferences.setLastFullSyncStart(server.type.name, clock.time - 1.days)
 
@@ -247,7 +247,7 @@ class MediaImporterSyncTest : MediaImporterTestBase() {
         preferences.lastMediaImportDate = null
         importer.sync(SyncTrigger.Periodic)
         preferences.lastMediaImportDate = clock.time
-        preferences.songTagsRescanVersion = MediaImporter.SONG_TAGS_VERSION - 1
+        preferences.songTagsRescanVersion = SONG_TAGS_VERSION - 1
         importer.sync(SyncTrigger.Periodic)
 
         server.requests shouldBe emptyList()
@@ -280,7 +280,7 @@ class MediaImporterSyncTest : MediaImporterTestBase() {
     fun `the daily sync reads this device in full and fetches every source's playlists`() = runBlocking<Unit> {
         importer.mediaProviders += server
         songRepository.stored = listOf(song())
-        preferences.setSongTagsVersion(server.type.name, MediaImporter.SONG_TAGS_VERSION)
+        preferences.setSongTagsVersion(server.type.name, SONG_TAGS_VERSION)
         preferences.setLastSyncStart(server.type.name, clock.time - 1.days)
         preferences.setLastFullSyncStart(server.type.name, clock.time - 1.days)
         provider.gate.trySend(Unit)

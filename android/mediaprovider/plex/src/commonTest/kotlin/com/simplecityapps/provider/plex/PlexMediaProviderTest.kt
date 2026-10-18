@@ -2,8 +2,9 @@ package com.simplecityapps.provider.plex
 
 import com.simplecityapps.mediaprovider.ClientIdentity
 import com.simplecityapps.mediaprovider.FlowEvent
-import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.MessageProgress
+import com.simplecityapps.mediaprovider.PlaylistListing
+import com.simplecityapps.mediaprovider.PlaylistUpdateData
 import com.simplecityapps.mediaprovider.server.AuthenticatedCredentials
 import com.simplecityapps.mediaprovider.server.FixtureServer
 import com.simplecityapps.mediaprovider.server.ServerCredentialStore
@@ -273,13 +274,13 @@ class PlexMediaProviderTest {
         server.respond("/playlists/11/items", "playlist_11_items.json")
         server.respond("/playlists/12/items", "empty.json")
 
-        val unchanged = provider.findPlaylists(emptyList(), mapOf("11" to "1759300000/3")).events().last().shouldBeInstanceOf<FlowEvent.Success<MediaImporter.PlaylistListing>>().result
+        val unchanged = provider.findPlaylists(emptyList(), mapOf("11" to "1759300000/3")).events().last().shouldBeInstanceOf<FlowEvent.Success<PlaylistListing>>().result
         unchanged.unchanged shouldBe setOf("11")
         unchanged.versions shouldBe mapOf("11" to "1759300000/3")
         unchanged.playlists.map { it.externalId } shouldContainExactly listOf("12")
         server.requestsTo("/playlists/11/items").shouldBeEmpty()
 
-        val changed = provider.findPlaylists(emptyList(), mapOf("11" to "1759300000/2")).events().last().shouldBeInstanceOf<FlowEvent.Success<MediaImporter.PlaylistListing>>().result
+        val changed = provider.findPlaylists(emptyList(), mapOf("11" to "1759300000/2")).events().last().shouldBeInstanceOf<FlowEvent.Success<PlaylistListing>>().result
         changed.unchanged.shouldBeEmpty()
         changed.playlists.map { it.externalId } shouldContainExactly listOf("11", "12")
         server.requestsTo("/playlists/11/items").size shouldBe 1
@@ -554,10 +555,10 @@ class PlexMediaProviderTest {
 
     private fun sync(): List<Song> = provider.findSongs(emptyList()).events().last().shouldBeInstanceOf<FlowEvent.Success<List<Song>>>().result
 
-    private fun syncPlaylists(library: List<Song>): List<MediaImporter.PlaylistUpdateData> = syncListing(library).result.playlists
+    private fun syncPlaylists(library: List<Song>): List<PlaylistUpdateData> = syncListing(library).result.playlists
 
-    private fun syncListing(library: List<Song>): FlowEvent.Success<MediaImporter.PlaylistListing> = provider.findPlaylists(library).events().last()
-        .shouldBeInstanceOf<FlowEvent.Success<MediaImporter.PlaylistListing>>()
+    private fun syncListing(library: List<Song>): FlowEvent.Success<PlaylistListing> = provider.findPlaylists(library).events().last()
+        .shouldBeInstanceOf<FlowEvent.Success<PlaylistListing>>()
 
     private fun <T> Flow<T>.events(): List<T> = runBlocking { toList() }
 

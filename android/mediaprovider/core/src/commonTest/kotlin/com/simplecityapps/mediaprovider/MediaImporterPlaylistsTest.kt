@@ -26,9 +26,9 @@ class MediaImporterPlaylistsTest : MediaImporterTestBase() {
         importer.mediaProviders += server
         songRepository.stored = listOf(song())
         playlistStore.storedIds = setOf("1")
-        preferences.setSongTagsVersion(server.type.name, MediaImporter.SONG_TAGS_VERSION)
+        preferences.setSongTagsVersion(server.type.name, SONG_TAGS_VERSION)
         preferences.setPlaylistVersions(server.type.name, mapOf("1" to "v1", "gone" to "v9"))
-        server.playlistListing = MediaImporter.PlaylistListing(emptyList(), unchanged = setOf("1"), versions = mapOf("1" to "v1", "2" to "v2"))
+        server.playlistListing = PlaylistListing(emptyList(), unchanged = setOf("1"), versions = mapOf("1" to "v1", "2" to "v2"))
         preferences.setLastSyncStart(server.type.name, clock.time - 5.minutes)
         preferences.setLastFullSyncStart(server.type.name, clock.time - 1.days)
 
@@ -47,7 +47,7 @@ class MediaImporterPlaylistsTest : MediaImporterTestBase() {
         songRepository.stored = listOf(song())
         server.found = listOf(song(id = 0, path = "jellyfin://item/2"))
         playlistStore.storedIds = setOf("1")
-        preferences.setSongTagsVersion(server.type.name, MediaImporter.SONG_TAGS_VERSION)
+        preferences.setSongTagsVersion(server.type.name, SONG_TAGS_VERSION)
         preferences.setPlaylistVersions(server.type.name, mapOf("1" to "v1"))
         preferences.setLastSyncStart(server.type.name, clock.time - 5.minutes)
         preferences.setLastFullSyncStart(server.type.name, clock.time - 1.days)

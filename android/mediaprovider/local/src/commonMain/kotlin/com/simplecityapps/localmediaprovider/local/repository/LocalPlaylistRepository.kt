@@ -7,6 +7,8 @@ import com.simplecityapps.localmediaprovider.local.data.room.entity.PlaylistSong
 import com.simplecityapps.mediaprovider.ImportedPlaylistStore
 import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.PlaylistEdit
+import com.simplecityapps.mediaprovider.PlaylistListing
+import com.simplecityapps.mediaprovider.PlaylistUpdateData
 import com.simplecityapps.mediaprovider.ServerPlaylistSync
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistQuery
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
@@ -97,7 +99,7 @@ class LocalPlaylistRepository(
      * which never hears of them: it keeps the songs added in S2 and gains the file's or server's new ones. Its file is then
      * written, as it may be writable now (its folder granted since).
      */
-    override suspend fun storePlaylist(playlist: MediaImporter.PlaylistUpdateData) = withContext(Dispatchers.IO) {
+    override suspend fun storePlaylist(playlist: PlaylistUpdateData) = withContext(Dispatchers.IO) {
         val m3u = isM3uSynced(playlist.mediaProviderType, playlist.externalId)
         if (m3u) {
             adoptFormerId(playlist.externalId)
@@ -132,7 +134,7 @@ class LocalPlaylistRepository(
 
     override suspend fun reconcilePlaylists(
         type: MediaProviderType,
-        listing: MediaImporter.PlaylistListing,
+        listing: PlaylistListing,
         listingComplete: Boolean,
         lastServerSongs: Map<String, Set<Long>>
     ) = withContext(Dispatchers.IO) {
@@ -150,7 +152,7 @@ class LocalPlaylistRepository(
         playlistDataDao.importedPlaylistIdsWithSongs(type).toSet()
     }
 
-    private fun MediaImporter.PlaylistUpdateData.toPlaylistData() = PlaylistData(
+    private fun PlaylistUpdateData.toPlaylistData() = PlaylistData(
         name = name,
         sortOrder = PlaylistSongSortOrder.Position,
         mediaProviderType = mediaProviderType,

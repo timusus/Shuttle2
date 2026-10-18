@@ -4,6 +4,8 @@ import com.simplecityapps.mediaprovider.FlowEvent
 import com.simplecityapps.mediaprovider.IncrementalMediaProvider
 import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.MessageProgress
+import com.simplecityapps.mediaprovider.PlaylistListing
+import com.simplecityapps.mediaprovider.PlaylistUpdateData
 import com.simplecityapps.mediaprovider.isLosslessCodec
 import com.simplecityapps.mediaprovider.losslessBitDepth
 import com.simplecityapps.mediaprovider.server.AuthenticatedCredentials
@@ -131,7 +133,7 @@ class PlexMediaProvider(
         emit(FlowEvent.Failure(failure.error.userDescription()))
     }
 
-    override fun findPlaylists(existingSongs: List<Song>, knownVersions: Map<String, String>): Flow<FlowEvent<MediaImporter.PlaylistListing, MessageProgress>> = withServerSession(strings, authenticationManager.credentialStore, authenticationManager.getAddress(), ::authenticate) { address, session ->
+    override fun findPlaylists(existingSongs: List<Song>, knownVersions: Map<String, String>): Flow<FlowEvent<PlaylistListing, MessageProgress>> = withServerSession(strings, authenticationManager.credentialStore, authenticationManager.getAddress(), ::authenticate) { address, session ->
         when (val playlistsResult = session.request { credentials -> authenticationManager.checkSession(credentials, itemsService.playlists(url = address, token = credentials.accessToken)) }) {
             is NetworkResult.Success<QueryResult> -> {
                 val songsByPath = existingSongs.associateBy { it.path }
@@ -149,9 +151,9 @@ class PlexMediaProvider(
     /**
      * A playlist per one of [playlists], holding the library songs its items refer to, by path (the track's key, which holds
      * across the server analysing a file again, unlike its media part's key). A playlist whose items
-     * fail to load, or come to fewer than the server counts for it, is listed as [unread][MediaImporter.PlaylistListing.unread],
+     * fail to load, or come to fewer than the server counts for it, is listed as [unread][PlaylistListing.unread],
      * so the one stored from it is never deleted; the songs a short one did return are still added to it. One whose
-     * [playlistVersion] is its version in [knownVersions] isn't read: it's [unchanged][MediaImporter.PlaylistListing.unchanged].
+     * [playlistVersion] is its version in [knownVersions] isn't read: it's [unchanged][PlaylistListing.unchanged].
      */
     private suspend fun findSongsForPlaylists(
         address: String,
@@ -159,8 +161,8 @@ class PlexMediaProvider(
         playlists: List<Metadata>,
         songsByPath: Map<String, Song>,
         knownVersions: Map<String, String>
-    ): MediaImporter.PlaylistListing {
-        val found = mutableListOf<MediaImporter.PlaylistUpdateData>()
+    ): PlaylistListing {
+        val found = mutableListOf<PlaylistUpdateData>()
         val unread = mutableSetOf<String>()
         val unchanged = mutableSetOf<String>()
         val versions = mutableMapOf<String, String>()
@@ -175,7 +177,7 @@ class PlexMediaProvider(
             val event = queryPlaylistItems(address, session, ratingKey).last()
             if (event is FlowEvent.Success) {
                 found +=
-                    MediaImporter.PlaylistUpdateData(
+                    PlaylistUpdateData(
                         mediaProviderType = type,
                         name = playlist.title ?: strings.unknownName,
                         songs = event.result.mapNotNull { item -> songsByPath[item.songPath] },
@@ -188,7 +190,7 @@ class PlexMediaProvider(
                 versions[ratingKey] = version
             }
         }
-        return MediaImporter.PlaylistListing(found, unread, unchanged, versions)
+        return PlaylistListing(found, unread, unchanged, versions)
     }
 
     private fun queryPlaylistItems(

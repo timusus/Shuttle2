@@ -1,8 +1,5 @@
 package com.simplecityapps.mediaprovider
 
-import com.simplecityapps.mediaprovider.MediaImporter.Companion.SONG_TAGS_VERSION
-import com.simplecityapps.mediaprovider.MediaImporter.Companion.songTagsOutdated
-import com.simplecityapps.mediaprovider.MediaImporter.SongImportResult
 import com.simplecityapps.shuttle.logging.Logger
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager

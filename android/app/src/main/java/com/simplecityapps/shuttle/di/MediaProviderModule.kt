@@ -9,8 +9,8 @@ import com.simplecityapps.localmediaprovider.local.provider.mediastore.MediaStor
 import com.simplecityapps.localmediaprovider.local.provider.taglib.FileScanner
 import com.simplecityapps.localmediaprovider.local.provider.taglib.MediaStoreAudioLister
 import com.simplecityapps.localmediaprovider.local.provider.taglib.TaglibMediaProvider
-import com.simplecityapps.mediaprovider.MediaImporter.Companion.songTagsOutdated
 import com.simplecityapps.mediaprovider.TagReadGuard
+import com.simplecityapps.mediaprovider.songTagsOutdated
 import com.simplecityapps.shuttle.di.ApplicationContext
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager

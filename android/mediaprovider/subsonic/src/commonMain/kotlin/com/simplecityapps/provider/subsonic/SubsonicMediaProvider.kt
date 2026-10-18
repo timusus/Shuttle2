@@ -5,6 +5,8 @@ import com.simplecityapps.mediaprovider.ImportPhase
 import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.MessageProgress
 import com.simplecityapps.mediaprovider.PathListingMediaProvider
+import com.simplecityapps.mediaprovider.PlaylistListing
+import com.simplecityapps.mediaprovider.PlaylistUpdateData
 import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.mediaprovider.losslessBitDepth
 import com.simplecityapps.mediaprovider.server.AuthenticatedCredentials
@@ -74,7 +76,7 @@ class SubsonicMediaProvider(
         emit(FlowEvent.Success(songs.filter(SongDto::isSong).map(SongDto::toSong), searched.missing))
     }
 
-    override fun findPlaylists(existingSongs: List<Song>, knownVersions: Map<String, String>): Flow<FlowEvent<MediaImporter.PlaylistListing, MessageProgress>> = withServerSession(strings, authenticationManager.credentialStore, authenticationManager.getAddress(), ::authenticate) { address, session ->
+    override fun findPlaylists(existingSongs: List<Song>, knownVersions: Map<String, String>): Flow<FlowEvent<PlaylistListing, MessageProgress>> = withServerSession(strings, authenticationManager.credentialStore, authenticationManager.getAddress(), ::authenticate) { address, session ->
         val playlists = when (val result = session.request { credentials -> authenticationManager.request(credentials) { auth -> service.playlists(address, auth) } }) {
             is NetworkResult.Success -> result.body
             is NetworkResult.Failure -> return@withServerSession fail(result.error)
@@ -84,7 +86,7 @@ class SubsonicMediaProvider(
         val unread = mutableSetOf<String>()
         val updates = playlists.mapNotNull { playlist ->
             when (val result = session.request { credentials -> authenticationManager.request(credentials) { auth -> service.playlist(address, auth, playlist.id) } }) {
-                is NetworkResult.Success -> MediaImporter.PlaylistUpdateData(
+                is NetworkResult.Success -> PlaylistUpdateData(
                     mediaProviderType = type,
                     name = playlist.name ?: strings.unknownName,
                     songs = result.body.entry.mapNotNull { entry -> songsById[entry.id] },
@@ -98,7 +100,7 @@ class SubsonicMediaProvider(
                 }
             }
         }
-        emit(FlowEvent.Success(MediaImporter.PlaylistListing(updates, unread)))
+        emit(FlowEvent.Success(PlaylistListing(updates, unread)))
     }
 
     /** The stored credentials, or a fresh sign-in with the saved login when there are none (after a 401 signed out). */

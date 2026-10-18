@@ -1,7 +1,7 @@
 package com.simplecityapps.provider.subsonic
 
 import com.simplecityapps.mediaprovider.FlowEvent
-import com.simplecityapps.mediaprovider.MediaImporter
+import com.simplecityapps.mediaprovider.PlaylistUpdateData
 import com.simplecityapps.provider.subsonic.TestSubsonic.Companion.ALBUM
 import com.simplecityapps.provider.subsonic.TestSubsonic.Companion.ALBUM_LIST
 import com.simplecityapps.provider.subsonic.TestSubsonic.Companion.PLAYLIST
@@ -213,7 +213,7 @@ class SubsonicMediaProviderTest {
         return (events.last() as FlowEvent.Success).result
     }
 
-    private fun syncPlaylists(library: List<Song>): List<MediaImporter.PlaylistUpdateData> {
+    private fun syncPlaylists(library: List<Song>): List<PlaylistUpdateData> {
         val events = runBlocking { provider.findPlaylists(library).toList() }
         return (events.last() as FlowEvent.Success).result.playlists
     }

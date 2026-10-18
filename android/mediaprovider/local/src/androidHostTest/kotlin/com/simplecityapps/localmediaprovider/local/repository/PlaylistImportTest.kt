@@ -13,6 +13,8 @@ import com.simplecityapps.mediaprovider.ImportedPlaylistStore
 import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.MediaProvider
 import com.simplecityapps.mediaprovider.MessageProgress
+import com.simplecityapps.mediaprovider.PlaylistListing
+import com.simplecityapps.mediaprovider.PlaylistUpdateData
 import com.simplecityapps.mediaprovider.PlaylistWriteResult
 import com.simplecityapps.mediaprovider.ResourceMediaImportStrings
 import com.simplecityapps.mediaprovider.ServerPlaylistEntry
@@ -430,7 +432,7 @@ class PlaylistImportTest {
             object : ImportedPlaylistStore by racingRepository {
                 override suspend fun reconcilePlaylists(
                     type: MediaProviderType,
-                    listing: MediaImporter.PlaylistListing,
+                    listing: PlaylistListing,
                     listingComplete: Boolean,
                     lastServerSongs: Map<String, Set<Long>>
                 ) {
@@ -572,16 +574,16 @@ class PlaylistImportTest {
             if (songsFail) FlowEvent.Failure("The server didn't answer") else FlowEvent.Success(songPaths.map { path -> song(path, type) })
         )
 
-        override fun findPlaylists(existingSongs: List<Song>, knownVersions: Map<String, String>): Flow<FlowEvent<MediaImporter.PlaylistListing, MessageProgress>> = flow {
+        override fun findPlaylists(existingSongs: List<Song>, knownVersions: Map<String, String>): Flow<FlowEvent<PlaylistListing, MessageProgress>> = flow {
             if (listingFails) {
                 emit(FlowEvent.Failure("The server didn't answer"))
                 return@flow
             }
             val read =
                 (playlists.filterKeys { id -> id !in unread && id !in unchanged && id !in partlyRead } + partlyRead).map { (id, paths) ->
-                    MediaImporter.PlaylistUpdateData(type, names[id] ?: PLAYLIST_NAME, paths.mapNotNull { path -> existingSongs.firstOrNull { song -> song.path == path } }, id)
+                    PlaylistUpdateData(type, names[id] ?: PLAYLIST_NAME, paths.mapNotNull { path -> existingSongs.firstOrNull { song -> song.path == path } }, id)
                 }
-            emit(FlowEvent.Success(MediaImporter.PlaylistListing(read, unread + partlyRead.keys, unchanged), missing = missing))
+            emit(FlowEvent.Success(PlaylistListing(read, unread + partlyRead.keys, unchanged), missing = missing))
         }
     }
 

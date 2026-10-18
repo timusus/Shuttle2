@@ -7,10 +7,11 @@ import com.simplecityapps.localmediaprovider.local.provider.toYearDate
 import com.simplecityapps.mediaprovider.FlowEvent
 import com.simplecityapps.mediaprovider.ImportPhase
 import com.simplecityapps.mediaprovider.MediaImporter
-import com.simplecityapps.mediaprovider.MediaImporter.Companion.songTagsOutdated
 import com.simplecityapps.mediaprovider.MediaProvider
 import com.simplecityapps.mediaprovider.MessageProgress
+import com.simplecityapps.mediaprovider.PlaylistListing
 import com.simplecityapps.mediaprovider.Progress
+import com.simplecityapps.mediaprovider.songTagsOutdated
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
@@ -101,8 +102,8 @@ class IosLocalMediaProvider(
     }
 
     /** Playlist files aren't read on iOS. */
-    override fun findPlaylists(existingSongs: List<Song>, knownVersions: Map<String, String>): Flow<FlowEvent<MediaImporter.PlaylistListing, MessageProgress>> = flow {
-        emit(FlowEvent.Success(MediaImporter.PlaylistListing(emptyList())))
+    override fun findPlaylists(existingSongs: List<Song>, knownVersions: Map<String, String>): Flow<FlowEvent<PlaylistListing, MessageProgress>> = flow {
+        emit(FlowEvent.Success(PlaylistListing(emptyList())))
     }
 }
 

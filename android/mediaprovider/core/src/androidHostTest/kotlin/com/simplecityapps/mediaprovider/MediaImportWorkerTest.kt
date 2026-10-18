@@ -41,20 +41,20 @@ class MediaImportWorkerTest {
         GeneralPreferenceManager(InMemoryKeyValueStore()).apply {
             // The library has been imported under this build, so the periodic sync has something to do
             lastMediaImportDate = kotlin.time.Clock.System.now()
-            songTagsRescanVersion = MediaImporter.SONG_TAGS_VERSION
+            songTagsRescanVersion = SONG_TAGS_VERSION
         }
     private val importer =
         MediaImporter(
             strings = FakeStrings,
             songRepository = EmptySongRepository,
             playlistStore = object : ImportedPlaylistStore {
-                override suspend fun storePlaylist(playlist: MediaImporter.PlaylistUpdateData) = Unit
+                override suspend fun storePlaylist(playlist: PlaylistUpdateData) = Unit
 
                 override suspend fun storedPlaylistIds(type: MediaProviderType): Set<String> = emptySet()
 
                 override suspend fun reconcilePlaylists(
                     type: MediaProviderType,
-                    listing: MediaImporter.PlaylistListing,
+                    listing: PlaylistListing,
                     listingComplete: Boolean,
                     lastServerSongs: Map<String, Set<Long>>
                 ) = Unit
@@ -255,7 +255,7 @@ class MediaImportWorkerTest {
             emit(failure?.let { FlowEvent.Failure(it) } ?: FlowEvent.Success(emptyList()))
         }
 
-        override fun findPlaylists(existingSongs: List<Song>, knownVersions: Map<String, String>): Flow<FlowEvent<MediaImporter.PlaylistListing, MessageProgress>> = emptyFlow()
+        override fun findPlaylists(existingSongs: List<Song>, knownVersions: Map<String, String>): Flow<FlowEvent<PlaylistListing, MessageProgress>> = emptyFlow()
     }
 
     private object FakeStrings : MediaImportStrings {

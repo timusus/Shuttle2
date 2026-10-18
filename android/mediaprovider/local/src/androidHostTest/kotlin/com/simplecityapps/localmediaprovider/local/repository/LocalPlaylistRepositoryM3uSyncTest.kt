@@ -14,6 +14,7 @@ import com.simplecityapps.localmediaprovider.local.data.room.entity.PlaylistSong
 import com.simplecityapps.localmediaprovider.local.data.room.entity.toSongData
 import com.simplecityapps.mediaprovider.M3uParser
 import com.simplecityapps.mediaprovider.MediaImporter
+import com.simplecityapps.mediaprovider.PlaylistUpdateData
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
@@ -174,7 +175,7 @@ class LocalPlaylistRepositoryM3uSyncTest {
     private fun scanned(
         externalId: String,
         songs: List<Song>
-    ) = MediaImporter.PlaylistUpdateData(MediaProviderType.Shuttle, "Imported", songs, externalId)
+    ) = PlaylistUpdateData(MediaProviderType.Shuttle, "Imported", songs, externalId)
 
     private suspend fun songIds(playlist: Playlist) = repository.getSongsForPlaylist(playlist).first().map { it.song.id }
 

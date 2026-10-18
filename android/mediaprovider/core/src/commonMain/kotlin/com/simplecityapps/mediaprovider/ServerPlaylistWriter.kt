@@ -6,7 +6,7 @@ import com.simplecityapps.shuttle.model.MediaProviderType
  * Writes the edits made in S2 to a playlist imported from [type]'s server back to that server (#916): its songs, its title, and
  * deleting it. Each call is one request
  * (or a few) that [ServerPlaylistSync] makes as it sends its queue. Playlists and songs are named as the import names them:
- * a playlist by its [MediaImporter.PlaylistUpdateData.externalId], a song by its path.
+ * a playlist by its [PlaylistUpdateData.externalId], a song by its path.
  */
 interface ServerPlaylistWriter {
     val type: MediaProviderType

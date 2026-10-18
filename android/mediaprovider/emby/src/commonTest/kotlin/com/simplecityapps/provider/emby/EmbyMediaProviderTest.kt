@@ -2,8 +2,9 @@ package com.simplecityapps.provider.emby
 
 import com.simplecityapps.mediaprovider.ClientIdentity
 import com.simplecityapps.mediaprovider.FlowEvent
-import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.MessageProgress
+import com.simplecityapps.mediaprovider.PlaylistListing
+import com.simplecityapps.mediaprovider.PlaylistUpdateData
 import com.simplecityapps.mediaprovider.server.AuthenticatedCredentials
 import com.simplecityapps.mediaprovider.server.FixtureServer
 import com.simplecityapps.mediaprovider.server.LoginCredentials
@@ -653,13 +654,13 @@ class EmbyMediaProviderTest {
 
     private fun syncEvent(): FlowEvent.Success<List<Song>> = provider.findSongs(emptyList()).events().last().shouldBeInstanceOf<FlowEvent.Success<List<Song>>>()
 
-    private fun syncPlaylists(library: List<Song>): List<MediaImporter.PlaylistUpdateData> = syncListing(library).result.playlists
+    private fun syncPlaylists(library: List<Song>): List<PlaylistUpdateData> = syncListing(library).result.playlists
 
     private fun syncListing(
         library: List<Song>,
         knownVersions: Map<String, String> = emptyMap()
-    ): FlowEvent.Success<MediaImporter.PlaylistListing> = provider.findPlaylists(library, knownVersions).events().last()
-        .shouldBeInstanceOf<FlowEvent.Success<MediaImporter.PlaylistListing>>()
+    ): FlowEvent.Success<PlaylistListing> = provider.findPlaylists(library, knownVersions).events().last()
+        .shouldBeInstanceOf<FlowEvent.Success<PlaylistListing>>()
 
     private fun <T> Flow<T>.events(): List<T> = runBlocking { toList() }
 

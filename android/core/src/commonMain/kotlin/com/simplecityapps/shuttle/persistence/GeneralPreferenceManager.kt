@@ -163,7 +163,7 @@ class GeneralPreferenceManager @Inject constructor(
     private fun libraryTabs(names: String): List<LibraryTab> = names.split(",").mapNotNull { name -> LibraryTab.entries.firstOrNull { it.name == name } }.distinct()
 
     /**
-     * The version of the tags (`MediaImporter.SONG_TAGS_VERSION`) the songs of [source] (a media provider type's name) were
+     * The version of the tags (`SONG_TAGS_VERSION`) the songs of [source] (a media provider type's name) were
      * last imported with, set when that source's import succeeds. Behind the current version its songs lack tags this
      * build reads, so the MediaStore provider reads unchanged files again rather than keeping their stored values.
      */

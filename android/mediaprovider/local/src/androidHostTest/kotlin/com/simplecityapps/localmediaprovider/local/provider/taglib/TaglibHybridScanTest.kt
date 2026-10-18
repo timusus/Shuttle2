@@ -14,6 +14,7 @@ import com.simplecityapps.ktaglib.KTagLib
 import com.simplecityapps.localmediaprovider.local.provider.testTagReadGuard
 import com.simplecityapps.mediaprovider.FlowEvent
 import com.simplecityapps.mediaprovider.MediaImporter
+import com.simplecityapps.mediaprovider.PlaylistListing
 import com.simplecityapps.mediaprovider.SongPathRemap
 import com.simplecityapps.mediaprovider.model.AudioFile
 import com.simplecityapps.saf.DocumentNode
@@ -261,7 +262,7 @@ class TaglibHybridScanTest {
         val playlists =
             runBlocking {
                 provider.findPlaylists(songs)
-                    .filterIsInstance<FlowEvent.Success<MediaImporter.PlaylistListing>>()
+                    .filterIsInstance<FlowEvent.Success<PlaylistListing>>()
                     .first()
                     .result
                     .playlists

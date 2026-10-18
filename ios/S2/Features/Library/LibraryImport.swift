@@ -21,7 +21,7 @@ enum LibraryImport {
     }
 
     /// Interrupted before it finished (the app killed mid-import), the first import runs again. A library imported
-    /// before this build's tags (`MediaImporter.SONG_TAGS_VERSION`) imports once more, updating its songs in place.
+    /// before this build's tags (`SONG_TAGS_VERSION`) imports once more, updating its songs in place.
     static func atLaunch(hasScanned: Bool, songTagsOutdated: Bool, scan: () -> Void) {
         if !hasScanned || songTagsOutdated { scan() }
     }

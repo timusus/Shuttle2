@@ -24,6 +24,8 @@ import com.simplecityapps.mediaprovider.M3uParser
 import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.MediaProvider
 import com.simplecityapps.mediaprovider.MessageProgress
+import com.simplecityapps.mediaprovider.PlaylistListing
+import com.simplecityapps.mediaprovider.PlaylistUpdateData
 import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.mediaprovider.SongPathRemap
 import com.simplecityapps.mediaprovider.TagReadFile
@@ -616,7 +618,7 @@ class TaglibMediaProvider(
         .takeIf { walks -> walks.isNotEmpty() }
         ?.flatten()
 
-    override fun findPlaylists(existingSongs: List<Song>, knownVersions: Map<String, String>): Flow<FlowEvent<MediaImporter.PlaylistListing, MessageProgress>> = flow {
+    override fun findPlaylists(existingSongs: List<Song>, knownVersions: Map<String, String>): Flow<FlowEvent<PlaylistListing, MessageProgress>> = flow {
         val sanitisedSongPaths = M3uEntryMatcher.sanitisedPathsByFilename(existingSongs)
 
         val playlistFiles = findPlaylistFiles()
@@ -666,7 +668,7 @@ class TaglibMediaProvider(
                     }
                 if (songs.isNotEmpty()) {
                     val updateData =
-                        MediaImporter.PlaylistUpdateData(
+                        PlaylistUpdateData(
                             mediaProviderType = type,
                             name = m3uPlaylist.name,
                             songs = songs,
@@ -677,7 +679,7 @@ class TaglibMediaProvider(
                     null
                 }
             }
-        emit(FlowEvent.Success(MediaImporter.PlaylistListing(updates.toList())))
+        emit(FlowEvent.Success(PlaylistListing(updates.toList())))
     }
 }
 

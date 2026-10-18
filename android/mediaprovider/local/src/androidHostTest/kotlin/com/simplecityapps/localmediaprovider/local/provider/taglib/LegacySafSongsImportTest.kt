@@ -19,6 +19,7 @@ import com.simplecityapps.mediaprovider.FlowEvent
 import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.MediaProvider
 import com.simplecityapps.mediaprovider.MessageProgress
+import com.simplecityapps.mediaprovider.PlaylistListing
 import com.simplecityapps.mediaprovider.ResourceMediaImportStrings
 import com.simplecityapps.mediaprovider.SongPathRemap
 import com.simplecityapps.shuttle.model.MediaProviderType
@@ -230,7 +231,7 @@ class LegacySafSongsImportTest {
 
         override fun findSongs(existingSongs: List<Song>): Flow<FlowEvent<List<Song>, MessageProgress>> = flowOf(FlowEvent.Success(files.map { file -> file.toScannedSong() }))
 
-        override fun findPlaylists(existingSongs: List<Song>, knownVersions: Map<String, String>): Flow<FlowEvent<MediaImporter.PlaylistListing, MessageProgress>> = flowOf(FlowEvent.Success(MediaImporter.PlaylistListing(emptyList())))
+        override fun findPlaylists(existingSongs: List<Song>, knownVersions: Map<String, String>): Flow<FlowEvent<PlaylistListing, MessageProgress>> = flowOf(FlowEvent.Success(PlaylistListing(emptyList())))
 
         private fun MediaStoreAudioFile.toScannedSong() = Song(
             id = 0,

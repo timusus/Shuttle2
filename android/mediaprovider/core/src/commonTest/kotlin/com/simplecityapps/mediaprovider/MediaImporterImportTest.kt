@@ -1,6 +1,5 @@
 package com.simplecityapps.mediaprovider
 
-import com.simplecityapps.mediaprovider.MediaImporter.Companion.songTagsOutdated
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.persistence.SourceReachability
 import io.kotest.matchers.collections.shouldBeEmpty

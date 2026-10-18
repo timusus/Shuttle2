@@ -7,7 +7,7 @@ import androidx.sqlite.execSQL
 /**
  * The album artist tag as written, unsplit, on `songs` (#1065): untagged classical credits read the performers a combined
  * "Mahler; Janet Baker, Simon Rattle" lists after the composer. Additive and null until the re-import that
- * `MediaImporter.SONG_TAGS_VERSION` 7 triggers reads each song again.
+ * `SONG_TAGS_VERSION` 7 triggers reads each song again.
  */
 val MIGRATION_59_60 =
     object : Migration(59, 60) {

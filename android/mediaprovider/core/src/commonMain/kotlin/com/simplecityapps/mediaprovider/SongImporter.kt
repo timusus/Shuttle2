@@ -1,6 +1,5 @@
 package com.simplecityapps.mediaprovider
 
-import com.simplecityapps.mediaprovider.MediaImporter.SongImportResult
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.shuttle.logging.Logger
 import com.simplecityapps.shuttle.model.Song
@@ -123,7 +122,7 @@ internal class SongImporter(
                             } else {
                                 preferenceManager.setLastFullSyncStart(mediaProvider.type.name, start)
                                 // Every song read again, so this source's songs hold every tag this build reads
-                                preferenceManager.setSongTagsVersion(mediaProvider.type.name, MediaImporter.requiredSongTagsVersion(mediaProvider.type))
+                                preferenceManager.setSongTagsVersion(mediaProvider.type.name, requiredSongTagsVersion(mediaProvider.type))
                             }
                         } else if (guarded.awaitsFullPass || (removed?.unfetched ?: 0) > 0) {
                             // Likewise after an incremental sync, which also brings it forward for songs the source holds that

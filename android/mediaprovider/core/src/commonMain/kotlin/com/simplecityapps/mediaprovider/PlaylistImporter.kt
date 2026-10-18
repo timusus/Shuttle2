@@ -1,7 +1,5 @@
 package com.simplecityapps.mediaprovider
 
-import com.simplecityapps.mediaprovider.MediaImporter.PlaylistImportResult
-import com.simplecityapps.mediaprovider.MediaImporter.PlaylistListing
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.shuttle.logging.Logger
 import com.simplecityapps.shuttle.model.MediaProviderType

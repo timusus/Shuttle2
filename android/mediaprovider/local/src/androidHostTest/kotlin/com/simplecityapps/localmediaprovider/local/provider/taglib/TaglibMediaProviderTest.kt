@@ -16,6 +16,8 @@ import com.simplecityapps.ktaglib.KTagLib
 import com.simplecityapps.localmediaprovider.local.provider.testTagReadGuard
 import com.simplecityapps.mediaprovider.FlowEvent
 import com.simplecityapps.mediaprovider.MediaImporter
+import com.simplecityapps.mediaprovider.PlaylistListing
+import com.simplecityapps.mediaprovider.PlaylistUpdateData
 import com.simplecityapps.mediaprovider.TagReadFile
 import com.simplecityapps.mediaprovider.model.AudioFile
 import com.simplecityapps.saf.DocumentNode
@@ -189,7 +191,7 @@ class TaglibMediaProviderTest {
         val playlists =
             runBlocking {
                 provider(excludes = emptyList(), trees = emptyList(), grantedTrees = emptyList()).findPlaylists(listOf(song))
-                    .filterIsInstance<FlowEvent.Success<MediaImporter.PlaylistListing>>()
+                    .filterIsInstance<FlowEvent.Success<PlaylistListing>>()
                     .first()
                     .result
                     .playlists
@@ -220,7 +222,7 @@ class TaglibMediaProviderTest {
         val playlists =
             runBlocking {
                 provider(excludes = emptyList(), trees = emptyList(), grantedTrees = emptyList()).findPlaylists(listOf(elsewhere, beside))
-                    .filterIsInstance<FlowEvent.Success<MediaImporter.PlaylistListing>>().first().result.playlists
+                    .filterIsInstance<FlowEvent.Success<PlaylistListing>>().first().result.playlists
             }
 
         playlists.single().songs.map { it.path } shouldBe listOf(beside.path)
@@ -397,12 +399,12 @@ class TaglibMediaProviderTest {
         provider.unreadableRoots shouldBe setOf("$locked/document/")
     }
 
-    private fun findPlaylists(trees: List<Uri>): List<MediaImporter.PlaylistUpdateData> = runBlocking {
+    private fun findPlaylists(trees: List<Uri>): List<PlaylistUpdateData> = runBlocking {
         provider(excludes = emptyList(), trees = emptyList(), grantedTrees = trees).playlists()
     }
 
-    private suspend fun TaglibMediaProvider.playlists(): List<MediaImporter.PlaylistUpdateData> = findPlaylists(listOf(mediaStoreSong("a.mp3", size = 10, lastModified = MODIFIED)))
-        .filterIsInstance<FlowEvent.Success<MediaImporter.PlaylistListing>>()
+    private suspend fun TaglibMediaProvider.playlists(): List<PlaylistUpdateData> = findPlaylists(listOf(mediaStoreSong("a.mp3", size = 10, lastModified = MODIFIED)))
+        .filterIsInstance<FlowEvent.Success<PlaylistListing>>()
         .first()
         .result
         .playlists

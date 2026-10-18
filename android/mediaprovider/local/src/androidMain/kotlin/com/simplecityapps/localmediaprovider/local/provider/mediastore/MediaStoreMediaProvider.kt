@@ -20,12 +20,14 @@ import com.simplecityapps.mediaprovider.FlowEvent
 import com.simplecityapps.mediaprovider.ImportPhase
 import com.simplecityapps.mediaprovider.IndexedMediaProvider
 import com.simplecityapps.mediaprovider.MediaImporter
-import com.simplecityapps.mediaprovider.MediaImporter.Companion.songTagsOutdated
 import com.simplecityapps.mediaprovider.MediaProvider
 import com.simplecityapps.mediaprovider.MessageProgress
+import com.simplecityapps.mediaprovider.PlaylistListing
+import com.simplecityapps.mediaprovider.PlaylistUpdateData
 import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.mediaprovider.SongPathRemap
 import com.simplecityapps.mediaprovider.TagReadGuard
+import com.simplecityapps.mediaprovider.songTagsOutdated
 import com.simplecityapps.mediaprovider.splitArtistTag
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
@@ -306,7 +308,7 @@ class MediaStoreMediaProvider(
 
     // Playlists
 
-    override fun findPlaylists(existingSongs: List<Song>, knownVersions: Map<String, String>): Flow<FlowEvent<MediaImporter.PlaylistListing, MessageProgress>> = flow {
+    override fun findPlaylists(existingSongs: List<Song>, knownVersions: Map<String, String>): Flow<FlowEvent<PlaylistListing, MessageProgress>> = flow {
         val mediaStorePlaylists = findMediaStorePlaylists().toList()
         val updates =
             mediaStorePlaylists.mapIndexed { i, mediaStorePlaylist ->
@@ -319,7 +321,7 @@ class MediaStoreMediaProvider(
                     }
 
                 val updateData =
-                    MediaImporter.PlaylistUpdateData(
+                    PlaylistUpdateData(
                         type,
                         mediaStorePlaylist.name,
                         matchingSongs,
@@ -329,7 +331,7 @@ class MediaStoreMediaProvider(
                 updateData
             }
 
-        emit(FlowEvent.Success(MediaImporter.PlaylistListing(updates.toList())))
+        emit(FlowEvent.Success(PlaylistListing(updates.toList())))
     }
 
     private suspend fun findSongsForMediaStorePlaylist(mediaStorePlaylistId: Long): List<MediaStoreSong> {

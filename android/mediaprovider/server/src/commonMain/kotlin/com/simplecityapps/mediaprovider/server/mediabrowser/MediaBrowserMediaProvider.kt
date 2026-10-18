@@ -4,6 +4,8 @@ import com.simplecityapps.mediaprovider.FlowEvent
 import com.simplecityapps.mediaprovider.IncrementalMediaProvider
 import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.MessageProgress
+import com.simplecityapps.mediaprovider.PlaylistListing
+import com.simplecityapps.mediaprovider.PlaylistUpdateData
 import com.simplecityapps.mediaprovider.losslessBitDepth
 import com.simplecityapps.mediaprovider.server.AuthenticatedCredentials
 import com.simplecityapps.mediaprovider.server.Page
@@ -166,7 +168,7 @@ open class MediaBrowserMediaProvider(
         }.map { it.toPage() }
     }
 
-    override fun findPlaylists(existingSongs: List<Song>, knownVersions: Map<String, String>): Flow<FlowEvent<MediaImporter.PlaylistListing, MessageProgress>> = withServerSession(strings, authenticationManager.credentialStore, authenticationManager.getAddress(), ::authenticate) { address, session ->
+    override fun findPlaylists(existingSongs: List<Song>, knownVersions: Map<String, String>): Flow<FlowEvent<PlaylistListing, MessageProgress>> = withServerSession(strings, authenticationManager.credentialStore, authenticationManager.getAddress(), ::authenticate) { address, session ->
         when (
             val queryResult =
                 session.request { credentials ->
@@ -294,9 +296,9 @@ open class MediaBrowserMediaProvider(
 
     /**
      * A playlist per one of [playlistItems], holding the library songs its items refer to, in playlist order. A playlist whose
-     * items fail to load, or come to fewer than the server counts for it, is listed as [unread][MediaImporter.PlaylistListing.unread],
+     * items fail to load, or come to fewer than the server counts for it, is listed as [unread][PlaylistListing.unread],
      * so the one stored from it is never deleted; the songs a short one did return are still added to it. One whose
-     * [playlistVersion] is its version in [knownVersions] isn't read: it's [unchanged][MediaImporter.PlaylistListing.unchanged].
+     * [playlistVersion] is its version in [knownVersions] isn't read: it's [unchanged][PlaylistListing.unchanged].
      */
     private suspend fun findSongsForPlaylists(
         address: String,
@@ -304,9 +306,9 @@ open class MediaBrowserMediaProvider(
         playlistItems: List<Item>,
         existingSongs: List<Song>,
         knownVersions: Map<String, String>
-    ): MediaImporter.PlaylistListing {
+    ): PlaylistListing {
         val songsById = existingSongs.filter { it.externalId != null }.associateBy { it.externalId }
-        val playlists = mutableListOf<MediaImporter.PlaylistUpdateData>()
+        val playlists = mutableListOf<PlaylistUpdateData>()
         val unread = mutableSetOf<String>()
         val unchanged = mutableSetOf<String>()
         val versions = mutableMapOf<String, String>()
@@ -320,7 +322,7 @@ open class MediaBrowserMediaProvider(
             val event = queryPlaylistItems(address, session, playlistItem.id).last()
             if (event is FlowEvent.Success) {
                 playlists +=
-                    MediaImporter.PlaylistUpdateData(
+                    PlaylistUpdateData(
                         mediaProviderType = type,
                         name = playlistItem.name ?: strings.unknownName,
                         songs = event.result.mapNotNull { item -> songsById[item.id] },
@@ -333,7 +335,7 @@ open class MediaBrowserMediaProvider(
                 versions[playlistItem.id] = version
             }
         }
-        return MediaImporter.PlaylistListing(playlists, unread, unchanged, versions)
+        return PlaylistListing(playlists, unread, unchanged, versions)
     }
 
     private fun queryPlaylistItems(

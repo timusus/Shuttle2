@@ -1,6 +1,5 @@
 package com.simplecityapps.mediaprovider
 
-import com.simplecityapps.mediaprovider.MediaImporter.Companion.songTagsOutdated
 import com.simplecityapps.shuttle.model.MediaProviderType
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe
@@ -63,7 +62,7 @@ class MediaImporterRemovalTest : MediaImporterTestBase() {
         importer.mediaProviders -= provider
         importer.mediaProviders += server
         songRepository.stored = listOf(song())
-        preferences.setSongTagsVersion(server.type.name, MediaImporter.SONG_TAGS_VERSION)
+        preferences.setSongTagsVersion(server.type.name, SONG_TAGS_VERSION)
         preferences.setLastSyncStart(server.type.name, clock.time - 1.hours)
         preferences.setLastFullSyncStart(server.type.name, clock.time - 1.days)
         server.found = listOf(song().copy(id = 2, path = "/added"))
@@ -81,7 +80,7 @@ class MediaImporterRemovalTest : MediaImporterTestBase() {
         importer.mediaProviders -= provider
         importer.mediaProviders += server
         songRepository.stored = listOf(song(1, "/1"), song(2, "/2"), song(3, "/3"))
-        preferences.setSongTagsVersion(server.type.name, MediaImporter.SONG_TAGS_VERSION)
+        preferences.setSongTagsVersion(server.type.name, SONG_TAGS_VERSION)
         preferences.setLastSyncStart(server.type.name, clock.time - 1.hours)
         preferences.setLastFullSyncStart(server.type.name, clock.time - 1.days)
     }
@@ -226,7 +225,7 @@ class MediaImporterRemovalTest : MediaImporterTestBase() {
         importer.mediaProviders -= provider
         importer.mediaProviders += server
         songRepository.stored = listOf(song(1, "/1"), song(2, "/2"), song(3, "/3")) + audiobooks
-        preferences.setSongTagsVersion(server.type.name, MediaImporter.SONG_TAGS_VERSION)
+        preferences.setSongTagsVersion(server.type.name, SONG_TAGS_VERSION)
         preferences.setLastSyncStart(server.type.name, clock.time - 1.hours)
         preferences.setLastFullSyncStart(server.type.name, clock.time - 1.days)
         server.count = 3
@@ -361,7 +360,7 @@ class MediaImporterRemovalTest : MediaImporterTestBase() {
         songRepository.stored = songs
         server.found = songs.take(5)
         server.held = server.found.map { it.path }
-        preferences.setSongTagsVersion(server.type.name, MediaImporter.SONG_TAGS_VERSION)
+        preferences.setSongTagsVersion(server.type.name, SONG_TAGS_VERSION)
         preferences.setLastSyncStart(server.type.name, clock.time - 8.days)
         preferences.setLastFullSyncStart(server.type.name, clock.time - 8.days)
         val importer = serverImporter()
