@@ -147,7 +147,7 @@ object AlbumIdentityRule {
         explicit: String
     ): TaggedAlbumArtists {
         val listed = song.albumArtists.orEmpty().map { it.trim() }.filter { it.isNotEmpty() }
-        val names = (listed.takeIf { it.size > 1 } ?: listOf(explicit)).map { name -> ArtistCredits.splitFeaturing(name).ifEmpty { listOf(name.trim()) } }
+        val names = (listed.takeIf { it.size > 1 } ?: listOf(explicit)).map { name -> ArtistNames.splitFeaturing(name).ifEmpty { listOf(name.trim()) } }
         // One album artist featuring no one is the album's own, keyed exactly as the album is
         if (names.size == 1 && names.single().size == 1) return TaggedAlbumArtists(listOf(ArtistCredit(explicit, AlbumArtistGroupKey(artistKey(explicit)))), emptyList())
         return TaggedAlbumArtists(

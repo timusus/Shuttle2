@@ -1,11 +1,5 @@
 package com.simplecityapps.shuttle.model
 
-/** An artist a song credits (#637): [name] as its tags spell it, and [groupKey], the artist page it belongs to. */
-data class ArtistCredit(
-    val name: String,
-    val groupKey: AlbumArtistGroupKey
-)
-
 /**
  * The artist credit rule (#637): which artists a song credits as its track artists, and whose artist page each is. With
  * [AlbumIdentityRule], which gives each album its album artist, it decides what an artist page lists: the albums they're
@@ -22,16 +16,6 @@ data class ArtistCredit(
  */
 object ArtistCredits {
     private val VARIOUS_ARTISTS_KEY = AlbumArtistGroupKey(AlbumIdentityRule.artistKey(AlbumIdentityRule.VARIOUS_ARTISTS))
-
-    private const val FEATURING_PATTERN = "\\s+[(\\[]?(?:feat\\.?|ft\\.?|featuring)\\s+"
-
-    private val SEPARATOR = Regex("\\s*;\\s+|\\s+/\\s+|$FEATURING_PATTERN", RegexOption.IGNORE_CASE)
-
-    /**
-     * "feat." and "ft." with their dot, or "featuring": an album artist is a band's name more often than a track artist,
-     * and "Little Feat" or "The Feat Band" is no featuring.
-     */
-    private val FEATURING = Regex("\\s+[(\\[]?(?:feat\\.|ft\\.|featuring)\\s+", RegexOption.IGNORE_CASE)
 
     /** The artists [tags] credits, each once, in credit order; [identity] is the song's album identity. */
     fun credits(tags: AlbumIdentityTags, identity: AlbumIdentity): List<ArtistCredit> = creditsWithServerIds(tags, identity).map { (credit, _) -> credit }.distinctBy { it.groupKey }
@@ -59,7 +43,7 @@ object ArtistCredits {
     /** Each credit in order, before deduplication, with the server artist id paired with it (null when ids don't pair). */
     private fun creditsWithServerIds(tags: AlbumIdentityTags, identity: AlbumIdentity): List<Pair<ArtistCredit, String?>> {
         val multiValue = tags.artistsTag.orEmpty().map { it.trim() }.filter { it.isNotEmpty() }
-        val names = multiValue.ifEmpty { tags.artists.flatMap(::split) }
+        val names = multiValue.ifEmpty { tags.artists.flatMap(ArtistNames::split) }
         // An id names the album artist only when the album has one
         val albumArtistKey = identity.albumArtistKeys.singleOrNull()
         val mbIds = tags.mbArtistIds.pairedWith(names)
@@ -72,24 +56,6 @@ object ArtistCredits {
             ArtistCredit(name, albumArtistKey?.takeIf { isAlbumArtist } ?: AlbumArtistGroupKey(AlbumIdentityRule.artistKey(name))) to serverIds?.get(index)
         }
         return trackArtists + identity.featuredArtists.map { name -> ArtistCredit(name, AlbumArtistGroupKey(AlbumIdentityRule.artistKey(name))) to null }
-    }
-
-    /** One ARTIST value's artists: "A feat. B" is A and B, "A (feat. B)" too; "A & B" and "AC/DC" are one each. */
-    fun split(artist: String): List<String> = SEPARATOR.split(artist).cleaned()
-
-    /**
-     * An album artist's artist, then whoever it features: "A feat. B" and "A (feat. B)" are A then B. Only "feat." splits
-     * an album artist (#637): "A; B", "A / B" and "A & B" are one each.
-     */
-    fun splitFeaturing(albumArtist: String): List<String> = FEATURING.split(albumArtist).cleaned()
-
-    private fun List<String>.cleaned(): List<String> = map { part -> part.trim().withoutUnopenedBracket().trim() }.filter { it.isNotEmpty() }
-
-    /** "B)", left of "A (feat. B)", without its closing bracket. */
-    private fun String.withoutUnopenedBracket(): String = when {
-        endsWith(')') && count { it == '(' } < count { it == ')' } -> dropLast(1)
-        endsWith(']') && count { it == '[' } < count { it == ']' } -> dropLast(1)
-        else -> this
     }
 
     private fun List<String>?.pairedWith(names: List<*>): List<String>? = this?.map { it.trim() }?.takeIf { it.size == names.size }

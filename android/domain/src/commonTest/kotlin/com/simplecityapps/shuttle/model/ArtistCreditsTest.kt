@@ -42,20 +42,20 @@ class ArtistCreditsTest {
 
     @Test
     fun `an ARTIST value splits on featuring credits - semicolons and a spaced slash`() {
-        ArtistCredits.split("Kanye West feat. Chris Martin") shouldBe listOf("Kanye West", "Chris Martin")
-        ArtistCredits.split("Mark Ronson (feat. Bruno Mars)") shouldBe listOf("Mark Ronson", "Bruno Mars")
-        ArtistCredits.split("Calvin Harris ft. Rihanna") shouldBe listOf("Calvin Harris", "Rihanna")
-        ArtistCredits.split("Santana featuring Rob Thomas") shouldBe listOf("Santana", "Rob Thomas")
-        ArtistCredits.split("Brian Eno / David Byrne") shouldBe listOf("Brian Eno", "David Byrne")
-        ArtistCredits.split("Daft Punk; Pharrell Williams") shouldBe listOf("Daft Punk", "Pharrell Williams")
+        ArtistNames.split("Kanye West feat. Chris Martin") shouldBe listOf("Kanye West", "Chris Martin")
+        ArtistNames.split("Mark Ronson (feat. Bruno Mars)") shouldBe listOf("Mark Ronson", "Bruno Mars")
+        ArtistNames.split("Calvin Harris ft. Rihanna") shouldBe listOf("Calvin Harris", "Rihanna")
+        ArtistNames.split("Santana featuring Rob Thomas") shouldBe listOf("Santana", "Rob Thomas")
+        ArtistNames.split("Brian Eno / David Byrne") shouldBe listOf("Brian Eno", "David Byrne")
+        ArtistNames.split("Daft Punk; Pharrell Williams") shouldBe listOf("Daft Punk", "Pharrell Williams")
     }
 
     @Test
     fun `an ampersand - a bare slash and a name holding 'ft' never split`() {
-        ArtistCredits.split("Simon & Garfunkel") shouldBe listOf("Simon & Garfunkel")
-        ArtistCredits.split("AC/DC") shouldBe listOf("AC/DC")
-        ArtistCredits.split("Daft Punk") shouldBe listOf("Daft Punk")
-        ArtistCredits.split("Sufjan Stevens") shouldBe listOf("Sufjan Stevens")
+        ArtistNames.split("Simon & Garfunkel") shouldBe listOf("Simon & Garfunkel")
+        ArtistNames.split("AC/DC") shouldBe listOf("AC/DC")
+        ArtistNames.split("Daft Punk") shouldBe listOf("Daft Punk")
+        ArtistNames.split("Sufjan Stevens") shouldBe listOf("Sufjan Stevens")
     }
 
     @Test
@@ -108,19 +108,19 @@ class ArtistCreditsTest {
 
     @Test
     fun `an album artist splits on feat only`() {
-        ArtistCredits.splitFeaturing("Calvin Harris feat. Rihanna") shouldBe listOf("Calvin Harris", "Rihanna")
-        ArtistCredits.splitFeaturing("Mark Ronson (ft. Bruno Mars)") shouldBe listOf("Mark Ronson", "Bruno Mars")
-        ArtistCredits.splitFeaturing("Simon & Garfunkel") shouldBe listOf("Simon & Garfunkel")
-        ArtistCredits.splitFeaturing("AC/DC") shouldBe listOf("AC/DC")
+        ArtistNames.splitFeaturing("Calvin Harris feat. Rihanna") shouldBe listOf("Calvin Harris", "Rihanna")
+        ArtistNames.splitFeaturing("Mark Ronson (ft. Bruno Mars)") shouldBe listOf("Mark Ronson", "Bruno Mars")
+        ArtistNames.splitFeaturing("Simon & Garfunkel") shouldBe listOf("Simon & Garfunkel")
+        ArtistNames.splitFeaturing("AC/DC") shouldBe listOf("AC/DC")
     }
 
     @Test
     fun `an album artist needs feat or ft with its dot or featuring so a band named Feat stays whole`() {
-        ArtistCredits.splitFeaturing("The Feat Band") shouldBe listOf("The Feat Band")
-        ArtistCredits.splitFeaturing("Little Feat") shouldBe listOf("Little Feat")
-        ArtistCredits.splitFeaturing("Little Feat ft Someone") shouldBe listOf("Little Feat ft Someone")
-        ArtistCredits.splitFeaturing("Little Feat featuring Bonnie Raitt") shouldBe listOf("Little Feat", "Bonnie Raitt")
-        ArtistCredits.splitFeaturing("Daft Punk FEAT. Pharrell Williams") shouldBe listOf("Daft Punk", "Pharrell Williams")
+        ArtistNames.splitFeaturing("The Feat Band") shouldBe listOf("The Feat Band")
+        ArtistNames.splitFeaturing("Little Feat") shouldBe listOf("Little Feat")
+        ArtistNames.splitFeaturing("Little Feat ft Someone") shouldBe listOf("Little Feat ft Someone")
+        ArtistNames.splitFeaturing("Little Feat featuring Bonnie Raitt") shouldBe listOf("Little Feat", "Bonnie Raitt")
+        ArtistNames.splitFeaturing("Daft Punk FEAT. Pharrell Williams") shouldBe listOf("Daft Punk", "Pharrell Williams")
         val song = tags(album = "Live", artists = listOf("The Feat Band"), albumArtist = "The Feat Band")
         val identity = AlbumIdentityRule.resolve(listOf(song)).getValue(song.songId)
         identity.albumArtists.map { it.name } shouldBe listOf("The Feat Band")
