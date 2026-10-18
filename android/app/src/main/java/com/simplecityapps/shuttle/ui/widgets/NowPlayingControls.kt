@@ -32,10 +32,13 @@ import androidx.glance.semantics.semantics
 import androidx.glance.unit.ColorProvider
 import com.simplecityapps.core.R as CoreR
 import com.simplecityapps.playback.PlaybackServiceAction
+import com.simplecityapps.playback.PlaybackServiceStarter
 import com.simplecityapps.playback.R as PlaybackR
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.designsystem.theme.S2IconSize
 import com.simplecityapps.shuttle.di.appGraph
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.ContributesTo
 
 /** Colours for text and controls, which change when they're drawn over artwork. */
 internal data class ContentColors(
@@ -256,6 +259,11 @@ class PlaybackActionCallback : ActionCallback {
         parameters: ActionParameters
     ) {
         val action = parameters[playbackActionKey]?.let(PlaybackServiceAction::valueOf) ?: return
-        context.appGraph<WidgetEntryPoint>().playbackServiceStarter().start(action)
+        context.appGraph<Injector>().playbackServiceStarter().start(action)
+    }
+
+    @ContributesTo(AppScope::class)
+    interface Injector {
+        fun playbackServiceStarter(): PlaybackServiceStarter
     }
 }
