@@ -7,10 +7,7 @@ import com.simplecityapps.shuttle.model.Song
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
 
-@RunWith(RobolectricTestRunner::class)
 class ClassicalMetadataTest {
 
     private val work = "Symphony No. 5 in C minor, Op. 67"
