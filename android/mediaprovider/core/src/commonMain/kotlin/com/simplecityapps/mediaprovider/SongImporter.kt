@@ -7,10 +7,12 @@ import com.simplecityapps.shuttle.persistence.SourceStateStore
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Clock
 import kotlin.time.Duration
+import kotlin.time.Instant
 import kotlin.time.TimeSource
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.lastOrNull
@@ -70,11 +72,7 @@ internal class SongImporter(
                 return@flow
             }
 
-        val songs =
-            when (plan) {
-                SyncPlan.Full -> if (listThoroughly) (mediaProvider as IndexedMediaProvider).findSongsThoroughly(existingSongs) else mediaProvider.findSongs(existingSongs)
-                is SyncPlan.Incremental -> (mediaProvider as IncrementalMediaProvider).findSongsChangedSince(existingSongs, plan.since)
-            }
+        val songs = listSongs(mediaProvider, plan, existingSongs, listThoroughly)
         val findSongsMark = TimeSource.Monotonic.markNow()
         songs.collect { event ->
             when (event) {
@@ -84,68 +82,7 @@ internal class SongImporter(
 
                 is FlowEvent.Success -> {
                     timings.findSongs = findSongsMark.elapsedNow()
-                    val dbWriteMark = TimeSource.Monotonic.markNow()
-                    try {
-                        emit(FlowEvent.Progress<SongImportResult, MessageProgress>(MessageProgress(ImportPhase.Saving(event.result.size), null)))
-                        val songDiff = SongDiff(existingSongs, event.result, deleteMissing = plan == SyncPlan.Full).apply()
-                        // A remote listing pages by offset, so a shifted page can skip a song that's still there (#934)
-                        val fullDeletes = if (plan == SyncPlan.Full) confirmedRemovals(mediaProvider, songDiff.deletes) else emptyList()
-                        // An incremental sync's removals, read from the source's path listing when its count says it needs one
-                        val removed = (plan as? SyncPlan.Incremental)?.let { songsRemovedOnSource(mediaProvider as IncrementalMediaProvider, existingSongs, songDiff.inserts) }
-                        val guarded =
-                            when {
-                                plan == SyncPlan.Full -> guardDeletes(mediaProvider, existingSongs.size, event.result.size, fullDeletes, userRemoval, event.missing, fullPass = true)
-
-                                removed != null -> guardDeletes(mediaProvider, existingSongs.size, existingSongs.size - removed.songs.size + songDiff.inserts.size, removed.songs, userRemoval, removed.missing, fullPass = false)
-
-                                // Nothing listed, so nothing to remove, and what the last listing held back stays as it was
-                                else -> DeleteGuard.Decision(apply = emptyList(), heldUnreadable = 0, heldMassRemoval = emptyList())
-                            }
-                        val result =
-                            songRepository.insertUpdateAndDelete(
-                                inserts = songDiff.inserts,
-                                updates = songDiff.updates,
-                                deletes = guarded.apply,
-                                mediaProviderType = mediaProvider.type
-                            )
-                        timings.dbWrite = dbWriteMark.elapsedNow()
-                        mediaProvider.songsStored()
-                        sourceState.setLastSyncStart(mediaProvider.type.name, start)
-                        if (plan == SyncPlan.Full) {
-                            // A full pass tries every file it hasn't stored, so its count of files left unread is the whole of it (#840)
-                            sourceState.setSkippedFiles(mediaProvider.type.name, mediaProvider.skippedFiles.size)
-                            if (guarded.awaitsFullPass) {
-                                // A held mass removal, or a listing that left songs out, waits on the next full sync, so that's
-                                // the next sync rather than a week on. The songs it held weren't read, so the tags version stays
-                                // as it was.
-                                sourceState.setLastFullSyncStart(mediaProvider.type.name, null)
-                            } else {
-                                sourceState.setLastFullSyncStart(mediaProvider.type.name, start)
-                                // Every song read again, so this source's songs hold every tag this build reads
-                                sourceState.setSongTagsVersion(mediaProvider.type.name, requiredSongTagsVersion(mediaProvider.type))
-                            }
-                        } else if (guarded.awaitsFullPass || (removed?.unfetched ?: 0) > 0) {
-                            // Likewise after an incremental sync, which also brings it forward for songs the source holds that
-                            // it never fetched (unchanged since before they were in reach): until a full sync stores them, the
-                            // count disagrees and every incremental sync would list the paths again. The tags version stays.
-                            sourceState.setLastFullSyncStart(mediaProvider.type.name, null)
-                        }
-                        emit(
-                            FlowEvent.Success(
-                                SongImportResult(
-                                    inserts = result.first,
-                                    updates = result.second,
-                                    deletes = result.third,
-                                    mediaProviderType = mediaProvider.type
-                                )
-                            )
-                        )
-                    } catch (e: CancellationException) {
-                        throw e
-                    } catch (e: Exception) {
-                        logger.error(e) { "Failed to update song repository" }
-                        emit(FlowEvent.Failure(strings.importError))
-                    }
+                    storeSongs(mediaProvider, plan, existingSongs, event, start, timings, userRemoval)
                 }
 
                 is FlowEvent.Failure -> {
@@ -155,6 +92,101 @@ internal class SongImporter(
             }
         }
     }.flowOn(Dispatchers.IO)
+
+    private fun listSongs(
+        mediaProvider: MediaProvider,
+        plan: SyncPlan,
+        existingSongs: List<Song>,
+        listThoroughly: Boolean
+    ): Flow<FlowEvent<List<Song>, MessageProgress>> = when (plan) {
+        SyncPlan.Full -> if (listThoroughly) (mediaProvider as IndexedMediaProvider).findSongsThoroughly(existingSongs) else mediaProvider.findSongs(existingSongs)
+        is SyncPlan.Incremental -> (mediaProvider as IncrementalMediaProvider).findSongsChangedSince(existingSongs, plan.since)
+    }
+
+    /** Diffs the [listing] against [existingSongs], writes the difference, notes the sync's state and emits what changed. */
+    private suspend fun FlowCollector<FlowEvent<SongImportResult, MessageProgress>>.storeSongs(
+        mediaProvider: MediaProvider,
+        plan: SyncPlan,
+        existingSongs: List<Song>,
+        listing: FlowEvent.Success<List<Song>>,
+        start: Instant,
+        timings: ImportTimings,
+        userRemoval: Boolean
+    ) {
+        val dbWriteMark = TimeSource.Monotonic.markNow()
+        try {
+            emit(FlowEvent.Progress<SongImportResult, MessageProgress>(MessageProgress(ImportPhase.Saving(listing.result.size), null)))
+            val songDiff = SongDiff(existingSongs, listing.result, deleteMissing = plan == SyncPlan.Full).apply()
+            // A remote listing pages by offset, so a shifted page can skip a song that's still there (#934)
+            val fullDeletes = if (plan == SyncPlan.Full) confirmedRemovals(mediaProvider, songDiff.deletes) else emptyList()
+            // An incremental sync's removals, read from the source's path listing when its count says it needs one
+            val removed = (plan as? SyncPlan.Incremental)?.let { songsRemovedOnSource(mediaProvider as IncrementalMediaProvider, existingSongs, songDiff.inserts) }
+            val guarded =
+                when {
+                    plan == SyncPlan.Full -> guardDeletes(mediaProvider, existingSongs.size, listing.result.size, fullDeletes, userRemoval, listing.missing, fullPass = true)
+
+                    removed != null -> guardDeletes(mediaProvider, existingSongs.size, existingSongs.size - removed.songs.size + songDiff.inserts.size, removed.songs, userRemoval, removed.missing, fullPass = false)
+
+                    // Nothing listed, so nothing to remove, and what the last listing held back stays as it was
+                    else -> DeleteGuard.Decision(apply = emptyList(), heldUnreadable = 0, heldMassRemoval = emptyList())
+                }
+            val result =
+                songRepository.insertUpdateAndDelete(
+                    inserts = songDiff.inserts,
+                    updates = songDiff.updates,
+                    deletes = guarded.apply,
+                    mediaProviderType = mediaProvider.type
+                )
+            timings.dbWrite = dbWriteMark.elapsedNow()
+            mediaProvider.songsStored()
+            recordSyncState(mediaProvider, plan, start, guarded, removed)
+            emit(
+                FlowEvent.Success(
+                    SongImportResult(
+                        inserts = result.first,
+                        updates = result.second,
+                        deletes = result.third,
+                        mediaProviderType = mediaProvider.type
+                    )
+                )
+            )
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            logger.error(e) { "Failed to update song repository" }
+            emit(FlowEvent.Failure(strings.importError))
+        }
+    }
+
+    /** Notes the stored sync's start, and whether the next full sync is due now, for the next sync to plan from. */
+    private suspend fun recordSyncState(
+        mediaProvider: MediaProvider,
+        plan: SyncPlan,
+        start: Instant,
+        guarded: DeleteGuard.Decision,
+        removed: RemovedOnSource?
+    ) {
+        sourceState.setLastSyncStart(mediaProvider.type.name, start)
+        if (plan == SyncPlan.Full) {
+            // A full pass tries every file it hasn't stored, so its count of files left unread is the whole of it (#840)
+            sourceState.setSkippedFiles(mediaProvider.type.name, mediaProvider.skippedFiles.size)
+            if (guarded.awaitsFullPass) {
+                // A held mass removal, or a listing that left songs out, waits on the next full sync, so that's
+                // the next sync rather than a week on. The songs it held weren't read, so the tags version stays
+                // as it was.
+                sourceState.setLastFullSyncStart(mediaProvider.type.name, null)
+            } else {
+                sourceState.setLastFullSyncStart(mediaProvider.type.name, start)
+                // Every song read again, so this source's songs hold every tag this build reads
+                sourceState.setSongTagsVersion(mediaProvider.type.name, requiredSongTagsVersion(mediaProvider.type))
+            }
+        } else if (guarded.awaitsFullPass || (removed?.unfetched ?: 0) > 0) {
+            // Likewise after an incremental sync, which also brings it forward for songs the source holds that
+            // it never fetched (unchanged since before they were in reach): until a full sync stores them, the
+            // count disagrees and every incremental sync would list the paths again. The tags version stays.
+            sourceState.setLastFullSyncStart(mediaProvider.type.name, null)
+        }
+    }
 
     /**
      * What a source's path listing says of an incremental sync: the [songs] it no longer holds, how many songs short of what
