@@ -2,6 +2,7 @@ import Foundation
 import os
 import PostHog
 import UIKit
+import S2Core
 import Shared
 
 /// PostHog product analytics, the shared `IosProductAnalytics`. Set up the first time the user allows analytics (the

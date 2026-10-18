@@ -1,6 +1,7 @@
 import PostHog
 import Testing
 @testable import S2
+import S2Core
 
 /// PostHog's config (#776): anonymous, on the given host, with lifecycle events and nothing captured automatically.
 struct PostHogProductAnalyticsTests {

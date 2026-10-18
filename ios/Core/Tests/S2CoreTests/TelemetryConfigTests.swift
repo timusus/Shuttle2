@@ -1,5 +1,5 @@
 import Testing
-@testable import S2
+@testable import S2Core
 
 /// The telemetry keys from Info.plist (#776): a blank or unexpanded key is no key, so that SDK stays off.
 struct TelemetryConfigTests {

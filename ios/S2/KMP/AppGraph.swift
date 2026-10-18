@@ -1,4 +1,5 @@
 import Foundation
+import S2Core
 import S2Playback
 import Shared
 import SwiftUI

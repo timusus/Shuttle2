@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		01A91325017F4F345F84AB53 /* TelemetryConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4D0ADAACD85DDF0E48DF557 /* TelemetryConfig.swift */; };
 		0478BEC87E6005E259F62AE4 /* EqualizerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFFFB17EF4036829CFD54688 /* EqualizerView.swift */; };
 		090C3713C7D8C7CDF2ACBA76 /* RouteDestination.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9439F2E0407BF9275E4CEC04 /* RouteDestination.swift */; };
 		0E0B027A3870445B18FC5012 /* Separator.swift in Sources */ = {isa = PBXBuildFile; fileRef = E961F30A527AB450C8572B47 /* Separator.swift */; };
@@ -47,7 +46,7 @@
 		3175D4D1DC6565C41E534C91 /* LibraryCollection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 205F2D98E447A246625BE4A5 /* LibraryCollection.swift */; };
 		3276AA0BF67F5F0A9B6E0D28 /* PlayerBindingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4508034A93DD7E7D4C59E362 /* PlayerBindingTests.swift */; };
 		34C47AF9BC740718A6B15B47 /* NowPlayingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0D38E5CC8D77C5BA07D5821 /* NowPlayingView.swift */; };
-		34EE44A329EA00DDAABAEF79 /* Sentry in Frameworks */ = {isa = PBXBuildFile; productRef = E1CF29EA73E2E84524801440 /* Sentry */; };
+		34EE44A329EA00DDAABAEF79 /* S2Core in Frameworks */ = {isa = PBXBuildFile; productRef = 18357E4F1FEC959D732C0C24 /* S2Core */; };
 		35711F16198C1340CC43E55A /* MiniPlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 528C6644D4642CD20178A704 /* MiniPlayerView.swift */; };
 		36448DF63FDD4D6333FB9DD2 /* DesignSystemTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA8F70031E091A9E05A0ABE8 /* DesignSystemTests.swift */; };
 		364F5DB5B5BC1C174907D5ED /* AlbumListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9EB97ABD546F19AAB459025C /* AlbumListView.swift */; };
@@ -107,7 +106,7 @@
 		76888FE5233E4B90ED2A244A /* Motion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FA31930A8CB79E30E7CB606 /* Motion.swift */; };
 		76E94E7833435C1AF3752B49 /* ProSettingsSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E8D9DB18D7662E94052AB35 /* ProSettingsSection.swift */; };
 		7A701E93B15CFAEEF3311D42 /* LibraryListTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 191927F39E29CE059057C079 /* LibraryListTests.swift */; };
-		807B002033B439F30DB6F44E /* PostHog in Frameworks */ = {isa = PBXBuildFile; productRef = 2C08565004895C8B70923EDF /* PostHog */; };
+		807B002033B439F30DB6F44E /* Sentry in Frameworks */ = {isa = PBXBuildFile; productRef = E1CF29EA73E2E84524801440 /* Sentry */; };
 		83383C1E9DCF9FF60907D62A /* KotlinLogSink.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0FAEE3FBBE47AD9BFB7A8E3 /* KotlinLogSink.swift */; };
 		842361F9758C975E8AAB0BDB /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = CB2C91FE8406D6ED46243D9D /* Localizable.strings */; };
 		85CD36E6527CD8C02C94C68E /* AppGraph.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E5961F296B2738309AF66BC /* AppGraph.swift */; };
@@ -135,7 +134,6 @@
 		A0D212754B15BC66F9CBE7EB /* PlayerPaletteTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9188F0A66E8159B42084CA4B /* PlayerPaletteTests.swift */; };
 		A12FAD75FAC331471138D9B0 /* PlaybackSystemCoordinatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F97906E25504493A67DA322 /* PlaybackSystemCoordinatorTests.swift */; };
 		A204971796190252B0805D9F /* Settings.strings in Resources */ = {isa = PBXBuildFile; fileRef = ABEAF4D5A4ED98BF0D97DB69 /* Settings.strings */; };
-		A26315901488642FD490FE9F /* TelemetryConfigTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E12ADD59D6091FBDE4935520 /* TelemetryConfigTests.swift */; };
 		A3179AE8E95F6FFCE330C21B /* PaywallPresenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B05D5F83A9F5B5AFF04D36F /* PaywallPresenter.swift */; };
 		A4DB8F671CB561F475D9337B /* Navigator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89689E4CDFC9350CB0EFB888 /* Navigator.swift */; };
 		A5AAD4F27D13FC392AD6BD4E /* DetailRows.swift in Sources */ = {isa = PBXBuildFile; fileRef = EAF6FC8389810EC57EEB07F1 /* DetailRows.swift */; };
@@ -160,6 +158,7 @@
 		BAE592350C4497801048DA0D /* ArtistHero.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90D5584F3316306808B17435 /* ArtistHero.swift */; };
 		BBA3A674A453A7214F3948FA /* Typography.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87263640816D52C273CCC216 /* Typography.swift */; };
 		BC96C3A8656E42ADB2A47476 /* PlayerPalette.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4EABE937DFDA953B4A4F31C /* PlayerPalette.swift */; };
+		BD583284B2C665195969E94B /* PostHog in Frameworks */ = {isa = PBXBuildFile; productRef = 2C08565004895C8B70923EDF /* PostHog */; };
 		BD9F9A57046F5AF82F885333 /* KitAudioPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7ED28830F54EABEDFD3C9156 /* KitAudioPlayer.swift */; };
 		BF51CC3EE780B523F4F14FA6 /* AppIntentPerformer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 126D030095908900A149B031 /* AppIntentPerformer.swift */; };
 		C0540805B66A09FDE6557DB9 /* AlbumDetailTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82D8F50EA0F4508C11C2A23D /* AlbumDetailTests.swift */; };
@@ -311,6 +310,7 @@
 		304BCC1B7506A922606DD4FE /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/Localizable.strings; sourceTree = "<group>"; };
 		30926EEA800ABB7EC1BB53F4 /* KotlinCrashEvent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KotlinCrashEvent.swift; sourceTree = "<group>"; };
 		31BFE59B764614F60E8C68CD /* pt-BR */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "pt-BR"; path = "pt-BR.lproj/Localizable.strings"; sourceTree = "<group>"; };
+		31CA82D22C155E09430626A4 /* Core */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Core; path = Core; sourceTree = SOURCE_ROOT; };
 		31E55AD106EEAAB1C05E1B8A /* ArtworkLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArtworkLoader.swift; sourceTree = "<group>"; };
 		344A8CE0E64AF6DE0B323968 /* GenreDetailTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GenreDetailTests.swift; sourceTree = "<group>"; };
 		359E00C31236C6EBF32CF982 /* DetailHero.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DetailHero.swift; sourceTree = "<group>"; };
@@ -473,7 +473,6 @@
 		CFFFB17EF4036829CFD54688 /* EqualizerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EqualizerView.swift; sourceTree = "<group>"; };
 		D0BFC0F69530A704544BE7AE /* NowPlayingWidgetPublisherTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NowPlayingWidgetPublisherTests.swift; sourceTree = "<group>"; };
 		D0D38E5CC8D77C5BA07D5821 /* NowPlayingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NowPlayingView.swift; sourceTree = "<group>"; };
-		D4D0ADAACD85DDF0E48DF557 /* TelemetryConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TelemetryConfig.swift; sourceTree = "<group>"; };
 		D561A4A70439272543CCFDD3 /* SourceSetupImportPage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SourceSetupImportPage.swift; sourceTree = "<group>"; };
 		D679F550BBE525E21437DE0B /* SongRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SongRow.swift; sourceTree = "<group>"; };
 		D6F13B4E6E24F493A2104D75 /* PlayerPresentation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerPresentation.swift; sourceTree = "<group>"; };
@@ -483,7 +482,6 @@
 		DF69F9EF58C01511DA169401 /* NowPlayingSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NowPlayingSnapshot.swift; sourceTree = "<group>"; };
 		E0F3E84B7D27020C578482FE /* en-GB */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "en-GB"; path = "en-GB.lproj/Localizable.strings"; sourceTree = "<group>"; };
 		E0FAEE3FBBE47AD9BFB7A8E3 /* KotlinLogSink.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KotlinLogSink.swift; sourceTree = "<group>"; };
-		E12ADD59D6091FBDE4935520 /* TelemetryConfigTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TelemetryConfigTests.swift; sourceTree = "<group>"; };
 		E1E4E9F08D9F2135AF04D337 /* NowPlayingPlayerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NowPlayingPlayerTests.swift; sourceTree = "<group>"; };
 		E5B4C7411078C92EE8985A4B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		E692D493FA73B336976469EC /* SourceTypeCards.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SourceTypeCards.swift; sourceTree = "<group>"; };
@@ -522,8 +520,9 @@
 			files = (
 				1E36BC6BB4AFF482C902E8F1 /* S2Playback in Frameworks */,
 				980E6C1CAAFE8E1F5BB5F288 /* S2Tags in Frameworks */,
-				34EE44A329EA00DDAABAEF79 /* Sentry in Frameworks */,
-				807B002033B439F30DB6F44E /* PostHog in Frameworks */,
+				34EE44A329EA00DDAABAEF79 /* S2Core in Frameworks */,
+				807B002033B439F30DB6F44E /* Sentry in Frameworks */,
+				BD583284B2C665195969E94B /* PostHog in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -864,6 +863,7 @@
 		D873E58C3EE60B6DDBAB3652 /* Packages */ = {
 			isa = PBXGroup;
 			children = (
+				31CA82D22C155E09430626A4 /* Core */,
 				9B1181F7DF24601B148DB16A /* Playback */,
 			);
 			name = Packages;
@@ -875,7 +875,6 @@
 				30926EEA800ABB7EC1BB53F4 /* KotlinCrashEvent.swift */,
 				78CF5B64D5117B6414664084 /* PostHogProductAnalytics.swift */,
 				4DA5E1F9413A15219BA5C23E /* SentryCrashReporter.swift */,
-				D4D0ADAACD85DDF0E48DF557 /* TelemetryConfig.swift */,
 			);
 			path = Telemetry;
 			sourceTree = "<group>";
@@ -980,7 +979,6 @@
 				3C35C7691E4A7FAE290762B2 /* SourceSetupFlowTests.swift */,
 				9617DD31BA89B09F9D5E6DDE /* SourcesViewTests.swift */,
 				F43278A29F0712F2BE55C8E6 /* SystemIntentsTests.swift */,
-				E12ADD59D6091FBDE4935520 /* TelemetryConfigTests.swift */,
 				55CD44CF87F2D163A0C713D5 /* TestGraph.swift */,
 				14BB2620441276D4E9C54BA6 /* TestSongs.swift */,
 				01EE6A1024391679E4219C13 /* ViewInspector+BreadthFirst.swift */,
@@ -1089,6 +1087,7 @@
 			packageProductDependencies = (
 				991A0127927C490EA585B9CC /* S2Playback */,
 				2D67CECE5865302F1EC5EC0D /* S2Tags */,
+				18357E4F1FEC959D732C0C24 /* S2Core */,
 				E1CF29EA73E2E84524801440 /* Sentry */,
 				2C08565004895C8B70923EDF /* PostHog */,
 			);
@@ -1145,6 +1144,7 @@
 				DE25CAB1E4BD6F34AF7E2EE0 /* XCRemoteSwiftPackageReference "posthog-ios" */,
 				BC078097C418CD7ED96438F2 /* XCRemoteSwiftPackageReference "sentry-cocoa" */,
 				B8CB0CC0A101C1C66AA6BA86 /* XCRemoteSwiftPackageReference "ViewInspector" */,
+				7C139763B66078FD9A76A9FD /* XCLocalSwiftPackageReference "Core" */,
 				82F6E270A6E27A25514ECA65 /* XCLocalSwiftPackageReference "Playback" */,
 			);
 			preferredProjectObjectVersion = 77;
@@ -1314,7 +1314,6 @@
 				219A25DB3B9C7F1880CE3AB0 /* Spacing.swift in Sources */,
 				EA686D032301971F38800359 /* StartupTrace.swift in Sources */,
 				1D3A0D79A059CD0BED9D6549 /* StoreKitManager.swift in Sources */,
-				01A91325017F4F345F84AB53 /* TelemetryConfig.swift in Sources */,
 				F01D288960936228B0746CF5 /* TextRole.swift in Sources */,
 				BBA3A674A453A7214F3948FA /* Typography.swift in Sources */,
 				D81817D1E15FF9445D39A71D /* ViewModelCache.swift in Sources */,
@@ -1384,7 +1383,6 @@
 				D959A8478773245D31E9DD45 /* SourceSetupFlowTests.swift in Sources */,
 				F5A38E52E15457BCE9E4FE31 /* SourcesViewTests.swift in Sources */,
 				C84B0068D6E98EA9305021CE /* SystemIntentsTests.swift in Sources */,
-				A26315901488642FD490FE9F /* TelemetryConfigTests.swift in Sources */,
 				ED0E6BC6AD9E362778EFBF68 /* TestGraph.swift in Sources */,
 				4BB77D4A9957ED117DDCF31A /* TestSongs.swift in Sources */,
 				214EA1E6B250A95E7367D433 /* ViewInspector+BreadthFirst.swift in Sources */,
@@ -1826,6 +1824,10 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
+		7C139763B66078FD9A76A9FD /* XCLocalSwiftPackageReference "Core" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Core;
+		};
 		82F6E270A6E27A25514ECA65 /* XCLocalSwiftPackageReference "Playback" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = Playback;
@@ -1860,6 +1862,10 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		18357E4F1FEC959D732C0C24 /* S2Core */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = S2Core;
+		};
 		223BCE871853A0BF4F40A55A /* S2PlaybackTestSupport */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = S2PlaybackTestSupport;

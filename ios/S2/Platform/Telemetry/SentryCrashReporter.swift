@@ -1,6 +1,7 @@
 import Foundation
 import os
 import Sentry
+import S2Core
 import Shared
 
 /// Sentry crash, app hang and session reporting, the shared `IosCrashReporter`. Not started until the user allows

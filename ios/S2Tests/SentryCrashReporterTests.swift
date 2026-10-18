@@ -1,6 +1,7 @@
 import Sentry
 import Testing
 @testable import S2
+import S2Core
 
 /// Sentry's options and its scrubber (#776): what's on and off, and that nothing identifying leaves in an event or a
 /// breadcrumb. The scrubbing itself is the shared `TelemetryScrubber` (`TelemetryScrubberTest`); these check every

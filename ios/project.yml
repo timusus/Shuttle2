@@ -13,6 +13,9 @@ packages:
   # The gapless engine (#588): a local package, see Playback/README.md.
   S2Playback:
     path: Playback
+  # Logic with no Kotlin, UIKit or SwiftUI behind it, tested with `swift test` instead of in the app host.
+  S2Core:
+    path: Core
   # Crash reporting and product analytics (#776), each started only while its Settings > Privacy switch is on
   # (Platform/Telemetry). Their keys come from Config/Telemetry.xcconfig, never from this file.
   Sentry:
@@ -62,6 +65,8 @@ targets:
         product: S2Playback
       - package: S2Playback
         product: S2Tags
+      - package: S2Core
+        product: S2Core
       # The widgets and the Control Center control (#758), embedded in S2.app/PlugIns
       - target: S2Widgets
       - package: Sentry
