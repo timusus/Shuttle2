@@ -105,9 +105,17 @@ fi
 mkdir -p "$dd" && echo "$pins" >"$dd/.s2-spm-pins"
 # ARCHS=arm64 here, not in project.yml: the tests share AudioPlaybackKit's targets with the app, so Xcode links them
 # as dynamic package frameworks, which ignore the project's EXCLUDED_ARCHS, and FFmpeg has no x86_64 simulator slice.
-xcodebuild build-for-testing -project S2.xcodeproj -scheme S2 -configuration Debug \
-  -destination 'generic/platform=iOS Simulator' -derivedDataPath "$dd" ARCHS=arm64 \
-  -clonedSourcePackagesDirPath "$spm_cache" COMPILER_INDEX_STORE_ENABLE=NO ${XCODE_CACHE_ARGS[@]+"${XCODE_CACHE_ARGS[@]}"} -quiet
+build() {
+  xcodebuild build-for-testing -project S2.xcodeproj -scheme S2 -configuration Debug \
+    -destination 'generic/platform=iOS Simulator' -derivedDataPath "$dd" ARCHS=arm64 \
+    -clonedSourcePackagesDirPath "$spm_cache" COMPILER_INDEX_STORE_ENABLE=NO "$@" -quiet
+}
+# A corrupt or concurrently written CAS fails the build with only "command failed with exit code 0" noise; retry uncached.
+if ! build ${XCODE_CACHE_ARGS[@]+"${XCODE_CACHE_ARGS[@]}"}; then
+  [[ ${#XCODE_CACHE_ARGS[@]} -gt 0 ]] || exit 1
+  echo "==> build failed with the Xcode compile cache on; retrying once with it off (S2_XCODE_CAS=off)"
+  build
+fi
 xctestrun="$(ls -t "$products"/*.xctestrun 2>/dev/null | head -n1)"
 [[ -n "$xctestrun" && -d "$app" ]] || { echo "ERROR: the build produced no xctestrun or S2.app" >&2; exit 1; }
 printf 'state=%s\nframework=%s\nxctestrun=%s\n' "$current" "$current_framework" "$xctestrun" > "$stamp"

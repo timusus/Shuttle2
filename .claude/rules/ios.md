@@ -78,7 +78,9 @@ median/min/max per milestone; `--help` for `--device`, `--append` and launch arg
 worktrees, and Xcode compilation caching shares one CAS (`~/Library/Caches/s2-xcode-cas`, `ios/scripts/xcode-cache.sh`;
 `S2_XCODE_CAS=off` disables; Debug builds only, capped at 10 GB, prefix-mapped so entries carry no worktree paths): a
 cold DerivedData build with a warm CAS took 79s against 106s uncached (-26%, Xcode 27.2), and two concurrent builds on
-one CAS both succeed. Deleting `~/Library/Caches/s2-xcode-cas` is always safe; the next build refills it. Don't set the
+one CAS both succeed. `-quiet` prints "command failed with exit code 0 but produced no further output" for compiles
+that only warned, with the cache on or off (the build still exits 0): not a failure. If xcodebuild really fails with
+the cache on, `build-app.sh` retries once with it off and says so. Deleting `~/Library/Caches/s2-xcode-cas` is always safe; the next build refills it. Don't set the
 S2Tests scheme `parallelizable`: Swift Testing already runs in parallel in-process, and cloning made the suite slower
 and flaky.
 
