@@ -1,16 +1,12 @@
 package com.simplecityapps.shuttle.settings
 
-import com.simplecityapps.shuttle.persistence.SharedPreferencesKeyValueStore
+import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import com.simplecityapps.shuttle.ui.theme.AppThemeViewModel
 import io.kotest.matchers.shouldBe
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
-import org.robolectric.RuntimeEnvironment
 
-@RunWith(RobolectricTestRunner::class)
 class SettleDynamicColourDefaultTest {
-    private val store = SettingsStore(SharedPreferencesKeyValueStore(RuntimeEnvironment.getApplication().defaultSharedPreferences().apply { edit().clear().commit() }))
+    private val store = SettingsStore(InMemoryKeyValueStore())
     private val settings = AppearanceSettings(store)
 
     private fun themeOnLaunch() = SettleDynamicColourDefault(settings)().let { AppThemeViewModel(ObserveSetting(store), ReadSetting(store)).uiState.value }
