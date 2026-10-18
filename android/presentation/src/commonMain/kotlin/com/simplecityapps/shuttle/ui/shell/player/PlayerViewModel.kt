@@ -17,7 +17,6 @@ import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.settings.ObserveSetting
 import com.simplecityapps.shuttle.settings.PlayerSettings
 import com.simplecityapps.shuttle.settings.SaveSetting
-import com.simplecityapps.shuttle.settings.Setting
 import com.simplecityapps.shuttle.ui.actions.AvailableMediaActions
 import com.simplecityapps.shuttle.ui.actions.MediaAction
 import com.simplecityapps.shuttle.ui.actions.MediaActionHandler
@@ -62,14 +61,6 @@ fun interface SavedNowPlaying {
 /** A queued song, each time it's skipped because streaming it needs S2 Pro. */
 fun interface ObserveGatedServerSkip {
     operator fun invoke(): Flow<Song>
-}
-
-/**
- * The stored ReplayGain mode setting. The setting lives with the playback settings in `:android:playback:core`, a data
- * module this layer can't see, so each platform's graph hands it over.
- */
-fun interface ReplayGainModeSetting {
-    fun setting(): Setting<ReplayGainMode>
 }
 
 /**

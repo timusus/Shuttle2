@@ -4,8 +4,17 @@ import com.simplecityapps.playback.dsp.replaygain.ReplayGainMode
 import com.simplecityapps.shuttle.entitlement.ProFeature
 import com.simplecityapps.shuttle.entitlement.TryUseProFeature
 import com.simplecityapps.shuttle.settings.SaveSetting
+import com.simplecityapps.shuttle.settings.Setting
 import com.simplecityapps.shuttle.ui.screens.settings.SettingsEffects
 import dev.zacsweers.metro.Inject
+
+/**
+ * The stored ReplayGain mode setting. The setting lives with the playback settings in `:android:playback:core`, a data
+ * module this layer can't see, so each platform's graph hands it over.
+ */
+fun interface ReplayGainModeSetting {
+    fun setting(): Setting<ReplayGainMode>
+}
 
 /**
  * Stores the ReplayGain mode and applies it to the live audio processor, as the Settings screen's choice does.
