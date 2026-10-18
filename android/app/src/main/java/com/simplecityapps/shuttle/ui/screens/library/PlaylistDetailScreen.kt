@@ -150,61 +150,105 @@ fun PlaylistDetailScreen(
             uiState.songs.forEachIndexed { index, entry ->
                 item(key = entry.id, contentType = "song") {
                     ReorderableItem(reorderState, key = entry.id, enabled = reorderable) { dragging ->
-                        val song = entry.song
-                        val playing = song.id == uiState.currentSong?.id
-                        if (reorderable) {
-                            QueueRow(
-                                title = song.name.orEmpty(),
-                                subtitle = song.rowSubtitle,
-                                onClick = { onPlay(songs, index) },
-                                position = if (playing) QueuePosition.Current else QueuePosition.Upcoming,
-                                artwork = { LibraryArtwork(song, ArtworkPlaceholder.Song, size = ArtworkSize.Small) },
-                                duration = formatDuration(song.duration.toLong()),
-                                dragging = dragging,
-                                offlineState = song.offlineState(),
-                                dragHandleModifier = Modifier.draggableHandle(onDragStopped = onMoveFinished),
-                                onLongClick = { onToggleSelected(entry) },
-                            )
-                        } else {
-                            LibrarySongRow(
-                                song = song,
-                                onClick = { if (selecting) onToggleSelected(entry) else onPlay(songs, index) },
-                                selected = entry.id in uiState.selectedIds,
-                                playing = playing,
-                                onLongClick = { onToggleSelected(entry) },
-                                onMore = if (selecting) null else ({ onSongMore(entry) }),
-                            )
-                        }
+                        PlaylistEntryRow(
+                            entry = entry,
+                            reorderable = reorderable,
+                            selecting = selecting,
+                            selected = entry.id in uiState.selectedIds,
+                            playing = entry.song.id == uiState.currentSong?.id,
+                            dragging = dragging,
+                            dragHandleModifier = Modifier.draggableHandle(onDragStopped = onMoveFinished),
+                            onPlay = { onPlay(songs, index) },
+                            onToggleSelected = onToggleSelected,
+                            onSongMore = onSongMore,
+                        )
                     }
                 }
             }
         }
 
         if (selecting) {
-            S2SelectionToolbar(
-                selectedCount = uiState.selectedIds.size,
+            PlaylistSelectionToolbar(
+                uiState = uiState,
                 onClearSelection = onClearSelection,
-                actions = listOf(
-                    S2Action(stringResource(R.string.playlist_detail_remove), onRemoveSelected, Icons.Rounded.PlaylistRemove),
-                    selectionAction(MediaActionType.Play, Icons.Rounded.PlayArrow, onSelectionAction),
-                    selectionAction(MediaActionType.AddToQueue, Icons.AutoMirrored.Rounded.QueueMusic, onSelectionAction),
-                ),
-                overflowActions = listOf(
-                    listOf(
-                        selectionAction(MediaActionType.PlayNext, Icons.Rounded.SkipNext, onSelectionAction),
-                        selectionAction(MediaActionType.Shuffle, Icons.Rounded.Shuffle, onSelectionAction),
-                        selectionAction(MediaActionType.AddToPlaylist, Icons.AutoMirrored.Rounded.PlaylistAdd, onSelectionAction),
-                    ),
-                    // Batch tag editing, when every selected song's provider can write tags.
-                    listOfNotNull(
-                        selectionAction(MediaActionType.EditTags, Icons.Rounded.Edit, onSelectionAction)
-                            .takeIf { uiState.selectedEntries.let { entries -> entries.isNotEmpty() && entries.all { it.song.mediaProvider.supportsTagEditing } } },
-                    ),
-                ).filter { it.isNotEmpty() },
+                onRemoveSelected = onRemoveSelected,
+                onSelectionAction = onSelectionAction,
                 modifier = Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = S2Spacing.medium),
             )
         }
     }
+}
+
+/** A queue-style row with a drag handle while the playlist is reorderable, else a selectable song row. */
+@Composable
+private fun PlaylistEntryRow(
+    entry: PlaylistSong,
+    reorderable: Boolean,
+    selecting: Boolean,
+    selected: Boolean,
+    playing: Boolean,
+    dragging: Boolean,
+    dragHandleModifier: Modifier,
+    onPlay: () -> Unit,
+    onToggleSelected: (PlaylistSong) -> Unit,
+    onSongMore: (PlaylistSong) -> Unit,
+) {
+    val song = entry.song
+    if (reorderable) {
+        QueueRow(
+            title = song.name.orEmpty(),
+            subtitle = song.rowSubtitle,
+            onClick = onPlay,
+            position = if (playing) QueuePosition.Current else QueuePosition.Upcoming,
+            artwork = { LibraryArtwork(song, ArtworkPlaceholder.Song, size = ArtworkSize.Small) },
+            duration = formatDuration(song.duration.toLong()),
+            dragging = dragging,
+            offlineState = song.offlineState(),
+            dragHandleModifier = dragHandleModifier,
+            onLongClick = { onToggleSelected(entry) },
+        )
+    } else {
+        LibrarySongRow(
+            song = song,
+            onClick = { if (selecting) onToggleSelected(entry) else onPlay() },
+            selected = selected,
+            playing = playing,
+            onLongClick = { onToggleSelected(entry) },
+            onMore = if (selecting) null else ({ onSongMore(entry) }),
+        )
+    }
+}
+
+@Composable
+private fun PlaylistSelectionToolbar(
+    uiState: PlaylistDetailUiState,
+    onClearSelection: () -> Unit,
+    onRemoveSelected: () -> Unit,
+    onSelectionAction: (MediaActionType) -> Unit,
+    modifier: Modifier,
+) {
+    S2SelectionToolbar(
+        selectedCount = uiState.selectedIds.size,
+        onClearSelection = onClearSelection,
+        actions = listOf(
+            S2Action(stringResource(R.string.playlist_detail_remove), onRemoveSelected, Icons.Rounded.PlaylistRemove),
+            selectionAction(MediaActionType.Play, Icons.Rounded.PlayArrow, onSelectionAction),
+            selectionAction(MediaActionType.AddToQueue, Icons.AutoMirrored.Rounded.QueueMusic, onSelectionAction),
+        ),
+        overflowActions = listOf(
+            listOf(
+                selectionAction(MediaActionType.PlayNext, Icons.Rounded.SkipNext, onSelectionAction),
+                selectionAction(MediaActionType.Shuffle, Icons.Rounded.Shuffle, onSelectionAction),
+                selectionAction(MediaActionType.AddToPlaylist, Icons.AutoMirrored.Rounded.PlaylistAdd, onSelectionAction),
+            ),
+            // Batch tag editing, when every selected song's provider can write tags.
+            listOfNotNull(
+                selectionAction(MediaActionType.EditTags, Icons.Rounded.Edit, onSelectionAction)
+                    .takeIf { uiState.selectedEntries.let { entries -> entries.isNotEmpty() && entries.all { it.song.mediaProvider.supportsTagEditing } } },
+            ),
+        ).filter { it.isNotEmpty() },
+        modifier = modifier,
+    )
 }
 
 /** The top bar's sort button: the seven sorts, Descending, and Export as m3u. */
