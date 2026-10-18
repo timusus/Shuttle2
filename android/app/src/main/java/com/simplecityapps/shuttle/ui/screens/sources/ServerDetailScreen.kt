@@ -38,11 +38,7 @@ class ServerDetailActions(
     val onRemove: () -> Unit,
 )
 
-/**
- * Settings > Sources > a server (#492): its status and what it holds, its account (to sign in again), a Sync now button
- * and Remove. Streaming quality and downloads live under Settings > Sources' own rows rather than here. [now] is when
- * "Updated 2 hours ago" counts from.
- */
+/** A server's status, sign-in, Sync now and Remove; [now] drives the relative "Updated" time. */
 @Composable
 fun ServerDetailScreen(
     type: MediaProviderType,

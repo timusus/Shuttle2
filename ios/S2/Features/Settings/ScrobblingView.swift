@@ -1,9 +1,7 @@
 import Shared
 import SwiftUI
 
-/// Last.fm scrobbling (#503): the shared `ScrobblingViewModel`, as one grouped `Form`, pushed from Settings' Scrobbling
-/// row (`Route.scrobbling`). Sign-in opens last.fm in the browser; coming back to the app finishes it, and the "I've
-/// approved it" button is there for when that didn't happen on its own.
+/// The "I've approved it" button covers the case where returning to the app doesn't finish sign-in on its own.
 struct ScrobblingView: View {
     @Environment(\.appServices) private var appServices
     private var services: AppServices { appServices.required }

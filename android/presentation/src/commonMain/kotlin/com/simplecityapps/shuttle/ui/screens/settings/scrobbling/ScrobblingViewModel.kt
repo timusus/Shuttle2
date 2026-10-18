@@ -32,7 +32,6 @@ data class ScrobblingUiState(
     val busy: Boolean = false
 )
 
-/** Settings > Playback & sound > Scrobbling (#503): the Last.fm account and the server-streams switch. */
 @ViewModelKey(ScrobblingViewModel::class)
 @ContributesIntoMap(AppScope::class)
 class ScrobblingViewModel @Inject constructor(

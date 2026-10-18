@@ -135,7 +135,7 @@ class IosItemResolver internal constructor(
         entries.remove(uid)?.let(::drop)
     }
 
-    /** Cancels [entry]'s resolution and ends its play, so a server stops what it started for it (#722). */
+    /** Cancels the resolution and ends the play so the server stops work it started for it. */
     private fun drop(entry: Entry) {
         entry.stream.cancel()
         endPlay(entry.item, entry.playId)

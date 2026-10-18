@@ -10,11 +10,7 @@ data class DirectPlayFormats(
     /** Codecs the player can't decode, even inside a container it otherwise plays. */
     val undecodableCodecs: Set<String>
 ) {
-    /**
-     * Whether the player decodes a file in [container] (an extension) encoded with [audioCodec] as it is. An unknown
-     * container or codec plays as it is. The container names the wrapper, not what's inside, so an undecodable codec
-     * such as ALAC on Android is rejected even inside a playable container like `.m4a` (#567).
-     */
+    /** An undecodable codec is rejected even inside a playable container, as ALAC is inside `.m4a` on Android. */
     fun isDecodable(
         container: String?,
         audioCodec: String?

@@ -3,10 +3,7 @@ package com.simplecityapps.mediaprovider
 import com.simplecityapps.shuttle.persistence.SecurePreferenceManager
 import kotlin.uuid.Uuid
 
-/**
- * One identity per install, sent to Jellyfin, Emby and Plex so a server's session/device list
- * shows a stable client across launches instead of a new device every time (#338).
- */
+/** Stable per install, so a server's device list doesn't gain an entry every launch. */
 data class ClientIdentity(
     val id: String,
     val clientName: String,

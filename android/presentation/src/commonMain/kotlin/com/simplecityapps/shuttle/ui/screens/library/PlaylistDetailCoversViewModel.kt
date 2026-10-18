@@ -22,11 +22,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 
-/**
- * The songs whose covers make up a playlist's mosaic (#652), the same ones its Library row draws: its first four from
- * different albums, in the playlist's order. Apart from [PlaylistDetailViewModel] so a screen that draws no mosaic
- * (Android's) never runs the query.
- */
+/** Kept apart from [PlaylistDetailViewModel] so a screen that draws no mosaic never runs this query. */
 @OptIn(ExperimentalCoroutinesApi::class)
 class PlaylistDetailCoversViewModel @AssistedInject constructor(
     @Assisted playlistId: Long,

@@ -13,12 +13,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
-/**
- * Last.fm's [web sign-in](https://www.last.fm/api/webauth) (#503 slice 5): [startSignIn] fetches a token and returns
- * the last.fm page where the user approves S2; [finishSignIn] trades the approved token for a session once they
- * come back. The token waits in [LastFmSessionStore] meanwhile, so the process can die while the user is in the
- * browser.
- */
+/** Last.fm web sign-in; the token waits in [LastFmSessionStore], so the process can die while the user is in the browser. */
 @SingleIn(AppScope::class)
 class LastFmAuthenticator
 @Inject

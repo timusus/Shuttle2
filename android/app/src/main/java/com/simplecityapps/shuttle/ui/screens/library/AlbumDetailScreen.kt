@@ -61,7 +61,7 @@ fun AlbumDetailScreen(
     } else {
         stringResource(R.string.album_detail_more_by, uiState.moreByArtistNames.joinToString(", "))
     }
-    // The artwork tints the whole screen, as the player does, when Colour from artwork is on (#496).
+    // The artwork tints the whole screen, as the player does, when Colour from artwork is on.
     ArtworkTheme(uiState.seed) {
         LibraryDetailScaffold(
             state = state,
@@ -122,7 +122,7 @@ fun AlbumDetailScreen(
     }
 }
 
-/** The song's artist when it isn't [album]'s own (a guest, a compilation's track), else null: the hero already names it (#739). */
+/** The song's artist when it isn't [album]'s own (a guest, a compilation's track), else null. */
 internal fun Song.artistUnlessAlbumArtist(album: Album?): String? = friendlyArtistName?.takeIf { it.isNotBlank() && it != (album?.albumArtist ?: album?.friendlyArtistName) }
 
 /** The actions target for an album's overflow menu, with a "Go to album" action that runs [onOpen]. */

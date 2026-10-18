@@ -9,11 +9,7 @@ import kotlin.time.Duration
 import kotlin.time.Instant
 import kotlinx.coroutines.flow.Flow
 
-/**
- * The listening history (#633): one event per play of a song that reached its [listenThresholdMs] (#651), marked
- * completed if it then played through, with the [PlayContext] its queue was started from. Home's suggestions are
- * aggregates over it. It keeps [RETENTION_DAYS] of history and at most [MAX_EVENTS] events.
- */
+/** Feeds Home's suggestions, so it keeps only [RETENTION_DAYS] of history and at most [MAX_EVENTS] events. */
 interface PlayHistoryRepository {
     /**
      * Records that [song] started playing at [startedAt] and was listened to for [listenedMs], to its end if [completed],
@@ -66,7 +62,7 @@ interface PlayHistoryRepository {
         limit: Int
     ): List<GenrePlays>
 
-    /** Saves where the queue started from [ResumePoint.context] was left (#670), replacing that context's last one. */
+    /** Saves where the queue started from [ResumePoint.context] was left, replacing that context's last one. */
     suspend fun saveResumePoint(point: ResumePoint)
 
     /** Where the queue started from [context] was last left; null if it never was, or for [PlayContext.None]. */
@@ -100,13 +96,7 @@ interface PlayHistoryRepository {
     }
 }
 
-/**
- * Where the queue started from [context] was left (#670): its current song, found again by [mediaProvider] and
- * [songPath], [positionMs] into it; the song's place in the queue as it played, [track] of [trackCount] from 0 (in the
- * shuffled order when [shuffled]); and whether the queue [finished], its last song played through. [songName] and
- * [songDurationMs] are the song's as the library has it when the point is read back (#706), null once it's gone; saving
- * ignores them.
- */
+/** Where the queue started from [context] was left, the song found again by [mediaProvider] and [songPath]. */
 data class ResumePoint(
     val context: PlayContext,
     val mediaProvider: MediaProviderType,

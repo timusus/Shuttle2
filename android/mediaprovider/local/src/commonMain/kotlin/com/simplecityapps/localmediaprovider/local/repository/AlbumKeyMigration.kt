@@ -12,20 +12,7 @@ import com.simplecityapps.shuttle.model.AlbumKeyChange
 import com.simplecityapps.shuttle.model.PlayContext
 import com.simplecityapps.shuttle.persistence.SourceStateStore
 
-/**
- * Moves the stored album and album artist keys (the play history's album and album artist contexts, the resume points and
- * the pinned albums) when the keys songs have change, once per change ([ALBUM_KEYS_VERSION]):
- * 1. [moveToIdentityRule]: the keys stored before the album identity rule (#637).
- * 2. [splitLocalArtists]: the local songs stored before #880 split a multi-artist ARTIST tag.
- *
- * It runs after the first import that leaves every source's tags current (the MusicBrainz and server album ids the rule
- * reads arrive with that import). A key it can't map (no song had it, or it doesn't read back) is kept as it is and
- * logged. Each key moves in one statement and a key already moved maps to itself, so a run cut short (the process killed
- * part way) just finishes on the next one.
- *
- * Known limit: an album whose songs were all re-split already (by a file re-read since #880) keeps its stale "A / B" key,
- * as no unsplit song is left to derive the mapping from ([AlbumKeyChange]).
- */
+/** Moves stored album keys to the current identity rule and artist split, once per change; a run cut short finishes on the next. */
 class AlbumKeyMigration(
     private val songDataDao: SongDataDao,
     private val playEventDao: PlayEventDao,
@@ -48,7 +35,7 @@ class AlbumKeyMigration(
         }
     }
 
-    /** Moves each key stored before the album identity rule (#637) through [com.simplecityapps.shuttle.model.AlbumKeyRekey]. */
+    /** Moves each key stored before the album identity rule through [com.simplecityapps.shuttle.model.AlbumKeyRekey]. */
     internal suspend fun moveToIdentityRule() {
         // Read fresh, not from the shared index: the import that made this due wrote a moment ago, and Room may not have
         // told the index yet
@@ -56,13 +43,7 @@ class AlbumKeyMigration(
         moveKeys("to the album identity rule", rekey::context)
     }
 
-    /**
-     * Splits the artists of the local songs stored before #880 as a read of their files does now ([splitArtistTag]), and
-     * moves the keys to follow: a song with no album artist tag whose ARTIST reads "A / B" belongs to A's album now, not
-     * "A / B"'s. An import keeps an unchanged file's stored tags, so without this its song would only split once the
-     * file changes. The keys move first, matched by song before and after the split ([AlbumKeyChange]), then the
-     * artists: a run cut short before the artists are written finds the keys moved already.
-     */
+    /** Splits stored local artists as a file read does now, moving the album keys first so a run cut short can resume. */
     internal suspend fun splitLocalArtists() {
         val songs = songDataDao.identityData()
         val splitArtists = songs
@@ -119,10 +100,10 @@ class AlbumKeyMigration(
     }
 
     companion object {
-        /** The album identity rule's (#637) keys. */
+        /** Album keys after the album identity rule. */
         const val IDENTITY_RULE_KEYS = 1
 
-        /** The keys of the local songs' split artists (#880). */
+        /** Album keys after the local songs' ARTIST tags are split. */
         const val SPLIT_ARTIST_KEYS = 2
 
         const val ALBUM_KEYS_VERSION = SPLIT_ARTIST_KEYS

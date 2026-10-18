@@ -42,7 +42,7 @@ sealed interface ThisDeviceDialog {
 
     data class RemoveFolder(val kind: FolderKind, val folder: SourceFolder) : ThisDeviceDialog
 
-    /** A folder whose SAF grant was revoked outside the app (#479): grant access again, or remove it. */
+    /** A folder whose SAF grant was revoked outside the app: grant access again, or remove it. */
     data class RevokedFolder(val kind: FolderKind, val folder: SourceFolder) : ThisDeviceDialog
 }
 
@@ -50,17 +50,13 @@ sealed interface ThisDeviceDialog {
 class ThisDeviceActions(
     val onThisDeviceChange: (Boolean) -> Unit,
     val onRescan: () -> Unit,
-    /** Reads the files this device's import couldn't read again (#840). */
+    /** Retries the files this device's import couldn't read. */
     val onRetrySkippedFiles: () -> Unit,
     val onAddFolder: (FolderKind) -> Unit,
     val onShowDialog: (ThisDeviceDialog) -> Unit,
 )
 
-/**
- * Settings > Sources > This device (#492): its switch with the import's status, a Scan now button, any files the last
- * scan couldn't read with a retry, and the folder rules (scan only these folders, exclude folders, extra folders).
- * Tapping a folder asks to remove it, or to fix its access. [now] is when "Updated 2 hours ago" counts from.
- */
+/** This device's switch and scan status, unreadable files to retry, and folder rules; [now] drives the "Updated" time. */
 @Composable
 fun ThisDeviceScreen(
     uiState: SourcesUiState,

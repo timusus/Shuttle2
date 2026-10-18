@@ -14,19 +14,14 @@ internal class PlaylistImporter(
     private val songRepository: SongRepository,
     private val playlistStore: ImportedPlaylistStore,
     private val sourceState: SourceStateStore,
-    /** Sends the edits made in S2 to a server's playlists before that server's playlists are read again (#916). */
+    /** Pushes local playlist edits to the server before its playlists are read again. */
     private val playlistSync: ServerPlaylistSync?
 ) {
     private val logger = Logger.tagged("MediaImporter")
 
     /**
-     * Fetches and stores [mediaProvider]'s playlists. A remote server's are reconciled with its listing, deleting the stale
-     * ones, only when this pass stored its songs ([songsStored]) and the library holds some: against a song import that
-     * failed, or a library that holds none of its songs yet, every playlist would match nothing and be deleted. Otherwise
-     * the playlists that hold songs are stored and nothing is deleted.
-     *
-     * With [reuseVersions], a reconcile passes the provider the version each stored playlist had when it was last read, so it
-     * reads only the playlists changed on the server since (#843). The versions are recorded once a reconcile stores them.
+     * Fetches and stores [mediaProvider]'s playlists. Stale ones are deleted only when this pass stored songs, since a failed
+     * or empty song import would make every playlist match nothing. With [reuseVersions], only playlists changed on the server are read.
      */
     fun import(
         mediaProvider: MediaProvider,

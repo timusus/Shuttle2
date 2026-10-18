@@ -47,8 +47,7 @@ struct ArtworkSource: Equatable {
         }
     }
 
-    /// An artist's row, tile or search result: the hero's rule (#823), which `requests(albumArtist:)` resolves from
-    /// their library, so the row shows what their page does.
+    /// Uses the artist hero's rule so the row shows the same image as their page.
     static func albumArtist(_ albumArtist: AlbumArtist) -> ArtworkSource {
         ArtworkSource(id: albumArtist.stableId, cacheKey: itemKey("artist", albumArtist.stableId, version: albumArtist.artworkVersion), isArtist: true) { lookups in
             try await lookups.requests(albumArtist: albumArtist).compactMap(ArtworkCandidate.init)
@@ -57,7 +56,7 @@ struct ArtworkSource: Equatable {
 }
 
 extension ArtworkSource {
-    /// An artist page's hero (#781): the shared rule's chain, so the image shown and the tint come from one place.
+    /// Shares the hero rule's chain so the image and the tint come from one place.
     static func artistHero(_ hero: ArtistHeroArtwork) -> ArtworkSource {
         let artist = itemKey("artist", hero.artist.stableId, version: hero.artist.artworkVersion)
         let album = hero.fallbackAlbum.map { itemKey("album", $0.stableId, version: $0.artworkVersion) } ?? "none"

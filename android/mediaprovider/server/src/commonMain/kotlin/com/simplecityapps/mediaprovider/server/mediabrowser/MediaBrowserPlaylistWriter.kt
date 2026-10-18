@@ -20,13 +20,7 @@ import io.ktor.http.contentType
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 
-/**
- * Writes the edits made in S2 to a playlist on a [MediaBrowserServer] back to it (#916): `POST /Playlists/{id}/Items?ids=`
- * adds, `DELETE /Playlists/{id}/Items?entryIds=` removes, `POST /Playlists/{id}/Items/{entryId}/Move/{newIndex}` moves,
- * and `DELETE /Items/{id}` deletes. Renaming differs: Jellyfin (10.9 and later) takes just the new name at
- * `POST /Playlists/{id}`; Emby's item update takes the whole item, so the playlist's item is read and sent back to
- * `POST /Items/{id}` with the new name. These routes sit at the address itself, without Emby's `/emby` prefix.
- */
+/** Writes S2's playlist edits to a Jellyfin or Emby server; Emby's rename sends the whole item back, Jellyfin's takes just the name. */
 class MediaBrowserPlaylistWriter(
     private val authenticationManager: MediaBrowserAuthenticationManager,
     private val client: HttpClient,

@@ -2,14 +2,7 @@ package com.simplecityapps.shuttle.ui.screens.library
 
 import com.simplecityapps.shuttle.persistence.LibraryTab
 
-/**
- * Clears a tab's active multi-select selection when the user switches away from it (#225, #456). Each tab's
- * ViewModel keeps its own selection for as long as the destination's nav entry lives, so nothing else clears
- * it on a tab switch. Leaving composition deliberately clears nothing: rotation and pushing a detail pane
- * dispose the destination while its entry, and the user's selection, should survive.
- * [LibraryDestination] owns one instance, so the rule lives here once instead of in every selectable tab's
- * ViewModel.
- */
+/** Clears a tab's selection on tab switch only, so rotation and opening a detail screen keep it. */
 class LibrarySelectionCoordinator(
     private val clearSelection: (LibraryTab) -> Unit,
 ) {

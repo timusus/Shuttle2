@@ -3,9 +3,7 @@ import Intents
 import Shared
 import UIKit
 
-/// What Siri is told about the library (#951): the `INMediaUserContext` (how many items, and whether the listener
-/// subscribes) and the vocabulary (the artists and playlists they play most), which is how "play the Beatles" finds
-/// Shuttle Music among the audio apps. Refreshed shortly after the library changes, not on every write of an import.
+/// What Siri is told about the library, including the vocabulary that lets "play the Beatles" find Shuttle Music; refreshed after changes, not every import write.
 enum SiriVocabulary {
     /// The SDK documents no count (`INVocabulary.setVocabularyStrings`: sorted by importance, "no guarantee that every
     /// provided string will be used", over 1024 bytes of UTF-16 discarded), so a modest number per type, most played first.

@@ -16,10 +16,7 @@ import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.model.nowPlayingArtworkModel
 import com.simplecityapps.shuttle.settings.NowPlayingImage
 
-/**
- * A song's artwork, loaded by Coil from the song itself, or from its album artist for [NowPlayingImage.ArtistImage], falling
- * back to the song's own (#952); the song placeholder shows until it loads, and stays if it can't.
- */
+/** A song's artwork via Coil, from its album artist for [NowPlayingImage.ArtistImage]; the placeholder stays if it can't load. */
 @Composable
 internal fun SongArtwork(
     song: Song,

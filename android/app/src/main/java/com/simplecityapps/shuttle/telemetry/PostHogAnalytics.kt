@@ -79,8 +79,7 @@ class PostHogAnalytics @Inject constructor(
             captureApplicationLifecycleEvents = true
             sessionReplay = false
             debug = BuildConfig.DEBUG
-            // No identify() call is ever made, so this never actually creates a person profile (#481): PostHog
-            // stays anonymous, tracked only by its own generated device ID
+            // No identify() call is made, so PostHog stays anonymous with only its generated device ID
             personProfiles = PersonProfiles.IDENTIFIED_ONLY
         }
         PostHogAndroid.setup(application, config)

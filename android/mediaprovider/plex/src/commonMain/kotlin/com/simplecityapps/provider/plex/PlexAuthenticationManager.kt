@@ -35,7 +35,7 @@ class PlexAuthenticationManager(
     /** Forgets this server's address, saved login and session. */
     fun forgetServer() = credentialStore.clear()
 
-    /** [result], after signing out when the server rejected [credentials] with a 401 (#577). */
+    /** [result], after signing out when the server rejected [credentials] with a 401. */
     fun <T : Any> checkSession(
         credentials: AuthenticatedCredentials,
         result: NetworkResult<T>
@@ -153,14 +153,7 @@ class PlexAuthenticationManager(
             query.entries.joinToString("&") { (name, value) -> "$name=${formUrlEncode(value)}" }
     }
 
-    /**
-     * A single-file MP3 transcode of [song] at [bitrateKbps], from Plex's universal transcoder, for downloading a
-     * format the player can't decode. `protocol=http` (rather than [buildPlexTranscodePath]'s `hls`) asks for one
-     * continuous file instead of a manifest and segments, since Media3's downloader saves whatever's at the URL as
-     * a single item (#567). It carries [sessionIdentifier], the song's streams' `X-Plex-Session-Identifier`, on a
-     * session of its own: Plex answers 400 to a transcode of a track under an identifier other than the last one it saw
-     * for it (#888). Null when the address or the song's ratingKey is missing.
-     */
+    /** A single-file MP3 transcode for downloads: Media3's downloader saves one URL as one item, and Plex answers 400 to a session identifier other than the track's last one. */
     fun buildPlexProgressiveTranscodePath(
         song: Song,
         authenticatedCredentials: AuthenticatedCredentials,

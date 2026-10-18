@@ -27,11 +27,7 @@ class SourceStateStore @Inject constructor(
         store.putInt("song_tags_version_$source", version)
     }
 
-    /**
-     * When the last successful sync of [source] (a media provider type's name) started (#771): the next incremental sync
-     * asks the server for what changed since then. Taken before the request, so a change made while it ran is fetched
-     * again rather than missed.
-     */
+    /** When the last successful sync of [source] started, taken before its request so a change made during it isn't missed. */
     fun lastSyncStart(source: String): Instant? = store.getInstant("last_sync_start_$source")
 
     fun setLastSyncStart(
@@ -39,10 +35,7 @@ class SourceStateStore @Inject constructor(
         start: Instant?
     ) = store.putInstant("last_sync_start_$source", start)
 
-    /**
-     * The server's version of each playlist last read in full from [source], by its external id: a playlist whose version
-     * is the same at the next sync isn't read again (#843).
-     */
+    /** Each playlist's server version when last read in full, by external id, so an unchanged playlist isn't read again. */
     fun playlistVersions(source: String): Map<String, String> = store.getString("playlist_versions_$source", null)
         ?.lineSequence()
         ?.mapNotNull { line -> line.split('\t', limit = 2).takeIf { it.size == 2 }?.let { (id, version) -> id to version } }
@@ -54,10 +47,7 @@ class SourceStateStore @Inject constructor(
         versions: Map<String, String>
     ) = store.putString("playlist_versions_$source", versions.entries.joinToString("\n") { (id, version) -> "$id\t$version" }.ifEmpty { null })
 
-    /**
-     * The songs, by path, each playlist held on [source]'s server when it was last read, by its external id: the next read
-     * removes only the songs the server dropped since, keeping those added to the playlist in S2 (#843).
-     */
+    /** Songs each playlist held on the server when last read, by external id, so a re-read keeps songs added in S2. */
     fun playlistServerSongs(source: String): Map<String, List<String>> = store.getString("playlist_server_songs_$source", null)
         ?.lineSequence()
         ?.mapNotNull { line -> line.split('\t').takeIf { it.isNotEmpty() && it[0].isNotEmpty() }?.let { fields -> fields[0] to fields.drop(1) } }
@@ -69,10 +59,7 @@ class SourceStateStore @Inject constructor(
         songs: Map<String, List<String>>
     ) = store.putString("playlist_server_songs_$source", songs.entries.joinToString("\n") { (id, paths) -> (listOf(id) + paths).joinToString("\t") }.ifEmpty { null })
 
-    /**
-     * The edits made in S2 to [source]'s playlists that its server hasn't been sent yet, oldest first, one per line, as
-     * `ServerPlaylistSync` encodes them (#916). Kept across restarts, so an edit made offline is sent once the server answers.
-     */
+    /** Playlist edits not yet sent to [source]'s server, oldest first; kept across restarts so an offline edit is sent later. */
     fun pendingPlaylistEdits(source: String): String? = store.getString("pending_playlist_edits_$source", null)
 
     fun setPendingPlaylistEdits(
@@ -131,10 +118,7 @@ class SourceStateStore @Inject constructor(
     /** [listingShortfall] now and each time it changes. */
     fun observeListingShortfall(source: String): Flow<Int> = store.changes("listing_shortfall_$source").map { listingShortfall(source) }.distinctUntilChanged()
 
-    /**
-     * The album key version the stored album keys (play history, pinned downloads) were last moved to (#637): 0 before
-     * the album identity rule, so they're moved once, after the first import that leaves every source's tags current.
-     */
+    /** Album key version the stored keys were last moved to; 0 until they're moved after an import with current tags. */
     var albumKeysVersion: Int
         set(value) {
             store.putInt("album_keys_version", value)
@@ -160,13 +144,10 @@ class SourceStateStore @Inject constructor(
             return store.getInstant(LAST_MEDIA_IMPORT_DATE)
         }
 
-    /** [lastMediaImportDate] now and each time it changes, so a screen shows an import's end as it's written (#648). */
+    /** Emits [lastMediaImportDate] now and on each change, so a screen shows an import's end as it's written. */
     fun observeLastMediaImportDate(): Flow<Instant?> = store.changes(LAST_MEDIA_IMPORT_DATE).map { lastMediaImportDate }.distinctUntilChanged()
 
-    /**
-     * How the last import of [source] (a media provider type's name) ended and when, kept across restarts so Sources
-     * still says a server couldn't be reached until an import gets through (#668). Null before any import has ended.
-     */
+    /** How the last import of [source] ended, kept across restarts so Sources still shows an unreachable server. */
     fun sourceReachability(source: String): SourceReachability? {
         val checkedAt = store.getInstant("source_checked_at_$source") ?: return null
         return SourceReachability(error = store.getString("source_error_$source", null), checkedAt = checkedAt)
@@ -185,7 +166,7 @@ class SourceStateStore @Inject constructor(
     /** [sourceReachability] now and each time an import of [source] ends. */
     fun observeSourceReachability(source: String): Flow<SourceReachability?> = store.changes("source_checked_at_$source").map { sourceReachability(source) }.distinctUntilChanged()
 
-    /** When an import of [source] (a media provider type's name) last completed successfully, for its row in Sources (#668). */
+    /** When an import of [source] last completed successfully, for its row in Sources. */
     fun sourceUpdated(source: String): Instant? = store.getInstant("source_updated_$source")
 
     fun setSourceUpdated(
@@ -196,7 +177,7 @@ class SourceStateStore @Inject constructor(
     /** [sourceUpdated] now and each time it changes. */
     fun observeSourceUpdated(source: String): Flow<Instant?> = store.changes("source_updated_$source").map { sourceUpdated(source) }.distinctUntilChanged()
 
-    /** Forgets what Sources kept of [source]'s imports (reachability, updated time, listing shortfall, skipped files), once it's removed or forgotten (#870, #868). */
+    /** Forgets what Sources kept of [source]'s imports once the source is removed or forgotten. */
     fun clearSourceState(source: String) {
         store.edit {
             remove("source_error_$source")
@@ -207,10 +188,7 @@ class SourceStateStore @Inject constructor(
         }
     }
 
-    /**
-     * The files a native tag read crashed the app on, by `path|size|lastModified`, which the scanner leaves unread (#840):
-     * a file replaced or edited since is another key, so it's read again.
-     */
+    /** Files whose native tag read crashed the app, by `path|size|lastModified`; an edited file is another key, so it's retried. */
     fun tagReadQuarantine(): Set<String> = keySet(TAG_READ_QUARANTINE)
 
     fun quarantineTagRead(key: String) = putKeySet(TAG_READ_QUARANTINE, tagReadQuarantine() + key)
@@ -228,7 +206,7 @@ class SourceStateStore @Inject constructor(
         }
     }
 
-    /** How many files the last full import of [source] (a media provider type's name) left unread, for Sources to say (#840). */
+    /** How many files the last full import of [source] left unread, for Sources to show. */
     fun skippedFiles(source: String): Int = store.getInt("skipped_files_$source", 0)
 
     fun setSkippedFiles(

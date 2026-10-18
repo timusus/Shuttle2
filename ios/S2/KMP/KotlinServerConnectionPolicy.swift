@@ -2,8 +2,7 @@ import Foundation
 import S2Playback
 import Shared
 
-/// The Kotlin `ServerRequestPolicy` (a server's custom headers and pinned certificate, #894) as the `ServerConnectionPolicy`
-/// the streaming and artwork sessions ask. The one rule, shared with the Ktor client and the downloads (#921).
+/// Adapts the Kotlin `ServerRequestPolicy` (custom headers, pinned certificate) for the streaming and artwork sessions.
 final class KotlinServerConnectionPolicy: ServerConnectionPolicy, @unchecked Sendable {
     private let policy: ServerRequestPolicy
 

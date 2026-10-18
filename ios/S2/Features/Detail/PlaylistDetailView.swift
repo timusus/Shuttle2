@@ -1,12 +1,7 @@
 import Shared
 import SwiftUI
 
-/// Playlist detail (P5-7): hero (the same `CoverMosaic` its Library row draws, #652, and its name), Play/Shuffle, then its songs in the
-/// playlist's own order. In `EditMode`, rows reorder with `.onMove` when the playlist is sorted by position
-/// (`canReorder`) — the HIG's native affordance for a manual order, replacing Android's `sh.calvin.reorderable`
-/// drag handle. Rename and delete are an alert/confirmationDialog, the same pattern `PlaylistListView` uses.
-/// Multi-select removal, the sort menu and m3u export are out of scope for this screen (tracked as a follow-up);
-/// a swipe removes one song from the playlist. Its menu and each song's download them or remove their downloads (#759).
+/// Reorders with `.onMove`, the HIG's native affordance, and only when the playlist is sorted by position.
 struct PlaylistDetailView: View {
     let id: Int64
 
@@ -189,8 +184,7 @@ struct PlaylistDetailContent: View {
 }
 
 extension View {
-    /// `PlaylistDetailViewModel`'s own events: on delete, pop back to the playlists list; export is out of
-    /// scope for this screen (see the file header), so its events are dropped here.
+    /// Delete pops back to the playlists list; export is out of scope for this screen, so its events are dropped here.
     func playlistDetailEvents(_ events: [PendingEvent<any PlaylistDetailEvent>], handled: @escaping (Int64) -> Void) -> some View {
         modifier(PlaylistDetailEventsModifier(events: events, handled: handled))
     }

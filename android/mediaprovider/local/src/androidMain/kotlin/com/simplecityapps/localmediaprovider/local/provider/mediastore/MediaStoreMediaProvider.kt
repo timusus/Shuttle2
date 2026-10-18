@@ -50,7 +50,7 @@ class MediaStoreMediaProvider(
     private val sourceState: SourceStateStore,
     // Takes the reads a crash interrupted before tags are read again, so a file that crashes TagLib is left unread
     private val tagReadGuard: TagReadGuard,
-    // MediaStore's audio files, read only in part where the last stored import's listing allows (#875)
+    // MediaStore's audio files, read only in part where the last stored import's listing allows
     private val mediaStoreFiles: MediaStoreAudioLister = MediaStoreAudioLister.whole(context)
 ) : IndexedMediaProvider {
     override val type = MediaProviderType.MediaStore
@@ -65,7 +65,7 @@ class MediaStoreMediaProvider(
 
     // Songs
 
-    /** The rows that changed since the last stored import, and a rescan ([findSongsThoroughly]) reads every one (#962). */
+    /** The rows that changed since the last stored import, and a rescan ([findSongsThoroughly]) reads every one. */
     override fun findSongs(existingSongs: List<Song>): Flow<FlowEvent<List<Song>, MessageProgress>> = findSongs(existingSongs, thorough = false)
 
     override fun findSongsThoroughly(existingSongs: List<Song>): Flow<FlowEvent<List<Song>, MessageProgress>> = findSongs(existingSongs, thorough = true)

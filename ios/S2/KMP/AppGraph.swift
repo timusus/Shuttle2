@@ -40,7 +40,7 @@ enum AppGraph {
         #endif
         StartupTrace.step("storeKit") { dependencies.storeKit.start() }
         StartupTrace.step("paywallPresenter") { dependencies.paywallPresenter.start { $0.appServices = dependencies.services } }
-        // Siri, Shortcuts, widgets and controls run their intents through the app (#758)
+        // Intents run in the app's process, so the app must hand them its graph.
         IntentPerformers.playback = dependencies.intentPerformer
         IntentPerformers.library = dependencies.intentPerformer
         built = dependencies
@@ -65,23 +65,21 @@ enum AppGraph {
 final class IosAppDependencies {
     /// The Kotlin `IosAudioPlayer` over AudioPlaybackKit's `Player`.
     let audioPlayer: KitAudioPlayer
-    /// This device's music files: Documents and the folders picked in Files (#590).
+    /// This device's music files: Documents and the folders picked in Files.
     let localLibrary: LocalLibrary
     let graph: IosAppGraph
     let playbackSystem: PlaybackSystemCoordinator
     /// Whether the listener wants playback running, which every play/pause control draws (`PlayIntent`).
     let playIntent: PlayIntent
-    /// The mini player and Now Playing screens' shared state, off the shared `PlayerViewModel` (#588, #587).
-    /// Built here, not lazily behind a cache key, so there is exactly one ViewModel and one subscription to
-    /// its state for the app's lifetime.
+    /// Built here, not behind a cache key, so there is one ViewModel and one state subscription for the app's lifetime.
     let playerBinding: PlayerBinding
     /// StoreKit for Shuttle Music Pro, reporting the user's purchases to the graph's `StoreEntitlements`.
     let storeKit: StoreKitManager
     /// Opens the paywall when a gated action asks for it.
     let paywallPresenter: PaywallPresenter
-    /// Carries out the App Intents: Siri, Shortcuts, the widgets' buttons and the Control Center control (#758).
+    /// Carries out the App Intents in the app's process.
     let intentPerformer: AppIntentPerformer
-    /// Plays what Siri's media domain resolved (#951).
+    /// Plays what Siri's media domain resolved.
     let siriPlayer: SiriMediaPlayer
     /// Tells Siri about the library: its size, and the artists and playlists to listen for.
     let siriContext: SiriLibraryContext
@@ -122,7 +120,7 @@ final class IosAppDependencies {
         }
         self.graph = graph
         builtGraph = graph
-        // Before anything opens a stream or fetches artwork: their sessions ask it for the server's headers and certificate (#921)
+        // Before anything opens a stream or fetches artwork, since their sessions ask for the server's headers and certificate.
         ServerConnections.policy = KotlinServerConnectionPolicy(graph.serverRequestPolicy)
         StreamWarmUp.shared.isConfiguredServer = { origin in
             MediaProviderType.signInTypes.contains { StreamWarmUp.address(graph.readServerLogin.invoke(type: $0).address, isAt: origin) }

@@ -9,11 +9,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 
-/**
- * The ids of those of [playlists] with a song that plays with no network (#925): the rule the player plays by, a song
- * on this device plays from its file, and a server song plays once its download has completed, so [isAvailableOffline]
- * takes the paths of the completed downloads. Re-emits as the playlists' songs change.
- */
+/** Ids of playlists with a song that plays offline: a local song always, a server song once downloaded. */
 @Inject
 class ObservePlayablePlaylists(
     private val playlistRepository: PlaylistRepository,

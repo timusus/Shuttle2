@@ -30,30 +30,23 @@ data class AlbumArtistDetailUiState(
     val expandedAlbums: Set<AlbumGroupKey> = emptySet(),
     val loadingState: LoadingState = LoadingState.Loading,
     val events: List<PendingEvent<AlbumArtistDetailEvent>> = emptyList(),
-    /** What the hero shows (#781): the artist's image if it's confidently theirs, else their top album's cover. */
+    /** The artist's image if it's confidently theirs, else their top album's cover. */
     val hero: ArtistHeroArtwork? = null,
-    /** The seed of the hero's image, which tints the screen when Colour from artwork is on; it never holds up the content, which shows at [ArtworkSeed.Loading] while it's extracted. */
+    /** Doesn't hold up the content: the screen shows at [ArtworkSeed.Loading] while the seed is extracted. */
     val seed: ArtworkSeed = ArtworkSeed.None,
 ) {
-    /**
-     * Whether the Albums shelf shows (#678): only while the song list has no album sections. Grouped by album, the
-     * section headers are the albums (each opens its album), so a shelf above them would list them twice.
-     */
+    /** Hidden when the section headers already list the albums, which would show them twice. */
     val showAlbumsShelf: Boolean get() = albums.isNotEmpty() && !hasAlbumSections
 
     /** Whether any section has an album: an album order can still resolve to nothing but the songs on none of them. */
     val hasAlbumSections: Boolean get() = sections.any { it.album != null }
 
-    /**
-     * Whether every album section is unfolded, which turns the songs header's Expand all into Collapse all (#631). False
-     * with no album sections, where the header has no toggle to show.
-     */
+    /** Drives the songs header's Expand all / Collapse all; false with no album sections, which have no toggle. */
     val allAlbumsExpanded: Boolean
         get() = sections.mapNotNull { it.album }.let { albums ->
             albums.isNotEmpty() && albums.all { album -> album.groupKey?.let { it in expandedAlbums } ?: false }
         }
 
-    /** What playing this screen's songs starts the queue from (#633). */
     val playContext: PlayContext get() = albumArtist?.playContext ?: PlayContext.None
 
     enum class LoadingState { Loading, Ready, Empty }

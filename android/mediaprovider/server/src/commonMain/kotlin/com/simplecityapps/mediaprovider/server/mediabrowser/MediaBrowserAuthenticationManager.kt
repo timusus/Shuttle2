@@ -42,7 +42,7 @@ open class MediaBrowserAuthenticationManager(
     /** Forgets this server's address, saved login and session. */
     fun forgetServer() = credentialStore.clear()
 
-    /** [result], after signing out when the server rejected [credentials] with a 401 (#577). */
+    /** [result], after signing out when the server rejected [credentials] with a 401. */
     fun <T : Any> checkSession(
         credentials: AuthenticatedCredentials,
         result: NetworkResult<T>
@@ -56,8 +56,7 @@ open class MediaBrowserAuthenticationManager(
         return when (val authenticationResult = userService.authenticate(address, loginCredentials.username, loginCredentials.password)) {
             is NetworkResult.Success<AuthenticationResult> -> Result.success(store(authenticationResult.body))
 
-            // Leaves the stored session alone: a mistyped password in the sign-in dialog mustn't sign out a working
-            // session (#596). A session the server rejects is cleared by checkSession, when it's used.
+            // A mistyped password mustn't sign out a working session; checkSession clears one the server rejects.
             is NetworkResult.Failure -> Result.failure(authenticationResult.error)
         }
     }
@@ -73,21 +72,14 @@ open class MediaBrowserAuthenticationManager(
         return authenticatedCredentials
     }
 
-    /**
-     * Re-fetches `Policy.EnableContentDownloading` for [authenticatedCredentials] and updates the
-     * stored credentials, so a permission change on the server (#322) takes effect without a fresh
-     * sign-in. Called wherever the session is already being validated with the server, rather than
-     * on a dedicated poll. Keeps the cached value on failure, but returns null when the server rejects the session
-     * (a 401, #577): that signs out, so the sync signs in again with the saved login.
-     */
+    /** Re-fetches the download permission whenever the session is validated, so a server-side change applies without a sign-in; null when the server rejects the session. */
     suspend fun refreshDownloadPermission(
         address: String,
         authenticatedCredentials: AuthenticatedCredentials
     ): AuthenticatedCredentials? = when (val result = userService.me(address, authenticatedCredentials.accessToken)) {
         is NetworkResult.Success -> {
             val refreshed = authenticatedCredentials.copy(canDownload = result.body.policy?.enableContentDownloading ?: false)
-            // Saved only while it's still the stored session, so this never brings back a session that was cleared,
-            // or overwrites a newer sign-in, while the request was in flight (#596)
+            // A request in flight must not revive a cleared session or overwrite a newer sign-in.
             credentialStore.compareAndSetAuthenticatedCredentials(expected = authenticatedCredentials, new = refreshed)
             refreshed
         }

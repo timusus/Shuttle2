@@ -2,13 +2,7 @@ package com.simplecityapps.mediaprovider
 
 import com.simplecityapps.shuttle.model.Song
 
-/**
- * Writes the favourite state of a remote provider's songs to its server, so a heart made here shows up in the server's
- * own apps (#497).
- *
- * [setFavourite] returns whether the server accepted the change. A network failure may also surface as an exception;
- * callers treat that the same as `false`.
- */
+/** Writes favourites to the server so a heart set here shows in its own apps; a network failure may throw. */
 interface FavouriteWriter {
     fun handles(song: Song): Boolean
 

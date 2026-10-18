@@ -4,12 +4,7 @@ import androidx.room.migration.Migration
 import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.execSQL
 
-/**
- * The raw artist and album tags and ids of #637, as nullable columns on `songs`: the multi-value ALBUMARTISTS and
- * ARTISTS tags, the raw ARTIST string, COMPILATION, the MusicBrainz ids, and a server's album and artist ids. Lists are
- * ';'-joined like `artists`. Additive only, so every row keeps its id and everything keyed by it; the new columns stay
- * null until the one-off tag backfill reads each song again (`MediaImporter.backfillSongTags`).
- */
+/** Adds nullable raw tag and id columns; additive, so row ids stay and the one-off tag backfill fills them in. */
 val MIGRATION_49_50 =
     object : Migration(49, 50) {
         override fun migrate(connection: SQLiteConnection) {

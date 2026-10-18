@@ -1,8 +1,6 @@
 import SwiftUI
 
-/// The hero's image (#781): `pending` until it has loaded, then the image, or nil when there's nothing to show. Either
-/// way the hero runs full bleed, over a neutral fill until (or unless) an image arrives, so the name and Play/Shuffle
-/// show at once.
+/// The hero runs full bleed over a neutral fill, so the name and actions show before the image arrives.
 enum ArtistHeroPhoto: Equatable {
     case loaded(UIImage?)
     case pending

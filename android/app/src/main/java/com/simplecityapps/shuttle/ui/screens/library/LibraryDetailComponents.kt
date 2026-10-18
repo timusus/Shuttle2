@@ -50,12 +50,7 @@ import com.simplecityapps.shuttle.ui.shell.sharedArtwork
 /** What a detail screen can show: its content, a spinner while the first load runs, or "not in your library". */
 enum class DetailContentState { Loading, NotFound, Ready }
 
-/**
- * A library detail screen: [DetailScaffold] with a [DetailHero] (the artwork, title and Play / Shuffle, then [header]),
- * or with [bleed] a [DetailBleedHero] showing [artwork] full-bleed (an artist page's, #781), and an overflow that opens the item's actions sheet, after any screen-specific [actions]. [content] follows the hero;
- * [overlay] draws over it, under the bar, given the bar's height. [heroArtwork] replaces the single [artwork] image
- * (a playlist's cover mosaic).
- */
+/** Library detail screen: a hero with Play and Shuffle, or a full-bleed hero with [bleed]; overflow opens the item's actions. */
 @Composable
 fun LibraryDetailScaffold(
     state: DetailContentState,

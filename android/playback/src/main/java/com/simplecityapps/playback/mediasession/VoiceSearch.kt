@@ -176,8 +176,7 @@ constructor(
                     VoiceSearchResult.Songs(songs, 0)
                 }
             }
-            // Favourites is a flag on each song rather than a stored playlist (#497), so it isn't among [playlists] above;
-            // both spellings are matched regardless of locale, since a voice search can use either (#563).
+            // Favourites is a flag on each song, so it isn't among [playlists]; both spellings match, as a voice search can use either.
             val favouritesScore = max(matchScore(key, "favorites"), matchScore(key, "favourites"))
             val favourites = Candidate(favouritesScore + bonus) {
                 VoiceSearchResult.Songs(songs.filter { it.isFavourite }.sortedByDescending { it.favouritedAt }, 0)

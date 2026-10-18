@@ -31,21 +31,10 @@ import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
 import com.simplecityapps.shuttle.designsystem.theme.isLargeText
 import com.simplecityapps.shuttle.fixtures.SampleLibrary
 
-/**
- * The mini player's height, whatever the text size: the shell docks the player sheet's Mini level this far
- * above the nav bar. At large text the bar keeps one line, the title, so it never outgrows this (#730).
- */
+/** The mini player's height, fixed at any text size: at large text the bar keeps only its title line. */
 val S2MiniPlayerHeight = 72.dp
 
-/**
- * The collapsed player above the nav bar (compact) or docked under the content (expanded): the
- * song's [artwork], [title] and [subtitle] ("artist • album"), a plain [S2PlayPauseIconButton]
- * (#738), skip next, and the [S2PlaybackProgress] wave along the bottom edge. [buffering] shows the
- * play button's `LoadingIndicator` and an indeterminate wave. While [castingTo] names a Cast device,
- * the subtitle says the song is playing there ([S2PlayingOn]). At large text
- * ([isLargeText]) only the title shows, and the second line is spoken with it, so the bar keeps its
- * [S2MiniPlayerHeight]. Tapping the rest of the bar ([onClick]) expands the player.
- */
+/** The collapsed player: at large text only the title shows, and the second line is spoken with it, so the bar keeps its height. */
 @Composable
 fun S2MiniPlayer(
     title: String,

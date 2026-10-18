@@ -26,8 +26,7 @@ enum CarPlayNowPlayingButton: Equatable {
     }
 }
 
-/// CarPlay's shared `CPNowPlayingTemplate` (#692, from Shuttle Podcasts): its shuffle and repeat buttons, and Up
-/// Next, which opens the queue. Follows `PlayerBinding`, the phone's Now Playing state.
+/// CarPlay's shared now-playing template: shuffle, repeat and Up Next. Follows the phone's Now Playing state through `PlayerBinding`.
 @MainActor
 final class CarPlayNowPlayingController: NSObject, CPNowPlayingTemplateObserver {
     private let binding: PlayerBinding

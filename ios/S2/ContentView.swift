@@ -99,10 +99,7 @@ struct ContentView: View {
     }
 }
 
-/// The adaptive shell (Android: `ui/shell`): Home, Library and Search as a tab bar on compact, and as a
-/// sidebar on regular/wide with the library categories promoted into it in place of a "Library" tab
-/// Each root has its own `NavigationStack`,
-/// the mini player inset at the bottom of every screen, and a wide-only inspector slot for phase 6.
+/// The adaptive shell: a tab bar on compact, a sidebar on regular and wide; each root has its own `NavigationStack`.
 struct AppShell: View {
     let tier: LayoutTier
     let container: ShellContainer
@@ -310,9 +307,7 @@ struct SettingsSheet: View {
 }
 
 extension View {
-    /// The gear that opens Settings, on the Home and Library roots (every library category's root on regular and
-    /// wide), so Settings is reachable at every width (#612); beside it, while the library imports or after an import
-    /// failed, the import's activity (`ImportActivityButton`, #624).
+    /// The Settings gear sits on every root so Settings is reachable at every width.
     func settingsButton(_ navigator: Navigator) -> some View {
         modifier(RootToolbar(navigator: navigator))
     }
@@ -323,9 +318,7 @@ struct RootToolbar: ViewModifier {
 
     @Environment(\.appServices) private var appServices
 
-    /// The import activity's Open Sources: pushes Sources onto the stack the button sits on (Home's, Library's or a
-    /// library category's), as the empty states' Add a Source does. It used to open the Settings sheet at Sources, but
-    /// that presented while the activity's popover was still dismissing, which UIKit refuses, so nothing opened (#645).
+    /// Pushes Sources rather than presenting a sheet: UIKit refuses a sheet opened over the dismissing popover.
     static func openSources(_ navigator: Navigator) {
         navigator.open(.sources)
     }
@@ -352,8 +345,7 @@ struct RootToolbar: ViewModifier {
     }
 }
 
-/// The wide-only inspector slot for Now Playing and the queue (empty until phase 6, #593), shown by a
-/// toolbar button: Android's supporting pane from Expanded width.
+/// Wide-only inspector slot for Now Playing and the queue, mirroring Android's supporting pane.
 private struct PlayerInspectorModifier: ViewModifier {
     let tier: LayoutTier
     let navigator: Navigator

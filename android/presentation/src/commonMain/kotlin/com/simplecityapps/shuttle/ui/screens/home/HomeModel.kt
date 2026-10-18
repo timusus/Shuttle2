@@ -39,16 +39,13 @@ enum class HomeSectionTitle {
     ShuffleAll,
 }
 
-/**
- * A section of Home: its [title], a one-line [subtitle] under it saying why these items (#671), and its items. Titles
- * are mapped per platform, for each one's casing; subtitles are shared strings, so both apps say the same.
- */
+/** Titles are mapped per platform for casing; subtitles are shared strings so both apps match. */
 data class HomeSection(
     val id: HomeSectionId,
     val title: HomeSectionTitle,
     val subtitle: StringKey?,
     val items: List<HomeItem>,
-    /** Where each item's queue was left, by [HomeItem.key]: Jump back in's items played from before (#670). */
+    /** Resume points by [HomeItem.key], for Jump back in's items. */
     val progress: Map<String, HomeItemProgress> = emptyMap(),
 ) {
     /**
@@ -59,11 +56,7 @@ data class HomeSection(
         get() = items.isNotEmpty() && id != HomeSectionId.JumpBackIn && id != HomeSectionId.ShuffleAll && items.none { it is HomeItem.GenreItem }
 }
 
-/**
- * Where an item's queue was left (#670, #706): on the song [songName] (null once it's no longer in the library),
- * [positionMs] into it, [fraction] of the way through the queue (0 to 1, in the shuffled order when [shuffled]), at
- * [updatedAt]; or [finished], its last song played through, so playing it starts over.
- */
+/** Where an item's queue was left, so Jump back in can resume it; [finished] means playing it starts over. */
 data class HomeItemProgress(
     val songName: String?,
     val positionMs: Long,
@@ -101,7 +94,7 @@ sealed interface HomeItem {
     /** Plays the item from its start, or for a genre, shuffles it. */
     fun playAction(): MediaAction
 
-    /** Carries on the item where its queue was left, as a Jump back in tile's play does (#670), else [playAction]. */
+    /** Resumes the item's queue where it was left, else plays from the start. */
     fun resumeAction(): MediaAction = MediaAction.Resume(playAction(), playContext)
 
     data class AlbumItem(val album: Album) : HomeItem {

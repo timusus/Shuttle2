@@ -13,13 +13,13 @@ interface IosServerAccessors {
     /** Offline downloads' state, which detail headers show and whose actions they offer. Swift builds it at launch. */
     val offlineDownloads: OfflineDownloads
 
-    /** Which playlists have a song that plays offline, given the completed downloads' paths; CarPlay's offline Home (#925). */
+    /** Which playlists have a song that plays offline, given the completed downloads' paths; CarPlay's offline Home. */
     val observePlayablePlaylists: ObservePlayablePlaylists
 
     /** Offline downloads' background `URLSession`, which the app delegate hands its background events to. */
     val urlSessionDownloads: UrlSessionDownloads
 
-    /** A server's custom headers and pinned certificate, for the sessions Swift makes itself (streaming, artwork; #921). */
+    /** A server's custom headers and pinned certificate, for the sessions Swift makes itself (streaming, artwork). */
     val serverRequestPolicy: ServerRequestPolicy
 
     /** Saves a server's custom headers, and trusts a certificate for it: the sign-in's, and what tests seed [serverRequestPolicy] with. */

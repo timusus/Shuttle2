@@ -89,7 +89,7 @@ abstract class DownloadsModule {
             downloadSettings: DownloadSettings,
             okHttpClient: OkHttpClient
         ): DownloadManager {
-            // The app's client, so downloads carry each server's custom headers and trusted certificate (#894)
+            // Downloads need each server's custom headers and trusted certificate.
             val dataSourceFactory =
                 OkHttpDataSource.Factory(
                     okHttpClient

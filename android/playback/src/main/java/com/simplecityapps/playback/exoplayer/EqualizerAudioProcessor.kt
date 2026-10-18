@@ -158,13 +158,7 @@ class EqualizerAudioProcessor(
         endedSinceFlush = true
     }
 
-    /**
-     * The output format takes effect here. The sink queues an end of stream before the flush when the audio carries
-     * straight on: a gapless join to the next song, or a drain to apply a new speed. A seek or skip flushes without
-     * one (and again on its first buffer), so the audio after it is unrelated to what the filters last saw. So the
-     * filters keep their history across a flush only when the audio carries on in the format they were built for;
-     * otherwise they're rebuilt, which clears it. Restarting them at a join rings audibly (#365).
-     */
+    /** Filters keep their history across a flush only when the audio carries on in the same format; restarting them at a join rings audibly. */
     override fun onFlush(streamMetadata: AudioProcessor.StreamMetadata) {
         super.onFlush(streamMetadata)
 

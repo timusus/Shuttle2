@@ -6,25 +6,7 @@ import com.simplecityapps.shuttle.model.Song
 import kotlin.math.abs
 import kotlin.math.min
 
-/**
- * Turns playback events into scrobbling decisions (#503, docs/architecture/scrobbling.md), tracking the one
- * play of the current item. Pure: the clocks come in as functions, so each rule is testable without a
- * player, a clock or a network.
- *
- * - A play starts when the current item is playing, never for one that's only loaded (a restored queue),
- *   and is announced with [Decision.NowPlaying].
- * - Listened time is the sum of the position's forward moves that match the time played, scaled by the
- *   playback speed, to within [SEEK_THRESHOLD_MS]. Anything else is a seek (or a late tick from the item
- *   before), and doesn't count. Track time is what counts, so a 2x listen covers twice the song.
- * - A song longer than [MIN_DURATION_MS] is scrobbled once its listened time reaches half its duration or
- *   [MAX_THRESHOLD_MS], whichever is less: one [Decision.Scrobble] per play, stamped with the play's start.
- *   Thresholds use the song's own duration, so a crossfade that cuts the item short doesn't change them.
- * - A new current item starts a new play. So does the same item played again after it played through
- *   (repeat one), once its position has gone back and moved on; a seek back mid-song is still the same play.
- * - A song [isServerSong] marks, whose server already hears of the play, is skipped unless
- *   [onScrobbleServerStreamsChanged] turns scrobbling those on. Turning it off drops a play of one; turning
- *   it on mid-song starts a new play there.
- */
+/** Turns playback events into scrobble decisions for the current play; pure, with the clocks passed in, so each rule is testable alone. */
 class ScrobblePlanner(
     private val isServerSong: (Song) -> Boolean,
     private val elapsedRealtimeMs: () -> Long,

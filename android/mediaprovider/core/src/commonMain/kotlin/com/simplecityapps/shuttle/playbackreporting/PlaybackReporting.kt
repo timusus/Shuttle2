@@ -14,12 +14,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-/**
- * Reports playback of Jellyfin, Emby and Plex songs to their server (#96): feeds the queue and
- * playback flows to a [PlaybackReportPlanner] and hands its calls to [PlaybackReportSender]. Collected
- * on [Dispatchers.Main.immediate] so the planner sees every change in order
- * on one thread.
- */
+/** Feeds playback changes to [PlaybackReportPlanner]; collected on Main so the planner sees them in order. */
 class PlaybackReporting
 @Inject
 constructor(

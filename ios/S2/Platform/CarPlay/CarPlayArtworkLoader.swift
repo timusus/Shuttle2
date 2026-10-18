@@ -1,9 +1,7 @@
 import CarPlay
 import UIKit
 
-/// A CarPlay row's artwork, through the app's `ArtworkLoader` at the size CarPlay draws it (#692, from Shuttle
-/// Podcasts). A row is drawn with no image (an image row with its symbols) and filled in when its artwork arrives; one
-/// seen before (here or on the phone, at this size) is set at once.
+/// Fills CarPlay rows' artwork through the app's `ArtworkLoader` at CarPlay's size; a row seen before is set at once.
 @MainActor
 final class CarPlayArtworkLoader {
     static let shared = CarPlayArtworkLoader()

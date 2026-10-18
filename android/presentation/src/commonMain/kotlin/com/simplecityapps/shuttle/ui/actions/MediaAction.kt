@@ -56,11 +56,7 @@ enum class MediaActionType {
 sealed interface MediaAction {
     val selection: MediaSelection
 
-    /**
-     * Replaces the queue with the selection's songs and plays from [position]. [context] is what the queue is started
-     * from (#633): the selection's own ([MediaSelection.playContext]) unless the screen says otherwise, as a detail
-     * screen playing its songs does.
-     */
+    /** [context] differs from the selection's only when a detail screen plays its own songs. */
     data class Play(
         override val selection: MediaSelection,
         val position: Int = 0,
@@ -86,10 +82,7 @@ sealed interface MediaAction {
         constructor(selection: MediaSelection) : this(selection, selection.playContext)
     }
 
-    /**
-     * Plays [context] from where it was left (#670), as a Jump back in tile's Play does ([ResumeContext]), or carries out
-     * [fromStart] when there's nothing to carry on from.
-     */
+    /** Carries on from [context]'s resume point, or runs [fromStart] when there is none. */
     data class Resume(
         val fromStart: MediaAction,
         val context: PlayContext

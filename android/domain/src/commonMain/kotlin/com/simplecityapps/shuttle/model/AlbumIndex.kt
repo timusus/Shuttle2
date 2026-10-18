@@ -1,11 +1,6 @@
 package com.simplecityapps.shuttle.model
 
-/**
- * A library's album identities ([AlbumIdentityRule]), resolved once over every song's identity tags: each song's
- * identity, the songs of each album and artist (an artist's own and those crediting them, [ArtistCredits]), and the [AlbumKeyRekey] for keys stored before #637. Built by an
- * [AlbumIndexProvider], which keeps one until the library changes, so a caller asks it for songs by id rather than
- * reading the whole library.
- */
+/** Built once per library change and shared, so callers look songs up by id rather than rereading the library. */
 class AlbumIndex(private val songs: Collection<AlbumIdentityTags>) {
     /** Each song's identity, by song id. */
     val identities: Map<Long, AlbumIdentity> = AlbumIdentityRule.resolve(songs)
@@ -27,7 +22,7 @@ class AlbumIndex(private val songs: Collection<AlbumIdentityTags>) {
         byArtist
     }
 
-    /** For keys stored before the album identity rule (#637); to be deleted with [AlbumKeyRekey]. */
+    /** Maps keys stored before the album identity rule; delete with [AlbumKeyRekey]. */
     val rekey: AlbumKeyRekey by lazy {
         AlbumKeyRekey(songs.mapNotNull { tags -> identities[tags.songId]?.let { tags to it } })
     }

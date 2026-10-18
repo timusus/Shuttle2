@@ -13,7 +13,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 
-/** How a source's import is going, for its card in Sources (#663). */
+/** How a source's import is going, for its card in Sources. */
 sealed interface SourceStatus {
     /** Not importing, and its last import this session (if any) went through. */
     data object Idle : SourceStatus
@@ -25,17 +25,14 @@ sealed interface SourceStatus {
     data class Failed(val error: String) : SourceStatus
 }
 
-/**
- * [state] as a source's status: a finished import with no error is [SourceStatus.Idle] again. Before this session has
- * imported from the source, [stored] (how its last import ended, kept across restarts) stands in (#668).
- */
+/** Before this session imports from a source, [stored] (kept across restarts) stands in for [state]. */
 internal fun sourceStatus(state: SongImportState?, stored: SourceReachability? = null): SourceStatus = when (state) {
     is SongImportState.ImportProgress -> SourceStatus.Importing(state.progress)
     is SongImportState.ImportComplete -> state.error?.let(SourceStatus::Failed) ?: SourceStatus.Idle
     SongImportState.Idle, null -> stored?.error?.let(SourceStatus::Failed) ?: SourceStatus.Idle
 }
 
-/** When each source's import last completed successfully, now and each time one does (#668). */
+/** When each source's import last completed successfully, as it changes. */
 class ObserveSourceUpdated @Inject constructor(
     private val sourceState: SourceStateStore
 ) {
@@ -44,7 +41,7 @@ class ObserveSourceUpdated @Inject constructor(
     }
 }
 
-/** How many songs each server counts but doesn't return, now and each time a full listing changes it (#868). */
+/** How many songs each server counts but doesn't return on a full listing. */
 class ObserveListingShortfalls @Inject constructor(
     private val sourceState: SourceStateStore
 ) {
@@ -53,14 +50,14 @@ class ObserveListingShortfalls @Inject constructor(
     }
 }
 
-/** How many files this device's last full import couldn't read and left unread (#840), now and each time one ends. */
+/** How many files this device's last full import left unread. */
 class ObserveDeviceSkippedFiles @Inject constructor(
     private val sourceState: SourceStateStore
 ) {
     operator fun invoke(): Flow<Int> = combine(LocalTypes.map { type -> sourceState.observeSkippedFiles(type.name) }) { counts -> counts.sum() }
 }
 
-/** Lets the next import read again the files that crashed a tag read (#840), and clears the count Sources shows until it has. */
+/** Lets the next import read again the files that crashed a tag read, and clears their count. */
 class ClearSkippedFiles @Inject constructor(
     private val sourceState: SourceStateStore
 ) {
@@ -72,7 +69,7 @@ class ClearSkippedFiles @Inject constructor(
 
 private val LocalTypes = MediaProviderType.entries.filter { it.isLocal }
 
-/** How each server's last import ended, now and each time one ends (#668). */
+/** How each server's last import ended, as it changes. */
 class ObserveSourceReachability @Inject constructor(
     private val sourceState: SourceStateStore
 ) {

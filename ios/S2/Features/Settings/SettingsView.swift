@@ -1,13 +1,8 @@
 import Shared
 import SwiftUI
 
-/// Settings (#589 phase 7, #612): the shared `SettingsViewModel` over `IosSettingsCatalog`, as one grouped `Form`.
-/// Presented as a sheet from the gear on the Home and Library roots (`AppShell`), with its own `NavigationStack`
-/// on `Navigator.settingsPath`, so the Sources row pushes Sources (and its sign-in) inside the sheet. The catalog
-/// holds only the rows iOS acts on; what it leaves out, and why, is on `IosSettingsCatalog`. The Equalizer row pushes
-/// `EqualizerView` the same way, and the Scrobbling row `ScrobblingView` (left out of a build without Last.fm keys,
-/// `SettingsUiState.lastFmConfigured`). ReplayGain's pre-amp is its own section, labelled and explained apart from the
-/// Equalizer's Preamp (#645).
+/// Presented as a sheet with its own `NavigationStack`, so pushed screens stay inside it.
+/// ReplayGain's pre-amp is its own section, kept apart from the Equalizer's preamp.
 struct SettingsView: View {
     /// The shared view model's cache key, and the catalog screens to show (nil: all of them, with About). The Audio
     /// sheet's Playback Settings screen is this same view over the Playback & Sound screen alone.

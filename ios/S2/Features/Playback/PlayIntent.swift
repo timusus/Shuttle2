@@ -55,7 +55,7 @@ final class PlayIntent {
     @ObservationIgnored let timeout: Duration
     /// The last `begin`'s ticket: a result for any other is a superseded action's.
     @ObservationIgnored private var ticket = 0
-    /// The last play or pause asked of the player, and who asked: what the `playback` log says (#897).
+    /// The last play or pause asked of the player, and who asked, for the `playback` log.
     @ObservationIgnored private(set) var lastCommand: Command?
     @ObservationIgnored private let log = Logger(subsystem: "com.simplecityapps.shuttle2", category: "playback")
     @ObservationIgnored private var pending: Pending?
@@ -91,8 +91,7 @@ final class PlayIntent {
         observers.forEach { $0.cancel() }
     }
 
-    /// Whether the listener wants playback running, read straight from the player rather than from
-    /// `isPlayIntended`, which trails it by a hop through the flow observers: for the system surfaces (#691).
+    /// Read from the player, not `isPlayIntended`, which trails it by a hop through the flow observers.
     var wantsPlayback: Bool {
         pending?.isPaused == false || player.playsWhenReady || player.isAudible
     }
@@ -103,7 +102,7 @@ final class PlayIntent {
     enum Source: String {
         case user
         case remoteCommand = "remote command"
-        /// Siri, Shortcuts, a widget's button or a Control Center control (#758).
+        /// Siri, Shortcuts, a widget's button or a Control Center control.
         case appIntent = "app intent"
     }
 

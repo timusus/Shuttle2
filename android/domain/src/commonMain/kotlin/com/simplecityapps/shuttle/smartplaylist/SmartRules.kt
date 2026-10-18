@@ -6,14 +6,7 @@ import kotlinx.datetime.LocalDate
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-/**
- * A user smart playlist's definition (#506): the songs matching [rules] ([match] all or any of them), in [sort] order,
- * cut to [limit]. No rules matches every song. Compiled to a predicate and evaluated in memory against the library,
- * like the built-in smart playlists; see [SmartRulesEvaluation.kt].
- *
- * Stored as JSON (see [SmartRulesCodec]): each class and constant carries a [SerialName], so renaming one doesn't change
- * what's stored. Property names are the JSON keys, so renaming a property needs a new [SmartRulesCodec.VERSION].
- */
+/** Stored as JSON, so renaming a property needs a new [SmartRulesCodec.VERSION]. */
 @Serializable
 data class SmartRules(
     val match: Match = Match.All,

@@ -39,24 +39,14 @@ fun seedColorScheme(
     specVersion = ColorSpec.SpecVersion.SPEC_2025,
 )
 
-/**
- * The root scheme for [accent], in the accent's own style. A colour accent uses Fidelity, which keeps the seed's own
- * chroma in the accent roles (tonal spot holds primary to chroma 32 whatever the seed, which read muted, #496) and
- * puts the seed itself in `primaryContainer`, while the neutral surfaces stay near grey. [S2Accent.Neutral] keeps
- * every role near grey.
- */
+/** The root scheme for [accent]; a colour accent uses Fidelity, which keeps the seed's chroma where TonalSpot would mute it. */
 fun accentColorScheme(
     accent: S2Accent,
     isDark: Boolean,
     contrast: S2Contrast = S2Contrast.Default,
 ): ColorScheme = seedColorScheme(accent.seed, isDark, accent.style, contrast)
 
-/**
- * The scheme for an artwork [seed], shared by the detail screens and the player, or null when the seed is too grey to
- * use and the caller should fall back to the root accent scheme. Vibrant holds the seed's hue in the accent and
- * container roles at full chroma whatever the seed's tone, so a cover reads as its own colour rather than TonalSpot's
- * muted version of it (#736), and an all-dark cover still gets tinted containers (#409).
- */
+/** The scheme for an artwork [seed], or null when it's too grey; Vibrant keeps the seed's hue at full chroma so a cover reads as its own colour. */
 fun artworkColorScheme(
     seed: Color,
     isDark: Boolean,

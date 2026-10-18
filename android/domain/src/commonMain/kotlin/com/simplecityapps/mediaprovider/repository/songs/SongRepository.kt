@@ -90,12 +90,7 @@ interface SongRepository {
 
     suspend fun clearExcludeList()
 
-    /**
-     * Makes [songs] favourites, or with [favourite] false stops them being ones. Stored with the song whatever its provider,
-     * so it's where a provider's own favourites (Jellyfin, Emby, Plex) will be written back and read in from (#497). A
-     * song that already carries a [Song.favouritedAt] is set to that exact time rather than now, so restoring one just
-     * removed (an Undo) gets its original place back instead of jumping to the top (#564).
-     */
+    /** Stored with the song whatever its provider; a song keeping its [Song.favouritedAt] lets an Undo restore its place. */
     suspend fun setFavourite(
         songs: List<Song>,
         favourite: Boolean

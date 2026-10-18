@@ -54,7 +54,6 @@ constructor(
             .build()
     )
 
-    /** Listed first among the playlists, where the Favorites playlist used to be. */
     private val favourites: MediaItem = browsableItem(FAVOURITES_ID, context.getString(R.string.auto_folder_favorites), MediaMetadata.MEDIA_TYPE_PLAYLIST)
 
     /** The children of the browsable item [mediaId]: empty for an id that isn't one. */
@@ -127,10 +126,7 @@ constructor(
 
     private suspend fun albumsBy(key: AlbumArtistGroupKey): List<Album> = albumRepository.getAlbums(AlbumQuery.ArtistGroupKey(key)).firstOrNull().orEmpty()
 
-    /**
-     * The album's songs. An id Auto kept from before the album identity rule (#637) names the album by its old key, with
-     * no identity: when that finds nothing, it's moved as the stored keys were.
-     */
+    /** The album's songs; an id Auto kept from before album identities names the album by its old key, which is tried when nothing matches. */
     private suspend fun songsForAlbum(directory: MediaIdWrapper.Directory.Songs.Album): List<Song> {
         val key = AlbumGroupKey(key = directory.albumGroupKey, albumArtistGroupKey = AlbumArtistGroupKey(directory.albumArtistGroupKey), identity = directory.identity)
         return songsIn(key).ifEmpty { albumIndex.albumIndex().rekey.album(key)?.takeIf { it != key }?.let { songsIn(it) }.orEmpty() }
@@ -151,7 +147,7 @@ constructor(
 
     private fun Playlist.toMediaItem(parentMediaId: String): MediaItem = browsableItem("${parentMediaId}playlist/$id/songs/", name, MediaMetadata.MEDIA_TYPE_PLAYLIST)
 
-    // An identity (#637) holds slashes (a folder), so it's encoded; ids from before it have no identity segment
+    // An identity holds slashes (a folder), so it's encoded; ids from before it have no identity segment.
     private fun Album.toMediaItem(parentMediaId: String): MediaItem {
         val identity = groupKey?.identity?.let { "$ALBUM_IDENTITY_SEGMENT/${Uri.encode(it)}/" }.orEmpty()
         return browsableItem("${parentMediaId}artist/${groupKey?.albumArtistGroupKey?.key}/album/${groupKey?.key}/${identity}songs/", name, MediaMetadata.MEDIA_TYPE_ALBUM)
@@ -181,7 +177,7 @@ constructor(
 
                 class Playlist(val playlistId: Long) : Songs()
 
-                /** The Favourites smart playlist: a flag on each song rather than a stored playlist (#497). */
+                /** The Favourites smart playlist: a flag on each song rather than a stored playlist. */
                 object Favourites : Songs()
             }
         }
@@ -306,7 +302,7 @@ constructor(
         const val SHUFFLE_ALL_ID = "media:/shuffle_all"
         private const val FAVOURITES_SEGMENT = "favourites"
 
-        /** The segment before an album's identity (#637), URI-encoded, in its media id. */
+        /** The segment before an album's identity, URI-encoded, in its media id. */
         private const val ALBUM_IDENTITY_SEGMENT = "album_id"
         const val FAVOURITES_ID = "media:/playlist_root/$FAVOURITES_SEGMENT/songs/"
 

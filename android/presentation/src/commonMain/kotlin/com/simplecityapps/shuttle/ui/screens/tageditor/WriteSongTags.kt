@@ -40,10 +40,7 @@ class WriteSongTags @Inject constructor(
         return TagWriteResult(updated, failed)
     }
 
-    /**
-     * Library reads leave [Song.lyrics] null (#873) and the update writes the column from the song, so a song whose
-     * lyrics aren't being edited carries its stored ones, or the update would clear them.
-     */
+    /** Library reads leave lyrics null and the update rewrites them, so unedited lyrics are reloaded first. */
     private suspend fun Song.withStoredLyrics(lyricsEdited: Boolean): Song = if (lyricsEdited || lyrics != null) this else copy(lyrics = songRepository.loadLyrics(id))
 }
 

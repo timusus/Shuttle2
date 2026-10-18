@@ -70,7 +70,7 @@ class PlaybackPreferenceManager(
             return if (playbackPosition == -1) null else playbackPosition
         }
 
-    /** What the saved queue was started from (#633); [PlayContext.None] when nothing is saved. */
+    /** What the saved queue was started from; [PlayContext.None] when nothing is saved. */
     var playContext: PlayContext
         set(value) {
             store.putString("play_context_type", value.type)
@@ -124,10 +124,7 @@ class PlaybackPreferenceManager(
         }
 
     companion object {
-        /**
-         * Reads and writes the JSON Moshi wrote before (#584): fields in declaration order, nulls left out, unknown
-         * fields ignored, enums by name.
-         */
+        /** Reads the JSON Moshi wrote before: nulls left out, unknown fields ignored, enums by name. */
         internal val json = Json {
             ignoreUnknownKeys = true
             explicitNulls = false

@@ -9,9 +9,9 @@ interface ArtworkSeedSource {
     /** The seed of [song]'s artwork: the player's, an album page's. */
     suspend fun seedFor(song: Song): ArtworkSeed
 
-    /** The seed of the image an artist page's [hero] shows (#735, #781): the first of its candidates that loads. */
+    /** The seed of an artist page's [hero] image: the first of its candidates that loads. */
     suspend fun seedFor(hero: ArtistHeroArtwork): ArtworkSeed
 
-    /** The seed of a song shown as its album artist (#952): the artist's image, else the song's artwork, as the player shows. */
+    /** The seed of a song shown as its album artist: the artist's image, else the song's artwork. */
     suspend fun seedFor(artwork: ArtistImageArtwork): ArtworkSeed = seedFor(artwork.song)
 }

@@ -13,10 +13,7 @@ struct NowPlayingItem: Equatable {
     var artwork: ArtworkSource?
 }
 
-/// Keeps the widgets' copy of Now Playing (#758): the current song, whether it plays and its cover, written to the App
-/// Group (`NowPlayingStore`) for the widget extension, which can't reach the player. `PlaybackSystemCoordinator` calls
-/// `update` whenever the queue or the play intent changes; only a change of song or play state writes, and each
-/// write asks WidgetKit to reload the widgets and the Control Center control.
+/// Writes the widgets' copy of Now Playing to the App Group, since the widget extension can't reach the player.
 @MainActor
 final class NowPlayingWidgetPublisher {
     /// The longest side the cover is stored at, in pixels: a medium widget's artwork at 3x, and small enough to read

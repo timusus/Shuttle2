@@ -26,7 +26,7 @@ class ObserveArtworkSeed @Inject constructor(
     private val seedSource: ArtworkSeedSource,
     private val observeSetting: ObserveSetting,
 ) {
-    /** The player passes [image], whose artist image it shows for a song when set so (#952): seeded from what the screen shows. */
+    /** [image] picks the artist's image over the album art for a song, so the seed matches what's shown. */
     operator fun invoke(
         song: Flow<Song?>,
         image: Flow<NowPlayingImage> = flowOf(NowPlayingImage.AlbumArt)

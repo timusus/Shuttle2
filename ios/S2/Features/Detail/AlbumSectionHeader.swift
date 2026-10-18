@@ -1,9 +1,7 @@
 import Shared
 import SwiftUI
 
-/// The artist screen's sticky header over one album's songs (#631): the album's small cover, its title, "year · N
-/// songs" and a chevron that turns as the section unfolds. The thumbnail opens the album and the rest of the header folds and
-/// unfolds the section; a long press offers the album's own actions, which VoiceOver reads as named actions.
+/// The long-press actions are also exposed as named actions for VoiceOver.
 struct AlbumSectionHeader: View {
     let album: Album
     let songCount: Int

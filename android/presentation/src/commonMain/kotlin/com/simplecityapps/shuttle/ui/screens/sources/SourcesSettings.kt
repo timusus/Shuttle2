@@ -27,10 +27,7 @@ class SourcesSettings @Inject constructor(
         /** SAF tree URIs the scanner walks directly, beside what MediaStore lists. Their grants are persisted. */
         val ExtraFolders = stringList("scanner_extra_folders")
 
-        /**
-         * SAF tree URIs picked as includes, listed even once their grant is revoked outside the app, so Sources can
-         * flag them instead of them silently vanishing (#479).
-         */
+        /** Listed even once their grant is revoked outside the app, so Sources can flag them. */
         val IncludedFolders = stringList("scanner_included_folders")
 
         /**

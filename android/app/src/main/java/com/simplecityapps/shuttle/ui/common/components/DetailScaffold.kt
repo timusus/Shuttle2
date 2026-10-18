@@ -42,20 +42,7 @@ import com.simplecityapps.shuttle.designsystem.component.S2Scaffold
 import com.simplecityapps.shuttle.ui.shell.RequestStatusBarOverImage
 import com.simplecityapps.shuttle.ui.shell.adaptive.LocalShellLayout
 
-/**
- * A detail screen: a single LazyColumn under a pinned [S2DetailTopBar] with back navigation and the overflow [actions].
- *
- * With a [hero] (a `DetailHero` carrying the page title), the list starts at the top of the screen, behind the bar,
- * and the hero is its first item, given the bar's height as its top inset so its wash runs up behind the bar's icons.
- * It scrolls with the list: no parallax, no scrim. The bar shows [title] and [subtitle] once the hero has scrolled
- * under it. Without one (loading, not found), the list sits below the bar and the bar shows the title throughout.
- * [heroBleeds]: the hero is a `DetailBleedHero`, whose image runs up behind the bar, so the bar's icons are white over it.
- * [overlay] draws over the list, under the bar, given the bar's height (an artist page's pinned album header, #631).
- *
- * At compact height (a landscape phone) a [hero] takes the leading 40% beside the list, below an opaque bar that keeps
- * the title; [overlay] then sits over the list column and is given no inset. The hero is given the column's height
- * (otherwise [Dp.Unspecified]) to fit its artwork and actions into without scrolling.
- */
+/** With a [hero] the list starts behind the bar, so the bar's title appears only once the hero scrolls under it. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DetailScaffold(

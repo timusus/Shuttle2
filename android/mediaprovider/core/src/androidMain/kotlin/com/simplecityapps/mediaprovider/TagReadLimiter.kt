@@ -8,10 +8,7 @@ import kotlinx.coroutines.sync.withPermit
 /** A file this big takes every permit: TagLib parses its embedded art into native memory, which a few at once can exhaust. */
 const val LARGE_TAG_READ_BYTES = 30L * 1024 * 1024
 
-/**
- * Caps the native tag reads running at once, across every flow that reads them (#840): each read holds one of [permits],
- * and a read that must run alone (a large file, a suspect) holds them all.
- */
+/** Caps native tag reads across all flows; a read that must run alone holds every permit. */
 class TagReadLimiter(val permits: Int = defaultTagReadPermits()) {
     private val semaphore = Semaphore(permits)
 

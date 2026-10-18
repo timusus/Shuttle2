@@ -2,14 +2,7 @@ import Foundation
 import Network
 import Shared
 
-/// Which of Home's items can play with no network (#692), by the rule the player plays by (`SongStreamResolver`): a
-/// song on this device (a local provider's) plays from its file, and a server song plays offline once its download
-/// has completed (`OfflineDownloads`). An item can play when one of its songs can.
-///
-/// There's no shared notion of an item's availability (downloads are per song, and iOS-only), so this lives with
-/// CarPlay rather than in the shared Home state. Albums, artists and genres are matched against the library's songs,
-/// a smart playlist by its query; a playlist's own songs aren't loaded on Home, so the shared `ObservePlayablePlaylists`
-/// judges it by all of its songs (#925).
+/// Which of Home's items can play offline, by the player's own rule (`SongStreamResolver`); kept here because downloads are per song and iOS-only.
 struct CarPlayOfflineIndex {
     private let playable: [Song]
     private let albums: Set<AlbumGroupKey>

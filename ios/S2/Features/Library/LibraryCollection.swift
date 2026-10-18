@@ -189,7 +189,7 @@ struct LibraryTile: View {
     }
 }
 
-/// A list's Shuffle, as a toolbar button next to the view-mode and settings items (#676).
+/// Sits in the toolbar beside the view-mode and settings items.
 struct ShuffleButton: View {
     let identifier: String
     let action: () -> Void
@@ -200,8 +200,7 @@ struct ShuffleButton: View {
     }
 }
 
-/// Rows of `MediaRowSkeleton` in place of a bare spinner, while a list's first page loads: a plain `List`, with the
-/// letter index's width kept clear, so each row sits where the loaded list's will (#643).
+/// A plain `List` with the letter index's width kept clear, so rows line up with the loaded list.
 struct LibraryListSkeleton: View {
     var artworkSize: CGFloat = ArtworkSize.row
     var artworkShape: S2Shape = .artworkRow
@@ -241,8 +240,7 @@ private struct NowPlayingRowBackground: ViewModifier {
     }
 }
 
-/// Grid tiles' skeleton, while a grid's first page loads: `LibraryGrid`'s columns, beside the letter index's width,
-/// and `LibraryTile`'s title and subtitle lines, so each tile sits where the loaded grid's will (#643).
+/// Mirrors `LibraryGrid`'s columns and `LibraryTile`'s text lines so tiles line up with the loaded grid.
 struct LibraryGridSkeleton: View {
     var artworkShape: S2Shape = .artworkTile
     /// Lays out as the compact grid view mode's `LibraryGrid` does.

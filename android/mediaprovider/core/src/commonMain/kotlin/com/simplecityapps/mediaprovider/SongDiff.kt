@@ -30,8 +30,7 @@ class SongDiff(
             blacklisted = old.blacklisted,
             mediaProvider = old.mediaProvider,
             albumIdentity = old.albumIdentity,
-            // The stored songs are read without their lyrics (#873), so there are none to compare: a changed tag moves
-            // the file's modified time, and the update writes the new lyrics
+            // Stored songs load without lyrics, so a changed file's new mtime is what rewrites them.
             lyrics = old.lyrics,
             // Stored as a year only
             date = if (updated.date?.year == old.date?.year) old.date else updated.date,
@@ -61,11 +60,7 @@ class SongDiff(
         dateAdded = newData.dateAdded ?: oldData.dateAdded
     )
 
-    /**
-     * The stream properties a provider reports, else the stored ones: the MediaStore scan reports none, and a TagLib
-     * rescan's would otherwise be wiped by it. A song whose file changed ([isReencodeOf]) keeps none of them: a server that
-     * no longer reports a field would otherwise leave the old encode's value on the new file (#891).
-     */
+    /** Keeps stored stream properties unless the file was re-encoded, since a server may omit a field the old encode had. */
     private fun Song.keepingStoredStreamProperties(old: Song): Song = if (isReencodeOf(old)) {
         this
     } else {

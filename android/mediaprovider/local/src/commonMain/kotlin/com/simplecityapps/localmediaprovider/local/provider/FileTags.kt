@@ -24,8 +24,7 @@ data class FileTags(
     val replayGainAlbum: Double?,
     val lyrics: String?,
     val grouping: String?,
-    // The raw tags of #637, never split: the ALBUMARTISTS and ARTISTS multi-value tags as written, the ARTIST tag as one
-    // string (several values joined by "; "), COMPILATION, and the MusicBrainz ids.
+    // Raw tags, unsplit: artists are split where they're read, with splitArtistTag.
     val albumArtists: List<String> = emptyList(),
     val artistsTag: List<String> = emptyList(),
     val artistDisplay: String? = null,
@@ -41,7 +40,7 @@ data class FileTags(
     val bitDepth: Int? = null,
     val sampleRate: Int? = null,
     val channelCount: Int? = null,
-    // Classical metadata (#1065); `grouping` stays the GROUPING tag (ID3 GRP1, MP4 ©grp), never the work
+    // Classical metadata; `grouping` stays the GROUPING tag (ID3 GRP1, MP4 ©grp), never the work
     val composer: String? = null,
     val composerSort: String? = null,
     val conductor: String? = null,
@@ -71,13 +70,11 @@ private fun Map<String, List<String>>.toFileTagsAsRead(id3: Boolean): FileTags {
     val movementTag = first(TagLibProperty.MovementNumber) ?: get(VORBIS_MOVEMENT)?.firstOrNull()
     val movementName = first(TagLibProperty.MovementName)
     val showMovement = (first(TagLibProperty.ShowMovement) ?: get(MP4_SHOW_WORK_MOVEMENT)?.firstOrNull())?.parseCompilation()
-    // ID3's TIT1 is a content group many taggers fill with a genre-like label, so on an MP3 it is only a work next to movement tags (#1065)
+    // ID3's TIT1 is a content group many taggers fill with a genre-like label, so on an MP3 it is only a work next to movement tags
     val isWork = !id3 || movementName != null || movementTag != null || showMovement == true
     return FileTags(
         title = first(TagLibProperty.Title),
-        // TagLib passes tag names it doesn't know through unchanged, so a Matroska file tagged by ffmpeg has ALBUM_ARTIST.
-        // A combined "A; B" names its first artist: an album has one album artist, and the whole string would list as an
-        // artist of its own (#886). The raw tag stays in albumArtists, and the ARTIST tag still credits every artist.
+        // A combined "A; B" album artist keeps only its first name, since an album has one album artist.
         albumArtist = (first(TagLibProperty.AlbumArtist) ?: get(MATROSKA_ALBUM_ARTIST)?.firstOrNull())?.let(::primaryAlbumArtist),
         artists =
             get(TagLibProperty.Artist.key).orEmpty().flatMap(::splitArtistTag),

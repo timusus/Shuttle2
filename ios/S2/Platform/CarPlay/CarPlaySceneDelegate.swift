@@ -2,14 +2,7 @@ import CarPlay
 import Shared
 import UIKit
 
-/// The CarPlay scene (#692, from Shuttle Podcasts): a tab bar of Home, Playlists and Library, drawn from the shared
-/// view models the phone's screens use. Home is the phone's Home for the car: each shelf, in the phone's order, a row
-/// of artwork whose images play (Jump Back In's resume) and whose row pushes the whole shelf; offline it shows only what
-/// can play. Playlists lists the auto playlists and the user's own; Library pushes Artists, Albums, Songs and Genres.
-/// Albums, artists, genres and playlists push their songs; a song plays its list from it, Shuffle shuffles the list.
-/// Playback goes through `MediaActionsViewModel`, as the phone's does, and Now Playing's transport is the remote
-/// commands `PlaybackSystemCoordinator` already registers. CarPlay is Shuttle Music Pro (#946): without it the root is one
-/// upgrade message, with nothing to browse or play, until the entitlement changes.
+/// The CarPlay scene: a tab bar of Home, Playlists and Library, built from the same shared view models as the phone's screens.
 @MainActor
 final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegate, CPInterfaceControllerDelegate {
     private var interfaceController: CPInterfaceController?
@@ -29,7 +22,6 @@ final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegat
     private var accessTask: Task<Void, Never>?
     private var showsUpgrade: Bool?
 
-    /// The root without Shuttle Music Pro (#946).
     private let upgradeTemplate = CPListTemplate(title: CarPlayText.upgrade, sections: [])
 
     private let homeTemplate = CPListTemplate(title: CarPlayText.home, sections: [])
@@ -92,9 +84,7 @@ final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegat
         }
     }
 
-    /// The library, or without Shuttle Music Pro only the upgrade message (#946), redrawn as the entitlement changes:
-    /// a purchase or a trial started on the phone opens the library, and an ended trial closes it. Open while the
-    /// store hasn't answered (`CarPlayAccess`).
+    /// Redrawn as the entitlement changes; open while the store hasn't answered (`CarPlayAccess`).
     private func showAccess(locked: Bool) {
         guard let interfaceController, showsUpgrade != locked else { return }
         showsUpgrade = locked

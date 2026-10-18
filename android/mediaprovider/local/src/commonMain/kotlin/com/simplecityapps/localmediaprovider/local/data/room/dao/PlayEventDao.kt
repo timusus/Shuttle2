@@ -8,11 +8,7 @@ import com.simplecityapps.mediaprovider.repository.playhistory.PlayHistoryReposi
 import kotlin.time.Instant
 import kotlinx.coroutines.flow.Flow
 
-/**
- * The listening history, `play_events` (#633). Every read of the events is an aggregate; none loads them. The by-day
- * aggregates take no limit: they read one row per (song or genres, day) in their window, which the history's own cap
- * ([PlayHistoryRepository.MAX_EVENTS]) bounds, and a limit would drop the least played rows a count of days needs.
- */
+/** The by-day aggregates take no limit: the history's own cap bounds them, and a limit would drop the least played rows. */
 @Dao
 interface PlayEventDao {
     @Insert
@@ -53,10 +49,7 @@ interface PlayEventDao {
         limit: Int
     ): List<ContextDaysRow>
 
-    /**
-     * The songs played through since [since], each once per local day (UTC shifted by [utcOffsetMs]) it was: the rows a
-     * caller merges into albums by their album identity (#637), which SQL can't compute.
-     */
+    /** SQL can't merge songs into albums by album identity, so callers do it over these per-day rows. */
     @Query(
         "SELECT s.id AS songId, (e.startedAt + :utcOffsetMs) / 86400000 AS day, MAX(e.startedAt) AS lastPlayedAt " +
             "FROM play_events e JOIN songs s ON s.path = e.songPath AND s.mediaProvider = e.mediaProvider " +

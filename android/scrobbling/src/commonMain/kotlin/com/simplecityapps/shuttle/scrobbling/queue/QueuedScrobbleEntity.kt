@@ -4,13 +4,7 @@ import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
 
-/**
- * A scrobble waiting to be sent (#503 slice 2, docs/architecture/scrobbling.md). Lives in the module's own
- * [ScrobbleDatabase], not the main media database, so scrobbling never migrates it. One row per service (only
- * "lastfm" or "listenbrainz") so an outage on one service never blocks another. The unique
- * index on ([service], [startedAtEpochSec], [track]) makes enqueuing idempotent: replaying the same play never
- * duplicates a row.
- */
+/** A scrobble waiting to be sent; its unique index makes enqueuing idempotent, so replaying a play never duplicates a row. */
 @Entity(
     tableName = "queued_scrobbles",
     indices = [Index(value = ["service", "startedAtEpochSec", "track"], unique = true)]

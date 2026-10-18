@@ -9,10 +9,9 @@ struct ArtworkCandidate: Hashable, Sendable {
     var unmeteredOnly = false
     /// Further headers the request needs, such as a Plex server's `X-Plex-Token`.
     var headers: [String: String] = [:]
-    /// The server's own custom headers (#921), which may be secrets: sent with the request, never kept with a cached response.
+    /// May hold secrets: sent with the request, never kept with a cached response.
     var customHeaders: [String: String] = [:]
-    /// The smallest the image's shorter side may be, in pixels: a smaller one counts as absent and the next candidate
-    /// is tried (an artist's image, #823). 0 takes any size.
+    /// A smaller image counts as absent and the next candidate is tried; 0 accepts any size.
     var minimumSize = 0
     /// What names the image in the caches, when it isn't `url`: the unsigned URL of one signed afresh each time
     /// (a Subsonic server's), whose own URL would never hit.

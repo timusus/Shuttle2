@@ -1,9 +1,7 @@
 import Shared
 import SwiftUI
 
-/// A Jellyfin, Emby, Plex or Subsonic server's sign-in (#587, #624), on the shared `ServerSignInViewModel`: Android's
-/// `ServerSignInRoute`/`ServerSignInDialog` as a HIG form, a step of the source setup (`SourceSetupFlow`), which is
-/// the one place it opens from: the first run, Sources' Add a Server and Sign In Again. It starts from the saved
+/// A step of the source setup (`SourceSetupFlow`), the only place it opens from. It starts from the saved
 /// login; once the server is signed in it calls `onConnected` (the setup enables the provider and imports), then
 /// `onFinished` when the view model says the success state has shown for long enough. Plex signs in with a plex.tv
 /// PIN approved in the browser, then a choice of the account's servers, as on Android.

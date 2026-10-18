@@ -5,7 +5,6 @@ enum class ViewMode {
     List,
     Grid,
 
-    /** A grid of smaller tiles, about three columns on a phone (#1053). */
     CompactGrid,
 }
 

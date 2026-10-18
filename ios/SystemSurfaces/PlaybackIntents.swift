@@ -1,10 +1,6 @@
 import AppIntents
 
-// The playback App Intents (#758): Siri, Shortcuts and Spotlight's Play or Pause and Next Song, the widgets' buttons and
-// the Control Center control. This file is compiled into both the app and the widget extension, so the widgets can name
-// the intents for their buttons; as `AudioPlaybackIntent`s they always run in the app's process, which registers the
-// `PlaybackIntentPerforming` that carries them out (`IntentPerformers`). Nothing here imports Shared: the extension
-// doesn't link the Kotlin framework.
+// Compiled into both targets so the widgets can name these intents; they always run in the app's process, and nothing here imports Shared.
 
 /// What the playback intents ask of the app. Called on the main thread.
 @MainActor

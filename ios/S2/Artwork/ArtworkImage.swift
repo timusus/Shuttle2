@@ -78,10 +78,7 @@ struct ArtworkImage<Placeholder: View>: View {
     }
 }
 
-/// The placeholder, until the real cover arrives or in place of one that doesn't exist (#646): a neutral system grey
-/// with a subtle symbol at about a third of the tile, the same on every screen whatever its tint. `symbol` says
-/// what's missing: `music.note` for a song, `square.stack` for an album, `music.mic` for an artist, `guitars` for a
-/// genre, `music.note.list` for a playlist.
+/// Neutral stand-in for missing artwork, with a symbol naming what is missing.
 struct ArtworkPlaceholder: View {
     var symbol: String = "music.note"
 

@@ -70,7 +70,6 @@ data class AlbumDetailUiState(
     /** The first conductor or performer credit among the songs, for the subtitle; null when classical display is off, the songs aren't a classical block or none is tagged. */
     val performers: String? get() = if (classical && songs.isClassicalBlock()) songs.firstNotNullOfOrNull { it.performersLine() } else null
 
-    /** What playing this screen's songs starts the queue from (#633). */
     val playContext: PlayContext get() = album?.playContext ?: PlayContext.None
 
     enum class LoadingState { Loading, Ready, Empty }

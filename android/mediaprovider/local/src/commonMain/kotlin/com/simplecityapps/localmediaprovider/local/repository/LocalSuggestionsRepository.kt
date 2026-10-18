@@ -19,13 +19,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
-/**
- * [SuggestionsRepository] over the songs table. Albums and album artists are the library's album identities (#637),
- * resolved from the identity columns rather than whole songs; a lookup then reads only the songs of the few albums or
- * artists it names. What Home shows (the song count, genres, albums, album artists) comes from [songRepository] and
- * [genreRepository], so it holds the same songs the library does (not excluded, not under the minimum track length):
- * an album key found here whose songs are all hidden finds no album.
- */
+/** Home's suggestions over the songs table, from the same songs the library shows, so hidden songs don't surface. */
 class LocalSuggestionsRepository(
     private val suggestionsDao: SuggestionsDao,
     private val albumIndex: AlbumIndexProvider,

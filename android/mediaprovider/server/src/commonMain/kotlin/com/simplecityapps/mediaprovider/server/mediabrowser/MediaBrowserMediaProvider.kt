@@ -56,12 +56,7 @@ open class MediaBrowserMediaProvider(
         since: Instant
     ): Flow<FlowEvent<List<Song>, MessageProgress>> = findSongs(existingSongs, since)
 
-    /**
-     * Every song of the music libraries, or with [since] only those saved on the server (added or changed) at or after it,
-     * plus those of [existingSongs] whose favourite changed on the server: that doesn't change the item's DateLastSaved
-     * (#497), and those played on the server since (in any client), which doesn't either. Only the libraries that may hold
-     * music are read: an audiobook library holds `Audio` items too (#845).
-     */
+    /** With [since], also re-reads favourites and plays the server doesn't date; only libraries that may hold music are read. */
     private fun findSongs(
         existingSongs: List<Song>,
         since: Instant?
@@ -93,8 +88,7 @@ open class MediaBrowserMediaProvider(
     override suspend fun countSongs(): Int? = (
         withServerSession<AuthenticatedCredentials, Int>(strings, authenticationManager.credentialStore, authenticationManager.getAddress(), ::authenticate) { address, session ->
             withMusicLibraries(address, session) { libraries, countsTogether ->
-                // A song in two libraries is in both their totals, so when the music libraries are the only ones with audio the
-                // server counts across them, once per song, in one request (#934)
+                // One request counts each song once, even when it sits in two libraries.
                 val parents = if (countsTogether) listOf(null) else libraries
                 var total = 0
                 for (libraryId in parents) {

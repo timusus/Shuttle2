@@ -33,10 +33,7 @@ extension PlaylistEntity {
     }
 }
 
-/// Carries out the App Intents (#758) in the app, through the same paths as its own buttons: plays and pauses through
-/// `PlayIntent`, so every play/pause control shows the change from the tap, and library plays as the shared
-/// `MediaAction`s, dispatched as a screen's are (`PlayIntent.begin`, then `finished` with the result). Registered in
-/// `IntentPerformers` at launch.
+/// Carries out the App Intents through the same paths as the in-app buttons, so plays and pauses go through `PlayIntent`.
 @MainActor
 final class AppIntentPerformer: PlaybackIntentPerforming, LibraryIntentPerforming {
     private let intent: PlayIntent

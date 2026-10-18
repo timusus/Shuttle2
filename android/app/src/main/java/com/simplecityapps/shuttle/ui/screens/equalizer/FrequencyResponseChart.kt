@@ -43,9 +43,7 @@ private fun yFraction(gainDb: Float): Float = ((MAX_DB - gainDb) / (MAX_DB - MIN
 
 private fun frequencyLabel(hz: Float): String = if (hz >= 1000f) "%.0f kHz".format(hz / 1000f) else "%.0f Hz".format(hz)
 
-// The dB labels sit in a gutter left of the plot, centred on their gridlines, so neither the
-// gridlines nor the curve ever run through them (#560). The plot is inset top and bottom by half a
-// label's height so the ±20 dB labels aren't clipped.
+// dB labels sit in a gutter so neither gridlines nor the curve run through them.
 private val DB_LABEL_GUTTER = 40.dp
 private val PLOT_VERTICAL_INSET = 7.dp
 

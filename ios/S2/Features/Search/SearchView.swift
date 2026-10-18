@@ -2,13 +2,7 @@ import os
 import Shared
 import SwiftUI
 
-/// Search (#589): the shared `SearchViewModel` behind the system search field, focused when the tab opens with
-/// nothing typed. Empty, it lists the recent searches (tap to search again, swipe to forget); typing shows the
-/// results as Android's screen does: the top result, then Artists, Albums, Songs, Genres and Playlists, each capped
-/// with a See All that expands it in place (`SearchResults.sections`). The type chips narrow the search and are kept
-/// by the ViewModel. A tap opens the artist, album, genre or playlist, or plays every song result from the tapped
-/// one (`SearchViewModel.playSong`); either keeps the query as a recent search. Long press plays or queues through
-/// the shared `MediaAction`s.
+/// Shows recent searches while empty, and results by section while typing; a tap keeps the query as a recent search.
 struct SearchView: View {
     let navigator: Navigator
 
@@ -432,9 +426,7 @@ struct SearchResultList: View {
     }
 }
 
-/// A `SearchResults`' hits as Swift arrays. Every read of one of its Kotlin lists from Swift copies the whole list, so
-/// reading them per row made laying out N rows cost N copies (#677); the rows read these instead, copied once. The
-/// "Search results" signpost interval times it in Instruments.
+/// A `SearchResults`' hits as Swift arrays, copied once: each read of a Kotlin list from Swift copies the whole list.
 struct SearchResultItems {
     static let signposter = OSSignposter(subsystem: "com.simplecityapps.shuttle", category: "Search")
 

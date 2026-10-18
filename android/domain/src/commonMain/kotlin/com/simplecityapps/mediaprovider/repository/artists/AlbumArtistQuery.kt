@@ -7,7 +7,7 @@ sealed class AlbumArtistQuery(
     val predicate: ((AlbumArtist) -> Boolean),
     val sortOrder: AlbumArtistSortOrder = AlbumArtistSortOrder.Default
 ) {
-    /** The Artists list (#637): everyone who is the album artist of an album, "Various Artists" (the compilations) too. */
+    /** Every album artist, compilations' "Various Artists" included. */
     class All(sortOrder: AlbumArtistSortOrder = AlbumArtistSortOrder.Default) :
         AlbumArtistQuery(
             predicate = { artist -> artist.isAlbumArtist },

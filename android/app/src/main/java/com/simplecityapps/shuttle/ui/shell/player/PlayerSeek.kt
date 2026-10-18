@@ -11,7 +11,7 @@ internal const val SeekBackwardSeconds = 10
 /** 1.0.10's audiobook/podcast `seekForwardButton`: seconds seeked per tap. */
 internal const val SeekForwardSeconds = 30
 
-/** Audiobook and podcast songs show seek-back/seek-forward buttons instead of skip (1.0.10 parity, #430). */
+/** Audiobook and podcast songs show seek-back/seek-forward buttons instead of skip. */
 internal val Song.Type.isSeekable: Boolean get() = this != Song.Type.Audio
 
 /** Seeks by [deltaSeconds] (negative to seek backward) from [progress]'s position, clamped to the song's duration. */

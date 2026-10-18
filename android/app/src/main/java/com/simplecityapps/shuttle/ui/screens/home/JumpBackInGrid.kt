@@ -50,12 +50,7 @@ import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.ui.text.relativeTimeSpan
 import kotlin.math.roundToInt
 
-/**
- * Jump back in (#633, #706): the most recent item as a wide resume card with the one Play button, which carries on
- * where its queue was left (#670), then the rest as a compact grid of tiles after Apple Music's and Spotify's recents
- * and the iOS app's `JumpBackInGrid`: [columns] wide ([jumpBackInColumns]), at most [JUMP_BACK_IN_MAXIMUM_TILES] of
- * them. Every card and tile opens its item; long-press offers the rest, Play from start among them.
- */
+/** Jump back in: the latest item as a resume card above a compact grid of recents. */
 @Composable
 fun JumpBackInGrid(
     items: List<HomeItem>,
@@ -66,8 +61,7 @@ fun JumpBackInGrid(
     modifier: Modifier = Modifier,
 ) {
     val first = items.firstOrNull() ?: return
-    // Not lazy, so no animateItem: each card and tile is keyed by its item so it keeps its state as the grid changes, and
-    // the grid animates its height when a row comes or goes (#672).
+    // Not lazy, so no animateItem: keyed items keep their state while the grid animates its height.
     Column(modifier = modifier.animateContentSize(), verticalArrangement = Arrangement.spacedBy(S2Spacing.small)) {
         key(first.key) {
             JumpBackInResumeCard(first, progress[first.key], covers[first.key].orEmpty(), callbacks)

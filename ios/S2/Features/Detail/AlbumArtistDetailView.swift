@@ -1,14 +1,7 @@
 import Shared
 import SwiftUI
 
-/// Album artist detail (P5-7, polished in #624, sectioned in #631): a full-bleed hero behind the bars with the name over
-/// it, showing and tinted from the image the shared `ArtistHeroArtwork` rule picks (#781: the artist's own, else their
-/// top album's cover; `ArtistHeroPhoto`); albums · songs, Play/Shuffle, and Shuffle by Album in the toolbar's menu), a shelf of the
-/// artist's album tiles (each zooming into `Route.album`) while the songs are flat, an Appears On shelf of others'
-/// albums crediting them (#637, hidden when empty; a long press on any tile plays or queues it), then the artist's
-/// songs in the chosen `ArtistSongSortOrder`: under one sticky, foldable header per album for the album orders, where
-/// the headers stand in for the album shelf (#678), or as one flat list. Tapping a song plays every song in the
-/// visible order from it, folded albums included. Modeled on Android's `AlbumArtistDetailScreen.kt`.
+/// Album headers stand in for the album shelf only under the album sort orders, so the shelf is hidden there.
 struct AlbumArtistDetailView: View {
     let albumArtistKey: String?
 

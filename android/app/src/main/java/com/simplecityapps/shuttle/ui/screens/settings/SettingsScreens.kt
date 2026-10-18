@@ -70,10 +70,7 @@ import java.util.Date
 import java.util.Locale
 import kotlin.math.roundToInt
 
-/**
- * A settings screen: a top bar over one list. The Settings [root] takes the collapsing large top bar the shell's
- * top-level screens use; its sub-pages take the standard one-row bar, so they read as a level down (#496).
- */
+/** The Settings root takes the collapsing large top bar; sub-pages take the standard bar so they read as a level down. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun SettingsScaffold(

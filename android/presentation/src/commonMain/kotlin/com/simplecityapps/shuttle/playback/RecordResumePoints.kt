@@ -25,24 +25,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-/**
- * Keeps each play context's resume point (#670) up to date, so a Jump back in tile can carry on where its queue was left:
- * the current song of the queue's [QueueOperations.playContext], how far into it, where it is in the queue and whether
- * shuffle was on. A queue with no context has none.
- *
- * Nothing is saved for a song until it plays: a progress tick while playing, a small step on from the one before. That's
- * when it takes the queue's context. So a queue restored at launch, or a song made current to resume a context from its
- * point, leaves the stored point alone (finished or not, at its position) until it plays, by when a resume's seek is
- * done. From then on its point is saved as it plays, every [SAVE_INTERVAL]; on a seek or any other jump in progress; on
- * a pause; and as another song becomes current. The last song of the queue playing through with repeat off marks it
- * finished, so the tile starts over next time, until that song plays again.
- *
- * Writes are at most one every [WRITE_INTERVAL], the latest point of a context winning over any not yet written, except
- * that a pause, the queue finishing and another context's point are written straight away. They go to [ioDispatcher]
- * one at a time, in order; a failed write is logged and the next one still goes.
- *
- * Started once at app start next to [RecordPlays], it runs for the life of the app on main.
- */
+/** Saves a context's resume point only once its song plays, so a restored queue doesn't overwrite it. */
 class RecordResumePoints(
     private val playbackStateSource: PlaybackStateSource,
     private val queueOperations: QueueOperations,

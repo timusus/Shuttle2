@@ -26,19 +26,7 @@ data class OpenedAudio(
     val album: String? = null,
     val durationMs: Int? = null
 ) {
-    /**
-     * The library song for this file, or null when it isn't in the library. A library song is preferred
-     * over [toTransientSong], since it plays from its own path (which doesn't depend on the caller's URI
-     * grant) and its plays are counted.
-     *
-     * Matches on the song's path: the URI itself, the file path (MediaStore songs carry file paths), or the
-     * SAF document id (songs found through a picked folder carry tree document URIs, which name the same
-     * document id under the same authority as a plain document URI for that file).
-     *
-     * The same file can be in the library more than once, a row per provider (#420), so every match is a
-     * candidate and the choice doesn't depend on the library's order (RS-57): a song that isn't excluded first,
-     * then S2's own scan over MediaStore's (the provider order of [MediaProviderType]), then the lowest id.
-     */
+    /** The library song for this file, or null; one file in the library twice resolves the same whatever the order: not excluded, S2's own scan first, then lowest id. */
     fun findIn(songs: List<Song>): Song? = songs.filter(::isSameFile).minWithOrNull(libraryRowPreference)
 
     private fun isSameFile(song: Song): Boolean {

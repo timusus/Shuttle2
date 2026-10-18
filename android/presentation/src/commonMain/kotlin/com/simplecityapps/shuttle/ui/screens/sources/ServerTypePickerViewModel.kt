@@ -16,7 +16,7 @@ sealed interface ServerTypePickerEvent {
     data class OpenSignIn(val type: MediaProviderType) : ServerTypePickerEvent
 }
 
-/** Backs the server-type picker sheet (#487): the paywall gate and the connect side effect [SourcesViewModel] also uses. */
+/** Backs the server-type picker sheet; the paywall gate and connect side effect match [SourcesViewModel]. */
 @ViewModelKey(ServerTypePickerViewModel::class)
 @ContributesIntoMap(AppScope::class)
 class ServerTypePickerViewModel @Inject constructor(

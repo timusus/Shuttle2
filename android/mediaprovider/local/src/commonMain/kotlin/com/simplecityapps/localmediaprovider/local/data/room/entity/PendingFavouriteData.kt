@@ -5,13 +5,7 @@ import androidx.room.ForeignKey
 import androidx.room.PrimaryKey
 import kotlin.time.Instant
 
-/**
- * A favourite/unfavourite made on a remote-provider song, not yet pushed to its server (#497): the local outbox. Keyed
- * by [songId] alone, so a later toggle before this row is sent replaces it rather than piling up -
- * only the latest desired state is ever sent. The sender looks the song up by [songId], and a sync's favourite merge
- * skips any song with a row here, so a toggle not yet sent isn't undone by the server's older state. Deleted along with
- * its song ([ForeignKey.CASCADE]).
- */
+/** A favourite toggle on a remote song not yet sent to its server; a sync's merge skips songs with one, so it isn't undone. */
 @Entity(
     tableName = "pending_favourites",
     foreignKeys = [

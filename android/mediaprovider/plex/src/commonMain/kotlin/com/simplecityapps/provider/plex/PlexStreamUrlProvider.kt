@@ -28,36 +28,7 @@ data class PlexStream(
     val isTranscode: Boolean = false
 )
 
-/**
- * A Plex song's authenticated stream: the original part file when it's a format this platform's player decodes
- * ([StreamProfile.directPlayFormats]) and there's no [StreamingPolicy] or the song's bitrate is known to be within
- * it; otherwise a transcode at the cap, or at [UNCAPPED_TRANSCODE_KBPS] without one. An unknown bitrate transcodes, as
- * Jellyfin does. Plex, unlike Jellyfin and Emby's universal endpoint, serves a part file as it is, so a format the
- * player can't decode (WMA, or ALAC inside an otherwise-playable container on Android) would fail to load and be
- * skipped (#362, #567).
- *
- * The transcode follows [StreamProfile.playsHls]: an HLS stream where the player plays HLS (Android's Media3), which
- * stays seekable, in the chosen codec ([StreamingPolicy.transcodeFormat]: AAC or MP3; HLS carries no Opus, so
- * [StreamProfile.streamTarget] falls it back to AAC); otherwise one progressive MP3 (iOS's engine), which starts at the
- * position it's asked for. MP3 is the one progressive target Plex's transcoder reliably serves, so a progressive
- * transcode stays MP3 whatever the choice.
- *
- * Plex keeps one transcode running for the user: any start replaces it (another song's, or another position's), except
- * a start on the same session at the start of the song, which joins it. And it answers 400 to a start whose
- * `X-Plex-Session-Identifier` isn't the last one it saw for the track, until another track is transcoded (#888;
- * support/scripts/plex-transcode-probe.sh). So every transcode of a song, streamed or downloaded, carries one
- * identifier, [sessionIdentifier], and plays of a song share one transcode session while any of them holds it: a
- * replay, or repeat one's next opened while the song plays, joins the transcode the song is playing from rather than
- * cutting it off. A seek's re-open replaces it at the position.
- *
- * [endPlay] stops a progressive transcode (#722) once the last play holding its session ends, and retires the session
- * in the same step, so a play opened after that gets a new one the stop can't reach; the server otherwise keeps
- * transcoding a skipped song until it times out idle. A stream with no play (Android's HLS, which the server times out
- * once its segments stop being read) is on the song's own session, which nothing stops. The open sessions, and the
- * retired ones not yet stopped, are also kept in [store], so the ones a killed app left running (or a stop that failed)
- * are stopped at the next launch ([stopLeftoverSessions]). Each run's sessions carry its own [run] id, so a session
- * this run opens is never one a previous run left.
- */
+/** Plex transcodes share one session per song, since Plex answers 400 to a session identifier other than the track's last one. */
 @Inject
 class PlexStreamUrlProvider(
     private val authenticationManager: PlexAuthenticationManager,
@@ -227,12 +198,7 @@ class PlexStreamUrlProvider(
     /** The `X-Plex-Session-Identifier` every transcode of [song] carries, and the session of a stream with no play. */
     private fun sessionIdentifier(song: Song): String = "s2-${plexRatingKey(song.path) ?: song.path}"
 
-    /**
-     * The original part file (`song.externalId`) when the player decodes it and it's within the download cap
-     * ([StreamingPolicy.downloadMaxBitrateKbps]); otherwise a progressive MP3 transcode at the cap, or at
-     * [UNCAPPED_TRANSCODE_KBPS] without one, so the download is one file of real, playable audio recorded under the type
-     * it actually is: not the HLS transcode Android streams, whose manifest would be saved as the "file" (#567).
-     */
+    /** A progressive MP3 rather than the HLS transcode Android streams, since a download saves a manifest as the file. */
     override fun downloadSource(song: Song): DownloadSource? {
         val authenticatedCredentials = authenticationManager.getAuthenticatedCredentials() ?: return null
         val maxBitrateKbps = streamingPolicy.downloadMaxBitrateKbps()

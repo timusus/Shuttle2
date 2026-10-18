@@ -1,18 +1,6 @@
 package com.simplecityapps.shuttle.model
 
-/**
- * What an artist's image is (#781, #823), one rule for Android and iOS and for every place an artist is pictured: their
- * page's full-bleed hero (whose colours are seeded from it) and their rows in lists and search. Tried in this order, the
- * first that loads being the one shown:
- *
- * 1. The artist's own image: one beside their files (Android's artist.jpg) or the media server's (Jellyfin, Emby, Plex).
- * 2. The S2 artwork API's artist image, only when [onlineLookup]: the API looks artists up by name alone and says
- *    nothing about how well it matched, so it's trusted only for an artist whose tags pin them down ([of]).
- * 3. [fallbackAlbum]'s cover, as a full square.
- *
- * An artist image (1 or 2) smaller than [MIN_ARTIST_IMAGE_SIZE] counts as absent, so the hero never
- * shows a thumbnail upscaled; the album cover, the last resort, is taken at any size.
- */
+/** One image rule for every artist surface; the online lookup is trusted only when tags pin the artist down. */
 data class ArtistHeroArtwork(
     val artist: AlbumArtist,
     /** Whether to ask the S2 artwork API for the artist's image: their songs carry one MusicBrainz artist id for them. */
@@ -21,10 +9,7 @@ data class ArtistHeroArtwork(
     val fallbackAlbum: Album?,
 ) {
     companion object {
-        /**
-         * The smallest an artist image's shorter side may be, in pixels, to be shown (the image loaders check it as they fetch): about a phone's full-bleed hero at
-         * 2x. A server's thumbnail-sized artist image falls through to the next source instead (#823).
-         */
+        /** Shorter-side minimum for an artist image (about a phone's full-bleed hero at 2x); smaller ones fall through. */
         const val MIN_ARTIST_IMAGE_SIZE = 500
 
         /** MusicBrainz's "Various Artists": an id, but no one artist's image. */

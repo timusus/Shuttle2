@@ -414,8 +414,7 @@ object AndroidSettingsCatalog : SettingsCatalog {
                         key = "pref_share_debug_logs",
                         dependsOn = DebugSettings.FileLogging
                     ),
-                    // Debug builds only: the live view of DebugLoggingTree's output (#433). The row itself
-                    // costs release nothing but this check; the screen and its buffer live in src/debug.
+                    // Debug builds only: the row costs release nothing but this check; the screen lives in src/debug.
                     SettingItem.Navigate(
                         target = SettingsLink.LiveLog,
                         title = SettingsString.PREF_VIEW_LIVE_LOG_TITLE,

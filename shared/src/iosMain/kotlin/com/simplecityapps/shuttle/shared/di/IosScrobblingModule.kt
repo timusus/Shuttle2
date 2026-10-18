@@ -19,14 +19,7 @@ import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.SingleIn
 import platform.Foundation.NSBundle
 
-/**
- * Last.fm scrobbling on iOS (#503): what `:android:scrobbling`'s common code needs that only the platform can build.
- * The queue's database sits next to the library's (in memory for an isolated graph, like it), the client is Darwin's,
- * and flushes run in-process ([InProcessScrobbleFlushScheduler]): Swift also asks for one on foreground and from a
- * `BGAppRefreshTask`. The API key and secret come from Info.plist (`S2LastFmApiKey`, `S2LastFmSharedSecret`, set from
- * `ios/Config/LastFm.xcconfig`, filled by `ios/scripts/generate-lastfm-config.sh`); a build without them hides the Scrobbling row. The session sits in the Keychain
- * through `SecurePreferenceManager`, as on Android.
- */
+/** Flushes run in-process because Swift also triggers them on foreground and from a `BGAppRefreshTask`. */
 @ContributesTo(AppScope::class)
 @BindingContainer
 abstract class IosScrobblingModule {

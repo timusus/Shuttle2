@@ -19,7 +19,7 @@ final class NowPlayingPlayer: ForwardingNowPlayingControllable {
     @ObservationIgnored let player: Player<KitAudioPlayer.QueueKey>
     @ObservationIgnored private let playback: IosPlayerController
     @ObservationIgnored private let intent: PlayIntent
-    /// Remote skips and seeks; plays and pauses are logged by `PlayIntent` with their source (#715, #897).
+    /// Remote skips and seeks; plays and pauses are logged by `PlayIntent`, which knows their source.
     @ObservationIgnored private let log = Logger(subsystem: "com.simplecityapps.shuttle2", category: "session")
 
     init(player: Player<KitAudioPlayer.QueueKey>, playback: IosPlayerController, intent: PlayIntent) {

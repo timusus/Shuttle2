@@ -1,10 +1,6 @@
 package com.simplecityapps.shuttle.model
 
-/**
- * An artist (#637): the album artist of [albumCount] albums, their own, and credited on the songs of [appearsOnCount]
- * others. One with no albums of their own is credited only (a featured artist, one on compilations): the Artists list
- * leaves them out ([isAlbumArtist]), but they have a page, and search finds them.
- */
+/** An artist with no albums of their own is credited only: the Artists list leaves them out, but search still finds them. */
 data class AlbumArtist(
     val name: String?,
     val artists: List<String>,

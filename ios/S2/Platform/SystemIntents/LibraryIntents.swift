@@ -1,7 +1,6 @@
 import AppIntents
 
-// The library App Intents (#758): Shuffle All and Play Playlist for Siri, Shortcuts and Spotlight. App-only, unlike the
-// playback intents (SystemSurfaces/PlaybackIntents.swift), which the widgets' buttons need too.
+// App-only, unlike the playback intents, which the widgets' buttons need too.
 
 /// What the library intents ask of the app. Called on the main thread.
 @MainActor
@@ -22,7 +21,7 @@ extension IntentPerformers {
     }
 }
 
-/// Shuffles the whole library, as Home's Shuffle All does (Android's Shuffle all shortcut, #761).
+/// Shuffles the whole library, as Home's Shuffle All does.
 struct ShuffleLibraryIntent: AudioPlaybackIntent {
     static var title: LocalizedStringResource { "Shuffle All" }
     static var description: IntentDescription { "Shuffles every song in your Shuttle Music library." }

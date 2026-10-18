@@ -137,7 +137,7 @@ class MediaActionHandler @Inject constructor(
         is ResumeContext.Result.Failure -> Message(MediaActionMessage.PlaybackFailed(result.message))
     }
 
-    /** Plays [action], a Resume's start over, with the selection's [songs] if the resume already read them (#687). */
+    /** Reuses [songs] when the resume already read them, so the selection isn't loaded twice. */
     private suspend fun startOver(action: MediaAction, songs: List<Song>?): MediaActionResult = when {
         songs == null -> handle(action)
         action is MediaAction.Play -> play(action, songs)

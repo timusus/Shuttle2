@@ -44,12 +44,7 @@ internal fun List<Song>.toAlbumArtist(key: AlbumArtistGroupKey): AlbumArtist {
     )
 }
 
-/**
- * The library's artists (#637), made of these songs (the whole library's): every album artist ([AlbumIdentityRule]),
- * with their own albums' songs, and every artist a song credits ([ArtistCredits]) with the songs crediting them. One
- * artist per key, so an album artist also credited elsewhere is one artist, and one only credited has no albums. An
- * album with several album artists ([com.simplecityapps.shuttle.model.AlbumIdentity.albumArtists]) is each one's own.
- */
+/** The library's artists: album artists with their albums, plus credited artists, merged one per key. */
 internal fun List<Song>.toArtists(): List<AlbumArtist> {
     val own = HashMap<AlbumArtistGroupKey, MutableList<Song>>()
     // The songs crediting each artist on someone else's album, with the name each credits them by

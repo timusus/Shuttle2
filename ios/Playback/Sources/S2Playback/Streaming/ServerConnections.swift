@@ -1,11 +1,7 @@
 import Foundation
 import PlaybackStreaming
 
-/// How requests to a media server are made beyond its credentials (#894, #921): the custom headers the user set for it
-/// (a reverse proxy's access token, say) and the one self-signed certificate they trusted for it. The app's implementation
-/// is Kotlin's, the same the Ktor client and the downloads use, so there is one rule for all three.
-///
-/// Header values may be secrets: they go on the request and nowhere else, never into a log, a cache key or a disk cache.
+/// Header values may be secrets: they go on the request only, never into a log, cache key or disk cache.
 public protocol ServerConnectionPolicy: AnyObject, Sendable {
     /// The custom headers for a request to `url`: none for a server without any, or for a host that isn't a configured server.
     func headers(for url: URL) -> [String: String]

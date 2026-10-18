@@ -43,7 +43,7 @@ class KeyValueEqualizerPresetStore(
         const val PresetKey = "preset_name"
         const val CustomPresetBandsKey = "custom_preset_bands"
 
-        /** Reads and writes the JSON Moshi wrote before (#584): nulls left out, unknown fields ignored. */
+        /** Reads the JSON Moshi wrote before: nulls left out, unknown fields ignored. */
         private val json = Json {
             ignoreUnknownKeys = true
             explicitNulls = false

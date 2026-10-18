@@ -1,8 +1,7 @@
 import SwiftUI
 import UIKit
 
-/// The colours of artwork S2 draws itself (#646): the neutral placeholder for a cover that's missing or still
-/// loading, and the muted tones of `GeneratedArtwork` for a genre or playlist, which have no cover of their own.
+/// Colours for artwork S2 draws itself: the placeholder, and muted tones for genres and playlists that have no cover.
 enum ArtworkPalette {
     /// The placeholder's fill: a system grey, the same quiet tone whatever the screen's tint.
     static let placeholderFill = Color(uiColor: .s2SurfaceFill)

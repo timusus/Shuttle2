@@ -11,11 +11,7 @@ import platform.Foundation.NSURLCredential
 import platform.Foundation.NSURLRequest
 import platform.Foundation.setValue
 
-/**
- * What Swift's own `URLSession`s (streaming, artwork) and the downloads need to talk to a server as the Ktor client does
- * (#894, #921): the one [ServerConnectionStore] behind both, so a server's custom headers and pinned certificate apply the
- * same everywhere. Swift can't see the networking module, so this is its way in.
- */
+/** Swift can't see the networking module, so this is its way in; one [ServerConnectionStore] keeps headers and pins the same everywhere. */
 @Inject
 class ServerRequestPolicy(
     private val store: ServerConnectionStore

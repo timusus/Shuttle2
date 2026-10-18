@@ -64,11 +64,7 @@ enum class S2PlayerControlsSize(
     Large(toggle = 56.dp, toggleIcon = 28.dp, skip = S2IconButtonSize.Large, skipContainer = 64.dp, playPause = 96.dp, width = 384.dp),
 }
 
-/**
- * The full player's play/pause button: a filled `primary` circle, the one transport button with a
- * container (#783). [buffering] swaps the icon for a `LoadingIndicator`. Elsewhere (the mini player)
- * play/pause is a plain [S2PlayPauseIconButton].
- */
+/** The full player's play/pause, the one transport button with a filled container. */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun S2PlayPauseButton(
@@ -102,11 +98,7 @@ fun S2PlayPauseButton(
     }
 }
 
-/**
- * Play/pause as a standard icon button, a [S2TouchTarget.minimum] square with no container: the mini
- * player's (#738). [buffering] swaps the icon for a `LoadingIndicator`; the button stays enabled, so
- * a tap while it spins pauses.
- */
+/** Mini player play/pause: stays enabled while buffering, so a tap still pauses. */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun S2PlayPauseIconButton(

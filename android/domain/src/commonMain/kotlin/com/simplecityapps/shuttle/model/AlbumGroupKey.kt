@@ -1,27 +1,16 @@
 package com.simplecityapps.shuttle.model
 
-/**
- * Which album a song belongs to, as [AlbumIdentityRule] decides it (#637): the album's name ([key], case-folded and
- * without articles, what albums sort and index by), its album artist, and [identity], what tells it apart from another
- * album of the same name and album artist.
- *
- * [identity] is `mb:<release id>` for an album keyed by its MusicBrainz id, `<source>:<album id>` (`jellyfin:…`) for one
- * keyed by its server's album id, `dir:<folder>` for an untagged album of several artists, told apart by its folder,
- * and null for one the name rule alone names.
- */
+/** Tells apart albums of the same name and album artist, by MusicBrainz release, server album id or folder. */
 data class AlbumGroupKey(
     val key: String?,
     val albumArtistGroupKey: AlbumArtistGroupKey?,
     val identity: String? = null
 ) {
-    /** The key as one string, for storing it; a name-rule key has no identity part, as before #637 (a play event's context, a pinned collection): [decode] reads it back. */
+    /** Stored form; a key without an identity keeps the two-part form older rows use, which [decode] still reads. */
     fun encode(): String = if (identity == null) encodeParts(albumArtistGroupKey?.key, key) else encodeParts(albumArtistGroupKey?.key, key, identity)
 
     companion object {
-        /**
-         * The key [encoded] names; null for a string that isn't one. A key stored before #637 has no identity part, and
-         * reads back as a name-rule key.
-         */
+        /** Null for a string that isn't a key; keys stored without an identity part read back as name-rule keys. */
         fun decode(encoded: String): AlbumGroupKey? = decodeParts(encoded).takeIf { it.size in 2..3 }?.let { parts ->
             AlbumGroupKey(parts[1], AlbumArtistGroupKey(parts[0]), parts.getOrNull(2))
         }

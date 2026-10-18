@@ -3,12 +3,7 @@ package com.simplecityapps.shuttle.shared.settings
 import com.simplecityapps.shuttle.settings.AppearanceSettings
 import platform.Foundation.NSUserDefaults
 
-/**
- * Where iOS's default for a shared setting departs from Android's. Registered in NSUserDefaults' registration
- * domain, which every suite in the process reads and nothing saves, so a value the user sets still wins.
- *
- * - Show Home on launch: iOS opens on Home, as Music does (#617, #623); Android keeps opening on Library.
- */
+/** Registered in NSUserDefaults' registration domain, so a value the user sets still wins over these defaults. */
 object IosSettingDefaults {
     val values: Map<String, Any> = mapOf(
         AppearanceSettings.ShowHomeOnLaunch.key to true

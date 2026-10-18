@@ -58,24 +58,7 @@ data class HomeCandidates(
         get() = jumpBackIn != null && aroundThisTime != null && heavyRotation != null && rediscover != null && recentlyAdded != null && genrePicks != null
 }
 
-/**
- * Chooses Home's sections from [candidates] as of [at] in [timeZone] (#633). While some candidates are still loading, it
- * stops at the first section whose candidates (or the cold start's choice) wait on them: the sections it gives are the
- * leading ones of the full set, each as it will be once everything has loaded, as a section only depends on the ones before it. Sections come in [HomeSectionId]
- * order and an item shows once, in the earliest section that shows it; a hidden section claims nothing. Each section's
- * thresholds are checked on its own candidates, and a section hides when fewer than [MIN_SHOWN_ITEMS] are left to show.
- * Every section but Shuffle all and Jump back in (whose cards say it, #706) carries a one-line subtitle saying what it is (#671).
- * - Cold start (no history, nothing ever played through): Recently added, Genre picks by size, and Shuffle all.
- * - Jump back in: the last [JUMP_BACK_IN_SIZE] contexts played from; the albums last played through until there's history.
- * - Around this time: contexts by days played near this hour, days of today's kind (weekday or weekend) counting
- *   [SAME_KIND_OF_DAY_WEIGHT]x; shown when [AROUND_THIS_TIME_MIN_ITEMS] contexts were each played on [AROUND_THIS_TIME_MIN_DAYS]
- *   days. Titled for the part of the day.
- * - Heavy rotation: albums and artists listened to on [HEAVY_ROTATION_MIN_DAYS] days or more (see [HeavyRotation]).
- * - Rediscover: shuffled with a seed that changes each local day, so it holds still through the day.
- * - Recently added: the library's newest albums, on a first import too, when everything was added at once (#649).
- * - Genre picks: played genres first, then the largest; [GENRE_PICKS_MIN] to [GENRE_PICKS_MAX] of them, else hidden. The
- *   ones shown are ordered by a hash seeded with the local day, so a play doesn't reshuffle them within the day (#672).
- */
+/** Stops at the first section still waiting on a loading candidate, so a shown section never changes. */
 fun assembleHomeSections(
     candidates: HomeCandidates,
     at: Instant,
@@ -202,12 +185,7 @@ internal const val HEAVY_ROTATION_MIN_DAYS = 3
 internal const val GENRE_PICKS_MIN = 4
 internal const val GENRE_PICKS_MAX = 6
 
-/**
- * Loads every section's candidates, side by side, and assembles Home's sections from them as they come (#688): each
- * emission is the leading sections whose candidates, and those of every section before them, have loaded, so a section
- * appears once and never changes after; the last is all of them. A partial set with no section yet isn't emitted. Jump
- * back in's items carry where each one's queue was left (#670), finished or not (#706): none for an item never played from.
- */
+/** Emits sections as their candidates load, so a section appears once and never changes after. */
 class LoadHomeSections @Inject constructor(
     private val jumpBackIn: JumpBackIn,
     private val aroundThisTime: AroundThisTime,
@@ -277,15 +255,7 @@ class LoadHomeSections @Inject constructor(
     }
 }
 
-/**
- * Home's sections, or null while the library is empty. They're loaded at set moments only, never per play, so nothing
- * moves under the user's thumb (#672): each time Home becomes [visible] (it appears, the user returns to its tab, the app
- * comes to the foreground), and while it's visible on each of [refreshes] (pull to refresh), when an import completes
- * and when the library turns empty or stops being so. While it's hidden they reload as the local hour turns, for Around
- * this time's window and the daily seeds, so returning finds them fresh. Nothing loads until Home is first visible.
- * Until sections have shown, they come in as each loads (see [LoadHomeSections]); after that, a reload replaces them all
- * at once, so the ones on screen don't shrink back and grow again.
- */
+/** Reloads at set moments only, never per play, so nothing moves under the user's thumb. */
 class ObserveHomeSections @Inject constructor(
     private val suggestionsRepository: SuggestionsRepository,
     private val playHistoryRepository: PlayHistoryRepository,

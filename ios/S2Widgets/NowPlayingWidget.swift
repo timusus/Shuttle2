@@ -3,9 +3,7 @@ import SwiftUI
 import UIKit
 import WidgetKit
 
-/// The current song, its cover and a play/pause button (#758): small and medium on the Home Screen, with Next on
-/// medium; rectangular, circular and inline on the Lock Screen. Nothing playing shows a play button, which shuffles
-/// the library (`TogglePlaybackIntent`).
+/// The current song, its cover and a play/pause button; with nothing playing, the button shuffles the library.
 struct NowPlayingWidget: Widget {
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: NowPlayingStore.nowPlayingWidgetKind, provider: NowPlayingProvider()) { entry in

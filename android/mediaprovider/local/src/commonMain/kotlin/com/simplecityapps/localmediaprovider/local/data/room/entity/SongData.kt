@@ -58,8 +58,7 @@ data class SongData(
     // When the song was made a favourite; null when it isn't one. Left out of [SongDataUpdate], so a rescan or a remote
     // sync keeps it, and written only by [com.simplecityapps.localmediaprovider.local.data.room.dao.SongDataDao.setFavourite].
     @ColumnInfo(name = "favouritedAt") var favouritedAt: Instant? = null,
-    // The raw tags and ids of #637, as [Song] describes them. Added by the migration to version 50 without a default:
-    // null until the song is next read, and where the source has no value.
+    // Nullable because the migration to version 50 added the column without a default.
     @ColumnInfo(name = "albumArtists") var albumArtists: List<String>? = null,
     @ColumnInfo(name = "artistsTag") var artistsTag: List<String>? = null,
     @ColumnInfo(name = "artistDisplay") var artistDisplay: String? = null,
@@ -74,7 +73,7 @@ data class SongData(
     @ColumnInfo(name = "serverArtistIds") var serverArtistIds: List<String>? = null,
     @ColumnInfo(name = "serverAlbumArtistIds") var serverAlbumArtistIds: List<String>? = null,
     @ColumnInfo(name = "artworkItemId") var artworkItemId: String? = null,
-    // Classical metadata of #1065, as [Song] describes it. Added by the migration to version 59: null until the song is next read.
+    // Nullable because the migration to version 59 added the column without a default.
     @ColumnInfo(name = "composer") var composer: String? = null,
     @ColumnInfo(name = "composerSort") var composerSort: String? = null,
     @ColumnInfo(name = "conductor") var conductor: String? = null,
@@ -169,12 +168,7 @@ private fun Song.resolvedDateAdded(): Instant {
 
 fun List<Song>.toSongData(mediaProviderType: MediaProviderType): List<SongData> = map { song -> song.toSongData(mediaProviderType) }
 
-/**
- * Every `songs` column but `lyrics`, which a whole library's worth of text would otherwise load with every song list
- * (#873). A song's lyrics are read by [com.simplecityapps.localmediaprovider.local.data.room.dao.SongDataDao.lyrics]
- * when shown. Room leaves [SongData.lyrics] null for a query that omits it; a new column must be added here too (see
- * `SongDataDaoLyricsTest`).
- */
+/** Every column but `lyrics`, which list queries skip to avoid loading a library's worth of text; a new column must be listed here too. */
 const val SONG_COLUMNS =
     "id, name, track, disc, duration, year, genres, path, albumArtist, artists, album, size, mimeType, lastModified, " +
         "playbackPosition, playCount, lastPlayed, lastCompleted, blacklisted, externalId, mediaProvider, " +

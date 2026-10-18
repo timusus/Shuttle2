@@ -53,7 +53,7 @@ fun LibraryArtwork(
         model = model,
         image = model?.let {
             {
-                // The glyph under the image, so art that's still loading or never loads isn't a blank tile (#398).
+                // The glyph under the image, so art that's still loading or never loads isn't a blank tile.
                 val reportLoaded = LocalArtworkImageLoaded.current
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     ArtworkPlaceholderGlyph(placeholder, size)
@@ -75,11 +75,7 @@ fun LibraryArtwork(
 /** What a library list is showing: its content, or why it has none yet. */
 enum class LibraryContentState { Loading, Scanning, Empty, Ready }
 
-/**
- * Shows [content] once [state] is Ready; otherwise the matching loading, scan progress or [emptyTitle] state, under the
- * tab's [controls] row when it has one (the Ready content shows that row as its list's first item). A scan with
- * [hasItems] keeps showing [content] under a thin progress bar instead of the full-screen placeholder (#625).
- */
+/** A scan with [hasItems] keeps [content] visible under a thin progress bar instead of a full-screen placeholder. */
 @Composable
 fun LibraryContent(
     state: LibraryContentState,
@@ -153,11 +149,7 @@ val Song.rowSubtitle: String
 /** The gap between a mosaic's covers. */
 private val MosaicGap = 2.dp
 
-/**
- * Artwork from [covers] (#491, #646, #135): a 2x2 mosaic of four albums' covers, or fewer repeated so every cell stays a
- * square, uncropped cover ([mosaicCells]); the one cover alone, or [placeholder] with none. [size] is the whole mosaic's;
- * the caller's [modifier] may override it, as for [Artwork].
- */
+/** A 2x2 mosaic of covers, repeating covers so every cell stays square and uncropped. */
 @Composable
 fun CoverMosaic(
     covers: List<Song>,

@@ -1,17 +1,8 @@
 import SwiftUI
 import UIKit
 
-/// Now Playing's colours, derived from the cover's raw extracted colour (`\.artworkTintSource`) per scheme (#624).
-///
-/// The player's ground is the cover's hue, not the system background: a light, saturated wash in the light scheme
-/// and a deep one in the dark, so the screen reads as the artwork top to bottom whatever the cover's own tone. The
-/// hue survives but the tone is normalised, so a near-black or washed-out cover still gives a rich ground, and a
-/// cover with no dominant hue (greyscale, near-black) falls back to a neutral grey ground and the app accent.
-///
-/// Everything drawn on the ground is measured against it rather than the scheme's chrome ground: `tint` is the
-/// extracted colour (or the accent) moved along `ContrastSafeTint`'s tone ramp until it clears 4.5:1 on `ground`,
-/// `secondaryInk` is the label colour faded toward the ground only as far as AA allows. Both are measured with the worst cover
-/// showing through as much as `ArtworkBackground` lets it where they sit (`worstGround`).
+/// Now Playing's colours, from the cover's hue with the tone normalised; a cover with no dominant hue gets a neutral ground.
+/// Everything drawn on the ground is measured against it, not the scheme's chrome, so text clears AA on the worst cover.
 struct PlayerPalette: Equatable {
     /// The control zone's ground: the lower half of the screen, under the title, scrubber and transport.
     let ground: ContrastSafeTint.RGB

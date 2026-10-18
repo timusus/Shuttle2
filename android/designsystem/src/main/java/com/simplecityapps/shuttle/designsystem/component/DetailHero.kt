@@ -130,12 +130,7 @@ fun DetailHero(
     }
 }
 
-/**
- * The head of an artist page (#781): [image] full-bleed, square on a phone and 4:3 from [WideBleedWidth], running up
- * behind the pinned bar, with a scrim at the top for the bar's icons and one at the bottom behind the white [title] and
- * [subtitle]. The Play / Shuffle [actions] and any [extra] follow below it. The scheme's `surfaceContainerHighest`
- * shows while the image loads, or when there's none: no placeholder glyph.
- */
+/** The artist page's head: [image] runs behind the pinned bar; `surfaceContainerHighest` shows while it loads, with no glyph. */
 @Composable
 fun DetailBleedHero(
     title: String,

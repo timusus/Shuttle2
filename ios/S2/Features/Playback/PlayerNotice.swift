@@ -42,8 +42,7 @@ enum PlayerEventOutcome {
         }
     }
 
-    /// Maps a shared action's result: Now Playing's events carry these, and the Library's song lists show the same
-    /// notices (`mediaActionResults(_:handled:send:)`), Exclude's with its Undo (#650).
+    /// Maps a shared action's result to a notice or route; Now Playing and the Library's song lists both use it.
     static func resolve(_ result: any MediaActionResult, send: @escaping (any MediaAction) -> Void) -> PlayerEventOutcome? {
         switch result {
         case let message as MediaActionResultMessage:

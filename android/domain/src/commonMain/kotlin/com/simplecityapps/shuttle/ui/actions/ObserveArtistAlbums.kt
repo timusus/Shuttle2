@@ -19,29 +19,19 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 
-/** An artist's albums (#637): [albums], those they're the album artist of, and [appearsOn], others' albums crediting them. Each newest first. */
+/** An artist's [albums] and the others' albums they appear on ([appearsOn]), each newest first. */
 data class ArtistAlbums(
     val albums: List<Album>,
     val appearsOn: List<Album>,
 )
 
-/**
- * The [ArtistAlbums] of the artist a key names; re-emits as they change. Appears On holds every album with a song
- * crediting them ([com.simplecityapps.shuttle.model.ArtistCredits]) whose album artist is someone else (a compilation's
- * is "Various Artists"); songs without an album name make no album to appear on.
- *
- * Appears On needs a songs query and then an albums query, so it starts empty: the artist's own albums emit as soon
- * as they load rather than waiting on it, which was what kept the artist page on its spinner (#677).
- */
+/** Appears On starts empty, so the artist's own albums show without waiting on its slower queries. */
 @Inject
 class ObserveArtistAlbums(
     private val albumRepository: AlbumRepository,
     private val songRepository: SongRepository,
 ) {
-    /**
-     * [settled] makes the first emission wait for Appears On, for a caller that takes just the one ([LoadArtistArtwork]),
-     * rather than starting with it empty.
-     */
+    /** [settled] waits for Appears On before the first emission, for a caller that takes only one. */
     operator fun invoke(
         key: AlbumArtistGroupKey,
         settled: Boolean = false,

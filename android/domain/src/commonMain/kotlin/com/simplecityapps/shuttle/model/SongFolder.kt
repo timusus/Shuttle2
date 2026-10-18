@@ -102,9 +102,7 @@ object SongFolder {
         val segments = documentId.substringAfter(':').split('/').filter { it.isNotEmpty() }
         if (segments.isEmpty()) return null
         return when (volume) {
-            // The "home" root is primary:Documents
             "home" -> Location(listOf(PRIMARY_VOLUME, "Documents") + segments.dropLast(1), segments.last())
-
             else -> Location(listOf(volume) + segments.dropLast(1), segments.last())
         }
     }

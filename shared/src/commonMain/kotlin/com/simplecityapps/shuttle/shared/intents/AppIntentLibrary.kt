@@ -9,11 +9,7 @@ import com.simplecityapps.shuttle.ui.actions.MediaSelection
 import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.flow.first
 
-/**
- * What Siri, Shortcuts and Spotlight's App Intents (#758) play from the library: the playlists their playlist parameter
- * offers, and the [MediaAction]s Swift's `AppIntentPerformer` dispatches, built here so Swift never spells out a query or
- * a play context. The actions are the app's own (Home's Shuffle All, a playlist row's Play and Shuffle).
- */
+/** Builds the actions and playlists for App Intents here so Swift never spells out a query or play context. */
 @Inject
 class AppIntentLibrary(
     private val playlistRepository: PlaylistRepository,

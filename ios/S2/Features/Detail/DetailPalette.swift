@@ -24,14 +24,7 @@ struct DetailWash: View {
     }
 }
 
-/// A detail screen's hero colours for its cover and scheme (#744), after Now Playing's `PlayerPalette`.
-///
-/// Dark, or with no cover colour, the hero draws in the tint in scope (`\.artworkTint`): the wash is the tint itself.
-/// Light with a cover colour, that tint is the cover darkened until it reads on the page, and a wash of it was a
-/// muddy beige or grey-blue, so the hero looked flat. There the wash is the cover's hue at a vivid tone instead, as
-/// strong as the secondary text still clearing AA on it allows, and the tint is measured against the darkest ground
-/// it's drawn on (the Shuffle capsule over the top of the wash), so the artist line, the Shuffle label and the
-/// playing row clear AA too.
+/// A light wash of the darkened cover tint reads as muddy beige, so light heroes wash with the cover's vivid hue instead.
 struct DetailPalette: Equatable {
     typealias RGB = ContrastSafeTint.RGB
 
@@ -52,7 +45,7 @@ struct DetailPalette: Equatable {
         /// The light wash's strongest opacity, before the secondary text's contrast lowers it.
         static let lightWashMaxOpacity = 0.32
         static let lightTonalOpacity = 0.2
-        /// The wash and the Shuffle capsule as they were before #744, kept for dark and the accent.
+        /// Dark and the accent keep these strengths.
         static let washOpacity = 0.22
         static let darkTonalOpacity = 0.26
         static let lightAccentTonalOpacity = 0.16

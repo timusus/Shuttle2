@@ -65,11 +65,7 @@ actual fun createPlatformHttpClient(
     }
 }
 
-/**
- * Answers a TLS challenge as the system would, except that a certificate it refuses is still accepted from the server
- * the user trusted it for, by its exact SHA-256 fingerprint (#894). A refused certificate is otherwise remembered, for
- * the sign-in to offer to trust it, and the request fails as it always has.
- */
+/** Answers a TLS challenge as the system does, but accepts a refused certificate the user trusted for that server, by exact fingerprint. */
 @OptIn(ExperimentalForeignApi::class)
 fun ((NSURLSessionAuthChallengeDisposition, NSURLCredential?) -> Unit).handleServerTrust(
     challenge: NSURLAuthenticationChallenge,

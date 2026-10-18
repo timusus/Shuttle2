@@ -18,10 +18,7 @@ class LibrarySettings @Inject constructor(
     val reportPlaybackToServer = store.preference(ReportPlaybackToServer)
     val minTrackLength = store.preference(MinTrackLength)
 
-    /**
-     * Moves anyone who chose never, when it was the default, to the daily sync (#771): once, so never chosen after this
-     * stays. Asked at launch, before the background sync is scheduled.
-     */
+    /** One-time move off the old default of never, run at launch before the background sync is scheduled. */
     fun migrateRescanFrequency() {
         if (rescanFrequencyMigrated.value) return
         if (rescanFrequency.value == ImportFrequency.Never) rescanFrequency.value = ImportFrequency.Daily

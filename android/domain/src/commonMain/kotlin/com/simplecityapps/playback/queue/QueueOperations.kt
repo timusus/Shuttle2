@@ -16,10 +16,7 @@ interface QueueOperations {
     val shuffleModeFlow: StateFlow<ShuffleMode>
     val repeatModeFlow: StateFlow<RepeatMode>
 
-    /**
-     * What the queue was started from (#633): the [context] of the last [setQueue], saved and restored with the queue.
-     * [PlayContext.None] once the queue is cleared, or set without one.
-     */
+    /** Saved with the queue, so a restore brings back where it was started from. */
     val playContext: PlayContext
 
     suspend fun setQueue(

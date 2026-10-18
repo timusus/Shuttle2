@@ -11,7 +11,7 @@ import com.simplecityapps.playback.R
 class CastOptionsProvider : OptionsProvider {
     override fun getCastOptions(context: Context): CastOptions = CastOptions.Builder()
         .setReceiverApplicationId(context.getString(R.string.cast_app_id))
-        // The route button opens the system output switcher where there is one, which lists Cast devices beside Bluetooth and wired outputs (#760).
+        // Where the system offers an output switcher, it lists Cast devices beside Bluetooth and wired outputs.
         .setShowSystemOutputSwitcherOnCastIconClick(true)
         // S2's own media session and notification follow the Cast player; the Cast SDK's own would duplicate them.
         .setCastMediaOptions(CastMediaOptions.Builder().setMediaSessionEnabled(false).setNotificationOptions(null).build())

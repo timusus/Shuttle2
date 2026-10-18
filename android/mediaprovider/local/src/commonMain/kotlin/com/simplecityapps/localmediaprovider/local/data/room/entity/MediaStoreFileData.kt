@@ -4,12 +4,7 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import com.simplecityapps.shuttle.model.MediaProviderType
 
-/**
- * One audio row of MediaStore's listing as [provider]'s last stored import read it (#875), every folder's: the folder
- * rules apply after. [id] is MediaStore's `_ID` and [generation] its `GENERATION_MODIFIED` (API 30), which MediaStore
- * raises on every change to the row, so the next import reads again only the rows whose generation moved and keeps the
- * rest. Each provider keeps its own: one's import moving past a change mustn't hide it from the other's.
- */
+/** One MediaStore row as the last stored import read it; the next import re-reads only rows whose generation moved. */
 @Entity(tableName = "media_store_files", primaryKeys = ["provider", "id"])
 data class MediaStoreFileData(
     @ColumnInfo(name = "provider") val provider: MediaProviderType,

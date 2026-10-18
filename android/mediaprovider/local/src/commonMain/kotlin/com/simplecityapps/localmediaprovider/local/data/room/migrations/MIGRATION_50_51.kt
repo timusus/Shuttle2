@@ -4,7 +4,7 @@ import androidx.room.migration.Migration
 import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.execSQL
 
-/** `resume_points`: where each play context's queue was left, so Home's Jump back in can resume it (#670). Starts empty. */
+/** Creates resume_points for Home's Jump back in; starts empty. */
 val MIGRATION_50_51 =
     object : Migration(50, 51) {
         override fun migrate(connection: SQLiteConnection) {

@@ -3,10 +3,8 @@ import Foundation
 import os
 import Shared
 
-/// Sends queued Last.fm scrobbles (#503) when the app can't do it in-process, where Android uses WorkManager. While
-/// the app runs, `InProcessScrobbleFlushScheduler` sends each scrobble as it's queued and on every return to the app;
-/// this `BGAppRefreshTask`, asked for each time the app leaves the foreground, sends what's still queued after the
-/// app is suspended or ended. The scheduler never runs two sends at once, whichever of these starts them.
+/// Sends queued scrobbles when the app is suspended or ended; while running, `InProcessScrobbleFlushScheduler` sends them.
+/// The scheduler never runs two sends at once, whichever of these starts them.
 @MainActor
 enum ScrobbleFlush {
     /// Listed in Info.plist's `BGTaskSchedulerPermittedIdentifiers` (`project.yml`).

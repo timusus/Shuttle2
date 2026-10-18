@@ -27,7 +27,7 @@ import kotlinx.coroutines.flow.stateIn
 
 data class SongInfoUiState(
     val song: Song? = null,
-    // Loaded apart from the song, which doesn't carry its lyrics (#873).
+    // Loaded apart from the song, which doesn't carry its lyrics.
     val lyrics: String? = null,
     val loading: Boolean = true,
 )

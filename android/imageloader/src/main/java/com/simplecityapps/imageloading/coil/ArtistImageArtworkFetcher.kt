@@ -9,10 +9,7 @@ import com.simplecityapps.shuttle.model.ArtistHeroArtwork
 import com.simplecityapps.shuttle.model.ArtistImageArtwork
 import com.simplecityapps.shuttle.model.Song
 
-/**
- * An artist's image for a song shown as its artist (#952): the shared rule's ([ArtistHeroArtwork]) real artist images, their own
- * or the online lookup, but not its top-album fallback, then the song's own artwork when the artist has no image.
- */
+/** An artist's real image for a song shown as its artist, falling back to the song's own artwork when there's none. */
 internal class ArtistImageArtworkFetcher(
     private val model: ArtistImageArtwork,
     private val options: Options,

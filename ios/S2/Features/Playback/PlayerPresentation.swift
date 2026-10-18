@@ -71,9 +71,7 @@ extension View {
                 content()
                     .environment(\.layoutTier, tier)
                     .presentationDetents([.medium, .large])
-                    // The queue sheet at its medium detent leaves Now Playing's close chevron on screen above it: let
-                    // it take touches, so the player closes without dismissing the sheet first (#684). The other
-                    // sheets keep the system dimming and blocking.
+                    // The queue sheet at medium leaves the close chevron on screen, so let it take touches.
                     .presentationBackgroundInteraction(keepsPlayerTappable ? .enabled(upThrough: .medium) : .automatic)
                     .presentationDragIndicator(.visible)
             }

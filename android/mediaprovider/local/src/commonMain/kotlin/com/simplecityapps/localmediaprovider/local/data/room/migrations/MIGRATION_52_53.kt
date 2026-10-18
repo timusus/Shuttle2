@@ -4,14 +4,7 @@ import androidx.room.migration.Migration
 import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.execSQL
 
-/**
- * Drops `pending_favourites.mediaProvider` and `externalId` (#497): the sender looks each song up by `songId`, so
- * nothing read them. SQLite before 3.35 (below API 34) can't drop a column, so the table is rebuilt, keeping its rows.
- *
- * Then backfills the outbox with every remote-provider favourite that has no pending row: hearts made before the outbox
- * existed were never sent, and the sync's favourite merge lets the server win for a song with no row, so they would be
- * cleared rather than pushed. Each is queued as a favourite at the time it was made.
- */
+/** Rebuilds pending_favourites without its unused columns, and queues hearts made before the outbox existed so a sync doesn't clear them. */
 val MIGRATION_52_53 =
     object : Migration(52, 53) {
         override fun migrate(connection: SQLiteConnection) {

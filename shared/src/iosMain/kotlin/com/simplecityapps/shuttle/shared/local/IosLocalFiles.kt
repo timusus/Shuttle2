@@ -1,16 +1,6 @@
 package com.simplecityapps.shuttle.shared.local
 
-/**
- * This device's music files (#590), which only Swift can reach: the app's Documents folder (the Files app's "On My
- * iPhone > Shuttle Music", and Finder's file sharing) and the folders picked in Files, each kept as a security-scoped
- * bookmark. Swift's `LocalLibrary` implements it; the graph's factory is given one.
- *
- * A file's song path is `s2local://<folder id>/<path in the folder>`, unescaped: `documents` for the Documents folder,
- * a picked folder's own id otherwise. It stays the same when the app's container moves (every update and reinstall),
- * so a song keeps its history; [fileUrl] resolves it to where the file is now.
- *
- * Every call is synchronous and may block on the file system, so the import calls it off the main thread.
- */
+/** Swift implements this over security-scoped bookmarks. Song paths stay put when the container moves, so history survives. */
 interface IosLocalFiles {
     /** The picked folders, in the order they were added. The Documents folder is always read, so isn't listed. */
     fun folders(): List<IosLocalFolder>

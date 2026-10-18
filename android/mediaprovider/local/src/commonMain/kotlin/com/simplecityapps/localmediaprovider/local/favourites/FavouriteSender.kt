@@ -19,20 +19,7 @@ import kotlinx.coroutines.withTimeoutOrNull
 
 private val logger = Logger.tagged("FavouriteSender")
 
-/**
- * Drains the `pending_favourites` outbox (#497) to [writer]: every favourite or unfavourite made on a remote-provider
- * song reaches its server, so a heart isn't local-only.
- *
- * [start] watches the outbox, and each time it changes (app start, or a new toggle) sends its rows one at a time, oldest
- * change first, on [scope]. A row is acked once the writer reports success. A row that fails (the server is unreachable,
- * or the session expired) stays queued and doesn't hold up the rows behind it; it isn't sent again by the drains that
- * follow (each ack re-emits the outbox), only by a retry, scheduled with a backoff that starts at [INITIAL_BACKOFF_MS],
- * doubles to [MAX_BACKOFF_MS] while sends keep failing, and starts over once one succeeds or a new toggle is sent.
- * A song that no longer exists, or that no writer handles, is dropped from the outbox rather than retried forever.
- *
- * One collector handles both the outbox and the retry timer, so drains never overlap. The retry delay uses [scope]'s
- * dispatcher, so it runs on virtual time in tests.
- */
+/** Sends favourites made on remote songs to their servers, one at a time with backoff, so a heart isn't local-only. */
 class FavouriteSender(
     private val dao: SongDataDao,
     private val writer: FavouriteWriter,

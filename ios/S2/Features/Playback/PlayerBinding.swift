@@ -21,7 +21,7 @@ struct NowPlayingState: Equatable {
     var positionMs = 0
     var durationMs = 0
     var queue: [NowPlayingQueueRow] = []
-    /// What the queue was started from (#909), the album, artist, playlist or genre its "Playing from" line opens.
+    /// The album, artist, playlist or genre the "Playing from" line opens.
     var queueSource: QueueSource?
     var shuffleOn = false
     var repeatMode: NowPlayingRepeat = .off
@@ -207,10 +207,7 @@ struct PlayerActions {
 
 // MARK: - The binding
 
-/// The mini player's and Now Playing's state and commands, off the shared `PlayerViewModel` (#586, #587, #621): its
-/// `uiState` mapped onto `MiniPlayerState` and `NowPlayingState`, its actions onto `PlayerActions`, and its one-shot
-/// events handed to Now Playing as `events`, which `outcome(for:)` turns into a notice or a route to open. Whether it
-/// plays is the listener's intent (`PlayIntent`), not the player's state, and play/pause goes through the intent.
+/// Whether it plays is the listener's intent (`PlayIntent`), not the player's state, so play/pause goes through the intent.
 ///
 /// Each state is replaced only when it changes, so the mini player, which reads `miniPlayer` alone, isn't
 /// redrawn on every progress tick. The displayed position holds a seek's target until the player catches up
@@ -295,7 +292,7 @@ final class PlayerBinding {
             next.artist = current?.artist
             next.album = current?.album
             next.artwork = artwork
-            // A transcode's badge is what the server sends, not the file it holds (#902).
+            // A transcode's badge is what the server sends, not the file it holds.
             next.quality = current.map { playing in player.delivered.map(AudioQuality.init(delivered:)) ?? AudioQuality(song: playing.song) }
             next.queueSource = player.queueSource.map(QueueSource.init)
             next.queue = player.items.map { item in

@@ -79,7 +79,7 @@ internal class ImportPasses(
     ): Map<MediaProviderType, ProviderSyncOutcome> {
         val time = TimeSource.Monotonic.markNow()
 
-        // Each provider's timings, filled in by its own song and playlist passes, so the summary line below can attribute a slow import (#866)
+        // Filled in by each provider's passes so the summary below can attribute a slow import.
         val timingsByProvider = plans.associate { (mediaProvider, _) -> mediaProvider.type to ImportTimings() }
 
         val outcomes =
@@ -99,7 +99,7 @@ internal class ImportPasses(
             afterImportTime = afterImportMark.elapsedNow()
         }
 
-        // One line per provider per run, so a slow import can be attributed to its phases (#866)
+        // One line per provider so a slow import can be attributed to its phases.
         timingsByProvider.forEach { (type, timings) ->
             logger.debug {
                 "$type import phases: findSongs ${timings.findSongs.inWholeMilliseconds}ms, " +

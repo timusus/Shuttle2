@@ -65,7 +65,7 @@ fun ShellRoute(
     }
 }
 
-/** Tells the user a server signed them out, with Sign in to open that server's dialog (#595). */
+/** Tells the user a server signed them out, with Sign in to open that server's dialog. */
 @Composable
 internal fun ShellEventsEffect(
     events: List<PendingEvent<ShellEvent>>,

@@ -82,15 +82,9 @@ data class MediaActionsTarget(
     val placeholder: ArtworkPlaceholder,
     /** Actions only this screen offers (remove from playlist, rename), listed after the shared ones. */
     val extraActions: List<S2Action> = emptyList(),
-    /**
-     * What Play and Shuffle start the queue from, when it isn't the selection's own ([MediaSelection.playContext]):
-     * a Home smart-playlist tile plays a song query, but the history should record the smart playlist (#633).
-     */
+    /** Overrides the selection's play context so a Home smart-playlist tile records the playlist, not its song query. */
     val playContext: PlayContext? = null,
-    /**
-     * What Play sends instead of playing from the start, with [playFromStart] listed after it: a Jump back in tile
-     * carries on where its queue was left (#670).
-     */
+    /** What Play sends instead of [playFromStart]: a Jump back in tile resumes where its queue was left. */
     val playAction: MediaAction? = null,
     val playFromStart: S2Action? = null,
     /** Actions only this screen offers that lead the sheet (the queue's Play next and Remove), before the shared ones. */

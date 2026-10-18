@@ -2,9 +2,7 @@ package com.simplecityapps.shuttle.scrobbling
 
 import kotlinx.coroutines.flow.Flow
 
-// The Last.fm account as Settings > Scrobbling sees it (#503), implemented in :android:scrobbling. Sign-in is
-// Last.fm's browser approval (docs/architecture/scrobbling.md): start it, send the user to the returned page,
-// then finish it once they come back.
+// Sign-in is Last.fm's browser approval: start it, send the user to the returned page, then finish it on return.
 
 sealed interface LastFmAccountState {
     /** This build has no Last.fm API key (a fork or F-Droid build), so Last.fm is hidden. */

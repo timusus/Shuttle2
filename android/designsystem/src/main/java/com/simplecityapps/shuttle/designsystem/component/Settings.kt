@@ -41,11 +41,7 @@ import com.simplecityapps.shuttle.designsystem.theme.supporting
  * and last rows round their outer corners. A row outside a group takes the default shapes.
  */
 
-/**
- * How a settings row draws its leading icon. [Tonal] sets it in a tonal rounded-square container and is
- * for top-level rows; [Plain] is the bare icon, for the rows under them, so the containers mark the
- * hierarchy instead of flattening it (#496).
- */
+/** A settings row's leading icon: [Tonal] for top-level rows, [Plain] under them, so the containers mark the hierarchy. */
 enum class SettingIconStyle { Tonal, Plain }
 
 /** A group of settings [rows] under an optional [title]; each row lambda receives its segmented shapes. */

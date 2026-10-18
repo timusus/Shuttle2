@@ -7,11 +7,7 @@ import coil3.request.Options
 import com.simplecityapps.shuttle.model.AlbumArtist
 import com.simplecityapps.shuttle.model.ArtistHeroArtwork
 
-/**
- * An artist's image wherever only the artist is to hand (their rows in lists, search and home): the shared rule's
- * ([ArtistHeroArtwork]), resolved from their library and loaded as their page's hero is, so the row and the page show
- * the same image (#823).
- */
+/** An artist's image where only the artist is at hand, loaded as their page's hero is, so the row and the page match. */
 internal class AlbumArtistArtworkFetcher(
     private val artist: AlbumArtist,
     private val options: Options,

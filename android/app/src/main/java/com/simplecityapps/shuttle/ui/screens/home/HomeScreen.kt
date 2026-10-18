@@ -84,19 +84,14 @@ class HomeCallbacks(
     val onSeeAll: (HomeSectionId) -> Unit = {},
 )
 
-/**
- * Home (#633): Jump back in as a grid, then the library's shelves; at cold start, Shuffle all and a line on how Home
- * fills in; or the empty state when there's no music yet. There's no resume hero: the mini player is that (#646).
- * The bar is a large "Home" title that collapses on scroll (as on iOS), holding Shuffle all and the Settings gear. The
- * first section leads with a headline; every shelf after it takes the one title header. Search is its own tab.
- */
+/** Home: Jump back in, then library shelves; the mini player stands in for a resume hero. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     uiState: HomeUiState,
     callbacks: HomeCallbacks,
     modifier: Modifier = Modifier,
-    /** Shown in place of the generic empty state while the library has no songs (#422), so it can offer access. */
+    /** Replaces the generic empty state while the library has no songs, so it can offer access. */
     emptyContent: (@Composable (Modifier) -> Unit)? = null,
 ) {
     // Fully drawn, for the startup metrics and the Baseline Profile (docs/performance/android-startup.md), once the
@@ -242,7 +237,7 @@ private fun LazyListScope.header(
 
 /**
  * A horizontally scrolling row of [HomeShelfTile]s, each title and subtitle below its cover rather than over it, where
- * they'd clash with text printed on the art (#404). A shelf of more than one kind of item says which each is.
+ * they'd clash with text printed on the art. A shelf of more than one kind of item says which each is.
  */
 private fun LazyListScope.shelf(
     section: HomeSection,

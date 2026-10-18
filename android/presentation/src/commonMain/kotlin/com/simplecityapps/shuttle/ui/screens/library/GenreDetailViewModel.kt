@@ -38,7 +38,6 @@ data class GenreDetailUiState(
     val currentSong: Song? = null,
     val loading: Boolean = true,
 ) {
-    /** What playing this screen's songs starts the queue from (#633). */
     val playContext: PlayContext get() = genre?.playContext ?: PlayContext.None
 }
 

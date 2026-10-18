@@ -1,8 +1,6 @@
 import SwiftUI
 
-/// Artwork for an item that has none of its own (#646): one of a few muted tones, picked by the item's name so a
-/// genre or playlist keeps its tone from launch to launch, screen to screen and platform to platform (Android's
-/// `GeneratedArtwork`), under a small glyph for its kind. The title under the tile says which one it is.
+/// The tone is hashed from the name so an item keeps its colour across launches, screens and platforms.
 struct GeneratedArtwork: View {
     let seed: String
     let symbol: String

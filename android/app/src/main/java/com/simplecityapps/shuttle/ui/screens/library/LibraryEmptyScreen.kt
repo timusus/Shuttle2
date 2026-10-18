@@ -42,11 +42,7 @@ import com.simplecityapps.shuttle.ui.screens.sources.MusicAccess
 import com.simplecityapps.shuttle.ui.screens.sources.MusicPermission
 import dev.zacsweers.metrox.viewmodel.metroViewModel
 
-/**
- * What the Library shows while it has no songs (#379): the way to let S2 read this device's music, the scan's
- * progress once it can, or "No music found" when the scan came back empty. "Connect a server" is on offer throughout.
- * A non-null [trialOffer] adds the skippable offer of the 14-day Pro trial; the user starts it only by tapping it.
- */
+/** Library state with no songs: offers device music access, shows scan progress, or reports that nothing was found. */
 @Composable
 fun LibraryEmptyScreen(
     state: LibraryAvailability.Empty,

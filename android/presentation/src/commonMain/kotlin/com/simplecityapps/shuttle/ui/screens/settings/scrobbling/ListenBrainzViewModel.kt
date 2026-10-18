@@ -28,7 +28,6 @@ data class ListenBrainzUiState(
     val busy: Boolean = false
 )
 
-/** The ListenBrainz section of Settings > Playback & sound > Scrobbling (#503): paste a token, see who's signed in, sign out. */
 @ViewModelKey(ListenBrainzViewModel::class)
 @ContributesIntoMap(AppScope::class)
 class ListenBrainzViewModel @Inject constructor(

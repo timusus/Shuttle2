@@ -1,10 +1,6 @@
 import Foundation
 
-/// The key a stream's completed download is kept under (``StreamStore``): its URL without the query parameters that
-/// change from one play of the same song to the next (#822). A Jellyfin or Emby stream URL carries a fresh
-/// `PlaySessionId` on every resolve and the account's token, a Plex one its token, so keyed by the URL as given, no
-/// later play would ever find what an earlier one kept. What's left still names the item and how it's served (its codec, bitrate and start position), so a
-/// different stream of the same song keeps a key of its own.
+/// Drops the per-play query parameters so replays of a song share one cached download.
 enum StreamCacheKey {
     /// Per-play session ids and auth tokens, matched case-insensitively: Jellyfin's `ApiKey`, Emby's `api_key`, the
     /// MediaBrowser header tokens either accepts in the query, Plex's token and transcode session identifier, and Subsonic's per-URL token and salt (`t`, `s`;

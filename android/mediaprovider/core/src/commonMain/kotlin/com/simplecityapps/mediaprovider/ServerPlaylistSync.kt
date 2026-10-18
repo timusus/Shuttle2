@@ -46,23 +46,7 @@ sealed interface PlaylistEdit {
     ) : PlaylistEdit
 }
 
-/**
- * Sends the edits made in S2 to playlists imported from a media server back to that server (#916). The local edit has already
- * been made; each one is queued here, persisted so an edit made offline or just before the app is closed is still sent, and the
- * queue is sent in order, oldest first, straight away and again before the next import of that server's playlists
- * ([withEditsSent]). An edit that fails stays queued, with everything after it, for the next try; one the server refuses is
- * dropped, and so is every edit to a playlist the server no longer has.
- *
- * Once the server has an edit, the songs the playlist last held on the server (the snapshot the import reconciles against,
- * #843) change with it, so the next import treats a song added in S2 as the server's own: it isn't added twice, and it's removed
- * if someone later removes it on the server.
- *
- * Only the songs of the playlist's own server go into an edit: the server can't hold a song from anywhere else, so such a song
- * stays in the playlist in S2 alone, as before.
- *
- * Deleting a playlist drops the edits to it still queued, and once the server has deleted it, so do the songs it last held there.
- * A server that refuses to delete it (a playlist the user doesn't own) keeps it, so the next import brings it back.
- */
+/** Queues S2 playlist edits to send to the server: persisted so offline edits still go out, and drained in order before each import. */
 class ServerPlaylistSync(
     writers: Set<ServerPlaylistWriter>,
     private val sourceState: SourceStateStore,
@@ -122,11 +106,7 @@ class ServerPlaylistSync(
      */
     suspend fun pendingPlaylistIds(type: MediaProviderType): Set<String> = queueLock.withLock { pending(type) }.mapTo(mutableSetOf()) { edit -> edit.playlistId }
 
-    /**
-     * Runs [block], which writes the imported playlists, with the ids [pendingPlaylistIds] holds, and holds off [editing] until
-     * it's done: an edit is never made, nor queued, between reading the ids and writing, where the import would overwrite it
-     * with the server's playlist from before it (#919).
-     */
+    /** Holds off edits while the import writes playlists, so an edit isn't overwritten by the server's older copy. */
     suspend fun <T> withPendingPlaylistIds(
         type: MediaProviderType,
         block: suspend (Set<String>) -> T

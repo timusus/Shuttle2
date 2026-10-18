@@ -3,13 +3,7 @@ import Shared
 import SwiftUI
 import UniformTypeIdentifiers
 
-/// Sources (#587, #624, #645, #590): this device's
-/// music and the media servers the library imports from, on the shared `SourcesViewModel`, as an inset-grouped list in
-/// the Settings style. On This iPhone turns the device's music on, lists where it's read from (the app's folder in
-/// Files, and each folder picked there) and adds a folder through the Files picker. Each server row shows its host and
-/// its import's status and pushes its detail (`ServerDetailView`); Add Server opens the source setup
-/// (`SourceSetupFlow`) in a sheet, the same cards, sign-in and import progress the first run shows. Scanning is its own
-/// section.
+/// This device's music and the media servers, as an inset-grouped list on the shared `SourcesViewModel`.
 struct SourcesView: View {
     /// Absent only outside the shell (previews); every stack in `AppShell` has it.
     @Environment(Navigator.self) private var navigator: Navigator?
@@ -272,7 +266,7 @@ extension MediaProviderType {
         case .jellyfin: .purple
         case .emby: .green
         case .plex: .orange
-        // Android's ic_subsonic tile, #1565C0
+        // Matches Android's Subsonic tile.
         case .subsonic: Color(red: 0x15 / 255, green: 0x65 / 255, blue: 0xC0 / 255)
         }
     }

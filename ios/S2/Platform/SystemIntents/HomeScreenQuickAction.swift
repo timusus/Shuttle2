@@ -2,8 +2,7 @@ import Observation
 import os
 import UIKit
 
-/// The quick actions on the app icon's long-press menu (#761). Dynamic shortcut items, so their titles are looked up
-/// in Localizable.strings at launch and fall back to the English literal until the generated tables carry them.
+/// Dynamic shortcut items: titles are looked up at launch and fall back to English until the strings tables carry them.
 enum HomeScreenQuickAction: String, CaseIterable {
     case shuffleAll = "com.simplecityapps.shuttle.quickaction.shuffle-all"
     case search = "com.simplecityapps.shuttle.quickaction.search"

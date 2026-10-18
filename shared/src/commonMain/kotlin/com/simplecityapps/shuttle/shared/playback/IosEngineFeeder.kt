@@ -20,7 +20,7 @@ internal class IosEngineFeeder(
     private val flows: IosPlaybackFlows,
     private val loads: IosPendingLoads
 ) {
-    /** The unified log's `playback` category (#897): commands, state changes, transitions and failures, by song id. */
+    /** Logs under the unified log's `playback` category, keyed by song id. */
     private val log = Logger.tagged("playback")
 
     /** The player's current item; null when nothing is loaded. */

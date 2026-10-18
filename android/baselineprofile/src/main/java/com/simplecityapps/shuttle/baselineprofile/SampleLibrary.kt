@@ -26,7 +26,7 @@ object SampleLibrary {
 
         device.executeShellCommand("mkdir -p $DEVICE_DIR")
         val assets = instrumentation.context.assets
-        // Playlists last: MediaStore drops a playlist entry whose song it hasn't indexed yet (seed-test-media.sh, #399)
+        // Playlists last: MediaStore drops a playlist entry whose song it hasn't indexed yet.
         val files = assets.list(ASSETS).orEmpty().sortedBy { it.endsWith(".m3u") }
         for (name in files) {
             // The shell splits commands on spaces, so the playlists lose theirs

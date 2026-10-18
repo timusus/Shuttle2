@@ -38,10 +38,7 @@ sealed interface MediaSelection {
     /** Local library folders, each identified by its [com.simplecityapps.shuttle.model.SongFolder] path. */
     data class Folders(val paths: List<List<String>>) : MediaSelection
 
-    /**
-     * The songs matching [query] when the action runs, in its sort order: the whole library for Shuffle all, a built-in
-     * smart playlist; resolved then, so nothing holds the song list before it's played (#633).
-     */
+    /** Resolved when the action runs, so nothing holds the song list before it's played. */
     data class SongsMatching(val query: SongQuery) : MediaSelection
 
     data object Queue : MediaSelection

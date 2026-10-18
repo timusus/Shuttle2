@@ -3,9 +3,7 @@ import Foundation
 import os
 import Shared
 
-/// The daily background sync (#771), where Android uses WorkManager: a `BGAppRefreshTask` the system runs about once a
-/// day, when it judges best. Asked for each time the app leaves the foreground, and again by the task itself.
-/// `BackgroundSync` brings every source up to date as `SyncPolicy` says, skipping one synced in the last few minutes.
+/// The system runs this about daily; a source synced in the last few minutes is skipped.
 @MainActor
 enum BackgroundRefresh {
     /// Listed in Info.plist's `BGTaskSchedulerPermittedIdentifiers` (`project.yml`).

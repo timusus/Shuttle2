@@ -7,11 +7,7 @@ import com.simplecityapps.shuttle.settings.ObserveSetting
 import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.flow.Flow
 
-/**
- * The artwork seed for an artist page, from the image its hero shows (#735, #781): the first of the [ArtistHeroArtwork]'s
- * candidates that loads. Otherwise as [ObserveArtworkSeed]: None while Colour from artwork is off, extracted again only
- * when one of those candidates changes.
- */
+/** Seeds an artist page from its hero image's first loadable candidate; otherwise as [ObserveArtworkSeed]. */
 class ObserveArtistArtworkSeed @Inject constructor(
     private val seedSource: ArtworkSeedSource,
     private val observeSetting: ObserveSetting,

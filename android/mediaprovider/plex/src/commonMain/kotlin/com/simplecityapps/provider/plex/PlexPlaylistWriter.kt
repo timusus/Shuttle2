@@ -10,11 +10,7 @@ import com.simplecityapps.provider.plex.http.PlaylistService
 import com.simplecityapps.shuttle.model.MediaProviderType
 import dev.zacsweers.metro.Inject
 
-/**
- * Writes the edits made in S2 to a Plex playlist back to it (#916): `PUT /playlists/{id}/items?uri=server://{machineId}/...`
- * adds, `DELETE /playlists/{id}/items/{playlistItemID}` removes one entry, `PUT /playlists/{id}/items/{playlistItemID}/move?after=`
- * moves one, `PUT /playlists/{id}?title=` renames and `DELETE /playlists/{id}` deletes. The machine id is the server's client identifier, which sign-in keeps as the credentials' user id.
- */
+/** Writes S2's playlist edits back to Plex; the machine id is the server's client identifier, kept as the credentials' user id. */
 class PlexPlaylistWriter
 @Inject
 constructor(

@@ -41,7 +41,7 @@ data class ServerSource(
 data class SourcesUiState(
     /** Whether the library imports this device's music. */
     val thisDevice: Boolean = false,
-    /** True for users who chose the Android (MediaStore) provider before #379: it ignores the folder lists. */
+    /** The MediaStore provider ignores the folder lists. */
     val usesAndroidProvider: Boolean = false,
     val folders: FolderLists = FolderLists(),
     /** Any source's import while one runs; iOS's scan row shows it. */
@@ -54,7 +54,7 @@ data class SourcesUiState(
     val deviceSongs: Int? = null,
     /** When an import of this device's music last completed, if one has. */
     val deviceUpdated: Instant? = null,
-    /** How many files this device's last full import couldn't read (#840): each crashed a tag read, so it's left unread until a retry. */
+    /** Files that crashed a tag read, left unread until a retry. */
     val deviceSkippedFiles: Int = 0,
     val servers: List<ServerSource> = ServerTypes.map { ServerSource(it, connected = false) },
     /** When any import last finished, if one ever has: iOS's scan row shows it. */
@@ -68,11 +68,7 @@ sealed interface SourcesEvent {
 
 val ServerTypes = listOf(MediaProviderType.Jellyfin, MediaProviderType.Emby, MediaProviderType.Plex, MediaProviderType.Subsonic)
 
-/**
- * Settings > Sources (#379): this device on or off, a rescan, and the media servers, each
- * source with its import status and song count (#663). Source changes start a scan, so the library follows them
- * straight away; the folder rules have their own [FolderRulesViewModel] (#881).
- */
+/** Settings > Sources: this device, a rescan and the media servers; each change starts a scan. */
 @ViewModelKey(SourcesViewModel::class)
 @ContributesIntoMap(AppScope::class)
 class SourcesViewModel @Inject constructor(
@@ -145,7 +141,7 @@ class SourcesViewModel @Inject constructor(
     /** A server's sign-in dialog succeeded. */
     fun onServerConnected(type: MediaProviderType) = connectServer(type)
 
-    /** Stops importing from [type]'s server, drops its music, and forgets its address and sign-in (#645). */
+    /** Stops importing from [type]'s server, drops its music, and forgets its address and sign-in. */
     fun onRemoveServer(type: MediaProviderType) {
         mediaSources.disable(type)
         forgetServer(type)

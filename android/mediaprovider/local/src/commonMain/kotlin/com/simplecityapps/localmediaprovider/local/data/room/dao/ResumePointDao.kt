@@ -12,10 +12,7 @@ interface ResumePointDao {
     @Upsert
     suspend fun upsert(point: ResumePointData)
 
-    /**
-     * The resume points of the contexts with any of [contextIds], whatever their type (a caller matches the type), each with
-     * its song's name and duration while the song is still in the library (#706).
-     */
+    /** Any context type, so callers match the type; song name and duration are joined only while the song is in the library. */
     @Query(
         """
         SELECT resume_points.*, songs.name AS songName, songs.duration AS songDuration FROM resume_points

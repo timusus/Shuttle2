@@ -4,14 +4,9 @@ import Intents
 import Shared
 import UIKit
 
-/// Siri's media domain (#951): "Hey Siri, play <artist, album, song, playlist or genre> on Shuttle Music", on the phone
-/// and in CarPlay, and a bare "play music", which Siri may route here without naming the app once Shuttle is the
-/// listener's preferred audio app. The app handles it in its own process (`AppDelegate.application(_:handlerFor:)`):
-/// resolution searches the library through `SiriMediaResolver`, and `handle` answers `.handleInApp`, which has iOS call
-/// `application(_:handle:completionHandler:)`, where `SiriMediaPlayer` starts playback with the app awake in the
-/// background. No Intents extension: it would need the library, which only the app process opens.
+/// Siri's media domain, handled in the app's process: only the app opens the library, so there is no Intents extension.
 
-/// Where a Siri request stands with CarPlay's Pro gate (#946).
+/// Where a Siri request stands with CarPlay's Pro gate.
 @MainActor
 enum CarPlayConnection {
     /// Set by `CarPlaySceneDelegate` for the life of a car connection.
@@ -134,9 +129,7 @@ final class SiriMediaPlayer {
         resolver = SiriMediaResolver(library: library)
     }
 
-    /// CarPlay is Shuttle Music Pro (#946), and so is a request made through it: the car can't show the paywall, so a
-    /// locked car is refused as the car's own browse is. The phone's Siri plays what the phone's buttons do, which
-    /// local playback never gates.
+    /// A request through CarPlay needs Pro, as the car can't show the paywall; the phone's Siri plays what its buttons do.
     var isBlockedByCarPlayGate: Bool {
         CarPlayConnection.isActive && graph.carPlayAccess.locked.value.boolValue
     }

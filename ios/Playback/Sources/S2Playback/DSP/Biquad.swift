@@ -1,6 +1,4 @@
-// Adapted from Shuttle Podcasts (podcasts@9ee6e0954) mobile/ios/Playback/Sources/Playback/DSP/Biquad.swift — see ios/Playback/README.md.
-// S2 changes: the factories are gone (the shared Kotlin EQ designs every band, #604); `adoptState(of:)`
-// lets the EQ swap a band's coefficients without a click.
+// Adapted from Shuttle Podcasts (podcasts@9ee6e0954); `adoptState(of:)` swaps coefficients without a click.
 import Foundation
 
 /// **Second-order IIR section, Direct Form II Transposed.**

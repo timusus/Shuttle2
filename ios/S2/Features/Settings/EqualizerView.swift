@@ -1,9 +1,7 @@
 import Shared
 import SwiftUI
 
-/// The equalizer (#604): the shared `EqualizerViewModel`, as one grouped `Form`, pushed from Settings' Equalizer row
-/// (`Route.equalizer`). Each change plays straight away through `IosEqualizer`, which designs the bands at the engine's
-/// fixed 48 kHz and hands their coefficients to the engine.
+/// Bands are designed at the engine's fixed 48 kHz, so each change applies immediately without a resample.
 struct EqualizerView: View {
     @Environment(\.appServices) private var appServices
     private var services: AppServices { appServices.required }

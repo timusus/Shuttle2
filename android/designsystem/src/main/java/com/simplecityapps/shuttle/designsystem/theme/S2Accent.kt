@@ -9,10 +9,7 @@ import com.materialkolor.PaletteStyle
  * a more saturated azure than the legacy 0xFF0492EA (#496).
  */
 enum class S2Accent(val seed: Color, internal val style: PaletteStyle = PaletteStyle.Fidelity) {
-    /**
-     * No accent chosen: near-grey chrome with a faint cool cast, so album art on the player and detail screens
-     * supplies the colour (#660).
-     */
+    /** No accent: near-grey chrome, so album art supplies the colour on the player and detail screens. */
     Neutral(Color(0xFF0088FF), PaletteStyle.Neutral),
     Blue(Color(0xFF0088FF)),
     Orange(Color(0xFFF44336)),

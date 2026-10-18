@@ -14,7 +14,7 @@ enum ProFeatures {
     /// The paywall's headline feature: "Stream from Jellyfin, Emby, Plex and Navidrome".
     static var headline: String { "Stream from \(serverList)" }
 
-    /// The paywall's other feature (#946), worded as Android's. ReplayGain is free on iOS, so it isn't listed.
+    /// ReplayGain is free on iOS, so it isn't listed.
     static let carPlay = "Browse and play your library in CarPlay"
 
     /// Settings' row.
@@ -66,8 +66,7 @@ enum ProStatus: Equatable {
     }
 }
 
-/// The Shuttle Music Pro paywall (#609): opened by a gated action (`PaywallPresenter`) or from Settings. It observes
-/// the Kotlin entitlement and buys through the app's `StoreKitManager`. Each showing is a `PaywallVisit`.
+/// Opened by a gated action or from Settings; each showing is a `PaywallVisit`.
 struct PaywallView: View {
     let store: StoreKitManager
     /// What opened it, for the shown and dismissed events.
@@ -91,8 +90,7 @@ struct PaywallView: View {
     }
 }
 
-/// One showing of the paywall, for the monetisation funnel (#776): `paywall_shown` as it appears and
-/// `paywall_dismissed` as it goes, unless a purchase, the trial or a restore got the user Pro or a trial meanwhile.
+/// Logs `paywall_dismissed` only if the user didn't become Pro or start a trial while it was open.
 @MainActor
 final class PaywallVisit {
     private let source: PaywallSource

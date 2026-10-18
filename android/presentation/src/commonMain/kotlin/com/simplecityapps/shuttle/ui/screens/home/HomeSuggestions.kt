@@ -29,11 +29,7 @@ class HomeTime(
     fun timeZone(): TimeZone = timeZone.invoke()
 }
 
-/**
- * The whole-list reads (genres, playlists) the sections of one Home load share, so each is read once however many
- * sections need it (#820). [LoadHomeSections] makes one per load and passes it to each section; a caller with none
- * reads for itself.
- */
+/** Whole-list reads that one Home load shares, so each list is read once. */
 class HomeReads {
     private val mutex = Mutex()
     private var genres: List<Genre>? = null
@@ -145,12 +141,7 @@ data class HeavyRotationCandidate(
     val lastPlayedAt: Instant,
 )
 
-/**
- * The albums and artists listened to on the most distinct days in the last [WINDOW_DAYS] (#671), so one sitting with a
- * long album counts once. A day counts for an album when [MIN_SONGS_A_DAY] of its songs were played through, or half of
- * an album of fewer than [SHORT_ALBUM_TRACKS] tracks; for an artist, when that many of their songs were, or half of one
- * of their short albums. Most days first, then the most recently played.
- */
+/** Ranks by distinct listening days, so one long sitting counts once. */
 class HeavyRotation @Inject constructor(
     private val playHistoryRepository: PlayHistoryRepository,
     private val resolveHomeItems: ResolveHomeItems,
@@ -217,7 +208,7 @@ class Rediscover @Inject constructor(
     }
 }
 
-/** The library's newest albums by date added, newest first (#649). */
+/** The library's newest albums by date added, newest first. */
 class RecentlyAdded @Inject constructor(
     private val suggestionsRepository: SuggestionsRepository,
     private val resolveHomeItems: ResolveHomeItems,

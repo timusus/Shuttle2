@@ -22,10 +22,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 
-/**
- * The songs whose covers make up a genre's mosaic (#652), the same ones its Library row draws: up to four from
- * different albums. Apart from [GenreDetailViewModel] so a screen that draws no mosaic (Android's) never runs the query.
- */
+/** Kept apart from [GenreDetailViewModel] so a screen that draws no mosaic never runs this query. */
 @OptIn(ExperimentalCoroutinesApi::class)
 class GenreDetailCoversViewModel @AssistedInject constructor(
     @Assisted genreName: String,

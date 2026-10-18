@@ -18,14 +18,11 @@ class InstallDefaults @Inject constructor(
 ) {
     fun onLaunch(versionCode: Int = BuildConfig.VERSION_CODE, versionName: String = BuildConfig.VERSION_NAME) {
         if (preferenceManager.previousVersionCode == -1) {
-            // Nothing to catch up on: the changelog is for upgrades. Crash reporting and analytics default to on
-            // (#379, #481) on their own; the welcome says so, and marks the notice shown once it has (#1031).
+            // Fresh installs skip the changelog, which is for upgrades; the welcome notice covers the defaults.
             preferenceManager.lastViewedChangelogVersion = versionName
             welcomeSettings.pending.value = true
         } else if (preferenceManager.previousVersionCode != versionCode) {
-            // First launch after upgrading to this version: analytics (and crash reporting) now default to on for
-            // anyone who never chose (#481). The deleted Home consent card's No thanks or dismiss (#421) never wrote
-            // an explicit value, so treat it as the opt-out it was.
+            // A dismissed consent card wrote no explicit value, so it still counts as the opt-out it was.
             if (analyticsConsentSettings.asked.value && !privacySettings.analytics.isSet()) {
                 privacySettings.analytics.value = false
             }

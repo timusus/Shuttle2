@@ -23,14 +23,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import timber.log.Timber
 
 /**
- * Includes and extras are persisted SAF grants: their tree URIs are listed in [SourcesSettings.includedFolders] and
- * [SourcesSettings.extraFolders] respectively, independent of whether the system still holds the grant, so a folder
- * whose access was revoked outside the app stays listed and flagged rather than disappearing (#479). Excludes are plain
- * paths, since nothing needs to read them.
- *
- * Folders picked before #479 (#207) were tracked only by their live grants. The first store to run adopts those grants
- * as includes, once, and records that in [SourcesSettings.includedFoldersMigrated]; after that [load] only reads, so a
- * grant `remove` failed to release, or one taken later for something else, never turns into a scan root.
+ * Keeps folders listed after their SAF grant is revoked; live grants are adopted as includes only once.
  *
  * Tree URIs are matched by their authority and tree document id rather than their string form, so the same folder
  * granted again under a differently encoded URI replaces its entry instead of being listed twice.
@@ -115,7 +108,7 @@ class SafScannerFolderStore @Inject constructor(
         synchronized(lock) { _folders.value = load() }
     }
 
-    /** Adopts the live grants of a pre-#479 install as includes, the first time only. Call under [lock]. */
+    /** Adopts the live grants of an earlier install as includes, the first time only. Call under [lock]. */
     private fun adoptPreexistingGrants() {
         if (settings.includedFoldersMigrated.value) return
         val tracked = (settings.includedFolders.value + settings.extraFolders.value).map(::treeKey).toSet()

@@ -1,11 +1,7 @@
 import Shared
 import SwiftUI
 
-/// A playlist's or genre's artwork, which has none of its own (#643, as Android's `CoverMosaic`): a 2x2 mosaic of
-/// four of its songs' album covers, each a rounded square `Spacing.tiny` from the next; the one cover when there are
-/// fewer than four; its `GeneratedArtwork` with none, or until they load. It fills the square it's given and draws
-/// its own corners and hairline (`shape` for the whole, half its radius for a mosaic's covers), so don't add
-/// `artworkStyle` around it.
+/// Draws its own corners and hairline, so don't wrap it in `artworkStyle`.
 struct CoverMosaic: View {
     let covers: [ArtworkSource]
     /// The `GeneratedArtwork`'s seed and glyph: the item's name and kind.

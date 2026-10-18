@@ -5,13 +5,7 @@ import SwiftUI
 /// artwork tint, and next; tapping opens Now Playing. Bound to the shared `PlayerViewModel` through `PlayerBinding`,
 /// reading only its `miniPlayer` state (the progress ring reads the position in a view of its own).
 ///
-/// Where it lives (#624, after Shuttle Podcasts' `MiniPlayerView`):
-/// - iOS 26 on the phone's tab bar: the tab view's bottom accessory (`AppShell`), one bar in the Liquid Glass capsule
-///   the system draws, laid out for its placement (`.expanded` above the tab bar, `.inline` beside the minimised one).
-///   The per-screen insets then draw nothing (`\.miniPlayerInAccessory`).
-/// - Otherwise (iOS 17-18, iOS 26.0, and the iPad sidebar): a floating rounded card inset at the bottom of every
-///   screen (`miniPlayerInset`), `S2Shape.card` on `.thickMaterial` with a hairline edge and a soft shadow
-///   (glass on iOS 26), inset `Spacing.small`.
+/// On iOS 26 phones it is the tab bar's bottom accessory; elsewhere a floating card inset on each screen.
 ///
 /// Either way it shows only while there is a current song (`PlayerBinding.isMiniPlayerVisible`), sliding in and out
 /// with `Motion.miniPlayerVisibility`; with nothing queued there is no bar and no inset.
@@ -356,10 +350,7 @@ extension View {
         modifier(MiniPlayerInsetModifier(showNowPlaying: showNowPlaying, binding: binding))
     }
 
-    /// Insets `bar` at the bottom of this screen, stretching the screen to fill first: `safeAreaInset` sizes to the
-    /// view it's attached to, so on content that doesn't fill (a `ProgressView`, an empty state, the importing
-    /// placeholder) the bar sat just under it, mid-screen above an empty band, instead of docking above the tab bar
-    /// (#623).
+    /// Stretches the screen to fill first, since `safeAreaInset` sizes to the content and would float the bar mid-screen on short content.
     func dockedAtBottom<Bar: View>(@ViewBuilder _ bar: () -> Bar) -> some View {
         frame(maxWidth: .infinity, maxHeight: .infinity)
             .safeAreaInset(edge: .bottom, spacing: 0, content: bar)

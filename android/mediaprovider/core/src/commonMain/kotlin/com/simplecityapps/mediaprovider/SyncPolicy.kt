@@ -4,7 +4,6 @@ import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Instant
 
-/** What asks for a sync (#771). */
 enum class SyncTrigger {
     /** The app came to the foreground: only sources that sync incrementally (the servers) are brought up to date. */
     Foreground,
@@ -13,10 +12,7 @@ enum class SyncTrigger {
     Periodic
 }
 
-/**
- * When and how a sync brings a source up to date (#771): at most once per [MIN_INTERVAL] per source for a return to the app, incrementally where
- * the source can, and in full at least every [FULL_SYNC_INTERVAL] so songs deleted on the server leave the library.
- */
+/** Full sync at least every [FULL_SYNC_INTERVAL] so server-side deletions leave the library; otherwise incremental where possible. */
 object SyncPolicy {
     /** A source synced more recently than this is left alone by a return to the app. */
     val MIN_INTERVAL = 15.minutes

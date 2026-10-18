@@ -17,12 +17,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-/**
- * Feeds the playback flows to a [ScrobblePlanner] and its decisions to [LastFmScrobbler] and [ListenBrainzScrobbler] (#503), on both platforms:
- * Android's ScrobblingInitializer and iOS's AppGraph each call [start] once at launch. Collected on
- * [Dispatchers.Main.immediate] so the planner sees every change in order on one thread; a server song counts as
- * already reported while S2 reports it to its server.
- */
+/** Feeds playback to the planner on [Dispatchers.Main.immediate], so it sees every change in order on one thread. */
 class PlaybackScrobbling
 @Inject
 constructor(

@@ -10,15 +10,11 @@ enum class FolderKind {
     /** Never scanned, even inside an included folder. */
     Exclude,
 
-    /** Read directly, for folders MediaStore skips (`.nomedia`) or formats it doesn't index (#415). */
+    /** Read directly, for folders MediaStore skips (`.nomedia`) or doesn't index. */
     Extra
 }
 
-/**
- * A folder in Sources: [uri] is its SAF tree (null for an exclude, which keeps only the path), [path] its file path
- * when known. [hasAccess] is false once its SAF grant was revoked outside the app (#479); excludes need no grant,
- * so they're always true.
- */
+/** [hasAccess] turns false once the SAF grant is revoked outside the app; excludes need no grant. */
 data class SourceFolder(val uri: String?, val path: String?, val name: String, val hasAccess: Boolean = true)
 
 data class FolderLists(

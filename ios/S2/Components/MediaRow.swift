@@ -1,23 +1,6 @@
 import SwiftUI
 
-/// The one list row for songs, albums, artists, genres, playlists and the queue: artwork, a title, an
-/// optional subtitle and a trailing accessory, with a playing state.
-///
-/// ```swift
-/// MediaRow(song.name ?? "Unknown", subtitle: "Radiohead · OK Computer", artwork: .song(song),
-///          playback: isCurrent ? .playing : .none) {
-///     Text(duration).font(.s2RowMeta).foregroundStyle(.s2TextSecondary)
-/// }
-/// ```
-///
-/// - Artwork is drawn by `RemoteArtwork` at `artworkSize` (`ArtworkSize.row`, or `.albumRow` for albums),
-///   in `S2Shape.artworkRow` (an artist's a circle), with the hairline and no shadow. A nil source draws
-///   the tinted `ArtworkPlaceholder` with `placeholderSymbol`. A playlist or genre passes its `mosaic` instead.
-/// - `playback` other than `.none` tints the title with `\.artworkTint` and lays an equaliser glyph over the
-///   artwork, animated while `.playing` (still under Reduce Motion, and while `.paused`).
-/// - At accessibility text sizes the trailing accessory moves under the title and subtitle, so the title gets the
-///   row's width (#782).
-/// - The row is not a button: wrap it in the `Button` or `NavigationLink` that says what a tap does.
+/// The row is not a button, so wrap it in a `Button` or `NavigationLink`.
 struct MediaRow<Trailing: View>: View {
     let title: String
     let subtitle: String?

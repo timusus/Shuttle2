@@ -61,7 +61,7 @@ class TaglibMediaProvider(
     private val grantedTrees: () -> List<Uri> = { persistedTrees(context) },
     // The roots of the storage volumes mounted now, each ending in a separator
     private val mountedRoots: () -> Set<String> = { mountedVolumeRoots(context) },
-    // MediaStore's audio files, read only in part where the last stored import's listing allows (#875)
+    // MediaStore's audio files, read only in part where the last stored import's listing allows
     private val mediaStoreFiles: MediaStoreAudioLister = MediaStoreAudioLister.whole(context),
     private val folders: () -> ScannerFolders
 ) : IndexedMediaProvider {
@@ -81,11 +81,7 @@ class TaglibMediaProvider(
 
     private val playlists = TaglibPlaylists(context, type, grantedTrees, folders) { walkedPlaylistFiles }
 
-    /**
-     * The MediaStore listing [remapLegacySongs] read, for the [findSongs] that follows it in the same import to take instead
-     * of querying again (#869): a file listed by one query and not the other would be moved by the remap and then found
-     * under its other path, taking its history with it.
-     */
+    /** Reuses the listing [remapLegacySongs] read, so both see the same files and no song is moved to a path it then misses. */
     @Volatile
     private var remapListing: MediaStoreListing? = null
 
@@ -202,15 +198,7 @@ class TaglibMediaProvider(
         mediaStoreFiles.listingStored()
     }
 
-    /**
-     * Stored songs moved to the path [findSongs] gives their file now, so they keep their history: a song under a SAF
-     * document URI that MediaStore lists, to its file path (the scanner before #370 stored every song so, and a walk stores
-     * every file MediaStore skips so), and a song under a file path that MediaStore no longer lists (its folder took a
-     * `.nomedia`, say) but an include tree still holds, to its document URI, which is the only way left to read it. Not
-     * while MediaStore lists no file at all, which is it reindexing: the next import would only move them back. Also a
-     * file MediaStore lists at another path under the same id. The listing read here is the one [findSongs] then takes,
-     * read whole if [thorough] as a thorough import's own would be.
-     */
+    /** Moves stored songs to the path [findSongs] gives their file now, so they keep their history. */
     override suspend fun remapLegacySongs(
         existingSongs: List<Song>,
         thorough: Boolean

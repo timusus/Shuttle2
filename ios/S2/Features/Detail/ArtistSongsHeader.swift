@@ -1,9 +1,7 @@
 import Shared
 import SwiftUI
 
-/// The song list's section header: "Albums" while the album sections
-/// stand in for the album shelf (#678), else "Songs"; then trailing, the sort menu, labelled with the current order
-/// (a checkmark on it in the menu), and for the album orders an Expand All / Collapse All icon button.
+/// Titled "Albums" where album sections stand in for the shelf, else "Songs"; album orders add an Expand All / Collapse All button.
 struct SongsHeader: View {
     let sortOrder: ArtistSongSortOrder
     let allExpanded: Bool

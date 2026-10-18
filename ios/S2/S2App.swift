@@ -30,7 +30,7 @@ struct S2App: App {
                     QuickActionRouter.shared.install()
                     // Siri and Spotlight learn the playlists' names for "Play <playlist> in Shuttle Music"
                     ShuttleShortcuts.updateAppShortcutParameters()
-                    // ... and "Play <artist> on Shuttle Music" learns the library (#951)
+                    // ... and "Play <artist> on Shuttle Music" learns the library
                     dependencies.siriContext.start()
                     await LibraryImport.whenLocalFilesChange(graph: dependencies.graph, localLibrary: dependencies.localLibrary)
                 }
@@ -69,9 +69,7 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
     /// Idempotent: S2App.init has already built them by the first callback.
     @MainActor private var dependencies: IosAppDependencies { AppGraph.initialize() }
 
-    /// iOS relaunched (or woke) the app because offline downloads' background session has events (#759): the session,
-    /// recreated by `AppGraph.initialize()`, delivers them, then calls `completionHandler` so iOS can suspend the app
-    /// again and refresh its snapshot.
+    /// Relaunched for offline downloads' background session events; `completionHandler` lets iOS suspend the app again.
     func application(
         _ application: UIApplication,
         handleEventsForBackgroundURLSession identifier: String,
@@ -100,7 +98,7 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
         return configuration
     }
 
-    /// Siri's "play <something>" (#951): the media intent is handled here, in the app's process.
+    /// Siri's "play <something>" is handled here, in the app's process.
     func application(_ application: UIApplication, handlerFor intent: INIntent) -> Any? {
         intent is INPlayMediaIntent ? siriHandler : nil
     }

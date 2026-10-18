@@ -39,8 +39,6 @@ extension EnvironmentValues {
         set { self[LayoutTierKey.self] = newValue }
     }
 
-    /// The app's container, measured once in `ContentView` above every navigation stack. A pushed screen's own
-    /// geometry is not stable while it's pushed: the zoom transition lays it out in a container of its own, without
-    /// the bars' safe area (#700). Size a screen's rows from this, not from the screen's own measurements.
+    /// Measured above every navigation stack, since a pushed screen's own geometry is unstable mid-zoom; size rows from this.
     @Entry var rootContainerSize: CGSize = .zero
 }

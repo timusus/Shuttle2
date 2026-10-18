@@ -4,11 +4,7 @@ import androidx.room.migration.Migration
 import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.execSQL
 
-/**
- * The MediaStore listing the last local import read, by MediaStore id with each row's generation, and the MediaStore
- * version it came from, so a rescan reads only the rows that changed (#875). Empty at first: the next import reads
- * MediaStore whole and fills them.
- */
+/** Stores MediaStore's listing from the last import, so a rescan reads only the rows that changed. */
 val MIGRATION_55_56 =
     object : Migration(55, 56) {
         override fun migrate(connection: SQLiteConnection) {

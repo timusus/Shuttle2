@@ -23,11 +23,7 @@ private const val MAX_SWATCHES = 128
  */
 const val MIN_PREFERRED_SEED_TONE = 20.0
 
-/**
- * The share of the artwork a lighter swatch's hue must cover to take over from a near-black one: a stray speck on a dark
- * cover (a highlight, a few letters of type) isn't its colour (#735). Counted over the hue's whole family, since thin
- * line art or a halftone splits one colour into many small anti-aliased swatches.
- */
+/** The share of artwork a lighter hue must cover to take over from near-black; a stray speck doesn't count. */
 const val MIN_PREFERRED_SEED_SHARE = 0.03
 
 /** Swatches within this many degrees of hue count towards the same colour's share. */
@@ -36,12 +32,7 @@ private const val HUE_FAMILY_RANGE = 20.0
 /** Swatches below this chroma are greys, with no hue to share. */
 private const val HUE_FAMILY_MIN_CHROMA = 8.0
 
-/**
- * Artwork whose population-weighted mean HCT chroma is below this is monochrome: a black-and-white photo with a faint
- * sepia or blue cast has swatches that pass [MIN_SEED_CHROMA] one by one, but the cast is the whole image's, and
- * Vibrant would amplify it into a loud accent (#1055). A vivid logo on grey still clears it, while a 3% speck
- * ([MIN_PREFERRED_SEED_SHARE]) of even the most saturated colour does not.
- */
+/** Artwork under this mean chroma is monochrome: a faint cast on a grey photo must not become a loud accent. */
 const val MIN_ARTWORK_CHROMA = 6.0
 
 /** Whether the image behind [populations] (quantised colour to pixel count) is too close to grey to seed a scheme. */

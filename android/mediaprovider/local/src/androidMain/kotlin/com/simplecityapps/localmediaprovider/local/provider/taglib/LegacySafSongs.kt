@@ -5,19 +5,7 @@ import com.simplecityapps.shuttle.model.Song
 import java.net.URLDecoder
 import kotlin.math.abs
 
-/**
- * Until #370 the TagLib scanner walked SAF folder grants and stored each song under its document URI, such as
- * `content://com.android.externalstorage.documents/tree/primary%3AMusic/document/primary%3AMusic%2FAlbum%2FSong.mp3`.
- * It now finds files through MediaStore and stores their file path, so without a remap an upgrade would replace every
- * such song with a new row and lose its history.
- *
- * A song matches the MediaStore file on the same volume at the same relative path. Size, last modified and duration
- * decide only when the path alone is ambiguous: the volume isn't mounted under its old id but the relative path
- * exists on another one, several files share the path, or the document id has no path at all. Anything else stays
- * unmatched, and the import removes it as missing.
- *
- * @param primaryStoragePath where the primary shared storage volume is mounted, `/storage/emulated/0` for the main user
- */
+/** Remaps songs stored under a SAF document URI to their file path, so an upgrade keeps their history. */
 internal class LegacySafSongs(primaryStoragePath: String) {
     private val primaryStoragePrefix = primaryStoragePath.trimEnd('/') + "/"
 

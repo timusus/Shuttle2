@@ -13,11 +13,7 @@ enum class ThemeMode {
 
 /** The theme accent colour. Stored by ordinal, so the order is fixed; new accents go at the end. */
 enum class Accent {
-    /**
-     * Neutral chrome, so album art supplies the colour (#660). Also what a stored 0 means: that was Shuttle blue, but
-     * the legacy settings screen persisted it as the default for anyone who opened it, so it can't be told apart from
-     * never choosing. Shuttle blue is now [Blue].
-     */
+    /** Neutral chrome, so album art supplies the colour; a stored 0 means this, not [Blue], since the old screen saved 0 by default. */
     Default,
     Orange,
     Cyan,

@@ -1,8 +1,6 @@
 import SwiftUI
 
-/// The first run's welcome: what S2 is, in one line and three honest rows, then Get Started, or Not Now. It also says
-/// that crash reports and usage data are on (#776): iOS has no upgraders to give Android's one-time Home notice to, so
-/// every install hears it here, where it can't be missed (`IosTelemetryStartup` marks that notice shown).
+/// Carries the telemetry disclosure too: iOS has no upgrade path to show it on, so every install hears it here.
 struct SourceSetupWelcome: View {
     static let telemetryDisclosure =
         "Shuttle Music shares anonymous crash reports and usage data to help improve the app. You can turn this off in Settings."

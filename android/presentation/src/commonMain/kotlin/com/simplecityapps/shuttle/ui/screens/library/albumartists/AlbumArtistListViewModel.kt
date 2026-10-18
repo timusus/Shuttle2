@@ -65,8 +65,7 @@ class AlbumArtistListViewModel @Inject constructor(
 
     private val _sortOrder = MutableStateFlow(readSetting(LibraryViewSetting.ArtistSort))
 
-    // Sorted and indexed as the library or the sort changes, not on each import progress tick (#627).
-    // The album artists, or with ArtistSettings.ShowCreditedArtists on, every artist a song credits as well (#637).
+    // Re-sorted only when the library or sort changes, not on every import progress tick.
     @OptIn(ExperimentalCoroutinesApi::class)
     private val artists = observeSetting(ArtistSettings.ShowCreditedArtists)
         .distinctUntilChanged()

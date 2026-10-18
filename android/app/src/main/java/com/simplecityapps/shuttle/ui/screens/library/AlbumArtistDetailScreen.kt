@@ -77,15 +77,7 @@ import com.simplecityapps.shuttle.ui.shell.LocalShellSnackbarHostState
 import dev.zacsweers.metrox.viewmodel.assistedMetroViewModel
 import kotlin.math.min
 
-/**
- * Artist detail (inventory §1, #631): the songs in the app-wide artist sort, chosen from the songs header's menu. Grouped
- * by album, the song list is the albums (#678): each album's header unfolds its tracks inline when tapped (its thumbnail
- * opens the album), and stays pinned under the bar while its tracks scroll by; the header's Expand all / Collapse all
- * folds them all. Then Appears On (#637), a shelf of others' albums crediting them, after the artist's own albums
- * (#788), and the songs on none of their albums as Other Songs. Listed flat, the artist's albums come first as a shelf,
- * then Appears On, then every song. Play / Shuffle play all of them in the visible order; the overflow holds the
- * artist's actions plus Shuffle albums.
- */
+/** Artist detail: album headers fold their tracks inline, and Appears On and Other Songs follow the albums. */
 @Composable
 fun AlbumArtistDetailScreen(
     uiState: AlbumArtistDetailUiState,
@@ -127,7 +119,7 @@ fun AlbumArtistDetailScreen(
             modifier = headerModifier,
         )
     }
-    // The artwork tints the whole screen, as the player does, when Colour from artwork is on (#496).
+    // The artwork tints the whole screen, as the player does, when Colour from artwork is on.
     ArtworkTheme(uiState.seed) {
         LibraryDetailScaffold(
             state = state,
@@ -139,7 +131,7 @@ fun AlbumArtistDetailScreen(
                     pluralString(R.plurals.songsPlural, uiState.songs.size),
                 ).joinToString(" · ")
             },
-            // The shared rule's image (#781): the artist's own, else their top album's cover, full-bleed and square.
+            // The artist's own image, else their top album's cover, full-bleed and square.
             artwork = uiState.hero,
             placeholder = ArtworkPlaceholder.Artist,
             bleed = true,
@@ -156,8 +148,7 @@ fun AlbumArtistDetailScreen(
                     albumShelf("artist-appears-on", appearsOnTitle, uiState.appearsOn, unknown, onAppearsOnClick, onAlbumMore)
                 }
             }
-            // Grouped by album, the song list's album headers are the albums (#678), and Appears On follows them (#788),
-            // ahead of the songs on none of them. Otherwise the shelves come first: the artist's albums, then Appears On.
+            // With album sections, Appears On follows the album headers; otherwise the shelves come first.
             if (!uiState.hasAlbumSections) {
                 if (uiState.showAlbumsShelf) {
                     albumShelf("artist-albums", albumsTitle, uiState.albums, unknown, onOpenAlbum, onAlbumMore, subtitle = { it.year?.toString() })
@@ -169,7 +160,7 @@ fun AlbumArtistDetailScreen(
                     SongsHeader(
                         title = stringResource(if (uiState.hasAlbumSections) R.string.artist_detail_albums else R.string.artist_detail_songs),
                         sortOrder = uiState.sortOrder,
-                        // An album order with no album sections, only Other Songs, has nothing to fold (#636)
+                        // An album order with no album sections, only Other Songs, has nothing to fold
                         allExpanded = uiState.allAlbumsExpanded.takeIf { uiState.hasAlbumSections },
                         onSortOrderSelected = onSortOrderSelected,
                         onExpandAll = onExpandAll,
@@ -268,8 +259,7 @@ private fun AlbumSectionHeader(
         edgeInset = S2Spacing.small,
         artwork = {
             val openAlbumLabel = stringResource(R.string.artist_detail_open_album, album.name ?: unknown)
-            // The thumbnail opens the album; the rest of the row folds it (#631). The description alone names
-            // the click, so it isn't announced twice.
+            // The thumbnail opens the album; its description alone announces that, so it isn't read twice.
             LibraryArtwork(
                 album,
                 ArtworkPlaceholder.Album,
@@ -285,11 +275,7 @@ private fun AlbumSectionHeader(
     )
 }
 
-/**
- * The header of the unfolded album whose rows are passing under the bar, pinned just below it (#631), as a sticky header
- * would be: the list runs up behind the bar, so a LazyColumn sticky header would pin out of sight. The next section's
- * first row pushes it up and away.
- */
+/** Pins the unfolded album's header below the bar; a LazyColumn sticky header would scroll out of sight behind it. */
 @Composable
 private fun BoxScope.PinnedAlbumHeader(
     listState: LazyListState,
@@ -345,11 +331,7 @@ private enum class ArtistSort(val order: ArtistSongSortOrder, val label: Int, va
     MostPlayed(ArtistSongSortOrder.MostPlayed, R.string.artist_sort_most_played, R.string.artist_sort_most_played),
 }
 
-/**
- * The song list's header: "Albums" while album sections stand in for the albums (#678), else "Songs"; then the sort
- * menu, labelled with the current sort, and, when [allExpanded] isn't null (there are album sections), Expand all or
- * Collapse all.
- */
+/** Titled "Albums" while album sections stand in for the songs; carries the sort menu and any expand-all toggle. */
 @Composable
 private fun SongsHeader(
     title: String,

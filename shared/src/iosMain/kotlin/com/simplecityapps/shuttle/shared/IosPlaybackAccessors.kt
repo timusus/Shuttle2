@@ -15,10 +15,10 @@ interface IosPlaybackAccessors {
     /** Records each song's plays and pause positions from [playerController]'s events; Swift starts it once, at launch. */
     val recordPlays: RecordPlays
 
-    /** Keeps where each play context was left (#670) from [playerController]'s events; Swift starts it once, at launch. */
+    /** Keeps where each play context was left, from [playerController]'s events; Swift starts it once, at launch. */
     val recordResumePoints: RecordResumePoints
 
-    /** Scrobbles to Last.fm from [playerController]'s events (#503); Swift starts it once, at launch. */
+    /** Scrobbles to Last.fm from [playerController]'s events; Swift starts it once, at launch. */
     val playbackScrobbling: PlaybackScrobbling
 
     /** Sends the queued scrobbles: after each one is queued, and from Swift on foreground and in a `BGAppRefreshTask`. */

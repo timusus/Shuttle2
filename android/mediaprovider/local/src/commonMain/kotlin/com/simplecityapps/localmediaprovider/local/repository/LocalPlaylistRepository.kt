@@ -51,7 +51,7 @@ class LocalPlaylistRepository(
     private val playlistSongJoinDao: PlaylistSongJoinDao,
     private val fileSync: PlaylistFileSync,
     private val albumIndex: LibraryAlbumIndex,
-    /** Sends the edits to a playlist imported from a media server back to that server (#916). */
+    /** Sends the edits to a playlist imported from a media server back to that server. */
     private val serverSync: ServerPlaylistSync? = null
 ) : PlaylistRepository,
     ImportedPlaylistStore {
@@ -292,10 +292,7 @@ class LocalPlaylistRepository(
         }
     }
 
-    /**
-     * Runs [edit], an edit to [playlist] in S2 that ends by queueing it for the server, as one step against an import's write of
-     * the server's playlists (#919): the import can't overwrite the edit before it's queued.
-     */
+    /** Runs [edit] as one step with the import's playlist write, so the import can't overwrite it before it's queued. */
     private suspend fun serverEdit(
         playlist: Playlist,
         edit: suspend () -> Unit

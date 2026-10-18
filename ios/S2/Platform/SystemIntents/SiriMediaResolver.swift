@@ -1,7 +1,6 @@
 import Intents
 
-// Siri's media domain (#951): what a spoken "play X" asks for, resolved against the library. SiriKit's own types are
-// here only where they carry the request in and the answer out; the decisions are plain Swift, tested without Siri.
+// What a spoken "play X" asks for, resolved against the library. SiriKit's types appear only at the edges, so the decisions are testable without Siri.
 
 /// What a request can name, as Siri's `INMediaItemType`s the library has.
 enum SiriMediaKind: Equatable, CaseIterable {

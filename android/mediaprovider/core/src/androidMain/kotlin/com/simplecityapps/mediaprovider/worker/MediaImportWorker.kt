@@ -34,11 +34,7 @@ import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.CancellationException
 import timber.log.Timber
 
-/**
- * The background sync (#771): brings every source up to date as [MediaImporter.sync] does, at the [ImportFrequency] chosen.
- * Runs silently in the background, and is retried with backoff when a source's sync fails. The user's own scan or Sync now
- * ([enqueueFullImport]) is expedited work and runs as a foreground service with a progress notification.
- */
+/** Background sync; the user's own scan ([enqueueFullImport]) is expedited and runs as a foreground service instead. */
 class MediaImportWorker
 @AssistedInject
 constructor(

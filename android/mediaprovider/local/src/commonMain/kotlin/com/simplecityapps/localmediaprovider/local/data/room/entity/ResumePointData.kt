@@ -4,12 +4,7 @@ import androidx.room.Entity
 import com.simplecityapps.shuttle.model.MediaProviderType
 import kotlin.time.Instant
 
-/**
- * Where the queue started from a [com.simplecityapps.shuttle.model.PlayContext] was left (#670), one row per context:
- * its current song, keyed like [PlayEventData]'s by [mediaProvider] and [songPath], the [positionMs] in it, the song's
- * place in the queue as it played ([track] of [trackCount], from 0, in the shuffled order when [shuffled]), and whether
- * the queue [finished] (its last song played through).
- */
+/** Where a play context's queue was left, keyed by song path rather than row id so a reimport keeps it. */
 @Entity(tableName = "resume_points", primaryKeys = ["contextType", "contextId"])
 data class ResumePointData(
     val contextType: String,

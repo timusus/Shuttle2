@@ -1,14 +1,6 @@
 package com.simplecityapps.shuttle.model
 
-/**
- * Moves an album or album artist key stored before the album identity rule (#637) to the key its songs have now.
- * Built over a library's songs: a stored key that names a current album is kept; one that doesn't is looked up as the
- * key the old name rule gave those songs (the album name, and the album artist tag or else every artist joined) and
- * moved to the album most of them now belong to. Null for a key no song had or has, which a caller keeps as it is.
- *
- * Only for what was stored before #637 (play history, pinned downloads, a saved queue's context, Android Auto ids); to
- * be deleted with the old key once a release cycle has moved them.
- */
+/** Moves keys stored under the old name rule to the album their songs belong to now; delete once those have migrated. */
 class AlbumKeyRekey(songs: Collection<Pair<AlbumIdentityTags, AlbumIdentity>>) {
     private val albums: Set<AlbumGroupKey> = songs.mapTo(HashSet()) { (_, identity) -> identity.groupKey }
 
@@ -40,10 +32,10 @@ class AlbumKeyRekey(songs: Collection<Pair<AlbumIdentityTags, AlbumIdentity>>) {
         .first().key
 
     companion object {
-        /** A key as the rule before #637 gave it: the album name and [oldAlbumArtistKey]. */
+        /** A key as the old name rule gave it: the album name and [oldAlbumArtistKey]. */
         fun oldAlbumKey(tags: AlbumIdentityTags): AlbumGroupKey = AlbumGroupKey(AlbumIdentityRule.albumKey(tags.album), oldAlbumArtistKey(tags))
 
-        /** An album artist key as the rule before #637 gave it: the album artist tag, else every artist joined. */
+        /** An album artist key as the old name rule gave it: the album artist tag, else every artist joined. */
         fun oldAlbumArtistKey(tags: AlbumIdentityTags): AlbumArtistGroupKey = AlbumArtistGroupKey(
             tags.albumArtist?.let(AlbumIdentityRule::artistKey)
                 ?: tags.artists.joinToString(", ") { AlbumIdentityRule.artistKey(it) }.ifEmpty { null }

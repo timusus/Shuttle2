@@ -4,7 +4,7 @@ import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.SingleIn
 
-/** Settings > Playback & sound > Scrobbling (#503). The signed-in accounts live in encrypted prefs, not here. */
+/** Scrobbling preferences; the signed-in accounts live in encrypted prefs, not here. */
 @SingleIn(AppScope::class)
 class ScrobblingSettings @Inject constructor(
     store: SettingsStore

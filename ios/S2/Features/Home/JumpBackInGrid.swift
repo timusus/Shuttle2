@@ -1,10 +1,6 @@
 import Shared
 import SwiftUI
 
-/// Jump Back In (#633, #706): the most recent item as a wide resume card with the one Play button, which carries on
-/// exactly where its queue was left (#670), then the rest as a compact grid of tiles after Apple Music's and Spotify's
-/// recents, two columns on an iPhone, four on an iPad and one at the accessibility text sizes. Every card and tile
-/// opens its item; long-press has the rest.
 struct JumpBackInGrid: View {
     let items: [HomeItem]
     /// Where each item's queue was left, by key.
@@ -61,7 +57,6 @@ struct JumpBackInGrid: View {
     }
 }
 
-/// What Jump Back In says about where an item's queue was left (#706).
 enum JumpBackInText {
     /// A tile's second line: the kind, then the song it was left on, "Shuffled" or "Finished" ("Album · Airbag").
     static func detail(item: HomeItem, progress: HomeItemProgress?) -> String {
@@ -121,9 +116,7 @@ private extension RelativeDateTimeFormatter {
     }()
 }
 
-/// The most recent item (#706): its artwork with how far through it the queue was left as a thin bar, the kind and
-/// when, the title, and the song it was left on (a shuffle glyph before it when shuffled), with the one Play button
-/// that carries on exactly there, showing a spinner until it plays. A tap anywhere else opens the item.
+/// Play carries on exactly where the queue was left; the rest of the card opens the item.
 struct JumpBackInResumeCard: View {
     let item: HomeItem
     let progress: HomeItemProgress?
@@ -235,9 +228,7 @@ struct JumpBackInResumeCard: View {
     }
 }
 
-/// The resume card's Play button: a disc in the item's artwork tint (`\.artworkTint`, scheme-safe) with the ink that
-/// clears AA on it, the accent with no artwork (#741). Its own view so it reads the tint the card provides. The disc
-/// grows with the glyph's text size, up to `maximumScale` times the 44 pt target, so the glyph never outgrows it.
+/// Its own view so it reads the card's tint; the disc stops growing before its glyph would outgrow it.
 private struct ResumePlayDisc: View {
     let shuffles: Bool
     let pending: Bool
@@ -279,9 +270,7 @@ private struct ResumePlayDisc: View {
 }
 
 private extension HomeItem {
-    /// The cover the resume card tints from (#741); nil for an item with no single cover, which keeps the accent. An
-    /// artist tints from the artist page's hero source (`AlbumArtistDetailView`, before its view model has picked an
-    /// online image or a fallback album), so the two share a cache key and a colour.
+    /// An artist uses the artist hero's source so the card and the artist page share a colour.
     var tintSource: ArtworkSource? {
         switch onEnum(of: self) {
         case .albumItem(let it): .album(it.album)
@@ -291,7 +280,6 @@ private extension HomeItem {
     }
 }
 
-/// How far through an item its queue was left, as a thin bar along the bottom of its artwork (#706).
 struct JumpBackInProgressBar: View {
     let fraction: Double
 

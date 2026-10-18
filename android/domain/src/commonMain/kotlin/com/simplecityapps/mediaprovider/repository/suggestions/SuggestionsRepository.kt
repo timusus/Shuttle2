@@ -8,12 +8,7 @@ import com.simplecityapps.shuttle.model.Genre
 import kotlin.time.Instant
 import kotlinx.coroutines.flow.Flow
 
-/**
- * The library as Home's suggestions read it (#633): aggregates over the songs with a limit, and lookups of the few
- * albums, artists and genres a section shows, so nothing here loads every song whole. Excluded songs are left out
- * throughout. Albums and artists are grouped by [com.simplecityapps.shuttle.model.AlbumIdentityRule], as the album and
- * artist repositories group them.
- */
+/** Aggregates and lookups for Home's suggestions, so nothing here loads every song whole. */
 interface SuggestionsRepository {
     /** How many songs the library holds, re-emitted whenever the songs change. */
     fun songCount(): Flow<Int>
@@ -33,11 +28,7 @@ interface SuggestionsRepository {
     /** The albums one of whose songs has played through, most recently first; at most [limit]. */
     suspend fun recentlyCompletedAlbums(limit: Int): List<AlbumGroupKey>
 
-    /**
-     * The library's newest albums, by the date their newest song was added, most recent first; at most [limit]. There's
-     * no window and no first-import rule: a library added all at once (a first import, or a server that scanned all its
-     * music on one day) still has its newest albums (#649).
-     */
+    /** No window or first-import rule, so a library added all at once still has its newest albums. */
     suspend fun recentlyAddedAlbums(limit: Int): List<AlbumGroupKey>
 
     /**

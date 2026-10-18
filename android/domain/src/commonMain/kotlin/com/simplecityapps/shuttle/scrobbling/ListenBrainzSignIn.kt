@@ -2,8 +2,7 @@ package com.simplecityapps.shuttle.scrobbling
 
 import kotlinx.coroutines.flow.Flow
 
-// The ListenBrainz account as Settings > Scrobbling sees it (#503), implemented in :android:scrobbling. Sign-in is
-// a user token pasted from listenbrainz.org/settings, checked against ListenBrainz before it is kept.
+// Sign-in checks the pasted token with ListenBrainz before keeping it.
 
 sealed interface ListenBrainzAccountState {
     data object SignedOut : ListenBrainzAccountState

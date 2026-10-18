@@ -1,10 +1,7 @@
 import CarPlay
 import UIKit
 
-/// Turns `CarPlayCatalog`'s section models into CarPlay's own objects (#692, from Shuttle Podcasts).
-///
-/// The only file that knows both halves, and it holds no judgement of its own: what a row says, and what tapping it
-/// does, was decided in `CarPlayCatalog`, where it can be tested.
+/// Turns `CarPlayCatalog`'s section models into CarPlay objects; the only file that knows both, and it decides nothing.
 @MainActor
 enum CarPlayListRenderer {
     static func sections(

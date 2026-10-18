@@ -17,10 +17,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.lastOrNull
 
-/**
- * How long each phase of one provider's import took, logged as the per-provider summary line at the end of an import
- * (#866). A phase that never ran (playlists not due, a fetch that failed) stays at zero.
- */
+/** Per-phase timings of one provider's import; a phase that never ran stays at zero. */
 internal class ImportTimings {
     var findSongs: Duration = Duration.ZERO
     var dbWrite: Duration = Duration.ZERO
@@ -117,7 +114,7 @@ internal class SongImporter(
         try {
             emit(FlowEvent.Progress<SongImportResult, MessageProgress>(MessageProgress(ImportPhase.Saving(listing.result.size), null)))
             val songDiff = SongDiff(existingSongs, listing.result, deleteMissing = plan == SyncPlan.Full).apply()
-            // A remote listing pages by offset, so a shifted page can skip a song that's still there (#934)
+            // Remote listings page by offset and can skip songs still there, so full-sync deletes are confirmed.
             val fullDeletes = if (plan == SyncPlan.Full) confirmedRemovals(mediaProvider, songDiff.deletes) else emptyList()
             // An incremental sync's removals, read from the source's path listing when its count says it needs one
             val removed = (plan as? SyncPlan.Incremental)?.let { songsRemovedOnSource(mediaProvider as IncrementalMediaProvider, existingSongs, songDiff.inserts) }
@@ -168,7 +165,7 @@ internal class SongImporter(
     ) {
         sourceState.setLastSyncStart(mediaProvider.type.name, start)
         if (plan == SyncPlan.Full) {
-            // A full pass tries every file it hasn't stored, so its count of files left unread is the whole of it (#840)
+            // A full pass tries every unstored file, so its skipped count is the whole of it.
             sourceState.setSkippedFiles(mediaProvider.type.name, mediaProvider.skippedFiles.size)
             if (guarded.awaitsFullPass) {
                 // A held mass removal, or a listing that left songs out, waits on the next full sync, so that's
@@ -195,14 +192,7 @@ internal class SongImporter(
      */
     private class RemovedOnSource(val songs: List<Song>, val missing: Int, val unfetched: Int)
 
-    /**
-     * Which of [existingSongs] [mediaProvider] no longer holds, for an incremental sync, which can't tell from the songs it
-     * fetched (#845), or null when it lists nothing. The [inserted] songs were new, so if the source's count is what's
-     * stored plus those (plus the songs its last full listing came up short by, which its count includes), nothing has gone
-     * and that's one request. Otherwise its path listing says: a failed one is null, and one that left songs out has
-     * [missing][RemovedOnSource.missing] as many, which [DeleteGuard] holds the removal back for as it does a full listing's.
-     * Songs missing from that listing are confirmed by a second, since a shifting page can skip one that's still there (#934).
-     */
+    /** Stored songs an incremental sync no longer finds: the source's count settles it in one request, else a path listing. */
     private suspend fun songsRemovedOnSource(
         mediaProvider: IncrementalMediaProvider,
         existingSongs: List<Song>,
@@ -234,11 +224,7 @@ internal class SongImporter(
         return RemovedOnSource(existingSongs.filter { song -> song.path !in held }, listing.missing, unfetched)
     }
 
-    /**
-     * Which of a full listing's [deletes] to go on with. A [PathListingMediaProvider]'s pages shift when a song goes
-     * mid-listing, skipping another that's still there and totalling as if nothing were skipped (#934), so a song is
-     * removed only if a second listing lacks it too; none is if that fails. Other sources' are as listed.
-     */
+    /** Path-listing pages shift mid-listing and can skip songs, so a delete stands only if a second listing also lacks the song. */
     private suspend fun confirmedRemovals(
         mediaProvider: MediaProvider,
         deletes: List<Song>

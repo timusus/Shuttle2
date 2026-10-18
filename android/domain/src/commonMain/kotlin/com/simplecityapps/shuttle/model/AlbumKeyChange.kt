@@ -1,13 +1,6 @@
 package com.simplecityapps.shuttle.model
 
-/**
- * Moves an album or album artist key across a change to the stored songs' tags, from the library [before] it to the one
- * [after] it, matching the songs by id: a key [after] names is kept; one only [before] names moves to the album (or album
- * artist) most of its songs belong to in [after]. Null for a key neither names, which a caller keeps as it is.
- *
- * For a change made to the stored songs directly rather than by reading their files again, so both libraries are at hand:
- * the local artist split of #880, applied to the songs stored before it.
- */
+/** Moves keys across a tag change made to stored songs directly, where both libraries are at hand. */
 class AlbumKeyChange(
     private val before: AlbumIndex,
     private val after: AlbumIndex

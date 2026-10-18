@@ -1,15 +1,6 @@
 import SwiftUI
 
-/// Now Playing's full-bleed backdrop (#624): the cover's colour top to bottom, with a blurred, saturated copy of the
-/// cover glowing through the top half, after Apple Music and Shuttle Podcasts.
-///
-/// Three layers, all from `palette` (`PlayerPalette`): a gradient from the hue's `glow` to its `ground`; the cover
-/// scaled to fill, blurred heavily and saturated, masked so it is strong behind the cover and fades out toward the
-/// controls; and a scrim of the ground that reaches 85% by the control zone, so the tint and captions, which
-/// `PlayerPalette` measures with the cover showing through (`textShowThrough`, `controlShowThrough`), still clear AA
-/// whatever the cover. With no source, or before the cover arrives, it is the palette's gradient alone.
-///
-/// Put it in a `.background { }` of the screen; it ignores the safe area itself.
+/// The ground scrim keeps the tint and captions above AA whatever the cover shows through.
 struct ArtworkBackground: View {
     let source: ArtworkSource?
     let palette: PlayerPalette

@@ -30,28 +30,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.onSubscription
 import kotlinx.coroutines.withContext
 
-/**
- * iOS playback: [PlaybackOperations], and [queueOperations], over a [QueueModel] and the Swift [player], with
- * Android's semantics (`PlaybackFacade`, `QueueFacade`, `ItemLoader` in android/playback). After every change to the
- * queue or the modes this hands the player the whole play order and the queue's current item ([IosEngineFeeder]); the
- * player owns the next item, repeat and the gapless join, and when it moves on the queue's current item follows
- * ([IosEngineEvents]).
- *
- * Songs that fail to load are skipped for the next one, as `ItemLoader` skips them: up to [PlaybackPolicy.MAX_LOAD_ATTEMPTS] in a row,
- * wrapping only under repeat all, each reported on [playbackFailureFlow] (bar one [resolver] couldn't resolve). A
- * load that doesn't skip (a restore) leaves a failed song current, paused, until it's played.
- *
- * Each queue entry the player opens is a play, under the id [itemResolver] resolves its stream with. A play that leaves
- * the order, or ends the queue, is ended ([IosStreamResolver.endPlay]), so a server stops its transcode (#722).
- *
- * Main thread only inside; callable from any thread by the domain interfaces' rule. [scope] runs on the main thread
- * (`Dispatchers.Main.immediate` on iOS): a call that changes playback made on it runs straight away, else it's posted
- * to it. The Swift player adapter calls back on the main thread.
- *
- * The queue, the modes, the position and the speed are saved and restored by [IosPlaybackStore], which watches this
- * controller's flows and restores through [restoreQueue]; a play of an item that isn't loaded starts it at
- * [resumePosition], as `PlaybackFacade` does with `QueueStore.resumePosition`.
- */
+/** Playback over the Swift player with Android's semantics; the player owns the gapless join, so Kotlin hands it the whole order. */
 class IosPlayerController(
     private val player: IosAudioPlayer,
     private val resolver: IosStreamResolver,
@@ -117,11 +96,7 @@ class IosPlayerController(
         player.setListener(events)
     }
 
-    /**
-     * A load that [playWhenReady] hands the engine its track to play once it's ready, so the engine gets its output ready
-     * (the audio session, its start) while the track opens rather than after (#687). It completes when the track is
-     * playing, or paused if the play was refused.
-     */
+    /** Starts the engine's output while the track opens, rather than after it opens. */
     override fun load(
         seekPosition: Int?,
         skipUnloadable: Boolean,
@@ -141,12 +116,7 @@ class IosPlayerController(
 
     override fun play() = main.run { playNow() }
 
-    /**
-     * Plays the current item. Nothing loaded (or a failed item) loads it at [resumePosition]; a played-out queue
-     * restarts its current item; a position within the song's last moments restarts it (RS-11). Paused at its end, the
-     * player has already made the next item current, so this plays that from its start, as Media3 does after
-     * `pauseAtEndOfMediaItems`.
-     */
+    /** Plays the current item; paused at its end the player has already moved on, so that item plays from its start, as Media3 does. */
     private fun playNow() {
         val item = queue.currentItem ?: return
         log.info { "play song ${item.song.id}, ${playbackState().name}" }
@@ -277,8 +247,7 @@ class IosPlayerController(
         context: PlayContext,
         completion: (Result<Any?>) -> Unit
     ) = main.call {
-        // Before the queue changes, as setQueue does: a listen starts, with the context as it stands, as the new
-        // queue's first item becomes current (RecordPlays), so a later set credits the old queue's context (#649)
+        // Set before the queue changes, so the listen that starts with the new first item credits the new context
         playContext = context
         queue.setShuffleMode(ShuffleMode.On, reshuffle = false)
         queue.setQueue(songs, songs.shuffled(random), 0, retainShuffle = retainShuffleOnNewQueue())

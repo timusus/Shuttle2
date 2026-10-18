@@ -17,12 +17,9 @@ class MediaImporter(
     songRepository: SongRepository,
     playlistStore: ImportedPlaylistStore,
     private val sourceState: SourceStateStore,
-    /**
-     * Runs after each import, told whether every source's songs now hold every tag this build reads: what moving the
-     * stored album keys to the album identity rule (#637) waits for.
-     */
+    /** Runs after each import, told whether every song holds the tags this build reads; the album-key migration waits on it. */
     private val afterImport: suspend (songTagsCurrent: Boolean) -> Unit,
-    /** Sends the edits made in S2 to a server's playlists before that server's playlists are read again (#916). */
+    /** Pushes local playlist edits to the server before its playlists are read again. */
     private val playlistSync: ServerPlaylistSync? = null,
     /** What each source's sync start is taken from: a fake in tests. */
     private val clock: Clock = Clock.System
@@ -127,16 +124,7 @@ class MediaImporter(
     }
 
     /**
-     * Brings each source up to date as [SyncPolicy] says for [trigger] (#771): only what changed on a server since its last
-     * sync, all of it now and then, and nothing on return to the app for a source synced in the last few minutes. Quiet,
-     * unlike [import]: it shows no progress, which would replace the library with the scanning state, only that a source
-     * changed or (but for a return to the app, which finds a server offline too often to say so) failed. An import or sync
-     * already running makes it return at once; an [import] asked for while it runs follows it. Nothing is synced before the
-     * library's first import, or while one is due for new tags: the launch asks for that import itself, and a sync that got
-     * the lock first would only read every source in full a second time.
-     *
-     * Returns how it went ([SyncResult]). [onStart] is called once there is work to do, just before it starts, and not at all
-     * for a sync that is skipped, so a caller can show that it's running only when it is.
+     * Quiet sync per [SyncPolicy]: no progress UI, and skipped while an import runs or is due, since that import reads every source in full anyway.
      */
     suspend fun sync(
         trigger: SyncTrigger,

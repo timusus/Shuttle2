@@ -166,13 +166,7 @@ class ItemLoader(
         giveUp()
     }
 
-    /**
-     * Opens the current item again at its position, playing on if it was, when [error] is a 404 on its stream and it's a
-     * transcode the server drops when another starts: Plex runs one per user, so opening the next item ahead replaced it,
-     * and the player keeps no back buffer to seek back into (#907). Opening it again starts the transcode afresh. Once
-     * per item and position, so one that fails again there is handled as any other failure. Checked before an unready
-     * item is skipped, as one replaced just as playback moved on to it (gaplessly) did load.
-     */
+    /** Reopens the current transcode after a 404: the server drops a transcode when another starts, and the player keeps no buffer to seek back into. */
     private fun reopensReplacedTranscode(
         error: PlaybackException,
         failedIndex: Int,

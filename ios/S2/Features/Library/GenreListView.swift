@@ -1,10 +1,7 @@
 import Shared
 import SwiftUI
 
-/// Library > Genres (P5-6b): `GenreListViewModel`'s genres as a list; a row pushes the genre's detail route. A genre
-/// has no artwork of its own, so each row draws a `CoverMosaic` of its albums' covers (`GenreCoversViewModel`,
-/// #643), which fill in after the list shows. A Shuffle row heads the list, shuffling every genre. Context menu plays
-/// or queues through the shared `MediaAction`s.
+/// A genre has no artwork of its own, so its row draws a `CoverMosaic` of its albums' covers.
 struct GenreListView: View {
     @Environment(\.appServices) private var appServices
     private var services: AppServices { appServices.required }

@@ -79,11 +79,7 @@ private fun Context.openFolderCover(song: Song): InputStream? {
     return openLargestImage(listOfNotNull(folder)) { name -> matchesFolderCoverName(name) }
 }
 
-/**
- * True for a folder image name S2 treats as cover art: `folder`, `cover`, `album`, `albumart`, `front` or
- * `artwork`, any case, with an optional leading dot, followed by anything, then a jpg/jpeg/png/webp
- * extension (#169: `albumart.jpg` didn't match until `albumart` was added to the name list).
- */
+/** True for a folder image name S2 treats as cover art: any case, an optional leading dot, and a jpg, jpeg, png or webp extension. */
 internal fun matchesFolderCoverName(name: String): Boolean = coverPattern.matcher(name).matches()
 
 /** Opens the largest image over 1 KB in [folders] whose name matches, skipping tiny thumbnails and placeholders. */

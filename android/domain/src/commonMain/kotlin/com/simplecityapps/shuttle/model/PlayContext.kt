@@ -1,13 +1,6 @@
 package com.simplecityapps.shuttle.model
 
-/**
- * What a queue was started from: the album, artist, playlist, smart playlist or genre the user chose to play (#633).
- * The queue remembers it, and each play event records it, so Home can suggest a way back into what was played.
- * [None] is a queue that wasn't started from one of those: a list of songs, a folder, a play request from outside.
- *
- * Stored as a [type] and an [id] ([decode] reads them back): the id is what finds the context again, so an album and
- * an artist are stored by their group key, not a row id a reimport would change.
- */
+/** Stored as [type] and [id]; albums and artists are stored by group key, not a row id a reimport would change. */
 sealed interface PlayContext {
     val type: String
     val id: String?

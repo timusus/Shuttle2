@@ -46,10 +46,7 @@ import com.simplecityapps.shuttle.ui.screens.sources.MusicPermission
 import com.simplecityapps.shuttle.ui.screens.sources.ServerTypePickerRoute
 import dev.zacsweers.metrox.viewmodel.metroViewModel
 
-/**
- * Shows the first run's welcome in place of [content] until the user picks where their music comes from (#1040).
- * [onOpenPrivacy] opens Settings > Privacy in the shell that replaces it.
- */
+/** Shows the first-run welcome in place of [content] until a music source is picked; [onOpenPrivacy] opens Privacy. */
 @Composable
 fun WelcomeGate(
     onOpenPrivacy: () -> Unit,

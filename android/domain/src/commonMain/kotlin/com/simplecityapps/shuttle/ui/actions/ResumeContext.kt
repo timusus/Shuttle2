@@ -11,13 +11,7 @@ import kotlin.coroutines.resume
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.suspendCancellableCoroutine
 
-/**
- * Plays a context from where it was left (#670), as a Jump back in tile's Play does: the player carries on if the queue
- * is still that context's; otherwise the context's songs are queued again from its resume point's song and position,
- * with shuffle on again if it was; a queue that fails leaves the shuffle mode as it was. [Result.StartOver] says to play
- * it from the start instead: it has no resume point, its songs played through, or the point's song is no longer among
- * them. Then it carries the songs if it read them, so the start over doesn't read them again (#687).
- */
+/** Resumes a context where it was left; [Result.StartOver] carries the songs read, so they aren't read twice. */
 @Inject
 class ResumeContext(
     private val queueOperations: QueueOperations,

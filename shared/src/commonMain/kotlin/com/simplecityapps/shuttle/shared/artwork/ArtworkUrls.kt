@@ -60,14 +60,10 @@ class ArtworkUrls(
         return listOfNotNull(song?.let(::localRequest)) + remoteRequests(album, song)
     }
 
-    /** An artist's row in a list or search (#823): their image by the hero's rule, so the row shows what their page does. */
+    /** Rows use the hero's rule so a row shows the same image as the artist's page. */
     suspend fun requests(albumArtist: AlbumArtist): List<ArtworkRequest> = requests(loadArtistArtwork(albumArtist))
 
-    /**
-     * An artist's image by the shared rule (#781, #823), the same chain as Android's: the media server's artist image, the S2
-     * API's only when [ArtistHeroArtwork.onlineLookup], each only at [ArtistHeroArtwork.MIN_ARTIST_IMAGE_SIZE] or larger,
-     * then the fallback album's cover.
-     */
+    /** Same chain as Android; an artist image below the minimum size falls through to the fallback album's cover. */
     suspend fun requests(hero: ArtistHeroArtwork): List<ArtworkRequest> {
         val artist = if (artworkSettings.localOnly.value) {
             emptyList()
@@ -99,10 +95,7 @@ class ArtworkUrls(
         )
     }
 
-    /**
-     * A song from this device's library (`s2local://...`, #590): its picture, embedded or beside it in its folder, which
-     * Swift's `ArtworkLoader` reads from the file. Asked even when artwork is local-only, which is what that setting keeps.
-     */
+    /** Asked even when artwork is local-only, since that setting keeps on-device pictures; Swift reads them from disk. */
     private fun localRequest(song: Song): ArtworkRequest? {
         if (!song.path.startsWith(LOCAL_PREFIX)) return null
         return ArtworkRequest(LOCAL_PREFIX + song.path.removePrefix(LOCAL_PREFIX).percentEncodedPath())
@@ -137,10 +130,7 @@ class ArtworkUrls(
         .orEmpty()
         .albumArtworkSong()
 
-    /**
-     * The first of their songs that pins down the server's id for them ([serverArtistId], #653), with that id: their own
-     * albums' songs first, then those crediting them elsewhere (a credited-only artist's).
-     */
+    /** Their own albums' songs go first, since those are the ones that pin down the server's id for them. */
     private suspend fun serverArtistSong(albumArtist: AlbumArtist): Pair<Song, String>? = songRepository.getSongs(SongQuery.ArtistGroupKeys(listOf(SongQuery.ArtistGroupKey(albumArtist.groupKey))))
         .firstOrNull()
         .orEmpty()

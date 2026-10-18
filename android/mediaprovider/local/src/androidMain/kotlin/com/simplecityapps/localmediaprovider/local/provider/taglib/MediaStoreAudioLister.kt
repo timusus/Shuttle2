@@ -139,14 +139,7 @@ internal fun movedSongRemaps(
     }
 }
 
-/**
- * MediaStore's listing, read in part where it can be (#875): with a stored listing of the same MediaStore [version], the
- * listing is the stored rows less those gone, with those whose generation moved read again. Each row's generation is
- * compared rather than one high-water mark alone, because MediaStore keeps a generation per volume: a volume mounted
- * again, or one whose generations run below another's, still has its rows read. Whole if [whole], if [incremental] is
- * off (before API 30, MediaStore has no generations), without a stored listing, or when MediaStore's version changed.
- * Null if MediaStore can't be queried.
- */
+/** MediaStore's listing, reading only the rows whose generation moved since the stored listing, or null if it can't be queried. */
 internal fun scanMediaStore(
     source: MediaStoreAudioSource,
     stored: StoredMediaStoreListing?,

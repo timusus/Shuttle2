@@ -17,10 +17,7 @@ import kotlinx.coroutines.flow.asStateFlow
 
 data class WelcomeUiState(val showWelcome: Boolean)
 
-/**
- * The first run's welcome (#1040): shown before the shell on a new install until the user picks where their music comes
- * from. It discloses crash reports and analytics, so seeing it counts as the one-time analytics notice (#1031).
- */
+/** Shown before the shell on a new install; seeing it counts as the one-time analytics notice. */
 @ViewModelKey(WelcomeViewModel::class)
 @ContributesIntoMap(AppScope::class)
 class WelcomeViewModel @Inject constructor(

@@ -11,13 +11,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 
-/**
- * What the queue was started from (#909), as the item the queue screen says it's "Playing from" and opens: the
- * album, artist, playlist, smart playlist or genre, resolved as Home resolves the contexts it suggests, so it carries
- * the item's current name. Null for a queue started from none of those, or from one the library no longer has.
- *
- * Resolved only when the queue's context changes, not on every change to the queue.
- */
+/** The item the queue plays from, resolved only when its context changes; null if none or gone. */
 class ObserveQueueSource @Inject constructor(
     private val resolveHomeItems: ResolveHomeItems,
 ) {

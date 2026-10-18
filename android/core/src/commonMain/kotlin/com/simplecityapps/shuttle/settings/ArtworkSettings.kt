@@ -32,7 +32,7 @@ class ArtworkSettings @Inject constructor(
         /** Hand artwork to the media session (lock screen, notification, Android Auto). */
         val MediaSessionArtwork = Setting.boolean("media_session_artwork", true)
 
-        /** Which image stands for the playing song on the player, mini player and media session (#952). */
+        /** Which image stands for the playing song on the player, mini player and media session. */
         val NowPlayingArtworkSource = Setting.enumOrdinalString("pref_now_playing_artwork", NowPlayingImage.AlbumArt, NowPlayingImage.entries)
     }
 }

@@ -33,21 +33,14 @@ import timber.log.Timber
 /** The Android write-consent request: [TagEditorScreen]'s launcher casts back to this to get the [intentSender] it launches. */
 class IntentSenderWriteConsent(val intentSender: IntentSender) : WriteConsent
 
-/**
- * Tag access through KTagLib, by the first route that can write the file (#406):
- * - a song read through a folder grant (Settings > Sources) is a document URI, written through the grant;
- * - a file under a granted folder is written through that grant, as its document;
- * - otherwise, on Android 11 and up, the file's MediaStore entry, once the user consents ([writeConsent]).
- *
- * Below Android 11 a file outside every granted folder can't be written, so it can't be edited either.
- */
+/** Tag access through KTagLib, writing via the first route available: folder grant, then MediaStore with consent. */
 class DeviceTagFileAccess @Inject constructor(
     @ApplicationContext private val context: Context,
     private val kTagLib: KTagLib,
     private val fileScanner: FileScanner,
     private val tagReadGuard: TagReadGuard,
 ) : TagFileAccess {
-    // A file TagLib crashed on is left unread, so opening it in the editor shows it as unreadable rather than crashing again (#874)
+    // A file TagLib crashed on is left unread, so the editor shows it as unreadable instead of crashing again
     override suspend fun read(song: Song): AudioFile? = tagReadGuard.read(tagReadFile(song), song.mediaProvider) {
         when (val target = target(song)) {
             is TagTarget.Document -> fileScanner.getAudioFile(context, kTagLib, target.uri)

@@ -1,9 +1,7 @@
 package com.simplecityapps.mediaprovider
 
 /**
- * The scheme a [MediaInfoProvider] or [RemoteArtworkProvider] matches [path] (a `Song.path`) against, without building
- * a Uri: "file" for a raw file path, the part before "://" otherwise, null for a path with neither. Keeps provider
- * matching in common code, and off `Uri.parse`/`Uri.fromFile` in plain-JVM tests, where they aren't mocked (#552).
+ * Scheme of a `Song.path` without building a Uri, so provider matching stays testable on plain JVM.
  */
 internal fun schemeOf(path: String): String? = if (path.startsWith("/")) {
     "file"

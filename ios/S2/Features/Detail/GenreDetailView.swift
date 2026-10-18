@@ -1,8 +1,6 @@
 import Shared
 import SwiftUI
 
-/// Genre detail (P5-7): hero (a genre has no artwork of its own, so the same `CoverMosaic` its Library row draws, #652), Play/Shuffle, the albums its
-/// songs come from as a shelf, then every one of its songs. Modeled on Android's `GenreDetailScreen.kt`.
 struct GenreDetailView: View {
     let name: String
 

@@ -46,12 +46,7 @@ class SourcesActions(
     val onAddServer: () -> Unit,
 )
 
-/**
- * Settings > Sources' own rows (#379, #492), ahead of the catalog's switches: the servers first, each connected one with
- * its account, status, songs and when it last updated (or a sync's progress) and opening its page, and "Add a server"
- * picking a type to sign in to; then This device as one row with its own status, opening its page. [now] is when
- * "Updated 2 hours ago" counts from.
- */
+/** Sources rows ahead of the catalog's switches: servers, then This device; [now] drives the relative "Updated" time. */
 fun LazyListScope.sourcesContent(uiState: SourcesUiState, actions: SourcesActions, now: Instant = Clock.System.now()) {
     item(key = "sources-servers") {
         SettingsGroup(

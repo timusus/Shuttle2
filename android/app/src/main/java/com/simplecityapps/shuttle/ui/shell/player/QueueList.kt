@@ -80,10 +80,7 @@ import kotlinx.coroutines.launch
 /** The least height of the queue's header ("Queue" with Save as playlist and Clear Queue); it grows with the text. */
 internal val QueueHeaderHeight = 56.dp
 
-/**
- * "Queue" over the queue's rows, with Save as playlist and Clear Queue, and over it what the queue is playing from
- * ([source], #909), which [onOpenSource] opens. It is transparent: the panel sheet's wash tints it under artwork.
- */
+/** "Queue" with Save as playlist and Clear Queue, plus the [source] it plays from; transparent so the sheet's wash tints it. */
 @Composable
 internal fun QueueHeader(
     source: HomeItem?,

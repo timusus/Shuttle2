@@ -45,7 +45,7 @@ import okhttp3.OkHttpClient
  */
 class ExoPlayerFactory(
     private val context: Context,
-    /** The app's client, so streams carry each server's custom headers and trusted certificate (#894). */
+    /** The app's client, so streams carry each server's custom headers and trusted certificate. */
     private val okHttpClient: OkHttpClient,
     private val equalizerAudioProcessor: EqualizerAudioProcessor,
     private val replayGainAudioProcessor: ReplayGainAudioProcessor,

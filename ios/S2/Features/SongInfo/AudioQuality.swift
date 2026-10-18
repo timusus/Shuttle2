@@ -31,8 +31,7 @@ struct AudioQuality: Equatable {
         )
     }
 
-    /// What the server sends while it transcodes a song, "MP3 · 128 kbps", for Now Playing's badge (#902); Song Info keeps
-    /// the file's own format.
+    /// What the server sends while it transcodes a song; Song Info keeps the file's own format.
     init(delivered: DeliveredFormat) {
         self.init(codec: delivered.codec, bitRate: delivered.bitrateKbps.map { Int(truncating: $0) })
     }

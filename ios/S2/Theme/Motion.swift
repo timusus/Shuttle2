@@ -103,9 +103,7 @@ extension View {
     }
 }
 
-/// Which of several tiles showing one item is the zoom source for its screen. An item can be in more than one Home
-/// section, or on a detail shelf pushed over Home, and a zoom from a tile the user didn't touch would be wrong, as
-/// would two live sources sharing one id (#698).
+/// The tile the user touched is the zoom source for its screen; two live sources sharing one id would clash.
 enum ZoomTile {
     /// A tile's key across the stack: its key on its screen (`tile`) under the screen's (`screen`), so the same
     /// album on Home and on a pushed screen's shelf are different tiles.

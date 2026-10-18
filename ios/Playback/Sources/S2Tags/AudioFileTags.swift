@@ -1,13 +1,7 @@
 import CS2Tags
 import Foundation
 
-/// A local audio file's tags and audio properties (#590), read with the FFmpeg build the engine plays with
-/// (`tag_read.c`), so the library reads tags from every format it can play: ID3, MP4 atoms, Vorbis comments
-/// (FLAC, Ogg Vorbis, Opus) and Matroska tags alike. AVFoundation reads none of FLAC's or Ogg's, and none of
-/// the ReplayGain or MusicBrainz tags in any format.
-///
-/// The tags are libavformat's, raw: the shared Kotlin library maps them to a song's fields with the rules
-/// Android's TagLib reader uses (`ffmpegPropertyMap`, then `toFileTags`, in `:android:mediaprovider:local`, #810).
+/// Reads tags through libavformat because AVFoundation skips FLAC and Ogg tags and ReplayGain or MusicBrainz tags.
 public struct AudioFileTags: Equatable, Sendable {
     /// One tag as libavformat names it ("album_artist", "TDOR", "MusicBrainz Album Id"), with its value.
     public struct Tag: Equatable, Sendable {

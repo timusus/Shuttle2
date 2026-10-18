@@ -63,18 +63,7 @@ class CrossfadeClippingMediaSourceFactory(
     override fun setDownloadExecutor(downloadExecutor: Supplier<ReleasableExecutor>): MediaSource.Factory = apply { delegate.setDownloadExecutor(downloadExecutor) }
 }
 
-/**
- * Shows the latest item given to [updateMediaItem] in the timeline, at its unclipped duration.
- *
- * A [ClippingMediaSource] refreshes its timeline from its child's, which keeps the item the child was prepared with,
- * so without this an item updated in place (a song renamed by a library update, or re-clipped) would revert to the
- * old one.
- *
- * It also shortens the window to the clip, so once a tail was ready the player's duration, and with it the session's
- * and notification's seek bars, came up the crossfade's length short, and changed as the item was clipped and
- * unclipped (#561). The window here keeps the song's whole duration, from [unclipped]; the period stays clipped, so
- * the item still ends, and hands over to the next, at the clip. A seek past the clip end lands at the period's end.
- */
+/** Shows the latest item from [updateMediaItem] at its unclipped duration, since a clipping source would revert it and shorten the seek bars. */
 private class UpdatedItemMediaSource(
     source: MediaSource,
     private var item: MediaItem,
@@ -372,16 +361,7 @@ class Crossfade(
         }
     }
 
-    /**
-     * Why the item at [index] can't go from clipped to [from]'s tail to clipped to [to]'s (null: unclipped), or null if
-     * it can: any but the playing item can, and that one only while both ends are [CLIP_CHANGE_MARGIN_MS] ahead of its
-     * position and, if it's to [keepPreload], the player is still loading it.
-     *
-     * A clip changes the item's period duration, and Media3 drops every period queued after one whose duration changes
-     * (`MediaPeriodQueue.updateQueuedPeriods` calls `removeAfter`). The player queues the next item's period once the
-     * playing one is loaded to its end, so moving the clip after that would throw away the next item's preload, and
-     * a remote item would open, probe and buffer again just as the crossfade starts (#562).
-     */
+    /** Why the item at [index] can't change clip, or null if it can: a change makes Media3 drop the preloads queued after it. */
     private fun clipBlock(
         index: Int,
         from: Decoded?,

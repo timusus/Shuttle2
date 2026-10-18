@@ -8,7 +8,7 @@ import Shared
 /// crash reporting (the shared `TelemetryConsentGate`), and closed again if they turn it off. Without a DSN it never
 /// starts. Like Android's `SentryCrashReporting`: crashes, hangs (2 s) and sessions; no profiling, automatic or network
 /// breadcrumbs, failed-request capture, screenshots, view hierarchy or user identity. Unlike Android, which sends
-/// crashes only, it also samples app start traces at 5% (#776's plan). Every message, exception, breadcrumb, tag,
+/// crashes only; it also samples app start traces at 5%. Every message, exception, breadcrumb, tag,
 /// context and extra goes through the shared `TelemetryScrubber` first (`TelemetryScrub`).
 final class SentryCrashReporter: NSObject, IosCrashReporter {
     private static let log = Logger(subsystem: "com.simplecityapps.shuttle2", category: "Telemetry")

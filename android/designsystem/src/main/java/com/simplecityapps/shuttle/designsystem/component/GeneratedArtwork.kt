@@ -22,12 +22,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.simplecityapps.shuttle.designsystem.preview.S2Preview
 import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
 
-/**
- * Artwork for something with none of its own (a genre, a playlist): a muted tone from a small curated palette, picked
- * by [seed], under [icon] (#646). The tone is stable across launches, so a genre keeps its colour on every screen, and
- * each has a light and a dark shade so the tile sits quietly in either theme. [size] picks the corner, as [Artwork]'s
- * does; the caller's [modifier] may override the size.
- */
+/** Artwork for something with none of its own; a stable tone from [seed] keeps its colour on every screen. */
 @Composable
 fun GeneratedArtwork(
     seed: String,

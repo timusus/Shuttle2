@@ -57,7 +57,7 @@ enum Route: Hashable, Codable {
     /// Downloads (storage used, Remove All, running and failed downloads), pushed from Settings' Downloads row.
     case downloads
 
-    /// The `ViewModelCache` key for the screen this route resolves to (`ios.md`, "Swift ↔ Kotlin").
+    /// The `ViewModelCache` key for the screen this route resolves to.
     var cacheKey: String {
         switch self {
         case .libraryCategory(let category): "libraryCategory:\(category.rawValue)"

@@ -9,10 +9,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 
-/**
- * The songs whose covers make up each of [playlists]' artwork, by playlist id: its first [CoverCount] songs from
- * different albums, in the playlist's order (#491, #534). Re-emits as the playlists' songs change.
- */
+/** Each playlist's first [CoverCount] songs from different albums, in playlist order, for its cover mosaic. */
 @Inject
 class ObservePlaylistCovers(
     private val playlistRepository: PlaylistRepository,

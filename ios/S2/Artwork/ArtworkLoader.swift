@@ -84,7 +84,7 @@ actor ArtworkLoader {
         let uncachedSession = URLSession(configuration: uncachedConfiguration, delegate: PlexTokenRedirectGuard(), delegateQueue: nil)
         let bindings = OSAllocatedUnfairLock(initialState: Bindings())
         self.init(fetch: { request in
-            // This device's songs (#590): the picture in the file, or an image beside it.
+            // Local-library URLs resolve on the device, never through a session.
             if let url = request.url, url.scheme == LocalLibrary.scheme {
                 guard let read = bindings.withLock({ $0.localArtwork }), let data = await read(url) else { throw URLError(.fileDoesNotExist) }
                 return (data, URLResponse(url: url, mimeType: nil, expectedContentLength: data.count, textEncodingName: nil))
@@ -245,10 +245,7 @@ actor ArtworkLoader {
     }
 }
 
-/// The artwork sessions' delegate. Keeps a Plex server's `X-Plex-Token` and the custom headers of any server from following
-/// a redirect to another host (`URLSession` carries a request's headers, and its query, over a redirect, so the server could
-/// otherwise send them anywhere), and trusts the certificate the user pinned for a server (#921), through the same
-/// ``ServerConnectionPolicy`` as sign-in, streaming and downloads.
+/// Strips Plex tokens and custom headers on a redirect to another host, which URLSession would otherwise carry over.
 final class PlexTokenRedirectGuard: NSObject, URLSessionTaskDelegate, Sendable {
     static let tokenName = "X-Plex-Token"
 

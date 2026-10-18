@@ -72,7 +72,6 @@ final class Navigator {
     var searchPath: [Route] = [] { didSet { retainViewModels() } }
     private var libraryCategoryPaths: [LibraryCategory: [Route]] = [:] { didSet { retainViewModels() } }
 
-    /// The wide inspector slot; empty until phase 6 wires Now Playing into it.
     var showsPlayerInspector = false
 
     /// Whether the Settings sheet is up (the gear on the Home and Library roots). Dismissing it drops
@@ -108,8 +107,7 @@ final class Navigator {
     /// whether to open the first run, and the setup follows the import after its sign-in has gone.
     static let sourceSetupCacheKey = "sourceSetup"
 
-    /// The `ViewModelCache` key for the shell's view model: always live, since it is what hears a server's session
-    /// expire (#819) for as long as the app runs.
+    /// Always live: the shell's view model hears a server's session expire.
     static let shellCacheKey = "shell"
 
     /// The `ViewModelCache` key for `type`'s sign-in inside the source setup.
@@ -117,7 +115,7 @@ final class Navigator {
         "sourceSetup.signIn:\(type.name)"
     }
 
-    /// `startTab` is where the app opens: `ShellViewModel`'s start tab, from Show Home on launch (#617).
+    /// Where the app opens: `ShellViewModel`'s start tab.
     init(viewModelCache: ViewModelCache = .shared, startTab: AppTab = .home) {
         self.viewModelCache = viewModelCache
         self._selection = .tab(startTab)

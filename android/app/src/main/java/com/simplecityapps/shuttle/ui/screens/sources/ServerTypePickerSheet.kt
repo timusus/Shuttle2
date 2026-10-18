@@ -11,7 +11,7 @@ import com.simplecityapps.shuttle.designsystem.component.S2Action
 import com.simplecityapps.shuttle.designsystem.component.S2ActionsSheet
 import com.simplecityapps.shuttle.model.MediaProviderType
 
-/** "Connect a server" (#487): a type per row, easy to extend with Quick Connect or LAN discovery later. */
+/** One row per provider type. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ServerTypePickerSheet(

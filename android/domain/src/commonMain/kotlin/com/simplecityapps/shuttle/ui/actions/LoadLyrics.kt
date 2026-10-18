@@ -5,10 +5,7 @@ import com.simplecityapps.shuttle.model.Song
 import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.flow.Flow
 
-/**
- * One song's lyrics, or null when it has none: the ones stored with the song, else [onlineLyrics]. Songs don't carry
- * them (#873), so a screen that shows lyrics loads them here.
- */
+/** Songs don't carry lyrics, so screens load them here: the stored ones, else online. */
 @Inject
 class LoadLyrics(
     private val songRepository: SongRepository,

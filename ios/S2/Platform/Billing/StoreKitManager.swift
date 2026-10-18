@@ -3,12 +3,7 @@ import Observation
 import Shared
 import StoreKit
 
-/// StoreKit 2 for Shuttle Music Pro (#609), after Shuttle Podcasts' `StoreKitManager`. Two non-consumables, their ids
-/// in :shared's `AppStoreProducts`: the free trial and Pro for life. What owning them grants is resolved in
-/// Kotlin (`StoreEntitlements`); this only loads and buys the products and reports the user's current transactions to
-/// it, at launch, after each purchase or restore, and whenever `Transaction.updates` delivers one (a purchase made on
-/// another device, Ask to Buy approval, a refund). Each purchase and restore is recorded in the shared monetisation
-/// funnel (`MonetisationAnalytics`, #776).
+/// Loads and buys the Pro products and reports the user's transactions to Kotlin's `StoreEntitlements`, which decides what they grant.
 @MainActor
 @Observable
 final class StoreKitManager {

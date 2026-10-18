@@ -1,10 +1,6 @@
 package com.simplecityapps.localmediaprovider.local.provider
 
-/**
- * The title of a Matroska file (.mka, .mkv, .webm), from the start of the file [head]. ffmpeg writes it to the segment
- * info (Segment > Info > Title), not as a tag, so TagLib's property map leaves it out (#523) and KTagLib exposes nothing
- * else. Returns null when the head holds no title: none is set, or the info lies past what [head] covers.
- */
+/** Reads the Matroska segment title, which TagLib's property map omits. */
 fun matroskaTitle(head: ByteArray): String? {
     var position = 0
 

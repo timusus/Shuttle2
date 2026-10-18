@@ -44,16 +44,7 @@ data class SourceSetupUiState(
     val serverImport: SourceSetupImport = SourceSetupImport.NotStarted,
 )
 
-/**
- * Adding a media server (#624), from the first-run setup or Sources' Add Source: whether the setup opens at launch,
- * the paywall gate and connect side effect [com.simplecityapps.shuttle.ui.screens.sources.ServerTypePickerViewModel]
- * has, and the connected server's import, so the setup can show it running and let the user carry on meanwhile.
- *
- * Android has no first run (#379: the Library's empty state asks for the music permission instead); iOS has no music
- * on the device to start from, so it opens this setup until a server is connected, the device's own music is chosen
- * (Files and the app's Documents folder, #590) or the user skips it. That first finish is recorded as
- * `onboarding_completed` with its [OnboardingPath]; a later Add Source, or a server that predates the setup, isn't.
- */
+/** Opens on iOS until a server or the device's music is chosen, since iOS starts with no music to show. */
 @ViewModelKey(SourceSetupViewModel::class)
 @ContributesIntoMap(AppScope::class)
 class SourceSetupViewModel @Inject constructor(
@@ -95,10 +86,7 @@ class SourceSetupViewModel @Inject constructor(
         complete(OnboardingPath.Server)
     }
 
-    /**
-     * The music on this device was chosen (iOS's "On this iPhone", #590): read it, following that import from here, as
-     * the setup does a server's. The setup is done, as the device's music is the library's source from now on.
-     */
+    /** Reads the device's music like a server import, so the setup can show it running. */
     fun onUseThisDevice() {
         serverImport.value = SourceSetupImport.Starting(MediaProviderType.Shuttle)
         mediaSources.scanThisDevice()

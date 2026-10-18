@@ -3,14 +3,7 @@ package com.simplecityapps.mediaprovider
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.persistence.SourceStateStore
 
-/**
- * Raised when the importer starts storing a tag it didn't before, so the songs stored already are read again once
- * ([songTagsOutdated]). 1: the raw artist and album tags and ids of #637. 3: the codec, bit rate,
- * sample rate and channel count of Emby and Jellyfin songs (#889). 4: a local combined album artist tag
- * ("A; B") reads as its first artist (#886). 5: a local multi-value ALBUMARTIST lists each value as an album artist.
- * 6: the classical fields of #1065. 7: the raw album artist tag (local files only). Local files whose path, size
- * and modified date are unchanged keep their stored tags, so only this re-import reads the new fields into them.
- */
+/** Bump when the importer starts storing a tag it didn't before, so stored songs are read again ([songTagsOutdated]). */
 const val SONG_TAGS_VERSION = 7
 
 /**

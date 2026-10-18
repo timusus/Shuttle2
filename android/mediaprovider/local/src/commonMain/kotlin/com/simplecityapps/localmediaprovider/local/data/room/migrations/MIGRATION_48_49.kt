@@ -4,11 +4,7 @@ import androidx.room.migration.Migration
 import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.execSQL
 
-/**
- * `play_events` is the listening history (#633): one row per song played through, or listened to for 30s before playback
- * moved off it, with the context its queue was started from. Backfilled with one play through per song that has a
- * `lastCompleted`, at that time, with its local hour and ISO weekday as SQLite's `localtime` has them, from no context.
- */
+/** Backfills play_events with one play per song that has a lastCompleted, at that time and from no context. */
 val MIGRATION_48_49 =
     object : Migration(48, 49) {
         override fun migrate(connection: SQLiteConnection) {

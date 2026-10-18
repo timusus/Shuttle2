@@ -63,7 +63,7 @@ class LibraryTabControls(
 
 private const val CONTROLS_KEY = "controls"
 
-/** The controls row as the list's first item, so it scrolls away with the page (#669). Nothing when there are no controls. */
+/** The controls row as the list's first item, so it scrolls away with the page; nothing when there are none. */
 internal fun LazyListScope.controlsItem(controls: LibraryTabControls?) {
     if (controls == null || controls.isEmpty) return
     item(key = CONTROLS_KEY, contentType = CONTROLS_KEY) { LibraryControlsRow(controls) }

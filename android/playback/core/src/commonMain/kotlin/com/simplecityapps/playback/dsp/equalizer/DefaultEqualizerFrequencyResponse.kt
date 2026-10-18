@@ -13,12 +13,7 @@ import kotlin.math.pow
 /** Output sample rate assumed before playback has configured the real one, so the chart still has a curve to show. */
 internal const val FALLBACK_OUTPUT_SAMPLE_RATE_HZ = 48_000
 
-/**
- * Builds the equalizer's plotted frequency response: the band cascade's magnitude response
- * ([frequencyResponseDb]), minus the headroom attenuation [cascadeAttenuation] applies at that sample rate -
- * the same function `EqualizerAudioProcessor` uses - plus the user's preamp, so the chart matches what actually
- * reaches the output (#312, #236).
- */
+/** Plots the band cascade with the same headroom attenuation and preamp the audio path applies, so the chart matches the output. */
 @ContributesBinding(AppScope::class)
 @Inject
 class DefaultEqualizerFrequencyResponse : EqualizerFrequencyResponse {

@@ -4,11 +4,7 @@ import androidx.room.migration.Migration
 import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.execSQL
 
-/**
- * User smart playlists (#506): `smart_playlists` holds each one's name and its rules as JSON, and `songs.dateAdded`
- * records when a song reached the library, for a "date added" rule. Existing songs take their `lastModified` as the best
- * guess there is; "Recently added" has used `lastModified` until now.
- */
+/** Adds songs.dateAdded for the "date added" rule; existing songs take lastModified as the best guess. */
 val MIGRATION_44_45 =
     object : Migration(44, 45) {
         override fun migrate(connection: SQLiteConnection) {

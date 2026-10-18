@@ -67,7 +67,7 @@ data class PlayerUiState(
     val delivered: DeliveredFormat? = null,
     /** The seek bar's end label counts down the time left, rather than showing the song's length. */
     val showRemainingTime: Boolean = true,
-    /** Whether Now Playing and the mini player picture a song by its album art or its artist's image (#952). */
+    /** Whether Now Playing and the mini player picture a song by its album art or its artist's image. */
     val nowPlayingImage: NowPlayingImage = NowPlayingImage.AlbumArt,
     /** The work the current song sits in (movement, performers, ribbon) when Classical display is on; null for any other song. */
     val work: NowPlayingWork? = null,
@@ -75,7 +75,7 @@ data class PlayerUiState(
     val lyrics: String? = null,
     /** The panel the bar has open, or null at rest. */
     val panel: NowPlayingPanel? = null,
-    /** What the queue is playing from (#909), shown and opened from the queue's header; null for none ([ObserveQueueSource]). */
+    /** What the queue is playing from, shown and opened from the queue's header; null for none. */
     val queueSource: HomeItem? = null,
 ) {
     companion object {

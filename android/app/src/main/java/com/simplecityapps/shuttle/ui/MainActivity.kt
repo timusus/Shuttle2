@@ -128,10 +128,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // The music permission is asked for by the welcome's "Music on this device" (#1040), the empty Library or
-        // Sources; one already held at startup scans from MediaSources.scanIfNeverScanned. Up to Android 9, someone who
-        // granted it before deleting needed write access is asked for that alone: it's in the same storage group, so
-        // the system grants it without a prompt.
+        // Up to Android 9 the write grant shares the storage group, so it is granted without a prompt.
         val missingPermissions = MusicPermission.missing(this)
         if (savedInstanceState == null && missingPermissions.isNotEmpty() && MusicPermission.name !in missingPermissions) {
             musicPermissionRequest.launch(missingPermissions.toTypedArray())

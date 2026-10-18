@@ -14,7 +14,7 @@ class AlbumListPreferenceManager @Inject constructor(
     private val preferenceManager: GeneralPreferenceManager,
 ) : AlbumListPreferences {
 
-    /** A grid until the user picks the list: albums are the most visual thing in the library (#491). */
+    /** A grid until the user picks a list: albums are the most visual thing in the library. */
     override var albumListViewMode: ViewMode
         get() = preferenceManager.albumListViewMode.toViewMode(default = ViewMode.Grid)
         set(value) {

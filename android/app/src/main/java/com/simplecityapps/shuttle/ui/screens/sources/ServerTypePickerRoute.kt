@@ -12,11 +12,7 @@ import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.ui.screens.sources.servers.ServerSignInRoute
 import dev.zacsweers.metrox.viewmodel.metroViewModel
 
-/**
- * "Connect a server" from Home or Library (#487): the type picker, then the chosen type's existing sign-in dialog,
- * without ever leaving for Settings. [onDismissRequest] closes the whole flow, whether from the picker or the
- * sign-in dialog's own dismissal (cancelled, or the "Authentication Successful" message finishing).
- */
+/** Type picker then sign-in, never leaving for Settings; dismissal closes the whole flow, not just one step. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ServerTypePickerRoute(onDismissRequest: () -> Unit) {

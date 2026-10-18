@@ -70,11 +70,7 @@ class IosEntitlementModule {
     @Provides
     fun provideObserveAddServerResumes(gate: ServerAccessGate): ObserveAddServerResumes = ObserveAddServerResumes { gate.addResumes }
 
-    /**
-     * Pro features beyond servers, as on Android (#939): a refusal opens the paywall offering the trial; a store that
-     * hasn't answered within [STORE_ANSWER_WAIT] lets it through. ReplayGain is free on iOS and iOS has no tag editor,
-     * so neither asks.
-     */
+    /** A store that hasn't answered within [STORE_ANSWER_WAIT] lets the feature through rather than block it. */
     @Provides
     fun provideTryUseProFeature(gate: ServerAccessGate): TryUseProFeature = TryUseProFeature { feature -> gate.tryUse(feature) }
 

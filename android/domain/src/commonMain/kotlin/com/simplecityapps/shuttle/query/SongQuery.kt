@@ -31,7 +31,7 @@ sealed class SongQuery(
         providerType = providerType
     )
 
-    /** The artist's songs: those of the albums they're the album artist of, and those crediting them (#637). */
+    /** The artist's songs: those of their own albums, and those crediting them. */
     data class ArtistGroupKey(
         val key: AlbumArtistGroupKey?
     ) : SongQuery(

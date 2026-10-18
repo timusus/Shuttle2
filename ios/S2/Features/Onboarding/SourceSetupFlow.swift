@@ -18,15 +18,7 @@ enum SourceSetupStep: Hashable {
     case importing
 }
 
-/// Adding a media server (#624), on the shared `SourceSetupViewModel`: welcome, the server cards, the sign-in
-/// (`ServerSignInView`) and the import's progress, in the setup's own `NavigationStack`. `ContentView` opens it at
-/// the welcome on a first run (no server, never finished or skipped: `SourceSetupUiState.firstRun`); Sources opens it
-/// at the cards or a sign-in in a sheet, so the first run and Add a Server are one implementation. Closing it, from
-/// Not Now, Continue or Cancel, finishes the setup (`onFinish`), so the first run never opens by itself again.
-///
-/// Android has no first run (#379); this is iOS's, since an iPhone's music isn't readable until it's copied into the
-/// app or a folder is picked in Files. The first run's cards also offer this device's music (#590): it turns the device
-/// on as a source and follows its import, as a sign-in does.
+/// The first run and Add a Server share this flow; closing it, from any exit, finishes the setup so the first run never reopens.
 struct SourceSetupFlow: View {
     let start: SourceSetupStart
     /// Keeps the sign-in's view model live while the setup is up (`Navigator.sourceSetupLive`); nil in previews.

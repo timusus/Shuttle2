@@ -16,12 +16,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 
-/**
- * Downloads again, through the transcode the provider now gives, each completed download of a song the player can't
- * decode (ALAC, #156): they were saved as the original and play silent. Run once at start-up, it is idempotent: a
- * download made from the transcode is recorded as the transcode's MIME type, not the song's own, so it isn't picked up
- * a second time.
- */
+/** Re-downloads undecodable originals through the transcode; idempotent, as a transcode is recorded under its own MIME type. */
 @SingleIn(AppScope::class)
 @UnstableApi
 class UndecodableDownloadMigrator

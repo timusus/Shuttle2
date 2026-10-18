@@ -65,10 +65,7 @@ struct DetailHero<Artwork: View>: View {
     }
 }
 
-/// Play and Shuffle as two capsules sharing the width, in the tint in scope: Play filled with the tint, Shuffle a
-/// tonal capsule (a light wash of the tint); glass on iOS 26, bordered below. At the accessibility sizes the
-/// capsules show their glyphs only (the titles stay their accessibility labels): side by side the titles truncate,
-/// and stacked the second capsule fell below the first screen, under the mini player (#782).
+/// Accessibility sizes show glyphs only: side by side the titles truncate, stacked the row lands under the mini player.
 struct HeroActions: View {
     let onPlay: () -> Void
     let onShuffle: () -> Void

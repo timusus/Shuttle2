@@ -5,11 +5,7 @@ import com.simplecityapps.networking.retrofit.NetworkResult
 import com.simplecityapps.networking.retrofit.error.RemoteServiceHttpError
 import io.ktor.http.HttpStatusCode
 
-/**
- * A server's answer to a request to one of its playlists (#916), as the queue of playlist edits reads it: a 404 means the
- * playlist is gone, any other client error but those a later try can get past (signed out, timed out, too many requests) means
- * the server won't take the edit, and anything else that failed (no connection, a server error) is tried again later.
- */
+/** Maps a playlist request's failure: a 404 means the playlist is gone, other client errors are final, anything else is retried later. */
 fun <S : Any, T> NetworkResult<S>.toPlaylistWriteResult(transform: (S) -> T): PlaylistWriteResult<T> = when (this) {
     is NetworkResult.Success -> PlaylistWriteResult.Success(transform(body))
 

@@ -1,13 +1,6 @@
 import Shared
 import SwiftUI
 
-/// Album detail (P5-7, polished in #624): a hero tinted from the cover (artwork, title, artist · year · songs ·
-/// duration, Play/Shuffle; the artist's name opens the artist), then the album's tracks, split into "Disc N" groups
-/// when it has more than one. A tap plays the album from that track; its context menu has the shared media actions.
-/// The toolbar's menu plays the whole album next, queues it, goes to the artist, or downloads it or removes its download
-/// (#759, a server album; the hero then says Downloading or Downloaded). A "More by <album artist>" shelf
-/// of the artist's other albums ends the screen (#695; hidden when there are none). Modeled on Android's
-/// `AlbumDetailScreen.kt`.
 struct AlbumDetailView: View {
     let albumKey: String?
     let albumArtistKey: String?

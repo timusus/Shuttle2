@@ -6,11 +6,7 @@ import androidx.sqlite.SQLiteStatement
 import androidx.sqlite.execSQL
 import kotlin.time.Clock
 
-/**
- * Every name the Favorites playlist has been given: it was created under the translation of `playlist_title_favorites`
- * for the device's language at the time (#528), so it's found by any of them. Past translations stay listed: a playlist
- * created under one keeps that name.
- */
+/** Every translation the Favorites playlist was created under, since a playlist keeps the name it was given. */
 internal val FAVORITES_PLAYLIST_NAMES = listOf(
     "Favorites",
     "Favourites",
@@ -28,14 +24,7 @@ internal val FAVORITES_PLAYLIST_NAMES = listOf(
     "收藏夹"
 )
 
-/**
- * Favourites become a flag on the song (#497) rather than a playlist found by its translated name (#528). `songs.favouritedAt`
- * records when a song was made one, null when it isn't. Every song in a local playlist under one of
- * [FAVORITES_PLAYLIST_NAMES] becomes a favourite, and those playlists go: the Favourites smart playlist replaces them.
- *
- * A song's favouritedAt keeps its place in the old playlist: the migration time less one millisecond per song after it,
- * so the most recently added comes first, as the Favourites list sorts.
- */
+/** Turns Favourites playlists into a per-song favouritedAt flag, stamped so the most recently added song still sorts first. */
 val MIGRATION_45_46 =
     object : Migration(45, 46) {
         override fun migrate(connection: SQLiteConnection) {

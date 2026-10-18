@@ -40,27 +40,7 @@ data class AlbumIdentity(
     val albumArtistKeys: List<AlbumArtistGroupKey> get() = albumArtists.map { it.groupKey }
 }
 
-/**
- * The one album identity rule (#637): everything that groups songs into albums or album artists goes through [resolve].
- * An album is decided over its songs, not one song at a time, so the rule reads a whole library at once.
- *
- * 1. The name rule makes the albums: the album name plus its album artist, which is
- *    - the album artist tag (ALBUMARTIST, else ALBUMARTISTS joined);
- *    - else "Various Artists" when the song is tagged a compilation;
- *    - else, among the untagged songs of that name in one folder, their artist when every one agrees (the first
- *      credited artist, before any "feat."), so an album spread over disc folders stays one;
- *    - else "Various Artists", told apart from others of that name by the folder.
- *    A song with no album name is its own artist's, as before: songs without one aren't gathered into one album.
- * 2. Ids then key each of those albums, per album rather than per song: when every song has a MusicBrainz release id the
- *    album is keyed by it (so different releases of one name split, and the same release under differing tags joins);
- *    else when every song has a server album id, by that, scoped to its source. One untagged song keeps its album on
- *    the name rule, so a partly tagged album never splits.
- * 3. Songs one id gathers from several name albums take the name and album artist of the largest of them.
- *
- * Whose albums it lists ([AlbumIdentity.albumArtists]) follows the tags without moving a key: an ALBUMARTISTS list of
- * several makes it each one's (while "A & B" in one value stays one artist), and an album artist featuring others
- * ("A feat. B") makes it A's alone, with B credited on its songs ([AlbumIdentity.featuredArtists]).
- */
+/** Groups songs per album rather than per song, so a whole library is read at once and a split album stays one. */
 object AlbumIdentityRule {
     const val VARIOUS_ARTISTS = "Various Artists"
 
@@ -138,10 +118,7 @@ object AlbumIdentityRule {
     private fun explicitAlbumArtist(song: AlbumIdentityTags): String? = song.albumArtist?.takeIf { it.isNotBlank() }
         ?: song.albumArtists?.filter { it.isNotBlank() }?.takeIf { it.isNotEmpty() }?.joinToString(", ")
 
-    /**
-     * The artists a song's album artist tags make it the album of (#637): each of an ALBUMARTISTS list of several, else
-     * the album artist [explicit]; each without whoever it features, who are credited instead.
-     */
+    /** A featured artist is credited on the songs, not made an album artist of the album. */
     private fun taggedAlbumArtists(
         song: AlbumIdentityTags,
         explicit: String

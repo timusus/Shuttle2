@@ -46,7 +46,7 @@ class ArtworkBitmapLoader(
     override fun loadBitmapFromMetadata(metadata: MediaMetadata): ListenableFuture<Bitmap>? {
         if (!artworkSettings.mediaSessionArtwork.value) return null
         val song = currentSong() ?: return null
-        // The song, or its album artist's image falling back to the song's, when the setting asks for it (#952)
+        // The album artist's image, when the setting asks for it, falls back to the song's.
         val artwork = nowPlayingArtwork(song, artworkSettings.nowPlayingArtwork.value)
         val key = sessionArtworkKey(artwork, artworkSettings.localOnly.value, artworkSettings.wifiOnly.value)
         synchronized(artworkCache) { artworkCache[key] }?.let { cached -> return Futures.immediateFuture(cached) }

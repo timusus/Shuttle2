@@ -4,12 +4,7 @@ import androidx.room.migration.Migration
 import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.execSQL
 
-/**
- * `pending_favourites` is the local outbox for a favourite/unfavourite made on a remote-provider song (#497): one row
- * per song, holding the desired state until a later slice pushes it to the server. `mediaProvider` and `externalId`
- * are copied in at write time so the writer doesn't need to look the song back up. No existing data needs migrating;
- * the table starts empty.
- */
+/** Creates the pending_favourites outbox; mediaProvider and externalId are copied in at write time so the writer needn't look the song up. */
 val MIGRATION_47_48 =
     object : Migration(47, 48) {
         override fun migrate(connection: SQLiteConnection) {

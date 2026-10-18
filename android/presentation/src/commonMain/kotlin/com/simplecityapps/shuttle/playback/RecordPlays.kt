@@ -23,28 +23,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.launch
 
-/**
- * Records each song's plays, for Recently Played, Most Played, an artist's Top Songs and the listening history (#633),
- * on both platforms:
- * - a track end ([PlaybackStateSource.trackEndedFlow]) counts the song as played through (its play count, last played
- *   and last completed);
- * - a play is written to the listening history as soon as it reaches the song's threshold
- *   ([PlayHistoryRepository.listenThresholdMs]: half the song or 4 minutes, whichever comes first, for a song of 30
- *   seconds or more), so a listen isn't lost when the app is killed mid-song or playback stops on the last one (#651);
- *   its track end then marks it completed. A play that doesn't reach the threshold writes nothing, and moving off a
- *   song writes nothing either;
- * - a pause ([PlaybackStateSource.pausePositionFlow]) saves its position (and when it was last played).
- *
- * Each play of the current queue item is a listen: it starts when the item becomes current (or when it starts over on
- * repeat), with the queue's [QueueOperations.playContext] as it stands then. It reaches the threshold when a progress
- * tick while playing is at or past it, having been before it earlier in the listen: a seek past it counts (once), while
- * a song resumed past it (after a restart, say) was counted when it got there before. Its listened time adds up the
- * progress ticks while playing, counting only small steps forward, so a seek isn't listening and a skip back isn't
- * negative. A track end can reach this before or after the queue moves on, so the last listen waits
- * [TRACK_END_GRACE_MS] for one after the queue moves on.
- *
- * Started once at app start, it runs for the life of the app on main; each write goes to [ioDispatcher].
- */
+/** Writes a listen once it reaches the threshold, so it survives the app being killed mid-song. */
 class RecordPlays(
     private val playbackStateSource: PlaybackStateSource,
     private val queueOperations: QueueOperations,

@@ -25,15 +25,7 @@ sealed interface LibraryAvailability {
     data class Empty(val access: MusicAccess, val scan: ScanProgress? = null, val hasServer: Boolean = false) : LibraryAvailability
 }
 
-/**
- * First run without onboarding screens (#379): the Library opens straight away and, while it has no songs, asks for
- * the music permission, starts the scan once it's granted and shows the scan's progress.
- *
- * Home and Library each create their own instance of this ViewModel, but both forward to the same
- * [MusicAccessCoordinator] (#427), so the permission check and scan-once bookkeeping run once for the app, not once
- * per screen. The screen reports the permission ([onAccessChecked] on every resume, [onAccessResult] after the
- * system prompt), because only the Activity can ask whether a rationale should show.
- */
+/** Home and Library share one MusicAccessCoordinator, so the permission check and scan run once per app. */
 @ViewModelKey(LibraryEmptyViewModel::class)
 @ContributesIntoMap(AppScope::class)
 class LibraryEmptyViewModel @Inject constructor(

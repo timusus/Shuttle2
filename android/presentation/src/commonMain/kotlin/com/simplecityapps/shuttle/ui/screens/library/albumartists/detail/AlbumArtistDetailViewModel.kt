@@ -42,11 +42,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-/**
- * One artist's albums, the albums they appear on, and their songs (#637), loaded by [groupKey], the key its route carries. Song and album
- * actions go through the screen's MediaActionsHost; this derives state, sorts and sections the songs (the sort is
- * app-wide, in [LibraryViewSetting.ArtistDetailSort]), unfolds albums and shuffles by album.
- */
+/** Song and album actions go through the screen's MediaActionsHost; this class only derives state. */
 class AlbumArtistDetailViewModel @AssistedInject constructor(
     @Assisted private val groupKey: AlbumArtistGroupKey,
     observeArtists: ObserveArtists,
@@ -98,7 +94,6 @@ class AlbumArtistDetailViewModel @AssistedInject constructor(
         .map { it.firstOrNull() }
         .shareIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), replay = 1)
 
-    /** What the hero shows, from the artist, their albums and their songs' tags (#781). */
     private val hero: Flow<ArtistHeroArtwork?> = combine(artist, albumsAndSongs, artistAlbums) { artist, (albums, songs), artistAlbums ->
         artist?.let { ArtistHeroArtwork.of(it, albums, songs, artistAlbums.appearsOn) }
     }.shareIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), replay = 1)
@@ -108,7 +103,7 @@ class AlbumArtistDetailViewModel @AssistedInject constructor(
         combine(albumsAndSongs, songList, artistAlbums) { albumsAndSongs, songList, artistAlbums -> Triple(albumsAndSongs, songList, artistAlbums.appearsOn) },
         observeCurrentSong(),
         combine(expandedAlbums, events.flow, ::Pair),
-        // Whatever image the hero shows is what seeds the tint (#735, #781)
+        // Seeds the tint from the hero's image, not the artist's own.
         observeArtistArtworkSeed(hero),
     ) { (albumArtist, hero), (albumsAndSongs, songList, appearsOn), currentSong, (expanded, events), seed ->
         val (albums, songs) = albumsAndSongs

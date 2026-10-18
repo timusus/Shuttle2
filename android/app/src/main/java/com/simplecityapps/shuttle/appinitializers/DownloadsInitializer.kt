@@ -8,11 +8,7 @@ import com.simplecityapps.shuttle.downloads.UndecodableDownloadMigrator
 import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.CoroutineScope
 
-/**
- * Keeps the download requirements in step with the Wi-Fi-only preference, and retries a failed
- * download once with a fallback URL when the server rejects it with 401/403 (#322), for the
- * process's life, and downloads again those saved from a transcode the player can't decode (#936).
- */
+/** Keeps download requirements in step with the Wi-Fi-only preference and repairs failed downloads. */
 class DownloadsInitializer
 @Inject
 constructor(

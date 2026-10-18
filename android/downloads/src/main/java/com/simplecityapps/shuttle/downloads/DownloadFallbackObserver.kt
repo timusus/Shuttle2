@@ -13,18 +13,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
-/**
- * Retries a failed download once with [AggregateMediaInfoProvider.downloadFallbackInfo] when Media3
- * reports an HTTP 401/403 from the Download URL (#322) — the server admin turned off download
- * permission after the URL was cached, or (401 only) the cached session simply expired. The
- * fallback is the static stream URL, which stays available in both cases; the retry restarts from
- * nothing, since the failed attempt's cached bytes may be from a different stream. Resolving it also
- * persists the permission change on a 403, so later downloads go straight to the stream URL.
- *
- * Keeps its own retried-path set rather than relying on Media3's retry count: a download that
- * fails for a different reason (network, disk) should keep retrying normally, so only a 401/403
- * consumes the one fallback attempt.
- */
+/** Retries a 401/403 download once from the static stream URL, which stays available when the cached URL's permission lapsed. */
 @SingleIn(AppScope::class)
 @UnstableApi
 class DownloadFallbackObserver

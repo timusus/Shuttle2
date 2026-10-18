@@ -15,11 +15,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 
-/**
- * Each genre's mosaic covers by genre name (#643): up to four songs from different albums. Apart from
- * [GenreListViewModel] so the list shows first and the artwork fills in as the covers load, and a screen that draws no
- * genre artwork never runs the per-genre queries.
- */
+/** Kept apart from [GenreListViewModel] so the list shows first and a screen with no artwork skips these queries. */
 @OptIn(ExperimentalCoroutinesApi::class)
 @ViewModelKey(GenreCoversViewModel::class)
 @ContributesIntoMap(AppScope::class)

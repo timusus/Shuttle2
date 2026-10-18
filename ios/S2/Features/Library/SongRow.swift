@@ -1,8 +1,7 @@
 import Shared
 import SwiftUI
 
-/// The sort key a song row shows after its credits, where it's the point of the list's order (#702): a play count,
-/// how long ago it last played, or the date it was added.
+/// The sort key a song row shows after its credits, where the list's order is the point.
 enum SongRowKey: Equatable {
     case plays
     case lastPlayed
@@ -58,12 +57,7 @@ private extension RelativeDateTimeFormatter {
     }()
 }
 
-/// A song as a list row, for every list of songs: Library > Songs, Search, and the artist, genre, playlist and smart
-/// playlist screens. One row, configured by where it sits:
-/// - `omittingArtist` drops the screen's own artist from the credits (artist detail), leaving the album, or only
-///   the other artists credited when they differ;
-/// - `key` adds the sort key where it's the point (`SongRowKey`);
-/// - the trailing side holds a small heart for a favourite, then the duration, after a badge when it's on the device (#853) (under the title at accessibility text sizes).
+/// One row for every song list, configured by where it sits; the trailing side holds the heart, duration and download badge.
 struct SongRow: View {
     let song: Song
     var playback: MediaRowPlayback = .none

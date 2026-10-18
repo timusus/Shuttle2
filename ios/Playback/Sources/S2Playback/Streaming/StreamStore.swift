@@ -16,9 +16,7 @@ public enum StreamStore {
         return store
     }()
 
-    /// The bytes of a stream as it opens: a file, a download kept whole, or a download into `store` under the stream's
-    /// token-free key, through the server's connection policy as it is now (#921, #933). A download runs only
-    /// `readAhead` ahead of the decoder while the network path is expensive or constrained; the source follows the path.
+    /// Downloads only `readAhead` ahead of the decoder on an expensive or constrained network path.
     public static func reader(url: URL, headers: [String: String], readAhead: GrowingFileReadAhead) throws -> StreamByteReader {
         StreamWarmUp.shared.noteStreamed(url)
         return try reader(url: url, headers: headers, readAhead: readAhead, store: shared)

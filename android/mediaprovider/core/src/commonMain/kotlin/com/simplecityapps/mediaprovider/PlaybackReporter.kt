@@ -13,11 +13,7 @@ data class PlaybackSession(
 )
 
 /**
- * Reports playback of a remote provider's songs to its server, so plays show in the server's now
- * playing and history, and reach scrobblers watching it (#96).
- *
- * Each call returns whether the server accepted it. A network failure may also surface as an
- * exception; callers treat that the same as `false`.
+ * Reports plays to the server so they show in its now playing and history; a network failure may throw.
  */
 interface PlaybackReporter {
     fun handles(song: Song): Boolean

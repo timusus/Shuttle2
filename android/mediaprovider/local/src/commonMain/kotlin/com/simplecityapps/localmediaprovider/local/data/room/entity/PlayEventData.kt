@@ -6,15 +6,7 @@ import androidx.room.PrimaryKey
 import com.simplecityapps.shuttle.model.MediaProviderType
 import kotlin.time.Instant
 
-/**
- * One play of a song (#633), written when it reached its listen threshold (#651) and marked [completed] if it then played
- * through; [listenedMs] is how long it was listened to by then (or in all, once completed).
- * The song is keyed by [mediaProvider] and [songPath], the songs table's own unique key, not its row id, which a reimport
- * replaces; a remote song's path is built from its server id (`jellyfin://item/<id>`), so it survives one too.
- * [localHour] (0 to 23) and [weekday] (ISO, 1 Monday to 7 Sunday) are the device's local ones at [startedAt], fixed at
- * write time. [contextType] and [contextId] are the [com.simplecityapps.shuttle.model.PlayContext] the queue was
- * started from.
- */
+/** One play of a song, keyed by path rather than row id, which a reimport replaces; local hour and weekday are fixed at write time. */
 @Entity(
     tableName = "play_events",
     indices = [

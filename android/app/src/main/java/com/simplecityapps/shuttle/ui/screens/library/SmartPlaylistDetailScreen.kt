@@ -85,7 +85,7 @@ fun SmartPlaylistDetailDestination(
             onPlaylistMore = { actions.showActions(MediaActionsTarget(title, null, MediaSelection.Songs(uiState.songs), placeholder)) },
             onSongMore = { song ->
                 val selection = MediaSelection.Songs(song)
-                // Favourites are a flag on the song, so taking one out of the list stops it being a favourite (#497)
+                // Favourites are a flag on the song, so taking one out of the list stops it being a favourite
                 val extraActions = if (isFavourites) {
                     listOf(S2Action(removeFromFavourites, { actions.dispatch(MediaAction.Favourite(selection, favourite = false)) }, Icons.Rounded.HeartBroken))
                 } else {

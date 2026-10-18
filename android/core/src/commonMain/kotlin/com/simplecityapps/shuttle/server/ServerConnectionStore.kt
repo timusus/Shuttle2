@@ -60,20 +60,7 @@ data class ServerConnection(
     }
 }
 
-/**
- * Each media server's custom headers and trusted certificate, keyed by its origin (host and port, [ServerOrigin]), so
- * every request to that server carries them: API calls, streams, artwork and downloads (#894). Kept in
- * [SecurePreferenceManager] with the servers' credentials, and cached in memory, as every request looks them up.
- *
- * A certificate is trusted for one origin, by its exact fingerprint; verification is never turned off. A certificate the
- * platform refused is remembered (in memory only) by [recordRejectedCertificate], for the sign-in to offer to trust it.
- *
- * Requests look settings up from any thread while the sign-in changes them. Each change writes the preferences first,
- * then updates the cache atomically from the cache as it is at that moment, counting the change ([Cache.changes]); a
- * read that misses loads the preferences inside its own atomic update. The count makes every change fail such an
- * update that started before it, even one that left the map as it was (forgetting a server that wasn't cached), so a
- * lookup never puts back settings a change has just replaced.
- */
+/** Each server's headers and trusted certificate, keyed by origin and cached in memory since every request reads them. */
 @SingleIn(AppScope::class)
 class ServerConnectionStore @Inject constructor(
     private val securePreferenceManager: SecurePreferenceManager

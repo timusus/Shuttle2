@@ -1,9 +1,7 @@
 import Shared
 import SwiftUI
 
-/// Settings > Downloads (#852): how much space the downloaded songs take, Remove All, and the downloads still running
-/// or failed, with Retry. Reads `OfflineDownloads` (docs/architecture/downloads.md); the files are the record, so the
-/// size is the files' own.
+/// The size is the files' own, since the files are the record of what's downloaded.
 struct DownloadsView: View {
     @Environment(\.appServices) private var appServices
     private var services: AppServices { appServices.required }

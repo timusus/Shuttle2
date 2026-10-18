@@ -6,7 +6,7 @@ import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.SingleIn
 
-/** The first run's welcome (#1040). */
+/** The first run's welcome. */
 @SingleIn(AppScope::class)
 class WelcomeSettings @Inject constructor(
     store: SettingsStore

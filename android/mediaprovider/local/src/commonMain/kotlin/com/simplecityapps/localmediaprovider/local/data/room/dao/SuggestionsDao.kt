@@ -4,12 +4,7 @@ import androidx.room.Dao
 import androidx.room.Query
 import kotlin.time.Instant
 
-/**
- * The library aggregates behind Home's suggestions (#633). Albums and album artists are grouped by
- * [com.simplecityapps.shuttle.model.AlbumIdentityRule] over the library's album index (#637), so the album rows here are per song,
- * a few columns each, which a caller aggregates by album; the songs a section shows come from the song repository. A newest-first
- * list is sorted here and read a page at a time, so a caller wanting the latest few albums reads only as far as it needs to (#688).
- */
+/** Album rows come per song because the album identity rule isn't SQL-computable; the caller aggregates them by album. */
 @Dao
 interface SuggestionsDao {
     /** The ids of the songs played through, last played through first: a [limit] rows' page of them from [offset]. */

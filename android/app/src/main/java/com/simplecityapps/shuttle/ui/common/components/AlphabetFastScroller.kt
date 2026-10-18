@@ -37,15 +37,7 @@ import kotlinx.coroutines.launch
 /** The thumb's touch target, which the 52dp thumb fills the height of. */
 private val ThumbTouchSize = 52.dp
 
-/**
- * A fast scroller that jumps by first letter (#491): the [sections] sit evenly along the track, so dragging the thumb
- * steps through the letters and scrolls to the first item of each, with the letter in a bubble beside it. At rest the
- * thumb marks the section of the first visible item. [itemOffset] counts the items that lead the list, such as a
- * header, which [LetterSection.firstIndex] doesn't.
- *
- * It only scrolls when the letter changes, so a drag across an 18k-song library costs a few dozen jumps, not one per
- * pixel (#155).
- */
+/** Scrolls only when the letter changes, so dragging through an 18k-song library costs dozens of jumps, not thousands. */
 @Composable
 fun AlphabetFastScroller(
     sections: List<LetterSection>,

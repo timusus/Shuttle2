@@ -28,7 +28,7 @@ data class ShellUiState(
 )
 
 sealed interface ShellEvent {
-    /** The server rejected [type]'s session mid-session and it was cleared, so the user has to sign in again (#595). */
+    /** The server rejected [type]'s session and it was cleared, so the user must sign in again. */
     data class ServerSignedOut(val type: MediaProviderType) : ShellEvent
 }
 

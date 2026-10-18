@@ -31,10 +31,7 @@ internal class MediaServerAlbumArtworkSource(
     override suspend fun url(model: Album): String? = songRepository.songsOf(model).albumArtworkSong()?.let { song -> remoteArtworkProvider.getAlbumArtworkUrl(song) }
 }
 
-/**
- * The artist's own image on the media server (#653): the server's id for them comes from the first of their songs that
- * pins one down ([serverArtistId]), never another artist credited on the same song.
- */
+/** The artist's image on the media server, from a song that pins their id down, never another artist credited on it. */
 internal class MediaServerAlbumArtistArtworkSource(
     private val artworkSettings: ArtworkSettings,
     private val songRepository: SongRepository,

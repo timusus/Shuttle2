@@ -55,8 +55,7 @@ extension View {
     /// stack's one zoom source (`\.zoomTiles`): each screen's tiles are keyed under the screen (its route's
     /// `cacheKey`, or the stack's root), and the last tap anywhere in the stack picks the one tile that's a source.
     ///
-    /// `insetsMiniPlayer: false` for a stack in a sheet (Settings), which covers the shell and its mini player:
-    /// the bar would otherwise draw over the sheet's pushed screens (#682).
+    /// `insetsMiniPlayer: false` for a stack in a sheet (Settings), where the bar would draw over its pushed screens.
     func routeDestinations(showNowPlaying: Binding<Bool>, insetsMiniPlayer: Bool = true) -> some View {
         modifier(RouteDestinationsModifier(showNowPlaying: showNowPlaying, insetsMiniPlayer: insetsMiniPlayer))
     }

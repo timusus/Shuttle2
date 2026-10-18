@@ -55,7 +55,7 @@ private fun HomeDestination(
     viewModel: HomeViewModel = metroViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    // Home reloads as it comes on screen, and while it's off screen only as the hour turns (#672)
+    // Home reloads as it comes on screen, and while it's off screen only as the hour turns
     HomeVisibilityEffect(viewModel::onVisibilityChanged)
     val emptyViewModel: LibraryEmptyViewModel = metroViewModel()
     val emptyState by emptyViewModel.uiState.collectAsStateWithLifecycle()

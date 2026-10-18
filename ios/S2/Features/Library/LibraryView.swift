@@ -1,15 +1,7 @@
 import Shared
 import SwiftUI
 
-/// The Library tab's root on compact: a pinned rail of category chips over the chosen category's own screen, shown in
-/// place with its chip tinted, as Android's library tabs switch in place (#643). It opens on the category last
-/// chosen, kept across launches, or the first enabled one. Regular and wide show the same categories directly in the
-/// sidebar instead (`AppShell`).
-///
-/// `LibraryViewModel`'s enabled tabs, in the user's order, pick the categories; `LibraryEmptyViewModel` swaps them
-/// for the empty state while there are no songs; the import's progress shows under the rail. Each category's own
-/// list pulls to refresh; the rail doesn't. A category's view model stays cached while shown here: every
-/// `Route.libraryCategory` key is always live (`Navigator.retainViewModels`).
+/// Categories swap in place rather than push, so each category's view model stays cached while shown.
 struct LibraryView: View {
     let navigator: Navigator
 
@@ -257,11 +249,7 @@ struct LibraryCategoryChips: View {
 }
 
 extension View {
-    /// Pins `bar` along the top of this screen, under the navigation bar, with the content scrolling beneath it.
-    /// iOS 26 needs `safeAreaBar`: the content's scroll edge effect covers the scroll view's whole top inset, so a
-    /// `safeAreaInset` bar sits in a blurred band (#624), where a `safeAreaBar` extends the effect under itself and
-    /// draws on top of it. The effect is the hard style, as for any pinned header of controls: the soft one lets
-    /// artwork show through the bar, washing out its chips. Earlier releases have no edge effect.
+    /// A `safeAreaInset` on iOS 26 would sit in a blurred band under the scroll edge effect, so the bar goes in a `safeAreaBar`.
     @ViewBuilder
     func pinnedTopBar<Bar: View>(@ViewBuilder _ bar: () -> Bar) -> some View {
         if #available(iOS 26, *) {
@@ -272,12 +260,7 @@ extension View {
         }
     }
 
-    /// An inline navigation title on iOS 26. There, a large title over a screen whose scroll view is swapped in place
-    /// (the Library's categories, and their grid and list) is left behind the content's scroll edge effect, a ghost
-    /// of itself above the pinned bar; an inline title sits in the navigation bar, clear of the effect, at any scroll
-    /// position. `inlineLarge` keeps it leading on every screen, however many toolbar items it has (a plain inline
-    /// title centres itself when there's room, so Genres' sat apart from Songs', #643). Earlier releases keep the
-    /// large title.
+    /// A large title would be left as a ghost under the iOS 26 scroll edge effect when the scroll view is swapped in place.
     @ViewBuilder
     func inlineTitleUnderEdgeEffect() -> some View {
         if #available(iOS 26, *) {

@@ -9,10 +9,7 @@ import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.SingleIn
 import kotlinx.coroutines.flow.first
 
-/**
- * The paywall, purchase, server sign-in and onboarding events, shared by Android and iOS (#776). Every property is an
- * enum's value, a product id or a provider type: never free text, so no error message, address or name is sent.
- */
+/** Properties are enum values, product ids or provider types, never free text, so no error text or address is sent. */
 @SingleIn(AppScope::class)
 class MonetisationAnalytics
 @Inject

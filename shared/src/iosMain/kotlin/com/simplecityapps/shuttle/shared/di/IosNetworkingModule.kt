@@ -22,11 +22,7 @@ import dev.zacsweers.metro.SingleIn
 import io.ktor.client.HttpClient
 import platform.UIKit.UIDevice
 
-/**
- * What the Jellyfin, Emby, Plex and Subsonic providers need from the platform: a
- * Darwin [HttpClient] each, sending each server's custom headers and trusting its pinned certificate (#894), and, for Jellyfin and Emby, a Keychain-backed [ServerCredentialStore] (Plex's container
- * makes its own, as Subsonic's does), under the names their containers ask for, and the [ClientIdentity] the servers list this device under.
- */
+/** Only the platform can build these Darwin clients and Keychain stores, so the server providers get them bound here. */
 @ContributesTo(AppScope::class)
 @BindingContainer
 abstract class IosNetworkingModule {

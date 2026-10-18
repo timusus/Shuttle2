@@ -9,11 +9,7 @@ import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.SingleIn
 import kotlinx.coroutines.flow.first
 
-/**
- * Sends `entitlement_resolved` once per install, as Android's `EntitlementRepository` does (#947): when StoreKit has
- * first answered and analytics is capturing. The flag is set only once a backend took the event, so an opt-out that
- * raced in offers it again next launch.
- */
+/** The flag is set only once a backend takes the event, so an opt-out that raced in is offered again next launch. */
 @SingleIn(AppScope::class)
 class EntitlementResolvedReporter @Inject constructor(
     private val entitlements: StoreEntitlements,

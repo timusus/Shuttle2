@@ -1,8 +1,6 @@
 import AppIntents
 
-/// The App Shortcuts Siri, Spotlight and the Shortcuts app offer without any set-up (#758). Each phrase names the app;
-/// Play Playlist's first phrase also names a playlist, from `PlaylistEntityQuery.suggestedEntities()`, which
-/// `updateAppShortcutParameters()` refreshes after launch.
+/// The shortcuts Siri and Spotlight offer with no set-up; Play Playlist's first phrase names a playlist, refreshed after launch.
 struct ShuttleShortcuts: AppShortcutsProvider {
     static var appShortcuts: [AppShortcut] {
         AppShortcut(

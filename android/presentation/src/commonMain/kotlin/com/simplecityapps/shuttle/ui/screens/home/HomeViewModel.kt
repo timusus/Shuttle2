@@ -36,10 +36,10 @@ sealed interface HomeUiState {
 
     data class Content(
         val showWhatsNew: Boolean,
-        /** The suggestion sections, in order; empty ones are left out (#633). */
+        /** The suggestion sections, in order; empty ones are left out. */
         val sections: List<HomeSection>,
         val events: List<PendingEvent<HomeEvent>> = emptyList(),
-        /** Each playlist and genre item's mosaic covers by [HomeItem.key], once loaded; absent for one with none (#646). */
+        /** Each playlist and genre item's mosaic covers by [HomeItem.key], once loaded; absent for one with none. */
         val covers: Map<String, List<Song>> = emptyMap(),
         /** A pull to refresh is waiting on its reload. */
         val refreshing: Boolean = false,
@@ -48,7 +48,7 @@ sealed interface HomeUiState {
 
 /** An event Home's UI must handle once, whose loss would be a bug. */
 sealed interface HomeEvent {
-    /** Analytics just turned on for this upgrader who never chose (#481); shown once. */
+    /** Analytics just turned on for an upgrader who never chose; shown once. */
     data object AnalyticsNowOn : HomeEvent
 
     /** A shelf's songs are resolved: the UI hands [action] to the media actions to play them. */
@@ -192,10 +192,7 @@ class HomeViewModel @Inject constructor(
 
     fun onEventHandled(id: Long) = events.consume(id)
 
-    /**
-     * Whether Home is on screen: its tab is showing and the app is in the foreground. Becoming visible reloads the
-     * sections; while hidden they reload only as the hour turns (#672).
-     */
+    /** Becoming visible reloads the sections; while hidden they reload only as the hour turns. */
     fun onVisibilityChanged(visible: Boolean) {
         this.visible.value = visible
     }

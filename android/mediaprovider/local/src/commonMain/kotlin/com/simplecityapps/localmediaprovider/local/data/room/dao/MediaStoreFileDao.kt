@@ -9,7 +9,7 @@ import com.simplecityapps.localmediaprovider.local.data.room.entity.MediaStoreFi
 import com.simplecityapps.localmediaprovider.local.data.room.entity.MediaStoreScanStateData
 import com.simplecityapps.shuttle.model.MediaProviderType
 
-/** The MediaStore listing each local provider's last stored import read, for its next one to read only what changed since (#875). */
+/** Lets the next import read only the MediaStore rows that changed since the last stored import. */
 @Dao
 abstract class MediaStoreFileDao {
     @Query("SELECT * FROM media_store_files WHERE provider = :provider")

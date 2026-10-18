@@ -1,8 +1,7 @@
 import Shared
 import SwiftUI
 
-/// Whether a song is on the device, for the badge on its row (#853): downloaded, or on its way. A failed download
-/// shows nothing, as it isn't held (`OfflineDownloads.observeHeldPaths`).
+/// A failed download shows no badge, since it isn't held.
 enum DownloadBadge: Equatable {
     case downloaded
     case downloading

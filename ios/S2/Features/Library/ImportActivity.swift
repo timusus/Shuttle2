@@ -1,9 +1,7 @@
 import Shared
 import SwiftUI
 
-/// The import's activity outside the setup (#624): a small ring filling as the library imports, or a warning once an
-/// import failed, beside Settings' gear on the Home and Library roots. Tapping it shows what's importing and a way to
-/// Sources; nothing blocks while it runs. Hidden while idle.
+/// Nothing blocks while the import runs, so this stays a small glyph that opens the detail on tap.
 struct ImportActivityButton: View {
     let status: ImportStatus
     let onOpenSources: () -> Void

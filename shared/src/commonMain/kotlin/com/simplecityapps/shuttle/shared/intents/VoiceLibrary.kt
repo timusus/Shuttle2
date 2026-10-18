@@ -31,11 +31,7 @@ class VoiceMatch internal constructor(
 /** What [VoiceLibrary.state] reports: enough to tell that the library changed. */
 data class VoiceLibraryState(val songCount: Int, val playlistCount: Int, val artistCount: Int)
 
-/**
- * What Siri's media domain (`INPlayMediaIntent`, #951) asks of the library: matches for a spoken name through the same
- * search as the Search screen, the plays Swift's `SiriMediaResolver` dispatches, and the counts and names it tells Siri
- * about. Built here so Swift never spells out a query, a selection or a ranking.
- */
+/** Builds the Siri matches and plays here so Swift never spells out a query, a selection or a ranking. */
 @Inject
 class VoiceLibrary(
     private val searchLibrary: SearchLibrary,

@@ -17,10 +17,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Response
 import okhttp3.internal.tls.OkHostnameVerifier
 
-/**
- * Applies each media server's [ServerConnection] to every request this client makes (#894): its custom headers, and
- * the one certificate the user trusted for it. Everything else verifies as the platform always has.
- */
+/** Applies each server's headers and trusted certificate; every other host verifies as the platform does. */
 fun OkHttpClient.Builder.applyServerConnections(store: ServerConnectionStore): OkHttpClient.Builder {
     val trustManager = ServerTrustManager(store, platformTrustManager())
     val sslContext = SSLContext.getInstance("TLS").apply { init(null, arrayOf(trustManager), null) }

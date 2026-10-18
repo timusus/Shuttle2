@@ -9,11 +9,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 
-/**
- * The songs whose covers make up each of [genres]' artwork, by genre name: up to [ObservePlaylistCovers.CoverCount]
- * songs from different albums, by album artist and album ([GenreRepository.getGenreCoverSongs]), for the same 2x2
- * mosaic a playlist draws (#643). Re-emits as the library changes.
- */
+/** Up to [ObservePlaylistCovers.CoverCount] songs per genre, from different albums, for the 2x2 mosaic. */
 @Inject
 class ObserveGenreCovers(
     private val genreRepository: GenreRepository,

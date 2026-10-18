@@ -14,7 +14,7 @@ enum class SmartPlaylistId(
     val id: String,
     val songQuery: SongQuery,
 ) {
-    /** Every favourite, most recently made one first (#497). */
+    /** Every favourite, most recently made one first. */
     Favourites("favourites", SongQuery.Favourites),
     RecentlyAdded("recently-added", SongQuery.RecentlyAdded()),
     MostPlayed("most-played", SongQuery.PlayCount(2, SongSortOrder.PlayCount)),
@@ -22,7 +22,7 @@ enum class SmartPlaylistId(
     /** Every song that has played to the end, most recent first. */
     History("history", SongQuery.LastCompleted(Instant.fromEpochMilliseconds(0))),
 
-    /** Every fully downloaded song (#498). Its paths are the download state's, so `ObserveDownloadedSongs` and `ResolveSongs` fill the query in. */
+    /** Every fully downloaded song, filled in from the download state at query time. */
     Downloaded("downloaded", SongQuery.Downloaded()),
     ;
 

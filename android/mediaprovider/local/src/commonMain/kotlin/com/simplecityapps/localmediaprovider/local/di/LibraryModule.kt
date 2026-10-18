@@ -96,7 +96,7 @@ abstract class LibraryModule {
             return MediaImporter(strings, songRepository, playlistStore, sourceState, albumKeyMigration::migrateIfDue, playlistSync)
         }
 
-        /** Sends the edits made to media servers' playlists back to them (#916); each provider module contributes its writer to the set. */
+        /** Sends playlist edits back to media servers; each provider module contributes its writer to the set. */
         @Provides
         @SingleIn(AppScope::class)
         fun provideServerPlaylistSync(
@@ -115,7 +115,7 @@ abstract class LibraryModule {
         @SingleIn(AppScope::class)
         fun provideAggregateSimilarSongsProvider(providers: Set<SimilarSongsProvider>): AggregateSimilarSongsProvider = AggregateSimilarSongsProvider(providers)
 
-        /** Sends the favourites made on remote songs to their servers (#497); each platform starts it once, at launch. */
+        /** Sends favourites made on remote songs to their servers; each platform starts it once, at launch. */
         @Provides
         @SingleIn(AppScope::class)
         fun provideFavouriteSender(

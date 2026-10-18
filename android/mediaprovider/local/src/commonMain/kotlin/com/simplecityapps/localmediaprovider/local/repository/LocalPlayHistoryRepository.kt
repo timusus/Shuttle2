@@ -73,10 +73,7 @@ class LocalPlayHistoryRepository(
         playEventDao.complete(id, listenedMs)
     }
 
-    /**
-     * [context] as it names its album or album artist now: a queue saved before the album identity rule (#637) still
-     * holds the old key, so it's moved as the stored history was ([AlbumKeyMigration]); kept as it is when no song has it.
-     */
+    /** Moves a saved context's album keys to the current identity rule, as the stored history is moved. */
     private suspend fun current(context: PlayContext): PlayContext {
         if (!isRekeyed(context)) return context
         return albumIndex.albumIndex().rekey.context(context) ?: context

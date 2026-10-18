@@ -5,10 +5,7 @@ import PlaybackPlayer
 import Shared
 import UIKit
 
-/// Connects the system's playback surfaces to the player (phase 6, #588): Now Playing (the lock screen, Control Center
-/// and CarPlay's metadata, position and transport commands) through AudioPlaybackKit's `NowPlayingSession` over a
-/// `NowPlayingPlayer`, whose commands go through Kotlin, and the widgets' copy of it. The audio session is the
-/// `Player`'s (`KitAudioPlayer`).
+/// Drives Now Playing and the widgets from the player; the `Player` owns the audio session.
 @MainActor
 final class PlaybackSystemCoordinator {
     typealias QueueKey = KitAudioPlayer.QueueKey
@@ -31,7 +28,7 @@ final class PlaybackSystemCoordinator {
     private let nowPlayingPlayer: NowPlayingPlayer
     private let makeSession: MakeSession
     private let artworkLoader: ArtworkLoader
-    /// The widgets' copy of Now Playing (#758); nil in tests that don't look at it.
+    /// The widgets' copy of Now Playing; nil in tests that don't look at it.
     private let widgets: NowPlayingWidgetPublisher?
     private(set) var session: NowPlayingSession<QueueKey>?
     private var observer: Task<Void, Never>?

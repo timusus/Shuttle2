@@ -1,9 +1,7 @@
 import Shared
 import SwiftUI
 
-/// Library > Songs (P5-6a): `SongListViewModel`'s songs, in its sort order. A tap plays the list from that song
-/// through the shared `MediaAction.Play`, as Android's `MediaActionsHost` does; the context menu queues one song.
-/// Shuffle is a toolbar button (#676). Pull to refresh imports.
+/// A tap plays the list from that song; the context menu queues just that one.
 struct SongListView: View {
     @Environment(\.appServices) private var appServices
     private var services: AppServices { appServices.required }
@@ -136,8 +134,7 @@ struct SongListContent: View {
     }
 }
 
-/// The Songs toolbar's Downloaded filter (#851), named as Android's list filter chip is: on, the list is only the songs
-/// on the device.
+/// On, the list shows only the songs on the device.
 struct DownloadedFilterToggle: View {
     @Binding var isOn: Bool
 
@@ -149,9 +146,7 @@ struct DownloadedFilterToggle: View {
     }
 }
 
-/// A song row's context menu in the song lists: Play Next, Add to Queue, Song Info (when the screen presents it) and
-/// Download or Remove Download, and Exclude (#650), marked destructive as in Now Playing's menu, which hides the song from the library through the
-/// shared action.
+/// Exclude is destructive, as it hides the song from the library.
 struct SongRowMenu: View {
     let song: Song
     let onPlayNext: (Song) -> Void
@@ -173,9 +168,7 @@ struct SongRowMenu: View {
     }
 }
 
-/// A list's placeholder while the library's first import runs, with how far through it is when known. A later
-/// import (pull to refresh, Sources' rescan) keeps showing what's already imported, which the shared list states
-/// still carry while `.scanning` (#623); the Library root shows its progress.
+/// Shown only for the first import; later imports keep the already-imported list on screen.
 struct LibraryScanningView: View {
     let progress: Shared.Progress?
 
@@ -193,9 +186,7 @@ struct LibraryScanningView: View {
 }
 
 extension View {
-    /// Consumes `MediaActionsViewModel`'s results: playback failed and nothing to play as an alert; with `send`, the
-    /// messages Now Playing shows as a notice (an Exclude, with its Undo, #650) show the same `PlayerNotice` here,
-    /// its button sending the result's snackbar action back through `send`. The rest are dropped.
+    /// Failed plays alert; with `send`, the Exclude notice (with its Undo) shows as a `PlayerNotice`.
     func mediaActionResults(
         _ events: [PendingEvent<any MediaActionResult>],
         handled: @escaping (Int64) -> Void,

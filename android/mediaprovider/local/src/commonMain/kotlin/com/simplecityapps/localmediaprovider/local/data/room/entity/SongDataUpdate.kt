@@ -26,12 +26,12 @@ data class SongDataUpdate(
     @ColumnInfo(name = "lyrics") var lyrics: String? = null,
     @ColumnInfo(name = "grouping") var grouping: String? = null,
     @ColumnInfo(name = "artworkVersion") var artworkVersion: String? = null,
-    // Written on every update, so a sync fills it in for a server song stored before it existed (#1048)
+    // Written on every update, so a sync backfills it for songs stored before it existed.
     @ColumnInfo(name = "artworkItemId") var artworkItemId: String? = null,
     // Written on update too, so a remote song's server date replaces an older import stamp. The importer's diff carries
     // the stored value over when the provider has none, so a local rescan or tag edit leaves it where it was.
     @ColumnInfo(name = "dateAdded") var dateAdded: Instant? = null,
-    // Written on every update, so a rescan or sync fills them in place for a song stored before they existed (#637)
+    // Written on every update, so a rescan or sync backfills them for songs stored before they existed.
     @ColumnInfo(name = "albumArtists") var albumArtists: List<String>? = null,
     @ColumnInfo(name = "artistsTag") var artistsTag: List<String>? = null,
     @ColumnInfo(name = "artistDisplay") var artistDisplay: String? = null,
@@ -45,14 +45,14 @@ data class SongDataUpdate(
     @ColumnInfo(name = "serverAlbumId") var serverAlbumId: String? = null,
     @ColumnInfo(name = "serverArtistIds") var serverArtistIds: List<String>? = null,
     @ColumnInfo(name = "serverAlbumArtistIds") var serverAlbumArtistIds: List<String>? = null,
-    // Written on every update, so a rescan or sync fills it in for a song stored before providers reported it (#798)
+    // Written on every update, so a rescan or sync backfills it for songs stored before providers reported it.
     @ColumnInfo(name = "bitDepth") var bitDepth: Int? = null,
-    // Written on every update too, so a sync fills them in for Emby and Jellyfin songs stored before they were mapped (#889)
+    // Written on every update, so a sync backfills Emby and Jellyfin songs stored before they were mapped.
     @ColumnInfo(name = "bitRate") var bitRate: Int? = null,
     @ColumnInfo(name = "sampleRate") var sampleRate: Int? = null,
     @ColumnInfo(name = "channelCount") var channelCount: Int? = null,
     @ColumnInfo(name = "audioCodec") var audioCodec: String? = null,
-    // Written on every update, so the re-import for a new tags version fills them in for a song stored before they existed (#1065)
+    // Written on every update, so a re-import backfills them for songs stored before they existed.
     @ColumnInfo(name = "composer") var composer: String? = null,
     @ColumnInfo(name = "composerSort") var composerSort: String? = null,
     @ColumnInfo(name = "conductor") var conductor: String? = null,

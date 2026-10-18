@@ -1,9 +1,7 @@
 import Shared
 import SwiftUI
 
-/// A connected server's detail (#645), pushed from its row in Sources (`Route.server`): where it is and who is signed
-/// in, its import's status, Scan Now, Sign In Again (the source setup at its sign-in) and Remove Server. Servers
-/// have no per-library choice in the shared model, so there is no Libraries section. On Sources' own view models,
+/// Servers have no per-library choice in the shared model, so there is no Libraries section. On Sources' own view models,
 /// which stay cached while Sources is under it.
 struct ServerDetailView: View {
     let typeName: String

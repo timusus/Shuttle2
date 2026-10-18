@@ -54,7 +54,7 @@ constructor(
             mediaSources.enabledTypes.collect { types -> monetisationAnalytics.mediaSourcesChanged(types) }
         }
 
-        // Each return to the app brings the servers up to date, at most every few minutes (#771)
+        // Each return to the app brings the servers up to date, at most every few minutes
         ProcessLifecycleOwner.get().lifecycle.addObserver(
             object : DefaultLifecycleObserver {
                 override fun onStart(owner: LifecycleOwner) = mediaSources.syncIfStale()

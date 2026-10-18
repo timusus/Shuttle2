@@ -20,16 +20,7 @@ interface AnalyticsSdk {
     fun setEnabled(enabled: Boolean)
 }
 
-/**
- * Each SDK runs only while its choice allows it. Both default to on for a user who never chose (#379, #481): Android's
- * Home says so once to an upgrader (`HomeEvent.AnalyticsNowOn`), iOS's first-run welcome to everyone. Turning either
- * off in Settings > Privacy stops its SDK at once. [startCrashReporting] and [startAnalytics] apply the stored choice
- * before anything can send a crash or an event, then follow every change to it.
- *
- * Crash reporting and analytics are separate choices ([PrivacySettings.crashReporting], [PrivacySettings.analytics]),
- * so each gates its own SDK. Shared by Android (`TelemetryInitializer`, `AnalyticsStartup`) and iOS (`IosTelemetryStartup`),
- * which both start crash reporting at launch and analytics only once the first frame is up.
- */
+/** Each SDK runs only while its own choice allows it, applied before anything can send, so a stored off takes effect at once. */
 @SingleIn(AppScope::class)
 class TelemetryConsentGate @Inject constructor(
     private val privacySettings: PrivacySettings,

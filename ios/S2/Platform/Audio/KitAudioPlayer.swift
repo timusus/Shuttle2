@@ -33,7 +33,7 @@ final class KitAudioPlayer: NSObject, IosAudioPlayer {
     private var lastLoggedStatus: String?
     private var routeObserver: NSObjectProtocol?
     private let log = Logger(subsystem: "com.simplecityapps.shuttle2", category: "playback")
-    /// When the last start that plays was asked for, until it is heard: the `time to first audio` line (#822).
+    /// When the last play start was asked for, until it is heard; feeds the time-to-first-audio log.
     private var startRequested: UInt64?
     /// Whether the last load, skip or seek is still to be heard; a resume of audio already heard isn't timed.
     private var awaitingFirstAudio = false

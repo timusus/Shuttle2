@@ -254,8 +254,7 @@ struct NowPlayingQueueList: View {
     }
 }
 
-/// A queue row's context menu: Play Next (not for the playing song), Remove from Queue, and Exclude (#650), which hides
-/// the song from the library and so drops it from the queue, with Undo in the notice.
+/// Exclude hides the song from the library, so it also leaves the queue; its notice offers Undo.
 struct NowPlayingQueueRowMenu: View {
     let item: NowPlayingQueueRow
     let playNext: (Int64) -> Void

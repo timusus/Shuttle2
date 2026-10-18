@@ -51,7 +51,7 @@ class KTagLibMediaStoreTagReader(
                     val audio = metadata.audioProperties
                     metadata.propertyMap?.toFileTags(id3 = carriesId3(fileName))?.let { tags ->
                         tags.copy(
-                            // TagLib's property map has no Matroska segment title (#523)
+                            // TagLib's property map has no Matroska segment title
                             title = tags.title ?: matroskaTitleOf(pfd.fd, fileName),
                             bitRate = audio?.bitrate,
                             bitDepth = taglibBitDepth(audio?.codec, audio?.bitsPerSample),

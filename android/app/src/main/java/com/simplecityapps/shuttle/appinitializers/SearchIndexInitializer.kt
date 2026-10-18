@@ -4,7 +4,7 @@ import android.app.Application
 import com.simplecityapps.shuttle.ui.screens.search.LibrarySearchIndex
 import dev.zacsweers.metro.Inject
 
-/** Builds the search index once the songs have loaded, so the first search doesn't wait for it (#677). */
+/** Builds the search index once the songs have loaded, so the first search doesn't wait for it. */
 class SearchIndexInitializer
 @Inject
 constructor(

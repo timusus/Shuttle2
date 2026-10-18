@@ -49,7 +49,6 @@ data class PlaylistDetailUiState(
 
     val selectedEntries: List<PlaylistSong> get() = songs.filter { it.id in selectedIds }
 
-    /** What playing this screen's songs starts the queue from (#633). */
     val playContext: PlayContext get() = playlist?.playContext ?: PlayContext.None
 }
 

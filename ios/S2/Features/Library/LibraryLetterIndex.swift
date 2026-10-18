@@ -1,14 +1,7 @@
 import Shared
 import SwiftUI
 
-/// The Library lists' A–Z section index (#627), Music and Contacts' right-edge letters rather than Android's draggable
-/// thumb. The letters come from the shared UiStates' `letterIndex` (`letterSections` in `:android:domain`): the same
-/// key the shared sort compares, so a name sort's letters run in order, with '#' for digits, symbols and scripts
-/// without a short alphabet. A sort that isn't by name has no `letterIndex`, and so no index.
-///
-/// Lists and grids alike use `LetterIndexStrip`, which scrolls to a section's first item, so the letters sit at the
-/// same x in list and grid mode (#643): iOS 26's native list index (`sectionIndexLabel`) sits further out than any
-/// strip a grid can draw.
+/// Right-edge letters as in Music and Contacts, not a draggable thumb: iOS 26's native index sits further out than a grid can draw.
 
 /// A run of a list's rows under one letter.
 struct LetterIndexSection: Identifiable, Equatable {
@@ -43,9 +36,7 @@ enum LetterIndex {
     }
 }
 
-/// A plain list of `items` in their letter `sections`, with the index down its trailing edge; without sections, the
-/// same rows unsectioned, without separators (spacing carries the grouping, #676). `row` gets each item's
-/// position in `items`.
+/// Unsectioned rows drop their separators, since spacing carries the grouping.
 struct LetterIndexedList<Item, ID: Hashable, Row: View>: View {
     let items: [Item]
     let id: KeyPath<Item, ID>
@@ -136,16 +127,12 @@ private struct IndexedItem<Item, ID: Hashable> {
 }
 
 extension DynamicTypeSize {
-    /// The width the letter index takes down the trailing edge at this text size: none at accessibility sizes, where
-    /// its width is better spent on the content (#782). The one place that rule lives.
+    /// None at accessibility sizes, where the width is better spent on the content.
     var letterIndexWidth: CGFloat { isAccessibilitySize ? 0 : LetterIndexStrip.baseWidth }
 }
 
 extension View {
-    /// The index for `sections` down the trailing edge, a `LetterIndexStrip`, which calls `scrollTo` with the section
-    /// picked. No index without sections, or at accessibility text sizes, where its width is better spent on the
-    /// content (#782). `reservesWidth` false leaves the content's width to the caller (a list's rows pad themselves,
-    /// so their backgrounds run full width).
+    /// `reservesWidth` false leaves the width to the rows, so their backgrounds run full width.
     @ViewBuilder
     func letterIndex(_ sections: [LetterIndexSection]?, reservesWidth: Bool = true, scrollTo: @escaping (LetterIndexSection) -> Void) -> some View {
         if let sections {
@@ -156,11 +143,7 @@ extension View {
     }
 }
 
-/// `letterIndex`: unless the caller reserves the width itself (`reservesWidth` false), the content gives up the
-/// strip's width with a clear inset, and the strip is an overlay centred in
-/// the visible height (below the navigation bar, above the clearance) that ignores the bottom safe area and keeps its
-/// own clearance above the bottom edge instead (`LetterIndexClearance`), so it doesn't move when scrolling minimises the iOS 26 tab bar and the bottom accessory
-/// (the mini player) moves in beside it (#674).
+/// The strip keeps its own clearance above the bottom edge, so it stays put as the iOS 26 tab bar minimises and the mini player moves in beside it.
 private struct LetterIndexModifier: ViewModifier {
     let sections: [LetterIndexSection]
     let reservesWidth: Bool

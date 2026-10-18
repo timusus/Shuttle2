@@ -34,7 +34,7 @@ internal class EmbeddedAlbumArtworkSource(
     override suspend fun open(model: Album): InputStream? = songRepository.firstSongOf(model)?.let { song -> openEmbeddedArtwork(context, tagReader, tagReadGuard, song) }
 }
 
-/** The song's embedded picture, or null without reading the file if it's one [tagReadGuard] quarantined for crashing TagLib (#874). */
+/** The song's embedded picture, or null without reading a file [tagReadGuard] quarantined for crashing TagLib. */
 private suspend fun openEmbeddedArtwork(
     context: Context,
     tagReader: ArtworkTagReader,

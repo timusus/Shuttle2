@@ -1,12 +1,7 @@
 import Foundation
 import PlaybackStreaming
 
-/// Opens a connection to the server the last stream came from, so the next play's first range request doesn't wait on
-/// TCP and TLS (#822). The request goes through the streaming source's own session, which keeps the connection for that
-/// request; the Ktor client's pool is a different one, so browsing the library doesn't warm it.
-///
-/// Only the origin is kept (scheme, host and port), never a path, query or credentials, and nothing is sent until a
-/// stream has played: a library of local files never talks to anyone.
+/// Warms the last stream's origin so the next play skips TCP and TLS; nothing is sent until a stream has played.
 public final class StreamWarmUp: @unchecked Sendable {
     public static let shared = StreamWarmUp()
 

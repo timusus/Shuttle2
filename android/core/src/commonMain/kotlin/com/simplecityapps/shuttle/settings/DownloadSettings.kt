@@ -24,7 +24,7 @@ class DownloadSettings @Inject constructor(
         /** Downloads wait for an unmetered network. On by default, so nothing eats mobile data unasked. */
         val WifiOnly = Setting.boolean("pref_download_wifi_only", true)
 
-        /** Library lists leave out server songs that aren't downloaded, so nothing tapped fails to play (#498). */
+        /** Library lists leave out server songs that aren't downloaded, so nothing tapped fails to play. */
         val OfflineMode = Setting.boolean("pref_offline_mode", false)
 
         /** The notification permission was asked for once, on a download that went ahead; it isn't asked again. */

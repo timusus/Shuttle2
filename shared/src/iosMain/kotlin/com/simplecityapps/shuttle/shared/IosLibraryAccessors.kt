@@ -13,7 +13,7 @@ import com.simplecityapps.shuttle.ui.screens.sources.MediaSources
 
 /** The library, its indexes and import, and the system surfaces that read it; part of [IosAppGraph]. */
 interface IosLibraryAccessors {
-    /** Sends the favourites made on Jellyfin, Emby and Plex songs to their servers (#497); Swift starts it once, at launch. */
+    /** Sends favourites to their servers; Swift starts it once, at launch. */
     val favouriteSender: FavouriteSender
 
     /** The album index; making it starts its build in the background, so Swift reads it at launch, ahead of the first content that needs it. */
@@ -34,12 +34,12 @@ interface IosLibraryAccessors {
     /** Authenticated artwork urls for songs, albums and album artists; Swift's `ArtworkLoader` fetches and decodes. */
     val artworkUrls: ArtworkUrls
 
-    /** The playlists and plays Siri, Shortcuts and Spotlight's App Intents offer (#758). */
+    /** The playlists and plays Siri, Shortcuts and Spotlight's App Intents offer. */
     val appIntentLibrary: AppIntentLibrary
 
     /** The library, for tests to seed songs into the graph's in-memory database. */
     val songRepository: SongRepository
 
-    /** What Siri's media domain searches and plays (`INPlayMediaIntent`, #951). */
+    /** What Siri's media domain searches and plays (`INPlayMediaIntent`). */
     val voiceLibrary: VoiceLibrary
 }

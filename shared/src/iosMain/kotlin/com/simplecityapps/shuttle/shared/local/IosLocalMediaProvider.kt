@@ -26,18 +26,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 
-/**
- * This device's music on iOS (#590), as the S2 scanner ([MediaProviderType.Shuttle]): every audio file [IosLocalFiles]
- * finds in Documents and the picked folders, read with FFmpeg. A file whose size and modification time are unchanged
- * keeps the song read last time, so a rescan only reads what's new or changed, unless the songs predate this build's
- * tags ([songTagsOutdated]), when every file is read again; one that's gone leaves the library.
- *
- * Only a folder that was read in full loses songs (see [IosLocalListing]): one out of reach (its bookmark won't resolve
- * until it's picked again), unreadable, or listing nothing where it had songs keeps them (until a second listing, a moment later, finds it empty
- * again, #721), and so does a file iCloud has
- * offloaded, so a moment without access doesn't cost them their history. An offloaded file with no song yet is
- * downloaded, and imported once it's here.
- */
+/** A folder that couldn't be read in full keeps its songs, since an unreadable or offloaded folder isn't a deleted one. */
 @OptIn(ExperimentalAtomicApi::class)
 @Inject
 class IosLocalMediaProvider(
@@ -76,7 +65,7 @@ class IosLocalMediaProvider(
         emit(FlowEvent.Success(songs))
     }.flowOn(Dispatchers.IO)
 
-    /** How long to wait before listing again a folder that listed nothing where it had songs (#721); tests set it to zero. */
+    /** How long to wait before listing again a folder that listed nothing where it had songs; tests set it to zero. */
     internal var emptyFolderRecheckDelayMs = 1_500L
 
     /**

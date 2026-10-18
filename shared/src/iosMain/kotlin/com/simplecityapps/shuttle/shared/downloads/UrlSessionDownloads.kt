@@ -39,33 +39,7 @@ import platform.UIKit.UIApplication
 import platform.UIKit.UIBackgroundTaskInvalid
 import platform.darwin.NSObject
 
-/**
- * [DownloadTransport] over a background `URLSession`: iOS runs the downloads out of process, so they carry on while the
- * app is suspended, and at the next launch the session's still-running tasks are found again ([restore]). Each task
- * carries its song's path and the file's extension in its `taskDescription`. A completed file is moved into [directory]
- * (Application Support/Downloads, excluded from iCloud backup) under its [DownloadFileNames] name, replacing any earlier
- * one only once it's there, and the directory's listing is the record of what's downloaded.
- *
- * Every delegate call arrives on the main queue, where [start] and [remove] are called too, so [wanted] is only touched
- * there. A path's wanted download is the one [wanted] holds, a task or a start still finding its address: a removal
- * cancels it there and then, and a task the session still runs for a removed or restarted path is cancelled and ignored,
- * never mistaken for the one that replaced it.
- *
- * A server with custom headers (#921) has its download's address found first (#933). A background session follows a
- * task's redirects itself (Apple documents `willPerformHTTPRedirection` as called for default and ephemeral sessions
- * only) and carries the request's headers along, so a task that sent them could take them to another host. So each hop
- * is probed on an ordinary session ([probeSession]) with the download's own request (same URL, headers and network
- * rules, no Range, cancelled at its response), and the task starts where the redirects leave the server, with the headers
- * only if that's still the server. The risk left: a server that redirects the download differently from the probe a
- * moment earlier (a redirect that depends on the time, or on something iOS adds to a background request) still takes
- * the task, headers and all, off the server. A probe that can't resolve hands over unprobed: see [start].
- *
- * iOS relaunches the app in the background when the session's downloads finish while it isn't running; the app delegate
- * hands that over with [handleBackgroundEvents]. The session must already exist by then, so the app builds this at launch.
- *
- * [isolatedName] (a test graph) gives a plain session and its own directory under tmp, so tests never touch the app's
- * downloads or its background session.
- */
+/** Runs downloads in a background URLSession so they carry on while the app is suspended; the directory listing is the record. */
 @OptIn(ExperimentalForeignApi::class, BetaInteropApi::class)
 class UrlSessionDownloads(
     isolatedName: String?,
@@ -151,13 +125,7 @@ class UrlSessionDownloads(
         wifiOnly: Boolean
     ) {
         val url = NSURL.URLWithString(source.url) ?: return listener?.onFailed(path) ?: Unit
-        // A server with custom headers (#921) has its redirects followed here first, with the headers (#933). While the
-        // probe can't be answered for want of an allowed network, it waits, as the background session would. One that
-        // can't resolve (it failed, or the app went to the background and its time ran out first) hands the download to
-        // the background session at the original address with the headers, as before the probes: that session keeps
-        // it until a network is allowed and the app is gone, where failing would lose it, and without the headers the
-        // proxy they're for refuses it, or answers with its sign-in page, saved as the song. Only these unprobed
-        // starts can still take the headers along a redirect off the server.
+        // Probe the redirects first so the headers never follow one off the server; an unprobed start is the fallback.
         if (serverRequestPolicy.headers(source.url).isEmpty()) return begin(path, source, url, wifiOnly, withHeaders = false)
         val resolution = Resolution(path, source, url, wifiOnly)
         wanted.pend(path, resolution)
@@ -182,11 +150,7 @@ class UrlSessionDownloads(
         task.resume()
     }
 
-    /**
-     * [path]'s download for a server with custom headers, finding its address from [origin]: it follows the redirects
-     * as far as they stay at the server, with the server's headers ([nextDownloadStep]), then starts the task. It holds
-     * background time while it does, and hands over unprobed when that runs out ([start]).
-     */
+    /** Follows [path]'s redirects with the server's headers before starting the task, within the background time it holds. */
     private inner class Resolution(
         private val path: String,
         private val source: DownloadSource,
@@ -531,10 +495,7 @@ internal fun nextDownloadStep(
     }
 }
 
-/**
- * The request for a download, or a probe of one, of [url]: [headers] are the server's custom headers (#921); the pinned
- * certificate is trusted in the delegate. A probe is the same request, so the server redirects it as it would the download.
- */
+/** A probe is the same request as the download, so the server redirects it the same way. */
 internal fun downloadRequest(
     url: NSURL,
     wifiOnly: Boolean,

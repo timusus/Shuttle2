@@ -133,11 +133,7 @@ fun HomeItem.subtitle(mixed: Boolean): String {
     return if (mixed) stringResource(R.string.home_tile_subtitle, type, detail) else detail
 }
 
-/**
- * An item's artwork: an album's cover or an artist's picture, with the same corners (the owner's call, as on iOS); a
- * playlist or genre, which have no artwork of their own, gets a mosaic of its albums' [covers] (#646), else
- * [GeneratedArtwork], as a smart playlist always does.
- */
+/** Playlists and genres without their own art get a mosaic of their albums' [covers]; others use [GeneratedArtwork]. */
 @Composable
 fun HomeItemArtwork(
     item: HomeItem,
@@ -164,12 +160,7 @@ private val SmartPlaylistId.icon: ImageVector
         SmartPlaylistId.Downloaded -> Icons.Rounded.DownloadDone
     }
 
-/**
- * What every Home tile offers besides its tap: the long-press actions sheet (Play, Shuffle, Play next, Add to queue,
- * Add to playlist and the rest, then Go to …) and the same actions for TalkBack, all carrying the item's play context.
- * A tile that [resumes] (Jump back in's, #670) plays on from where the item's queue was left, with Play from start
- * after Play.
- */
+/** Long-press and TalkBack actions for a Home tile; a [resumes] tile plays on from where its queue was left. */
 class HomeItemActions(
     val showMenu: () -> Unit,
     val accessibilityActions: List<CustomAccessibilityAction>,
@@ -220,11 +211,7 @@ fun homeItemActions(
     )
 }
 
-/**
- * A shelf tile: a [GridTile] of the item's artwork with its title and [HomeItem.subtitle] under it, where they can't
- * clash with text printed on the art (#404). A tap opens the item; a genre's tile also has a shuffle button on its
- * art (a Genre pick is something to put on); a long press has the rest.
- */
+/** Shelf tile with its title under the artwork, so the text never clashes with words printed on the art. */
 @Composable
 fun HomeShelfTile(
     item: HomeItem,

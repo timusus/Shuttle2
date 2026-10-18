@@ -111,9 +111,7 @@ object CoilModule {
                 add(MediaServerAlbumArtworkSource(artworkSettings, songRepository, remoteArtworkProvider))
                 add(S2AlbumArtworkSource(artworkSettings))
             }
-        // An artist's image (#781, #823), on their page's hero and their rows alike: their own image, the online one only when
-        // their tags pin them down, else their top album's cover. An artist image under the rule's minimum size counts as
-        // absent. MediaStore's artist "image" is an album thumbnail, which the fallback album covers properly.
+        // MediaStore's artist image is an album thumbnail, so the artist's own image and top album's cover are used instead.
         val artistHeroSources =
             buildList<ArtworkSource<ArtistHeroArtwork>> {
                 val minimumSize = ArtistHeroArtwork.MIN_ARTIST_IMAGE_SIZE

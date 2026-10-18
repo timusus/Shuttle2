@@ -25,23 +25,7 @@ enum class FlushResult {
     SignedOut
 }
 
-/**
- * Drains the Last.fm queue (and, through [ListenBrainzFlusher], the ListenBrainz one), oldest first, [ScrobbleQueue.BATCH_SIZE] at a time (#503 slice 2). A batch that
- * Last.fm accepts is deleted whether each scrobble was accepted or permanently ignored - both are done with.
- * A transient failure (HTTP failure, or error 8/11/16/29) keeps the whole batch queued and asks for a retry with
- * backoff. An invalid session (error 9) signs the user out and stops without retrying forever, leaving the queue
- * intact (a different account signing in clears it, see [ScrobbleQueue.clear]). A bad or suspended API key or
- * signature ([LastFmError.HOLD]) says nothing about the scrobbles themselves, so the queue is held and the run ends
- * without a retry. Error 6 (invalid parameters) means some row in the batch is malformed: the batch is halved until
- * the offending row is isolated, and only a row that still gets error 6 when sent alone is dropped (only when
- * something else in the run was accepted, and at most [MAX_DROPS_PER_RUN] times), while the rest are scrobbled. Any
- * other error is held like the above and never deletes anything, so a systemic failure (bad auth, deprecated method)
- * cannot empty the queue; only the age purge bounds it. Runs before any of that: entries older than
- * [ScrobbleQueue.MAX_AGE] are dropped, since Last.fm rejects their timestamp regardless.
- *
- * Platform-free: Android runs it from ScrobbleFlushWorker, iOS from [InProcessScrobbleFlushScheduler]. Neither may
- * run two at once (two runs would send the same rows twice).
- */
+/** Drains the scrobble queues oldest first; a failure holds the batch rather than deleting it, and runs never overlap, so no row is sent twice. */
 class ScrobbleFlusher
 @Inject
 constructor(

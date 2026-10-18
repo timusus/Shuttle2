@@ -9,7 +9,7 @@ import com.simplecityapps.shuttle.model.Song
 data class PlaylistListUiState(
     val playlists: List<Playlist> = emptyList(),
     val smartPlaylists: List<SmartPlaylist> = emptyList(),
-    /** Each playlist's cover songs by playlist id, up to four from different albums, for its mosaic (#491). */
+    /** Each playlist's mosaic songs by playlist id: up to four, from different albums. */
     val covers: Map<Long, List<Song>> = emptyMap(),
     val sortOrder: PlaylistSortOrder = PlaylistSortOrder.Default,
     val loadingState: LoadingState = LoadingState.Loading,

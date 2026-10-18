@@ -1,8 +1,4 @@
-/**
- * The module layer rules (#443, docs/architecture/layering.md) as pure data and functions, so the
- * rule engine is unit-tested without Gradle. [VerifyModuleLayers] feeds it the declared project
- * dependencies of every module.
- */
+/** The layer rules as pure data and functions, so the rule engine is unit-tested without Gradle. */
 enum class ModuleLayer(val label: String) {
     /** Logging, dispatchers, settings storage, DI qualifiers. Usable by every layer; depends on nothing of ours. */
     CORE("core"),
@@ -16,10 +12,7 @@ enum class ModuleLayer(val label: String) {
     /** Media provider implementations. Data, but only the composition root may depend on one. */
     PROVIDER("provider"),
 
-    /**
-     * The shared ViewModels, their UI state and screen use cases (`:android:presentation`, KMP commonMain, #586):
-     * what Compose and SwiftUI both render. Sees core and domain only; never data, and never the Compose layer.
-     */
+    /** The shared ViewModels, rendered by both Compose and SwiftUI. Sees core and domain only, never data or Compose. */
     VIEWMODEL("viewmodel"),
 
     /** Compose components and screens. Sees domain types and the shared ViewModels only, never data. */
@@ -28,7 +21,7 @@ enum class ModuleLayer(val label: String) {
     /** `:android:app`: the only module allowed to see everything, to create the Metro dependency graph. */
     COMPOSITION_ROOT("composition root"),
 
-    /** Test/debug-only fixtures (#402 keeps them off release classpaths). */
+    /** Test/debug-only fixtures, kept off release classpaths. */
     FIXTURES("fixtures"),
 
     /** Build tooling that parses other modules' sources; nothing depends on it. */
@@ -58,7 +51,7 @@ object ModuleLayers {
         ":android:presentation" to ModuleLayer.VIEWMODEL,
         ":android:designsystem" to ModuleLayer.PRESENTATION,
         ":android:app" to ModuleLayer.COMPOSITION_ROOT,
-        // The iOS umbrella: links the shared modules into Shared.framework, as :android:app does the APK (#587).
+        // The iOS umbrella: links the shared modules into Shared.framework, as :android:app does the APK.
         ":shared" to ModuleLayer.COMPOSITION_ROOT,
         ":android:fixtures" to ModuleLayer.FIXTURES,
         ":android:mediaprovider:server-testing" to ModuleLayer.FIXTURES,
@@ -80,7 +73,7 @@ object ModuleLayers {
         ModuleLayer.DOMAIN to setOf(ModuleLayer.CORE),
         ModuleLayer.DATA to setOf(ModuleLayer.CORE, ModuleLayer.DOMAIN, ModuleLayer.DATA),
         ModuleLayer.PROVIDER to setOf(ModuleLayer.CORE, ModuleLayer.DOMAIN, ModuleLayer.DATA),
-        // Core is multiplatform since #584, so the shared ViewModels reach settings and the app scope through it.
+        // Core is multiplatform, so the shared ViewModels reach settings and the app scope through it.
         ModuleLayer.VIEWMODEL to setOf(ModuleLayer.CORE, ModuleLayer.DOMAIN),
         ModuleLayer.PRESENTATION to setOf(ModuleLayer.CORE, ModuleLayer.DOMAIN, ModuleLayer.VIEWMODEL, ModuleLayer.PRESENTATION, ModuleLayer.FIXTURES),
         ModuleLayer.COMPOSITION_ROOT to ModuleLayer.entries.toSet() - ModuleLayer.TOOLING,

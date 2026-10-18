@@ -17,12 +17,7 @@ data class DeliveredFormat(
     val bitrateKbps: Int?
 )
 
-/**
- * The transcode each server song's latest stream was opened as, by song path: Now Playing's badge shows it in place of
- * the file's own format (#902), while Song Info keeps the file's. A song streamed as its original file has no entry,
- * so a stream reopened as the original (a network or settings change) clears the transcode it replaced, and so does a
- * song played from its download. Only the [MAX_ENTRIES] most recently recorded songs are kept.
- */
+/** The transcode each server song's latest stream was opened as, by path; a song streamed as its original has no entry. */
 @SingleIn(AppScope::class)
 class DeliveredFormats @Inject constructor() {
     private val formats = MutableStateFlow<Map<String, DeliveredFormat>>(emptyMap())

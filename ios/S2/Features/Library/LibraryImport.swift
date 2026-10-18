@@ -1,15 +1,7 @@
 import Foundation
 import Shared
 
-/// When the library imports on iOS: after a sign-in (`SourcesViewModel`), on the Library's pull-to-refresh and
-/// Sources' Rescan, and at launch only until an import has finished once, as Android's `scanIfNeverScanned`
-/// The library lives in Room, so a relaunch shows it straight away; a
-/// re-import on every launch blanked the lists for minutes (#623). This device's files are the exception: at launch
-/// and on every return to the foreground they're listed again, and the library imports when one was added, removed or
-/// changed since the last import (#590), as a file copied in through Files or Finder should show up without a pull to
-/// refresh. The servers are synced quietly, for what changed on them, at launch and on every return to the foreground
-/// (`syncIfStale`), and daily in the background (`BackgroundRefresh`), as on Android (#771).
-/// `MediaSources.scan` outlives the screen that asked and is a no-op while an import runs, or with no source.
+/// Launch imports only until the first import finishes, so a relaunch shows the Room library at once.
 @MainActor
 enum LibraryImport {
     static func atLaunch(graph: IosAppGraph) {

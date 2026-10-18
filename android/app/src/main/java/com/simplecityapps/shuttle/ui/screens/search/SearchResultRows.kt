@@ -42,7 +42,7 @@ internal fun ArtistResult(hit: SearchHit<AlbumArtist>, callbacks: SearchCallback
     val showActions = { callbacks.onShowActions(MediaActionsTarget(name, null, MediaSelection.AlbumArtists(artist), ArtworkPlaceholder.Artist)) }
     ArtistRow(
         name = highlighted(hit, listOf(name)).single(),
-        // A track artist found by their credits (#637) has songs but no albums of their own to count
+        // A track artist found by their credits has songs but no albums of their own to count
         summary = if (artist.isAlbumArtist) countString(R.plurals.albumsPlural, artist.albumCount) else countString(R.plurals.songsPlural, artist.songCount),
         onClick = { callbacks.onArtistClick(artist) },
         artwork = { LibraryArtwork(artist, ArtworkPlaceholder.Artist, size = ArtworkSize.Small, shape = ArtworkShape.Circle) },

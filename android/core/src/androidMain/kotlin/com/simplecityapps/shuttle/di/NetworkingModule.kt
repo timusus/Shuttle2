@@ -24,10 +24,7 @@ class NetworkingModule {
         level = HttpLoggingInterceptor.Level.NONE
     }
 
-    /**
-     * Every media server request goes through this client, or one built from it: API calls, streams, artwork and
-     * downloads. So each server's custom headers and trusted certificate apply to all of them (#894).
-     */
+    /** Every server request uses this client or one built from it, so each server's headers and trusted certificate apply everywhere. */
     @SingleIn(AppScope::class)
     @Provides
     fun provideOkHttpClient(

@@ -26,26 +26,7 @@ import dev.zacsweers.metro.BindingContainer
 import dev.zacsweers.metro.ContributesTo
 import dev.zacsweers.metro.Provides
 
-/**
- * iOS's settings: only the rows something on iOS acts on, so no row is a switch that does nothing. Swift's
- * `SettingsView` renders it as one grouped `Form`, with a Sources row of its own above the Sources rows.
- *
- * Left out, with why:
- * - Appearance: theme, dynamic colour, accent and pure black restyle Android's Material theme, which iOS doesn't
- *   draw; widget opacity has no widget. Colour from artwork stays: `ArtworkTintModifier` falls back to the accent
- *   when it's off. Show Home on launch stays: the shell starts on
- *   `ShellViewModel`'s start tab (on by default on iOS, [IosSettingDefaults]).
- * - Playback & sound: USB DAC direct output is Android's mixer. The equalizer, ReplayGain and its pre-amp are Android's
- *   rows, run by the S2Playback engine (phase 6, #604); ReplayGain and its pre-amp are a group of their own, apart
- *   from the Equalizer's Preamp (#645).
- * - Sources: reporting playback to the server has no iOS reporter yet; download on Wi-Fi only is
- *   Android's download requirements (`DownloadSettings`); artwork on Wi-Fi only, below.
- * - Library: rescan frequency needs a background scheduler; excluded songs and folders wait for local files (phase
- *   8); artwork Wi-Fi only gates the S2 artwork service iOS doesn't use; media session artwork, clearing the
- *   artwork cache and downloading all artwork reach Android's Coil and media session.
- * - About: What's New and Licences read Android's bundled changelog and `aboutlibraries.json`; iOS's
- *   acknowledgements are in its Settings bundle. File logging and debug logs have no iOS log file.
- */
+/** Only rows something on iOS acts on, so no switch does nothing. */
 object IosSettingsCatalog : SettingsCatalog {
     val playbackAndSound = SettingsScreen(
         destination = SettingsDestination.PlaybackAndSound,
@@ -70,7 +51,7 @@ object IosSettingsCatalog : SettingsCatalog {
                     )
                 )
             ),
-            // ReplayGain and its own pre-amp, a group apart from the Equalizer's Preamp (#645).
+            // ReplayGain has its own pre-amp, apart from the Equalizer's.
             SettingsGroup(
                 title = SettingsString.DSP_REPLAY_GAIN_TITLE,
                 items = listOf(
@@ -158,7 +139,7 @@ object IosSettingsCatalog : SettingsCatalog {
                     )
                 )
             ),
-            // Read by the shared AlbumArtistListViewModel behind Library > Artists (#637)
+            // Read by the shared AlbumArtistListViewModel behind Library > Artists
             SettingsGroup(
                 title = SettingsString.SETTINGS_GROUP_ARTISTS,
                 items = listOf(

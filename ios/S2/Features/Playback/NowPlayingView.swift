@@ -1,17 +1,8 @@
 import Shared
 import SwiftUI
 
-/// Now Playing, after Shuttle Podcasts' player and Apple Music (#624, #644): the cover over a ground in its own colour
-/// with a blurred copy of it glowing through the top (`ArtworkBackground`), close and the favourite heart along the
-/// top, the title with the artist and the album under it in `MarqueeText` (tapping either opens its screen; a long
-/// press of the cover or the title opens the song's menu), a capsule scrubber, previous / play-pause / next in the
-/// cover's tint between shuffle and repeat, and Audio (speed, then the equalizer and playback settings), the sleep timer, AirPlay and the
-/// queue in one glass capsule along the bottom. The cover's colour (`\.artworkTintSource`) comes from above
-/// (`playerArtworkTint`, in `ContentView`); the screen derives
-/// its ground, tint and captions from it (`PlayerPalette`), so they are measured on the ground they sit on. Presented by `nowPlayingPresentation` (a full-screen cover in
-/// `compact`, which a swipe down dismisses, a form sheet otherwise); the queue and Audio open through `playerSheet` (a sheet
-/// in `compact`, a popover otherwise). From `AdaptiveLayout.twoColumnMinWidth` (a phone on its side) the cover sits
-/// left of the controls. Bound to the shared `PlayerViewModel` through `PlayerBinding` only.
+/// Its colours come from the cover (`PlayerPalette`), so the text is measured on the ground it sits on.
+/// Bound to the shared `PlayerViewModel` through `PlayerBinding` only.
 ///
 /// The ViewModel's one-shot events are consumed here while Now Playing is up: a notice (`PlayerNotice`, with Undo
 /// where the ViewModel offers it) or a screen to open, which closes Now Playing and pushes the route through `onOpen`.

@@ -17,7 +17,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 
 /**
- * Sets PostHog up once, after the first frame, off the main thread (#914), as iOS does. Sentry is started
+ * Sets PostHog up once, after the first frame, off the main thread. Sentry is started
  * synchronously at launch ([TelemetryConsentGate.startCrashReporting]); only analytics waits.
  *
  * Consent is unchanged: [TelemetryConsentGate.startAnalytics] applies the stored choice before PostHog is set up, and

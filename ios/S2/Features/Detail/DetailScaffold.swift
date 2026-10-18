@@ -69,9 +69,7 @@ enum DetailHeroLayout: Equatable {
         }
     }
 
-    /// The cover at the accessibility text sizes: `accessibilityArtworkSize` at most, so the title, the eyebrow lines
-    /// and the Play/Shuffle row, all much taller there, still land on the first screen above the mini player
-    /// rather than below it (#782). The other sizes keep `artworkSize`.
+    /// Caps the cover at accessibility sizes so the Play/Shuffle row stays above the mini player.
     func artworkSize(isAccessibilitySize: Bool) -> CGFloat {
         isAccessibilitySize ? min(artworkSize, Self.accessibilityArtworkSize) : artworkSize
     }
@@ -260,13 +258,8 @@ private struct UnderTheBars: ViewModifier {
     }
 }
 
-/// Light bar chrome over a full-bleed backdrop: while the hero's title is still below the bar, the navigation bar
-/// draws no background of its own and runs in the dark scheme, so the status bar, the back button and the bar
-/// buttons are white over the photo in both appearances; once the title has scrolled under the bar, the bar takes
-/// back its usual material and the screen's own scheme. `toolbarColorScheme` only takes on a bar whose background is
-/// visible, hence the clear one rather than a hidden one, and a visible material bar after it: handed back to
-/// `.automatic` and a nil scheme, iOS 26 kept the dark one, and the inline title stayed white over light rows (#635).
-/// Inactive (no backdrop), the bar is left alone.
+/// Light bar chrome over a full-bleed backdrop, until the hero's title scrolls under the bar. The scheme is set to nil
+/// only after a visible material bar is back, since iOS 26 otherwise keeps the dark scheme over light rows.
 private struct BleedNavigationBar: ViewModifier {
     let isActive: Bool
     let isOverBackdrop: Bool

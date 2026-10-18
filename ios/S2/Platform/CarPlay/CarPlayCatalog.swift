@@ -1,8 +1,6 @@
 import Foundation
 
-// What CarPlay lists (#692), as values: the rows of each tab and pushed list, built from plain inputs so tests need
-// neither CarPlay nor Kotlin. `CarPlaySceneDelegate` maps the shared view models' state into these inputs and
-// `CarPlayListRenderer` draws the result. Ported from Shuttle Podcasts' catalog.
+// Plain values built from plain inputs, so tests need neither CarPlay nor Kotlin.
 
 /// A song as a CarPlay list shows it.
 struct CarPlaySong: Equatable {
@@ -175,7 +173,7 @@ enum CarPlayCatalog {
         message(CarPlayText.unavailable, detail: CarPlayText.unavailableDetail)
     }
 
-    /// CarPlay's root without Shuttle Music Pro (#946): one inert row, since the paywall only opens on the phone.
+    /// CarPlay's root without Shuttle Music Pro: one inert row, since the paywall only opens on the phone.
     static func upgrade() -> [CarPlaySectionModel] {
         message(CarPlayText.upgrade, detail: CarPlayText.upgradeDetail)
     }

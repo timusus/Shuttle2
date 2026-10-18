@@ -1,16 +1,7 @@
 import Shared
 import SwiftUI
 
-/// Home (#587, polished in #624, sections from #633): the suggestion sections from the shared `HomeViewModel`, with
-/// no resume card: the mini player is that (#646). Jump Back In is a compact grid; the time of day, Heavy Rotation, Rediscover, Recently
-/// Added and Genre Picks are shelves, each under a subtitle saying what it holds (#671). A tap opens the album, artist or playlist (zooming from the tile on iOS 18+), or
-/// shuffles a Genre Picks tile; every tile's context menu and VoiceOver actions play, shuffle, queue or open it
-/// through the shared `MediaAction`s. Before anything has been played (cold start) Home offers Shuffle All and says it
-/// learns from listening. Before there's a library, the empty state, or the import's progress while one runs. Pull
-/// to refresh re-imports and reloads Home, in every state.
-///
-/// Home reloads only as it comes on screen (it appears, or the app returns to the foreground), on pull to refresh or
-/// when an import completes, and on the hour while it's off screen (#672), so nothing moves while it's being looked at.
+/// No resume card here (the mini player is one), and Home reloads only as it comes on screen, so nothing moves while it's being read.
 struct HomeView: View {
     let navigator: Navigator
 
@@ -92,21 +83,14 @@ final class HomeModels: ViewModelGroup {
     var members: [Lifecycle_viewmodelViewModel] { [home, actions] }
 }
 
-/// Home from a `HomeUiState`. `showWhatsNew` has no iOS surface yet (no changelog screen until phase 7, #589), and
-/// `HomeEvent.AnalyticsNowOn` never fires on iOS: the first run's welcome discloses telemetry instead (#776), so
-/// that event is consumed and dropped; `HomeEvent.PlayShelf` (a shelf header's Play, #865) is dispatched as a `MediaAction`.
-///
-/// A `ScrollView` of a `LazyVStack`, not a `List`: the grid and the shelves are full-bleed, and the
-/// content is capped at `AdaptiveLayout.contentMaxWidth` and centred on an iPad.
+/// Not a `List`, so the shelves can run full-bleed; `AnalyticsNowOn` never fires on iOS and is dropped.
 struct HomeContent: View {
     let state: HomeUiState
     var importStatus: ImportStatus = .idle
     var onShuffleAll: () -> Void = {}
     /// Plays a whole shelf from its header (`HomeSection.playable` ones only).
     var onPlaySection: (HomeSectionId) -> Void = { _ in }
-    /// Opens the item's screen.
     var onOpen: (HomeItem) -> Void = { _ in }
-    /// Dispatches a play or queue action.
     var onAction: (MediaAction) -> Void = { _ in }
     /// The item whose play is under way (`PlayIntent.loadingKey`), by key: its Jump Back In cell shows a spinner.
     var pendingPlayKey: String?

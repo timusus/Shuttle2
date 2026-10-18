@@ -22,9 +22,7 @@ extension View {
     }
 }
 
-/// A detail screen's offline downloads (#759, docs/architecture/downloads.md): how far some songs' downloads have got
-/// (`OfflineDownloads.summary`, the shared actions' rule) and the shared Download and Remove Download actions. The
-/// default has no `summary`, which hides the items, as for a screen that doesn't offer them.
+/// A nil `summary` hides the download items, so only screens that offer downloads show them.
 struct DetailDownloads {
     var summary: (([Song]) -> DownloadSummary)? = nil
     var onDownload: ([Song]) -> Void = { _ in }

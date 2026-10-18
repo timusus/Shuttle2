@@ -1,6 +1,5 @@
 package com.simplecityapps.shuttle.settings
 
-/** The Artists list's own preferences (#637). */
 object ArtistSettings {
     /**
      * The Artists list also shows the artists who are only credited on others' albums (a featured or compilation

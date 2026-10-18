@@ -1,10 +1,7 @@
 import Shared
 import SwiftUI
 
-/// Library > Playlists (P5-6b): `PlaylistListViewModel`'s smart playlists (always shown) and user playlists (with
-/// the `CoverMosaic` of their cover songs, #643) as a list. Create and rename go through an `alert` with a `TextField`, per
-/// the HIG; delete is a destructive swipe with a confirmation. Context menu plays or queues through the shared
-/// `MediaAction`s, same as the other library lists. A Shuffle row heads the list while there are playlists to shuffle.
+/// Create and rename use an alert, per the HIG; delete is a swipe that asks first.
 struct PlaylistListView: View {
     @Environment(\.appServices) private var appServices
     private var services: AppServices { appServices.required }
@@ -70,9 +67,7 @@ func trimmedPlaylistName(_ name: String) -> String {
 }
 
 extension SmartPlaylistId {
-    /// A display title for the POC; phase 5's string catalogue replaces this (matches `MediaActionText`'s
-    /// existing hardcoded-copy precedent). Internal (not file-private) so `SmartPlaylistDetailView` can use it
-    /// as the detail screen's title too.
+    /// Internal so `SmartPlaylistDetailView` can use it as its title too.
     var title: String {
         switch id {
         case "favourites": "Favourites"

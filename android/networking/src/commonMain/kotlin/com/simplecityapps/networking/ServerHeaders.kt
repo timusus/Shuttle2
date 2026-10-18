@@ -13,14 +13,7 @@ class ServerHeadersConfig {
     var store: ServerConnectionStore? = null
 }
 
-/**
- * Adds the custom headers the user set for the server a request goes to (#894), replacing any of the same name. Only
- * that server's requests carry them: a request to another host (plex.tv, say) gets none.
- *
- * Matched on each hop as it's sent, on a copy of the request, so a redirect (which copies the request it follows)
- * never carries a server's headers to another host: the next hop is matched against its own origin. The copy keeps the
- * request's execution context (Ktor-internal, as its redirect copies it), so cancelling the call still cancels the hop.
- */
+/** Adds the server's custom headers to requests bound for that server only, matched per hop, so a redirect never carries them elsewhere. */
 @OptIn(InternalAPI::class)
 val ServerHeaders =
     createClientPlugin("ServerHeaders", ::ServerHeadersConfig) {

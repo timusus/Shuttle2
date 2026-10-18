@@ -9,10 +9,7 @@ interface RemoteArtworkProvider {
 
     suspend fun getAlbumArtworkUrl(song: Song): String?
 
-    /**
-     * The image of the artist the server knows as [serverArtistId], one of [song]'s artists ([com.simplecityapps.shuttle.model.serverArtistId]):
-     * the caller names the artist, so the image is never another artist's on the same song (#653).
-     */
+    /** Takes the artist's id from the caller so a song never gets another artist's image. */
     suspend fun getArtistArtworkUrl(
         song: Song,
         serverArtistId: String

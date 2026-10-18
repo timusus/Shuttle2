@@ -23,10 +23,7 @@ sealed interface FolderRulesEvent {
     data object FolderNotOnDevice : FolderRulesEvent
 }
 
-/**
- * Settings > Sources > This device > Folder rules (#379, #881): the S2 scanner's folders. Each change starts a scan, so
- * the library follows the rules straight away.
- */
+/** Each change starts a scan, so the library follows the rules straight away. */
 @ViewModelKey(FolderRulesViewModel::class)
 @ContributesIntoMap(AppScope::class)
 class FolderRulesViewModel @Inject constructor(

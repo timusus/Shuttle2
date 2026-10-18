@@ -3,31 +3,7 @@ import os
 import S2Tags
 import Shared
 
-/// This device's music files (#590), the Kotlin `IosLocalFiles` the library's local provider imports through: the
-/// app's Documents folder (Files' "On My iPhone > Shuttle Music", and Finder's file sharing) and the folders picked in
-/// Files, kept as bookmarks.
-///
-/// A song's path is `s2local://<folder id>/<path in the folder>`: `documents` for Documents, the folder's own id for a
-/// picked one. The app's container moves on every update, so paths never hold it; `fileURL(forSongPath:)` resolves one
-/// to where the file is now.
-///
-/// A picked folder's security scope is opened when its bookmark resolves (at launch, off the main thread, or when it's
-/// picked) and stays open for the process's life, so the engine can open its files whenever it plays them. It counts
-/// as reachable only once its scope opened, or when it's inside the app's own container, which needs none. A bookmark
-/// that resolves stale is saved again; one that doesn't resolve leaves the folder without access until it's picked
-/// again, which keeps its id, so its songs keep their history.
-///
-/// Each file is read under one folder only: picking Documents, or a folder inside Documents or inside one already
-/// picked, adds nothing, as its files are read already; a folder picked around ones already there is added, and its
-/// listing leaves out the folders inside it that are read on their own, so their songs keep their paths.
-///
-/// A listing tells the provider which folders it couldn't read in full (out of reach, unreadable, or failing partway),
-/// so their songs are kept rather than removed. A file iCloud has offloaded (`.<name>.icloud`) is listed as offloaded
-/// under its own name, so its song is kept too.
-///
-/// **Threading:** Kotlin calls in from the import's background threads and the player's main thread; the state is
-/// behind a lock, and the file system is read outside it. Every call that needs the picked folders waits until the
-/// bookmarks have resolved.
+/// This device's music files, behind the Kotlin `IosLocalFiles`. Song paths hold no container path, since the container moves on each update.
 final class LocalLibrary: NSObject, IosLocalFiles, @unchecked Sendable {
     static let scheme = "s2local"
     static let documentsID = "documents"

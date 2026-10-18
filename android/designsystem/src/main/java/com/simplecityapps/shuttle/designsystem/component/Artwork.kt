@@ -150,11 +150,7 @@ fun Artwork(
 /** An [Artwork] `image` slot reports here when its image has loaded (true) or is loading or failed (false); the hairline follows. */
 val LocalArtworkImageLoaded: ProvidableCompositionLocal<(Boolean) -> Unit> = staticCompositionLocalOf { {} }
 
-/**
- * The [placeholder]'s glyph as [Artwork] draws it: the media type's icon, in a neutral grey (#646), centred on the
- * artwork's own container. For an [Artwork] `image` slot to draw under an image that loads asynchronously, so art
- * that never loads keeps the glyph.
- */
+/** The placeholder glyph as [Artwork] draws it, under an image that loads asynchronously, so art that never loads keeps it. */
 @Composable
 fun ArtworkPlaceholderGlyph(placeholder: ArtworkPlaceholder, size: ArtworkSize) {
     Icon(

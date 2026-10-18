@@ -1,8 +1,6 @@
 import Shared
 import SwiftUI
 
-/// What Home's tiles and grid cells say about a `HomeItem` and the actions they offer on it (#633). The item's
-/// `playAction()` is the shared model's: an album, artist or playlist plays from its start, a genre shuffles.
 extension HomeItem {
     var title: String {
         switch onEnum(of: self) {
@@ -24,7 +22,7 @@ extension HomeItem {
         }
     }
 
-    /// A shelf tile's accessibility identifier: its kind, with a smart playlist kept apart from a playlist (#633).
+    /// Smart playlists get their own identifier, apart from playlists.
     var tileIdentifier: String {
         switch onEnum(of: self) {
         case .albumItem: "homeTile.album"
@@ -86,8 +84,7 @@ extension HomeItem {
     }
 }
 
-/// Plays, shuffles, queues or opens an item; the context menu and the VoiceOver actions of every Home tile. A tile
-/// that `resumes` (Jump Back In's, #670) plays on from where the item's queue was left, with Play from Start after Play.
+/// A `resumes` tile plays on from where the item's queue was left, with Play from Start after it.
 struct HomeItemActions {
     let item: HomeItem
     let perform: (MediaAction) -> Void
@@ -131,9 +128,7 @@ extension View {
     }
 }
 
-/// An item's artwork at `size`: an album's cover or an artist's picture (same corners for both, the owner's call);
-/// for a playlist or genre, which have no artwork of their own, its `CoverMosaic` from Home's covers (#643); for a
-/// smart playlist, its `GeneratedArtwork`.
+/// Playlists and genres have no artwork of their own, so they show a mosaic of Home's covers.
 struct HomeItemArtwork: View {
     let item: HomeItem
     let size: CGFloat

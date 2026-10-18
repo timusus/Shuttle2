@@ -4,11 +4,7 @@ import androidx.room.migration.Migration
 import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.execSQL
 
-/**
- * The album artist tag as written, unsplit, on `songs` (#1065): untagged classical credits read the performers a combined
- * "Mahler; Janet Baker, Simon Rattle" lists after the composer. Additive and null until the re-import that
- * `SONG_TAGS_VERSION` 7 triggers reads each song again.
- */
+/** Adds the album artist tag unsplit, since untagged classical credits read performers from a combined list. */
 val MIGRATION_59_60 =
     object : Migration(59, 60) {
         override fun migrate(connection: SQLiteConnection) {

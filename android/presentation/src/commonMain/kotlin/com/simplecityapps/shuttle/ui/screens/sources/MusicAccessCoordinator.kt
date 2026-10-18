@@ -19,14 +19,8 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 
 /**
- * Whether the Library has music to show, tracked once for the whole app (#427): Home and Library used to each hold
- * their own [LibraryEmptyViewModel][com.simplecityapps.shuttle.ui.screens.library.LibraryEmptyViewModel] instance,
- * so the music permission and scan-once bookkeeping below ran twice on every resume, once per screen.
- *
- * [onChecked] reports the permission as it stands on resume; [onResult] reports the system prompt's answer. Only
- * the very first report of either kind defers to [MediaSources.scanIfNeverScanned], which covers a permission
- * already held (granted in system settings while backgrounded, or restored with a backup) without rescanning a
- * library that already has one.
+ * Tracks music access once for the whole app, so Home and Library don't each run the permission and scan bookkeeping.
+ * [onChecked] reports the permission on resume; [onResult] reports the system prompt's answer.
  */
 @SingleIn(AppScope::class)
 class MusicAccessCoordinator @Inject constructor(

@@ -5,7 +5,7 @@ import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.model.nowPlayingArtworkModel
 import com.simplecityapps.shuttle.settings.NowPlayingImage
 
-/** The image-loader [model] that pictures a song on the media session (#952), and the [cacheKey] identifying what it resolves to. */
+/** The image-loader [model] that pictures a song on the media session, and the [cacheKey] of what it resolves to. */
 class NowPlayingArtwork(
     val model: Any,
     val cacheKey: String,

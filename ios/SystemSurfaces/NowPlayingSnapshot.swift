@@ -1,7 +1,6 @@
 import Foundation
 
-/// What the widgets show (#758): the current song and whether it plays. The app writes it to the App Group container
-/// as it changes (`NowPlayingWidgetPublisher`), the widget extension reads it; compiled into both.
+/// The widgets' state, written by the app to the App Group and compiled into both targets.
 struct NowPlayingSnapshot: Codable, Equatable {
     /// The queue item's id: a new one means new artwork.
     var itemID: String

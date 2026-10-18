@@ -4,10 +4,7 @@ import androidx.room.migration.Migration
 import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.execSQL
 
-/**
- * `identity_generation`: what the album index rebuilds by, so a play no longer rebuilds it (#688). Starts empty: its row
- * and the songs triggers that bump it come with `IdentityGenerationTriggers` on open.
- */
+/** Creates identity_generation so a play no longer rebuilds the album index. */
 val MIGRATION_51_52 =
     object : Migration(51, 52) {
         override fun migrate(connection: SQLiteConnection) {

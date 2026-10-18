@@ -9,7 +9,7 @@ import io.ktor.client.request.header
 import io.ktor.client.request.parameter
 import io.ktor.client.request.put
 
-/** Plex's playlist edits (#916): a playlist's entries, adding tracks, removing an entry and moving one. */
+/** Plex's playlist endpoints: a playlist's entries, adding tracks, removing an entry and moving one. */
 class PlaylistService(private val client: HttpClient) {
     /** Every entry of the playlist, in order, each with its playlistItemID. */
     suspend fun entries(

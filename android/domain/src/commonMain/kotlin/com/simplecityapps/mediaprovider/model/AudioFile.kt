@@ -26,8 +26,7 @@ data class AudioFile(
     val bitDepth: Int?,
     val sampleRate: Int?,
     val channelCount: Int?,
-    // The raw artist and album tags and MusicBrainz ids (#637), as [com.simplecityapps.shuttle.model.Song] stores them.
-    // Empty or null where the file doesn't have the tag.
+    // Empty or null where the file lacks the tag.
     val albumArtists: List<String> = emptyList(),
     val artistsTag: List<String> = emptyList(),
     val artistDisplay: String? = null,
@@ -38,7 +37,7 @@ data class AudioFile(
     val mbReleaseGroupId: String? = null,
     val mbArtistIds: List<String> = emptyList(),
     val mbAlbumArtistIds: List<String> = emptyList(),
-    // Classical metadata (#1065), as [com.simplecityapps.shuttle.model.Song] stores it; null or empty where untagged.
+    // Null or empty where the file is untagged.
     val composer: String? = null,
     val composerSort: String? = null,
     val conductor: String? = null,

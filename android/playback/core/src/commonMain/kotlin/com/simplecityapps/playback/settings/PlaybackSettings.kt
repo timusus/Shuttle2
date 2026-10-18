@@ -38,10 +38,7 @@ class PlaybackSettings @Inject constructor(
         /** The speed chosen in Now Playing, a multiplier; the player owns it, this keeps it across restarts. */
         val PlaybackSpeed = Setting.float("playback_speed", 1f)
 
-        /**
-         * How long one song fades into the next, in ms; 0 is off. Set from the Playback settings slider (#570): a change
-         * applies from the next song, see docs/architecture/crossfade.md.
-         */
+        /** How long one song fades into the next, in ms; 0 is off. A change applies from the next song. */
         val CrossfadeDuration = Setting.int("crossfade_duration_ms", 0)
     }
 }

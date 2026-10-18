@@ -40,20 +40,12 @@ class ServerCredentialStore(
             securePreferenceManager.putString(passwordKey, value?.password)
         }
 
-    /**
-     * The signed-in session. Setting it replaces the stored session outright, as a sign-in does; a write that must not
-     * clobber a newer session, or bring back a cleared one, goes through [compareAndSetAuthenticatedCredentials]. Every
-     * read and write holds the same lock as [expireSession], so none of them sees or leaves a half-written session (#596).
-     */
+    /** Setting it replaces the session outright; reads and writes share [expireSession]'s lock, so none sees a half-written session. */
     var authenticatedCredentials: AuthenticatedCredentials?
         get() = lock.withLock { readAuthenticatedCredentials() }
         set(value) = lock.withLock { writeAuthenticatedCredentials(value) }
 
-    /**
-     * Replaces the stored session with [new] only while it is still [expected] (the same access token), returning
-     * whether it did. So saving something learned about [expected], such as a refreshed download permission, never
-     * overwrites a newer sign-in or brings back a session [expireSession] has cleared (#596).
-     */
+    /** Replaces the session only while it is still [expected], so a save learned about the old session never overwrites a newer sign-in. */
     fun compareAndSetAuthenticatedCredentials(
         expected: AuthenticatedCredentials,
         new: AuthenticatedCredentials?
@@ -90,11 +82,7 @@ class ServerCredentialStore(
 
     private val _sessionExpired = MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
-    /**
-     * Emits each time the server rejects the stored session mid-session and [expireSession] clears it (#577). The
-     * next sync signs in again with the saved [loginCredentials]; without them (a Quick Connect session, say) the
-     * user has to sign in again.
-     */
+    /** Emits when the server rejects the session mid-session; the next sync signs in again with saved [loginCredentials], if any. */
     val sessionExpired: SharedFlow<Unit> = _sessionExpired.asSharedFlow()
 
     // Guarded by [lock]: the syncs running now, and whether one of their 401s cleared the session while they ran
@@ -139,7 +127,7 @@ class ServerCredentialStore(
     }
 }
 
-/** [result], after [ServerCredentialStore.expireSession] when the server rejected [credentials] with a 401 (#577). */
+/** [result], after [ServerCredentialStore.expireSession] when the server rejected [credentials] with a 401. */
 fun <T : Any> ServerCredentialStore.checkSession(
     credentials: AuthenticatedCredentials,
     result: NetworkResult<T>

@@ -42,16 +42,7 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.launch
 
-/**
- * The whole library as one [SearchIndex] of [AlbumArtist]s, [Album]s, [Song]s, [Playlist]s and [Genre]s, rebuilt off
- * the main thread whenever the library's content changes. A change is built straight away, then later ones at most
- * every [REBUILD_INTERVAL], latest first, so an import's stream of changes makes a build every half second and ends on
- * its final state; while the library has no songs, every change builds at once. Playing a song moves play counts and
- * last-played times in three repositories, which would rebuild the whole index mid-search (#677), so those changes
- * alone rebuild it at most every [PLAY_REFRESH]: the play counts that weight the ranking catch up at the first play
- * after that, or at the next build for any other reason. Shared by every search screen; it stops following the library
- * a minute after the last one goes, so reopening search soon after reuses the index, unless [warmUp] is holding it.
- */
+/** Rebuilds off the main thread; play-count churn rebuilds less often so a search isn't reindexed mid-query. */
 @SingleIn(AppScope::class)
 class LibrarySearchIndex @Inject constructor(
     albumArtistRepository: AlbumArtistRepository,
@@ -66,7 +57,7 @@ class LibrarySearchIndex @Inject constructor(
     private var warming: Job? = null
 
     val index: Flow<SearchIndex<Any>> = combine(
-        // Every artist, album artist or only credited (featured, on compilations), each once (#637)
+        // Credited artists include featured ones on compilations, each listed once.
         albumArtistRepository.getAlbumArtists(AlbumArtistQuery.Credited()),
         albumRepository.getAlbums(AlbumQuery.All()),
         songRepository.getSongs(SongQuery.All()),

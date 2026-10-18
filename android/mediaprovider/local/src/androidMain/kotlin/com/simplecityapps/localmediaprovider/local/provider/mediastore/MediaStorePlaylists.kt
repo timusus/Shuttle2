@@ -148,10 +148,7 @@ internal class MediaStorePlaylists(
     }
 }
 
-// We assume two songs are equal, if they have the same title, album, artist & duration. We can't be too specific, as the
-// MediaStore scanner may have interpreted some fields differently to Shuttle's built in scanner. MediaStore's artist is the
-// raw tag, so both sides are split like Shuttle's own (#880; a song scanned before then may still hold the raw tag) and
-// any shared artist counts: one side may list fewer of them.
+// MediaStore's scanner reads some tags differently from ours, so match loosely: title, album, duration, and any shared artist.
 internal fun Song.matchesPlaylistEntry(mediaStoreSong: MediaStoreSong): Boolean {
     val mediaStoreArtists = mediaStoreSong.artist?.let(::splitArtistTag).orEmpty()
     val songArtists = artists.flatMap(::splitArtistTag)
