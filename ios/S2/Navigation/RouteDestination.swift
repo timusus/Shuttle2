@@ -89,6 +89,19 @@ private struct RouteDestinationsModifier: ViewModifier {
     }
 }
 
+extension LibraryRootContent where CategoryContent == RouteDestinationView {
+    init(
+        categories: [LibraryCategory],
+        availability: LibraryRootAvailability,
+        importStatus: ImportStatus,
+        selection: Binding<LibraryCategory?> = .constant(nil)
+    ) {
+        self.init(categories: categories, availability: availability, importStatus: importStatus, selection: selection) { category in
+            RouteDestinationView(route: .libraryCategory(category))
+        }
+    }
+}
+
 private struct OptionalMiniPlayerInset: ViewModifier {
     let showNowPlaying: Binding<Bool>
     let isEnabled: Bool

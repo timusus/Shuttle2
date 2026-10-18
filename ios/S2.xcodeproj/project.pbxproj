@@ -111,6 +111,7 @@
 		87BE61D41895A26AB403D726 /* PlayerEventOutcomeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 589A21F654ABF5821FB118E5 /* PlayerEventOutcomeTests.swift */; };
 		87E7FAF7C7C7910AFA56B5D7 /* AlbumArtistListTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60C0C48BCE8CEF1B30FF9D34 /* AlbumArtistListTests.swift */; };
 		890A154886B1B157CAAFDFEA /* SongInfoSections.swift in Sources */ = {isa = PBXBuildFile; fileRef = C646ADA121ECD50C73F27ECA /* SongInfoSections.swift */; };
+		8916CC82B7C60D4D4AE55293 /* ServerSignOutPrompt.swift in Sources */ = {isa = PBXBuildFile; fileRef = 887B8C0D48997AEBCDFDEA88 /* ServerSignOutPrompt.swift */; };
 		8C902B94FBC0F25EEC5CDFE6 /* NowPlayingTransport.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE7E13261780E0BFE0677949 /* NowPlayingTransport.swift */; };
 		8D35BFA6D0DEA168AF80AD0C /* NowPlayingAudioSheets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4ADA676570793AAB2B73A604 /* NowPlayingAudioSheets.swift */; };
 		8DB510F3C2861DAE2E6D79ED /* NowPlayingViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48E0B40EF9B1410AFE3490A4 /* NowPlayingViewTests.swift */; };
@@ -123,6 +124,7 @@
 		97C1316CB57AA5EC7C3219A5 /* PlayIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F2835E631713B620C844627 /* PlayIntent.swift */; };
 		980207C00AC3BA14C05F6215 /* ShuttleShortcuts.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4FBE2409766007909DE78800 /* ShuttleShortcuts.swift */; };
 		980E6C1CAAFE8E1F5BB5F288 /* S2Tags in Frameworks */ = {isa = PBXBuildFile; productRef = 2D67CECE5865302F1EC5EC0D /* S2Tags */; };
+		98160EF7CE5EAED813FDBD0D /* MediaActionText.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC99E81CF83E53644564068F /* MediaActionText.swift */; };
 		9B1E89BAD9F71286BF2437AA /* LibraryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F74B98EFB99516DD895C476 /* LibraryView.swift */; };
 		9D1A42B52CE59007F5DFA5A7 /* LayoutTier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 467103A9C583DD5E8967EABF /* LayoutTier.swift */; };
 		9F1FD3B78D286A40F4A9857C /* KotlinServerConnectionPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93A7435F3E54B803C6E2C542 /* KotlinServerConnectionPolicy.swift */; };
@@ -389,6 +391,7 @@
 		82D8F50EA0F4508C11C2A23D /* AlbumDetailTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlbumDetailTests.swift; sourceTree = "<group>"; };
 		8477763CCDC4966B330DC086 /* Shimmer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Shimmer.swift; sourceTree = "<group>"; };
 		87263640816D52C273CCC216 /* Typography.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Typography.swift; sourceTree = "<group>"; };
+		887B8C0D48997AEBCDFDEA88 /* ServerSignOutPrompt.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServerSignOutPrompt.swift; sourceTree = "<group>"; };
 		88C7376431FF07B6FFA8E7C5 /* SearchWarmUp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchWarmUp.swift; sourceTree = "<group>"; };
 		89689E4CDFC9350CB0EFB888 /* Navigator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Navigator.swift; sourceTree = "<group>"; };
 		8AC73FE52C2CA57301083158 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.stringsdict; name = "zh-Hans"; path = "zh-Hans.lproj/Localizable.stringsdict"; sourceTree = "<group>"; };
@@ -458,6 +461,7 @@
 		D679F550BBE525E21437DE0B /* SongRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SongRow.swift; sourceTree = "<group>"; };
 		D6F13B4E6E24F493A2104D75 /* PlayerPresentation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerPresentation.swift; sourceTree = "<group>"; };
 		DB04BA19C3A256E1B0383B7F /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Settings.strings; sourceTree = "<group>"; };
+		DC99E81CF83E53644564068F /* MediaActionText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediaActionText.swift; sourceTree = "<group>"; };
 		DDCC039C577D8A1D202C35A0 /* ArtworkPalette.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArtworkPalette.swift; sourceTree = "<group>"; };
 		DF69F9EF58C01511DA169401 /* NowPlayingSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NowPlayingSnapshot.swift; sourceTree = "<group>"; };
 		E0F3E84B7D27020C578482FE /* en-GB */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "en-GB"; path = "en-GB.lproj/Localizable.strings"; sourceTree = "<group>"; };
@@ -549,6 +553,7 @@
 			isa = PBXGroup;
 			children = (
 				B7AADEAF2F8D24AC514AD547 /* AirPlayButton.swift */,
+				DC99E81CF83E53644564068F /* MediaActionText.swift */,
 				528C6644D4642CD20178A704 /* MiniPlayerView.swift */,
 				4ADA676570793AAB2B73A604 /* NowPlayingAudioSheets.swift */,
 				5EA536C6F52AF3AE4FCE7931 /* NowPlayingQueueList.swift */,
@@ -756,6 +761,7 @@
 				89689E4CDFC9350CB0EFB888 /* Navigator.swift */,
 				102211043771B638F9DEBB28 /* Route.swift */,
 				9439F2E0407BF9275E4CEC04 /* RouteDestination.swift */,
+				887B8C0D48997AEBCDFDEA88 /* ServerSignOutPrompt.swift */,
 				67AA5EABDB43DCBE61D34029 /* ShellContainer.swift */,
 			);
 			path = Navigation;
@@ -1207,6 +1213,7 @@
 				9B1E89BAD9F71286BF2437AA /* LibraryView.swift in Sources */,
 				16489298128294520408752E /* LocalLibrary.swift in Sources */,
 				B0FB022FA7D066955A64D070 /* MarqueeText.swift in Sources */,
+				98160EF7CE5EAED813FDBD0D /* MediaActionText.swift in Sources */,
 				CCEAD67EFEF0617F3B75D30D /* MediaRow.swift in Sources */,
 				35711F16198C1340CC43E55A /* MiniPlayerView.swift in Sources */,
 				76888FE5233E4B90ED2A244A /* Motion.swift in Sources */,
@@ -1248,6 +1255,7 @@
 				0E0B027A3870445B18FC5012 /* Separator.swift in Sources */,
 				69DAA7DE0ED3D9BCF0A98D4C /* ServerDetailView.swift in Sources */,
 				5BF07A6C45571F1110476F74 /* ServerSignInView.swift in Sources */,
+				8916CC82B7C60D4D4AE55293 /* ServerSignOutPrompt.swift in Sources */,
 				C6F8C2F04E379EB42828F981 /* SettingsView.swift in Sources */,
 				C06F838DD291958251D1AA51 /* Shape.swift in Sources */,
 				6A67D7A370D304760B517B8D /* ShellContainer.swift in Sources */,

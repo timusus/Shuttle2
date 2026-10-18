@@ -209,19 +209,6 @@ struct LibraryRootContent<CategoryContent: View>: View {
     }
 }
 
-extension LibraryRootContent where CategoryContent == RouteDestinationView {
-    init(
-        categories: [LibraryCategory],
-        availability: LibraryRootAvailability,
-        importStatus: ImportStatus,
-        selection: Binding<LibraryCategory?> = .constant(nil)
-    ) {
-        self.init(categories: categories, availability: availability, importStatus: importStatus, selection: selection) { category in
-            RouteDestinationView(route: .libraryCategory(category))
-        }
-    }
-}
-
 /// The pinned rail of category chips, scrolling sideways only. The chosen one is filled with the tint and scrolled
 /// to the middle, so its neighbours are in reach.
 struct LibraryCategoryChips: View {
