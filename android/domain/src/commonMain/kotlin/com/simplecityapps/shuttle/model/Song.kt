@@ -28,7 +28,7 @@ data class Song(
     val replayGainTrack: Double? = null,
     val replayGainAlbum: Double? = null,
     // What a scan or tag edit reads, for the update to store. The library's songs leave it null, so the whole library's
-    // lyrics aren't held in memory (#873): [com.simplecityapps.mediaprovider.repository.songs.SongRepository.loadLyrics]
+    // lyrics aren't held in memory: [com.simplecityapps.mediaprovider.repository.songs.SongRepository.loadLyrics]
     // reads one song's.
     val lyrics: String?,
     val grouping: String?,
@@ -52,7 +52,7 @@ data class Song(
     val dateAdded: Instant? = null,
     // When the song was made a favourite (the player's heart, or "Add to Favorites"); null when it isn't one.
     val favouritedAt: Instant? = null,
-    // The tags as the song's source holds them (#637): [AlbumIdentityRule] groups albums by them. Null where the source has no such value, and for a song not read since they were
+    // The tags as the song's source holds them: [AlbumIdentityRule] groups albums by them. Null where the source has no such value, and for a song not read since they were
     // added (the one-off backfill after the migration to version 50 fills them).
     // The ALBUMARTISTS multi-value tag (a server's album artist list), as written: never split.
     val albumArtists: List<String>? = null,
@@ -77,7 +77,7 @@ data class Song(
     // The album this song belongs to in its library, as [AlbumIdentityRule] decided it over the library's songs; null for
     // a song read on its own (one being imported, or opened from another app), which is then its album's only song.
     val albumIdentity: AlbumIdentity? = null,
-    // Classical metadata of #1065; null where the source has no value.
+    // Classical metadata; null where the source has no value.
     val composer: String? = null,
     val composerSort: String? = null,
     val conductor: String? = null,
