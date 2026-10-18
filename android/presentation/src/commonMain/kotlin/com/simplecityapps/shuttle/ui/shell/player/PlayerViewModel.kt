@@ -12,7 +12,6 @@ import com.simplecityapps.playback.dsp.replaygain.ReplayGainMode
 import com.simplecityapps.playback.persistence.NowPlayingSnapshot
 import com.simplecityapps.playback.queue.QueueState
 import com.simplecityapps.playback.queue.ShuffleMode
-import com.simplecityapps.playback.sleeptimer.SleepTimer
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.model.nowPlayingWork
@@ -101,10 +100,7 @@ class PlayerViewModel @AssistedInject constructor(
     observeFavouriteSongIds: ObserveFavouriteSongIds,
     private val setFavourite: ToggleFavourite,
     private val playlistRepository: PlaylistRepository,
-    private val controlSleepTimer: ControlSleepTimer,
-    private val sleepTimer: SleepTimer,
-    observeSleepTimerAtEndOfWork: ObserveSleepTimerAtEndOfWork,
-    readSleepTimerPlayToEnd: ReadSleepTimerPlayToEnd,
+    private val sleepTimer: SleepTimerState,
     observeSetting: ObserveSetting,
     private val saveSetting: SaveSetting,
     replayGainModeSetting: ReplayGainModeSetting,
@@ -138,11 +134,6 @@ class PlayerViewModel @AssistedInject constructor(
     private val savedSnapshot: NowPlayingSnapshot? = savedNowPlaying.snapshot()
     private val savedSong: PlayerSong? = savedSnapshot?.toPlayerSong()
 
-    /** Bumped when the sleep timer is started or stopped here. */
-    private val sleepTimerChanges = MutableStateFlow(0)
-    private val sleepTimerPlayToEnd = MutableStateFlow(readSleepTimerPlayToEnd())
-    private val sleepTimerAtEndOfWork: Flow<Boolean> = observeSleepTimerAtEndOfWork()
-
     private val events = PendingEvents<PlayerUiEvent>()
 
     private var clearedQueue: QueueSnapshot? = null
@@ -164,23 +155,6 @@ class PlayerViewModel @AssistedInject constructor(
     private val favouriteIds: Flow<Set<Long>> = observeFavouriteSongIds()
 
     private val seed: Flow<ArtworkSeed> = observeArtworkSeed(currentSong, observeSetting(ArtworkSettings.NowPlayingArtworkSource))
-
-    // Ticks only while a timer runs, so it notices the timer going off (the timer has no flow of its own).
-    private val sleepTimerActive: Flow<Boolean> =
-        sleepTimerChanges
-            .flatMapLatest {
-                if (sleepTimer.timeRemaining() == null) {
-                    flowOf(false)
-                } else {
-                    flow {
-                        while (sleepTimer.timeRemaining() != null) {
-                            emit(true)
-                            delay(SLEEP_TIMER_TICK_MS)
-                        }
-                        emit(false)
-                    }
-                }
-            }.distinctUntilChanged()
 
     // Songs don't carry their lyrics (#873); null until loaded, so loading never holds the rest of the player back.
     // The online setting re-runs the lookup but only a new song blanks the lyrics, so toggling it doesn't flash them.
@@ -221,11 +195,10 @@ class PlayerViewModel @AssistedInject constructor(
         combine(
             favouriteIds,
             seed,
-            sleepTimerActive,
-            combine(sleepTimerPlayToEnd, sleepTimerAtEndOfWork, ::Pair),
+            sleepTimer.fields,
             observeSetting(replayGainModeSetting.setting()),
-        ) { favourites, seed, sleeping, (playToEnd, atEndOfWork), replayGainMode ->
-            Extras(favourites, seed, sleeping, playToEnd, atEndOfWork, replayGainMode)
+        ) { favourites, seed, sleepTimer, replayGainMode ->
+            Extras(favourites, seed, sleepTimer, replayGainMode)
         }
 
     private val player: Flow<PlayerUiState> =
@@ -236,9 +209,9 @@ class PlayerViewModel @AssistedInject constructor(
                 shuffle = playback.shuffleMode == ShuffleMode.On,
                 repeatMode = playback.repeatMode.toS2RepeatMode(),
                 favourite = queue.currentItem?.song?.id?.let { it in extras.favouriteIds } ?: false,
-                sleepTimerActive = extras.sleepTimerActive,
-                sleepTimerPlayToEnd = extras.sleepTimerPlayToEnd,
-                sleepTimerAtEndOfWork = extras.sleepTimerAtEndOfWork,
+                sleepTimerActive = extras.sleepTimer.active,
+                sleepTimerPlayToEnd = extras.sleepTimer.playToEnd,
+                sleepTimerAtEndOfWork = extras.sleepTimer.atEndOfWork,
                 castAvailable = castAvailable,
                 castDevice = playback.castDevice,
                 seed = extras.seed,
@@ -319,28 +292,13 @@ class PlayerViewModel @AssistedInject constructor(
     override fun startSleepTimer(
         durationMs: Long,
         playToEnd: Boolean,
-    ) {
-        controlSleepTimer(SleepTimerCommand.Start(durationMs, playToEnd))
-        sleepTimerPlayToEnd.value = playToEnd
-        sleepTimerChanges.value++
-    }
+    ) = sleepTimer.start(durationMs, playToEnd)
 
-    override fun startSleepTimerAtEndOfWork() {
-        controlSleepTimer(SleepTimerCommand.StartAtEndOfWork)
-        sleepTimerChanges.value++
-    }
+    override fun startSleepTimerAtEndOfWork() = sleepTimer.startAtEndOfWork()
 
-    override fun stopSleepTimer() {
-        controlSleepTimer(SleepTimerCommand.Stop)
-        sleepTimerChanges.value++
-    }
+    override fun stopSleepTimer() = sleepTimer.stop()
 
-    override fun sleepTimerRemaining(): Flow<Long?> = flow {
-        while (true) {
-            emit(sleepTimer.timeRemaining())
-            delay(SLEEP_TIMER_TICK_MS)
-        }
-    }.distinctUntilChanged()
+    override fun sleepTimerRemaining(): Flow<Long?> = sleepTimer.remaining()
 
     override fun setShowRemainingTime(show: Boolean) = saveSetting(PlayerSettings.ShowRemainingTime, show)
 
@@ -420,15 +378,11 @@ class PlayerViewModel @AssistedInject constructor(
     private data class Extras(
         val favouriteIds: Set<Long>,
         val seed: ArtworkSeed,
-        val sleepTimerActive: Boolean,
-        val sleepTimerPlayToEnd: Boolean,
-        val sleepTimerAtEndOfWork: Boolean,
+        val sleepTimer: SleepTimerFields,
         val replayGainMode: ReplayGainMode,
     )
 
     internal companion object {
-        private const val SLEEP_TIMER_TICK_MS = 1_000L
-
         const val PANEL_KEY = "now_playing_panel"
 
         /**
