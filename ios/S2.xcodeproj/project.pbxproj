@@ -74,10 +74,12 @@
 		50A175EB717119CF83290D4D /* PostHogProductAnalyticsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB760772A55D6C206EACBE22 /* PostHogProductAnalyticsTests.swift */; };
 		52C29020D1D42E749E7EAC01 /* Settings.bundle in Resources */ = {isa = PBXBuildFile; fileRef = FCBFC3688D06BC30635B00FA /* Settings.bundle */; };
 		532918A4779EF3721C9912DB /* MotionZoomSourceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2C785BA32B0E86AAB1AA5B6 /* MotionZoomSourceTests.swift */; };
+		5368301D0BBED30729AB1F8D /* ArtworkCandidate.swift in Sources */ = {isa = PBXBuildFile; fileRef = FDAE386E509CA541BC7E535E /* ArtworkCandidate.swift */; };
 		553A58C265C6AFA440D89FCF /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC548555BCD74CA0702CE7B3 /* ContentView.swift */; };
 		570B6E4C9E40ECF2784B855C /* AlbumArtistDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9CF6FFC261DFB5CF6553CC77 /* AlbumArtistDetailView.swift */; };
 		57F9789CC5776E74E0B9857B /* SongInfoTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7041C95EB2787868FD153782 /* SongInfoTests.swift */; };
 		585A0251C433400E10A4AF82 /* MiniPlayerViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8AC265BC9335CC1C9710C63 /* MiniPlayerViewTests.swift */; };
+		5BDC85D9A6E90EC93E68A309 /* GeneratedArtwork.swift in Sources */ = {isa = PBXBuildFile; fileRef = 606AE93327386A0D14444102 /* GeneratedArtwork.swift */; };
 		5BF07A6C45571F1110476F74 /* ServerSignInView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1778C13112603D7FCD2AAAE6 /* ServerSignInView.swift */; };
 		5CB5C5912DA7AF5DF32CE0B4 /* RemoteArtwork.swift in Sources */ = {isa = PBXBuildFile; fileRef = 442479EA4A659CDC3E88462B /* RemoteArtwork.swift */; };
 		5DF9EB33C38E447BC8F2378C /* DebugArtworkTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91A4064C4CA7EA59DB04DB03 /* DebugArtworkTests.swift */; };
@@ -95,6 +97,7 @@
 		6AEB0AC592D2378BF49D2D41 /* PlayIntentTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4145D11B811DE85C2F3F718A /* PlayIntentTests.swift */; };
 		6EA145E4CCCF5A2D66E95C7C /* ArtworkLoaderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C6B428E35216AC97CDD0502 /* ArtworkLoaderTests.swift */; };
 		6FCD52F9E616A87BD3E500FA /* SiriMediaResolverTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1CFF3AA03943A0FF17FE8063 /* SiriMediaResolverTests.swift */; };
+		71D2BB90A6883F7FFC99B0B3 /* ArtworkSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9ED95F9740ABBA1E79B1EDE4 /* ArtworkSource.swift */; };
 		73304BDD0F5F554C34287560 /* ArtworkImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 163103F43F01EBA86D007C5F /* ArtworkImage.swift */; };
 		7470E4F2218A8D38E42764C1 /* LibraryLetterIndexTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B1B9EE110E1BFA6AF478F22 /* LibraryLetterIndexTests.swift */; };
 		74DD184C2EBBB3F4E997B71D /* LibraryLetterIndex.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6D121E3E347AC1642C1D039 /* LibraryLetterIndex.swift */; };
@@ -352,6 +355,7 @@
 		5EA536C6F52AF3AE4FCE7931 /* NowPlayingQueueList.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NowPlayingQueueList.swift; sourceTree = "<group>"; };
 		5EB548347F36B5DBD39E7922 /* SourcesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SourcesView.swift; sourceTree = "<group>"; };
 		6034EA9FC8ADE665C760B261 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/Localizable.strings"; sourceTree = "<group>"; };
+		606AE93327386A0D14444102 /* GeneratedArtwork.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeneratedArtwork.swift; sourceTree = "<group>"; };
 		60C0C48BCE8CEF1B30FF9D34 /* AlbumArtistListTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlbumArtistListTests.swift; sourceTree = "<group>"; };
 		626D669847C07508951E6DCF /* AlbumArtistDetailTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlbumArtistDetailTests.swift; sourceTree = "<group>"; };
 		644FCDF9D90ECEA9AEB75600 /* LibraryViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryViewTests.swift; sourceTree = "<group>"; };
@@ -415,6 +419,7 @@
 		9CF6FFC261DFB5CF6553CC77 /* AlbumArtistDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlbumArtistDetailView.swift; sourceTree = "<group>"; };
 		9EAF9B332A3F86BA130C9B9B /* CarPlayCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CarPlayCatalog.swift; sourceTree = "<group>"; };
 		9EB97ABD546F19AAB459025C /* AlbumListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlbumListView.swift; sourceTree = "<group>"; };
+		9ED95F9740ABBA1E79B1EDE4 /* ArtworkSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArtworkSource.swift; sourceTree = "<group>"; };
 		9F59DA1BBF939E0071AED4F2 /* ViewModelCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewModelCache.swift; sourceTree = "<group>"; };
 		A18FD9C61B587B073E26B5DC /* GenreDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GenreDetailView.swift; sourceTree = "<group>"; };
 		A2C785BA32B0E86AAB1AA5B6 /* MotionZoomSourceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MotionZoomSourceTests.swift; sourceTree = "<group>"; };
@@ -492,6 +497,7 @@
 		FC1FE5FCCB4D9AB28DBE8864 /* HomeItemTile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeItemTile.swift; sourceTree = "<group>"; };
 		FC548555BCD74CA0702CE7B3 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		FCBFC3688D06BC30635B00FA /* Settings.bundle */ = {isa = PBXFileReference; lastKnownFileType = wrapper.cfbundle; path = Settings.bundle; sourceTree = "<group>"; };
+		FDAE386E509CA541BC7E535E /* ArtworkCandidate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArtworkCandidate.swift; sourceTree = "<group>"; };
 		FDE441BEEA21AC1B5F72DE55 /* CarPlaySceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CarPlaySceneDelegate.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -770,10 +776,13 @@
 		B802D8A89AD0B7B3EF631EF3 /* Artwork */ = {
 			isa = PBXGroup;
 			children = (
+				FDAE386E509CA541BC7E535E /* ArtworkCandidate.swift */,
 				163103F43F01EBA86D007C5F /* ArtworkImage.swift */,
 				31E55AD106EEAAB1C05E1B8A /* ArtworkLoader.swift */,
 				C3C6A5655EF4681CB35A5848 /* ArtworkRequests.swift */,
+				9ED95F9740ABBA1E79B1EDE4 /* ArtworkSource.swift */,
 				EE223215219F6F97AC1D9FD2 /* DebugArtwork.swift */,
+				606AE93327386A0D14444102 /* GeneratedArtwork.swift */,
 			);
 			path = Artwork;
 			sourceTree = "<group>";
@@ -1160,11 +1169,13 @@
 				BF51CC3EE780B523F4F14FA6 /* AppIntentPerformer.swift in Sources */,
 				AC22037D6AE51277EEAB4650 /* AppServices.swift in Sources */,
 				624E2C6798581CD66B607606 /* ArtworkBackground.swift in Sources */,
+				5368301D0BBED30729AB1F8D /* ArtworkCandidate.swift in Sources */,
 				FC765588CFC3B367E0D2CFB0 /* ArtworkColorExtractor.swift in Sources */,
 				73304BDD0F5F554C34287560 /* ArtworkImage.swift in Sources */,
 				D974D54BCFF1770DE0DF8A55 /* ArtworkLoader.swift in Sources */,
 				B2017C3E5F7DB5964CD434D0 /* ArtworkPalette.swift in Sources */,
 				4BE11B1A4D1F36CD0D175005 /* ArtworkRequests.swift in Sources */,
+				71D2BB90A6883F7FFC99B0B3 /* ArtworkSource.swift in Sources */,
 				F1039F380A383B28D4B1BC2F /* ArtworkTint.swift in Sources */,
 				F473B39BF82E79D396C77573 /* AudioQuality.swift in Sources */,
 				ACDB6D9649523BDFD87FE392 /* BackgroundRefresh.swift in Sources */,
@@ -1192,6 +1203,7 @@
 				A63A662503830912A4762A65 /* EmptyState.swift in Sources */,
 				0478BEC87E6005E259F62AE4 /* EqualizerView.swift in Sources */,
 				48BBD8574995CA01C2A459C1 /* FilterChip.swift in Sources */,
+				5BDC85D9A6E90EC93E68A309 /* GeneratedArtwork.swift in Sources */,
 				E5C52791957D1D65E6800967 /* GenreDetailView.swift in Sources */,
 				B72F8880FF3CF21C649FB03E /* GenreListView.swift in Sources */,
 				CA6F3819B1788DCE9222B321 /* Glass.swift in Sources */,
