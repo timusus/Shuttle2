@@ -36,6 +36,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.collectIndexed
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.isActive
@@ -115,7 +116,29 @@ class MediaStoreMediaProvider(
             return@flow
         }
         val folderImageReader = FolderImageReader(sharedStorageListsImages = Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU)
-        // A file unchanged since the last import keeps its song, so only the rest is read from MediaStore and the file
+        val (keptSongs, changedFiles) = partition(files, existingSongs, backfillFileTags, folderImageReader)
+        val rawSongs = readChangedRows(changedFiles, folderImageReader)
+        if (rawSongs == null) {
+            emit(FlowEvent.Failure(context.getString(com.simplecityapps.mediaprovider.R.string.media_import_error)))
+            return@flow
+        }
+
+        // After the listing, so a volume unmounted while it ran counts too: MediaStore leaves its songs out until it's back
+        unreadableRoots = unmountedRoots(existingSongs.map { song -> song.path }, mountedVolumeRoots(context))
+
+        val songs = mergeTags(rawSongs, existingSongs, backfillFileTags)
+        val genresBySongId = readGenresBySongId()
+        skippedFiles = tagReadGuard.skippedPaths(type)
+        emit(FlowEvent.Success(songs.withGenres(genresBySongId) + keptSongs))
+    }
+
+    // A file unchanged since the last import keeps its song, so only the rest is read from MediaStore and the file
+    private fun partition(
+        files: List<MediaStoreAudioFile>,
+        existingSongs: List<Song>,
+        backfillFileTags: Boolean,
+        folderImageReader: FolderImageReader
+    ): Pair<List<Song>, List<MediaStoreAudioFile>> {
         val merger = LocalFileTagMerger(existingSongs, readUnchanged = backfillFileTags)
         val keptSongs = mutableListOf<Song>()
         val changedFiles = mutableListOf<MediaStoreAudioFile>()
@@ -127,6 +150,14 @@ class MediaStoreMediaProvider(
                 keptSongs += kept.copy(id = 0, externalId = file.id.toString(), artworkVersion = localArtworkVersion(file.lastModified, folderImageReader.imagesNear(file.path)))
             }
         }
+        return keptSongs to changedFiles
+    }
+
+    /** MediaStore's rows for [changedFiles], or null if it couldn't be queried. */
+    private suspend fun readChangedRows(
+        changedFiles: List<MediaStoreAudioFile>,
+        folderImageReader: FolderImageReader
+    ): List<Song>? {
         val rawSongs = mutableListOf<Song>()
         val projection =
             mediaStoreSongProjection(
@@ -150,8 +181,7 @@ class MediaStoreMediaProvider(
                     null
                 }
             if (songCursor == null) {
-                emit(FlowEvent.Failure(context.getString(com.simplecityapps.mediaprovider.R.string.media_import_error)))
-                return@flow
+                return null
             }
             songCursor.use {
                 val discNumberColumnIndex =
@@ -231,10 +261,14 @@ class MediaStoreMediaProvider(
                 }
             }
         }
+        return rawSongs
+    }
 
-        // After the listing, so a volume unmounted while it ran counts too: MediaStore leaves its songs out until it's back
-        unreadableRoots = unmountedRoots(existingSongs.map { song -> song.path }, mountedVolumeRoots(context))
-
+    private suspend fun FlowCollector<FlowEvent<List<Song>, MessageProgress>>.mergeTags(
+        rawSongs: List<Song>,
+        existingSongs: List<Song>,
+        backfillFileTags: Boolean
+    ): List<Song> {
         val songs = mutableListOf<Song>()
         rawSongs
             .withFileTags(existingSongs, tagReader, readUnchanged = backfillFileTags)
@@ -254,8 +288,11 @@ class MediaStoreMediaProvider(
                     )
                 )
             }
+        return songs
+    }
 
-        // Each genre's members by song id, gathered first: matching each member against every song is quadratic in a large library
+    // Each genre's members by song id, gathered first: matching each member against every song is quadratic in a large library
+    private suspend fun readGenresBySongId(): Map<String, List<String>> {
         val genresBySongId = mutableMapOf<String, MutableList<String>>()
         context.contentResolver.query(
             MediaStore.Audio.Genres.EXTERNAL_CONTENT_URI,
@@ -286,8 +323,7 @@ class MediaStoreMediaProvider(
                 }
             }
         }
-        skippedFiles = tagReadGuard.skippedPaths(type)
-        emit(FlowEvent.Success(songs.withGenres(genresBySongId) + keptSongs))
+        return genresBySongId
     }
 
     // Playlists
