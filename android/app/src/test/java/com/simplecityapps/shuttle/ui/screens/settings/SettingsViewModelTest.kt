@@ -31,7 +31,8 @@ import com.simplecityapps.shuttle.ui.screens.settings.model.AndroidSettingsCatal
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingItem
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsAction
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsLink
-import com.simplecityapps.shuttle.ui.text.StringKey
+import com.simplecityapps.shuttle.ui.text.EqualizerPresetString
+import com.simplecityapps.shuttle.ui.text.SettingsString
 import com.simplecityapps.testing.MainDispatcherRule
 import io.kotest.matchers.shouldBe
 import kotlin.time.Instant
@@ -329,7 +330,7 @@ class SettingsViewModelTest {
     fun `the Equalizer summary is Off while it is off, whatever the preset`() {
         KeyValueEqualizerPresetStore(prefs).preset = Equalizer.Presets.bassBoost
 
-        viewModel().uiState.value.equalizerSummary shouldBe StringKey.SETTINGS_STATE_OFF
+        viewModel().uiState.value.equalizerSummary shouldBe SettingsString.SETTINGS_STATE_OFF
     }
 
     @Test
@@ -340,12 +341,12 @@ class SettingsViewModelTest {
         val viewModel = viewModel()
         backgroundScope.launch { viewModel.uiState.collect {} }
         runCurrent()
-        viewModel.uiState.value.equalizerSummary shouldBe StringKey.EQ_PRESET_BASS_BOOST
+        viewModel.uiState.value.equalizerSummary shouldBe EqualizerPresetString.EQ_PRESET_BASS_BOOST
 
         presets.preset = Equalizer.Presets.custom
         runCurrent()
 
-        viewModel.uiState.value.equalizerSummary shouldBe StringKey.EQ_PRESET_CUSTOM
+        viewModel.uiState.value.equalizerSummary shouldBe EqualizerPresetString.EQ_PRESET_CUSTOM
     }
 
     private fun TestScope.events(viewModel: SettingsViewModel) = viewModel.uiState.value.events.map { it.value }

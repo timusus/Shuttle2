@@ -17,7 +17,7 @@ import com.simplecityapps.shuttle.ui.screens.settings.model.SettingItem
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsAction
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsDestination
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsLink
-import com.simplecityapps.shuttle.ui.text.StringKey
+import com.simplecityapps.shuttle.ui.text.SettingsString
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldNotContainAnyOf
 import io.kotest.matchers.shouldBe
@@ -82,8 +82,8 @@ class IosSettingsCatalogTest {
     fun privacyHasTheCrashReportingAndAnalyticsSwitchesWithAndroidsText() {
         val switches = catalog.privacy.items.filterIsInstance<SettingItem.Switch>()
         switches.map { it.setting } shouldContainExactly listOf(PrivacySettings.CrashReporting, PrivacySettings.Analytics)
-        switches.map { it.title } shouldContainExactly listOf(StringKey.PREF_CRASH_REPORTING_TITLE, StringKey.PREF_ANALYTICS_TITLE)
-        switches.map { it.summary } shouldContainExactly listOf(StringKey.PREF_CRASH_REPORTING_SUBTITLE, StringKey.PREF_ANALYTICS_SUBTITLE)
+        switches.map { it.title } shouldContainExactly listOf(SettingsString.PREF_CRASH_REPORTING_TITLE, SettingsString.PREF_ANALYTICS_TITLE)
+        switches.map { it.summary } shouldContainExactly listOf(SettingsString.PREF_CRASH_REPORTING_SUBTITLE, SettingsString.PREF_ANALYTICS_SUBTITLE)
     }
 
     @Test
@@ -105,7 +105,7 @@ class IosSettingsCatalogTest {
     @Test
     fun sourcesIsOneStreamingAndDownloadsGroupWithTheNetworkQualitiesTheFormatTheDownloadQualityAndWifiOnly() {
         val group = catalog.sources.groups.single()
-        group.title shouldBe StringKey.SETTINGS_GROUP_STREAMING_AND_DOWNLOADS
+        group.title shouldBe SettingsString.SETTINGS_GROUP_STREAMING_AND_DOWNLOADS
         group.items.map { it.key } shouldContainExactly listOf(
             StreamingSettings.UnmeteredQuality.key,
             StreamingSettings.MeteredQuality.key,

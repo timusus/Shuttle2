@@ -5,6 +5,7 @@ import com.simplecityapps.mediaprovider.repository.playhistory.PlayHistoryReposi
 import com.simplecityapps.mediaprovider.repository.suggestions.SuggestionsRepository
 import com.simplecityapps.shuttle.di.IoDispatcher
 import com.simplecityapps.shuttle.logging.Logger
+import com.simplecityapps.shuttle.ui.text.HomeString
 import com.simplecityapps.shuttle.ui.text.StringKey
 import dev.zacsweers.metro.Inject
 import kotlin.concurrent.atomics.AtomicBoolean
@@ -86,12 +87,12 @@ fun assembleHomeSections(
     val jumpBackInCandidates = candidates.jumpBackIn ?: return builder.sections
     val coldStart = !candidates.hasHistory && jumpBackInCandidates.lastCompleted.isEmpty()
     if (coldStart) {
-        builder.add(HomeSectionId.RecentlyAdded, HomeSectionTitle.RecentlyAdded, StringKey.HOME_RECENTLY_ADDED_SUBTITLE, candidates.recentlyAdded ?: return builder.sections, SECTION_SIZE)
+        builder.add(HomeSectionId.RecentlyAdded, HomeSectionTitle.RecentlyAdded, HomeString.HOME_RECENTLY_ADDED_SUBTITLE, candidates.recentlyAdded ?: return builder.sections, SECTION_SIZE)
         val largest = candidates.genrePicks?.largest ?: return builder.sections
         builder.add(
             HomeSectionId.GenrePicks,
             HomeSectionTitle.GenrePicks,
-            StringKey.HOME_GENRE_PICKS_LARGEST_SUBTITLE,
+            HomeString.HOME_GENRE_PICKS_LARGEST_SUBTITLE,
             largest,
             GENRE_PICKS_MAX,
             eligible = largest.size >= GENRE_PICKS_MIN,
@@ -114,19 +115,19 @@ fun assembleHomeSections(
     builder.add(
         HomeSectionId.AroundThisTime,
         partOfDay(now.hour),
-        StringKey.HOME_AROUND_THIS_TIME_SUBTITLE,
+        HomeString.HOME_AROUND_THIS_TIME_SUBTITLE,
         aroundThisTime,
         SECTION_SIZE,
         eligible = aroundThisTime.size >= AROUND_THIS_TIME_MIN_ITEMS,
     )
 
     val heavyRotation = (candidates.heavyRotation ?: return builder.sections).filter { it.days >= HEAVY_ROTATION_MIN_DAYS }.map { it.item }
-    builder.add(HomeSectionId.HeavyRotation, HomeSectionTitle.HeavyRotation, StringKey.HOME_HEAVY_ROTATION_SUBTITLE, heavyRotation, SECTION_SIZE)
+    builder.add(HomeSectionId.HeavyRotation, HomeSectionTitle.HeavyRotation, HomeString.HOME_HEAVY_ROTATION_SUBTITLE, heavyRotation, SECTION_SIZE)
 
     val rediscover = (candidates.rediscover ?: return builder.sections).shuffled(Random(day))
-    builder.add(HomeSectionId.Rediscover, HomeSectionTitle.Rediscover, StringKey.HOME_REDISCOVER_SUBTITLE, rediscover, SECTION_SIZE)
+    builder.add(HomeSectionId.Rediscover, HomeSectionTitle.Rediscover, HomeString.HOME_REDISCOVER_SUBTITLE, rediscover, SECTION_SIZE)
 
-    builder.add(HomeSectionId.RecentlyAdded, HomeSectionTitle.RecentlyAdded, StringKey.HOME_RECENTLY_ADDED_SUBTITLE, candidates.recentlyAdded ?: return builder.sections, SECTION_SIZE)
+    builder.add(HomeSectionId.RecentlyAdded, HomeSectionTitle.RecentlyAdded, HomeString.HOME_RECENTLY_ADDED_SUBTITLE, candidates.recentlyAdded ?: return builder.sections, SECTION_SIZE)
 
     val genrePickCandidates = candidates.genrePicks ?: return builder.sections
     val played = genrePickCandidates.played.map { it.key }.toSet()
@@ -134,7 +135,7 @@ fun assembleHomeSections(
     builder.add(
         HomeSectionId.GenrePicks,
         HomeSectionTitle.GenrePicks,
-        subtitle = { shown -> if (shown.any { it.key in played }) StringKey.HOME_GENRE_PICKS_SUBTITLE else StringKey.HOME_GENRE_PICKS_LARGEST_SUBTITLE },
+        subtitle = { shown -> if (shown.any { it.key in played }) HomeString.HOME_GENRE_PICKS_SUBTITLE else HomeString.HOME_GENRE_PICKS_LARGEST_SUBTITLE },
         genrePicks,
         GENRE_PICKS_MAX,
         eligible = genrePicks.size >= GENRE_PICKS_MIN,

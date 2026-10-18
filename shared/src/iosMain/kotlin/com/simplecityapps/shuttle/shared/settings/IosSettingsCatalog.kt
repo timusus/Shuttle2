@@ -20,7 +20,7 @@ import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsLink
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsScreen
 import com.simplecityapps.shuttle.ui.screens.settings.model.StreamingQualityOptions
 import com.simplecityapps.shuttle.ui.screens.settings.model.TranscodeFormatOptions
-import com.simplecityapps.shuttle.ui.text.StringKey
+import com.simplecityapps.shuttle.ui.text.SettingsString
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer
 import dev.zacsweers.metro.ContributesTo
@@ -55,8 +55,8 @@ object IosSettingsCatalog : SettingsCatalog {
                 items = listOf(
                     SettingItem.Switch(
                         setting = PlaybackSettings.RetainShuffleOnNewQueue,
-                        title = StringKey.PREF_DISABLE_SHUFFLE_ON_QUEUE_TITLE,
-                        summary = StringKey.PREF_DISABLE_SHUFFLE_ON_QUEUE_SUBTITLE
+                        title = SettingsString.PREF_DISABLE_SHUFFLE_ON_QUEUE_TITLE,
+                        summary = SettingsString.PREF_DISABLE_SHUFFLE_ON_QUEUE_SUBTITLE
                     )
                 )
             ),
@@ -65,28 +65,28 @@ object IosSettingsCatalog : SettingsCatalog {
                 items = listOf(
                     SettingItem.Navigate(
                         target = SettingsLink.Equalizer,
-                        title = StringKey.DSP_EQUALIZER_TITLE,
+                        title = SettingsString.DSP_EQUALIZER_TITLE,
                         stateSetting = EqualizerSettings.Enabled
                     )
                 )
             ),
             // ReplayGain and its own pre-amp, a group apart from the Equalizer's Preamp (#645).
             SettingsGroup(
-                title = StringKey.DSP_REPLAY_GAIN_TITLE,
+                title = SettingsString.DSP_REPLAY_GAIN_TITLE,
                 items = listOf(
                     SettingItem.Choice(
                         setting = PlaybackSettings.ReplayGain,
-                        title = StringKey.DSP_REPLAY_GAIN_TITLE,
+                        title = SettingsString.DSP_REPLAY_GAIN_TITLE,
                         options = listOf(
                             // Free on iOS: free rivals include it. iOS has no advanced ReplayGain modes to keep Pro.
-                            ChoiceOption(ReplayGainMode.Track, StringKey.DSP_REPLAY_GAIN_TRACK),
-                            ChoiceOption(ReplayGainMode.Album, StringKey.DSP_REPLAY_GAIN_ALBUM),
-                            ChoiceOption(ReplayGainMode.Off, StringKey.DSP_REPLAY_GAIN_OFF)
+                            ChoiceOption(ReplayGainMode.Track, SettingsString.DSP_REPLAY_GAIN_TRACK),
+                            ChoiceOption(ReplayGainMode.Album, SettingsString.DSP_REPLAY_GAIN_ALBUM),
+                            ChoiceOption(ReplayGainMode.Off, SettingsString.DSP_REPLAY_GAIN_OFF)
                         )
                     ),
                     SettingItem.Slider(
                         setting = PlaybackSettings.PreAmpGain,
-                        title = StringKey.DSP_PREAMP,
+                        title = SettingsString.DSP_PREAMP,
                         range = -MAX_REPLAY_GAIN_PREAMP_DB.toFloat()..MAX_REPLAY_GAIN_PREAMP_DB.toFloat(),
                         steps = 0,
                         fromFloat = { it }
@@ -100,7 +100,7 @@ object IosSettingsCatalog : SettingsCatalog {
                 items = listOf(
                     SettingItem.Navigate(
                         target = SettingsLink.Scrobbling,
-                        title = StringKey.SETTINGS_SCROBBLING_TITLE
+                        title = SettingsString.SETTINGS_SCROBBLING_TITLE
                     )
                 )
             )
@@ -111,33 +111,33 @@ object IosSettingsCatalog : SettingsCatalog {
         destination = SettingsDestination.Sources,
         groups = listOf(
             SettingsGroup(
-                title = StringKey.SETTINGS_GROUP_STREAMING_AND_DOWNLOADS,
+                title = SettingsString.SETTINGS_GROUP_STREAMING_AND_DOWNLOADS,
                 items = listOf(
                     SettingItem.Choice(
                         setting = StreamingSettings.UnmeteredQuality,
-                        title = StringKey.PREF_STREAMING_QUALITY_UNMETERED_TITLE,
+                        title = SettingsString.PREF_STREAMING_QUALITY_UNMETERED_TITLE,
                         options = StreamingQualityOptions
                     ),
                     SettingItem.Choice(
                         setting = StreamingSettings.MeteredQuality,
-                        title = StringKey.PREF_STREAMING_QUALITY_METERED_TITLE,
+                        title = SettingsString.PREF_STREAMING_QUALITY_METERED_TITLE,
                         options = StreamingQualityOptions
                     ),
                     SettingItem.Choice(
                         setting = StreamingSettings.Format,
-                        title = StringKey.PREF_TRANSCODE_FORMAT_TITLE,
+                        title = SettingsString.PREF_TRANSCODE_FORMAT_TITLE,
                         options = TranscodeFormatOptions,
-                        summary = StringKey.PREF_TRANSCODE_FORMAT_SUMMARY
+                        summary = SettingsString.PREF_TRANSCODE_FORMAT_SUMMARY
                     ),
                     SettingItem.Choice(
                         setting = StreamingSettings.DownloadQuality,
-                        title = StringKey.PREF_DOWNLOAD_QUALITY_TITLE,
+                        title = SettingsString.PREF_DOWNLOAD_QUALITY_TITLE,
                         options = StreamingQualityOptions
                     ),
                     SettingItem.Switch(
                         setting = DownloadSettings.WifiOnly,
-                        title = StringKey.PREF_DOWNLOAD_WIFI_ONLY_TITLE,
-                        summary = StringKey.PREF_DOWNLOAD_WIFI_ONLY_SUMMARY
+                        title = SettingsString.PREF_DOWNLOAD_WIFI_ONLY_TITLE,
+                        summary = SettingsString.PREF_DOWNLOAD_WIFI_ONLY_SUMMARY
                     )
                 )
             )
@@ -152,30 +152,30 @@ object IosSettingsCatalog : SettingsCatalog {
                 items = listOf(
                     SettingItem.Action(
                         action = SettingsAction.Rescan,
-                        title = StringKey.PREF_MEDIA_RESCAN_TITLE,
-                        summary = StringKey.PREF_MEDIA_RESCAN_SUMMARY,
+                        title = SettingsString.PREF_MEDIA_RESCAN_TITLE,
+                        summary = SettingsString.PREF_MEDIA_RESCAN_SUMMARY,
                         key = "pref_media_rescan"
                     )
                 )
             ),
             // Read by the shared AlbumArtistListViewModel behind Library > Artists (#637)
             SettingsGroup(
-                title = StringKey.SETTINGS_GROUP_ARTISTS,
+                title = SettingsString.SETTINGS_GROUP_ARTISTS,
                 items = listOf(
                     SettingItem.Switch(
                         setting = ArtistSettings.ShowCreditedArtists,
-                        title = StringKey.PREF_SHOW_CREDITED_ARTISTS_TITLE,
-                        summary = StringKey.PREF_SHOW_CREDITED_ARTISTS_SUMMARY
+                        title = SettingsString.PREF_SHOW_CREDITED_ARTISTS_TITLE,
+                        summary = SettingsString.PREF_SHOW_CREDITED_ARTISTS_SUMMARY
                     )
                 )
             ),
             SettingsGroup(
-                title = StringKey.PREF_CATEGORY_TITLE_ARTWORK,
+                title = SettingsString.PREF_CATEGORY_TITLE_ARTWORK,
                 items = listOf(
                     SettingItem.Switch(
                         setting = ArtworkSettings.LocalOnly,
-                        title = StringKey.PREF_ARTWORK_LOCAL_ONLY_TITLE,
-                        summary = StringKey.PREF_ARTWORK_LOCAL_ONLY_SUBTITLE
+                        title = SettingsString.PREF_ARTWORK_LOCAL_ONLY_TITLE,
+                        summary = SettingsString.PREF_ARTWORK_LOCAL_ONLY_SUBTITLE
                     )
                 )
             )
@@ -190,12 +190,12 @@ object IosSettingsCatalog : SettingsCatalog {
                 items = listOf(
                     SettingItem.Switch(
                         setting = AppearanceSettings.ColourFromArtwork,
-                        title = StringKey.PREF_COLOUR_FROM_ARTWORK_TITLE,
-                        summary = StringKey.PREF_COLOUR_FROM_ARTWORK_SUMMARY
+                        title = SettingsString.PREF_COLOUR_FROM_ARTWORK_TITLE,
+                        summary = SettingsString.PREF_COLOUR_FROM_ARTWORK_SUMMARY
                     ),
                     SettingItem.Switch(
                         setting = AppearanceSettings.ShowHomeOnLaunch,
-                        title = StringKey.PREF_SHOW_HOME_ON_LAUNCH_TITLE
+                        title = SettingsString.PREF_SHOW_HOME_ON_LAUNCH_TITLE
                     )
                 )
             )
@@ -211,13 +211,13 @@ object IosSettingsCatalog : SettingsCatalog {
                 items = listOf(
                     SettingItem.Switch(
                         setting = PrivacySettings.CrashReporting,
-                        title = StringKey.PREF_CRASH_REPORTING_TITLE,
-                        summary = StringKey.PREF_CRASH_REPORTING_SUBTITLE
+                        title = SettingsString.PREF_CRASH_REPORTING_TITLE,
+                        summary = SettingsString.PREF_CRASH_REPORTING_SUBTITLE
                     ),
                     SettingItem.Switch(
                         setting = PrivacySettings.Analytics,
-                        title = StringKey.PREF_ANALYTICS_TITLE,
-                        summary = StringKey.PREF_ANALYTICS_SUBTITLE
+                        title = SettingsString.PREF_ANALYTICS_TITLE,
+                        summary = SettingsString.PREF_ANALYTICS_SUBTITLE
                     )
                 )
             )

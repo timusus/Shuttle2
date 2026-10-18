@@ -3,7 +3,7 @@ package com.simplecityapps.shuttle.ui.screens.home
 import com.simplecityapps.createAlbum
 import com.simplecityapps.createAlbumArtist
 import com.simplecityapps.createGenre
-import com.simplecityapps.shuttle.ui.text.StringKey
+import com.simplecityapps.shuttle.ui.text.HomeString
 import io.kotest.matchers.shouldBe
 import kotlin.test.Test
 import kotlin.time.Duration.Companion.hours
@@ -176,7 +176,7 @@ class AssembleHomeSectionsTest {
 
         sections.map { it.id } shouldBe listOf(HomeSectionId.RecentlyAdded, HomeSectionId.GenrePicks, HomeSectionId.ShuffleAll)
         sections.section(HomeSectionId.GenrePicks).items.toSet() shouldBe genres.take(6).toSet()
-        sections.section(HomeSectionId.GenrePicks).subtitle shouldBe StringKey.HOME_GENRE_PICKS_LARGEST_SUBTITLE
+        sections.section(HomeSectionId.GenrePicks).subtitle shouldBe HomeString.HOME_GENRE_PICKS_LARGEST_SUBTITLE
         sections.section(HomeSectionId.ShuffleAll).items shouldBe emptyList()
     }
 
@@ -240,14 +240,14 @@ class AssembleHomeSectionsTest {
 
         sections.map { it.subtitle } shouldBe listOf(
             null,
-            StringKey.HOME_AROUND_THIS_TIME_SUBTITLE,
-            StringKey.HOME_HEAVY_ROTATION_SUBTITLE,
-            StringKey.HOME_REDISCOVER_SUBTITLE,
-            StringKey.HOME_RECENTLY_ADDED_SUBTITLE,
-            StringKey.HOME_GENRE_PICKS_SUBTITLE,
+            HomeString.HOME_AROUND_THIS_TIME_SUBTITLE,
+            HomeString.HOME_HEAVY_ROTATION_SUBTITLE,
+            HomeString.HOME_REDISCOVER_SUBTITLE,
+            HomeString.HOME_RECENTLY_ADDED_SUBTITLE,
+            HomeString.HOME_GENRE_PICKS_SUBTITLE,
         )
         assemble(empty.copy(hasHistory = false, recentlyAdded = albums.take(2))).map { it.subtitle } shouldBe
-            listOf(StringKey.HOME_RECENTLY_ADDED_SUBTITLE, null)
+            listOf(HomeString.HOME_RECENTLY_ADDED_SUBTITLE, null)
     }
 
     @Test
@@ -276,7 +276,7 @@ class AssembleHomeSectionsTest {
 
         val picks = assemble(empty.copy(genrePicks = GenrePickCandidates(played, genres))).section(HomeSectionId.GenrePicks)
         picks.items.toSet() shouldBe setOf(genre("jazz"), genres[1], genres[0], genres[2], genres[3], genres[4])
-        picks.subtitle shouldBe StringKey.HOME_GENRE_PICKS_SUBTITLE
+        picks.subtitle shouldBe HomeString.HOME_GENRE_PICKS_SUBTITLE
         assemble(empty.copy(genrePicks = GenrePickCandidates(played, genres.take(3)))).section(HomeSectionId.GenrePicks).items.size shouldBe 4
         assemble(empty.copy(genrePicks = GenrePickCandidates(played, genres.take(1)))).map { it.id } shouldBe emptyList()
     }
@@ -288,7 +288,7 @@ class AssembleHomeSectionsTest {
             genrePicks = GenrePickCandidates(listOf(genre("jazz")), genres),
         )
 
-        assemble(candidates).section(HomeSectionId.GenrePicks).subtitle shouldBe StringKey.HOME_GENRE_PICKS_LARGEST_SUBTITLE
+        assemble(candidates).section(HomeSectionId.GenrePicks).subtitle shouldBe HomeString.HOME_GENRE_PICKS_LARGEST_SUBTITLE
     }
 
     @Test

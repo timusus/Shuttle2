@@ -8,6 +8,7 @@ import com.simplecityapps.shuttle.ui.preview.toAlbumArtist
 import com.simplecityapps.shuttle.ui.preview.toGenre
 import com.simplecityapps.shuttle.ui.preview.toPlaylist
 import com.simplecityapps.shuttle.ui.preview.toSong
+import com.simplecityapps.shuttle.ui.text.HomeString
 import com.simplecityapps.shuttle.ui.text.StringKey
 import kotlin.time.Instant
 
@@ -45,11 +46,11 @@ object HomeScenarios {
     /** The subtitle the shared assembly gives a section with history (#671). */
     private fun subtitle(id: HomeSectionId): StringKey? = when (id) {
         HomeSectionId.JumpBackIn -> null
-        HomeSectionId.AroundThisTime -> StringKey.HOME_AROUND_THIS_TIME_SUBTITLE
-        HomeSectionId.HeavyRotation -> StringKey.HOME_HEAVY_ROTATION_SUBTITLE
-        HomeSectionId.Rediscover -> StringKey.HOME_REDISCOVER_SUBTITLE
-        HomeSectionId.RecentlyAdded -> StringKey.HOME_RECENTLY_ADDED_SUBTITLE
-        HomeSectionId.GenrePicks -> StringKey.HOME_GENRE_PICKS_SUBTITLE
+        HomeSectionId.AroundThisTime -> HomeString.HOME_AROUND_THIS_TIME_SUBTITLE
+        HomeSectionId.HeavyRotation -> HomeString.HOME_HEAVY_ROTATION_SUBTITLE
+        HomeSectionId.Rediscover -> HomeString.HOME_REDISCOVER_SUBTITLE
+        HomeSectionId.RecentlyAdded -> HomeString.HOME_RECENTLY_ADDED_SUBTITLE
+        HomeSectionId.GenrePicks -> HomeString.HOME_GENRE_PICKS_SUBTITLE
         HomeSectionId.ShuffleAll -> null
     }
 
@@ -139,7 +140,7 @@ object HomeScenarios {
     val unplayed = content.copy(
         sections = listOf(
             section(HomeSectionId.RecentlyAdded, HomeSectionTitle.RecentlyAdded, HomeItem.AlbumItem(nightBus), HomeItem.AlbumItem(blueHours), HomeItem.AlbumItem(phaseGarden)),
-            genrePicks.copy(subtitle = StringKey.HOME_GENRE_PICKS_LARGEST_SUBTITLE),
+            genrePicks.copy(subtitle = HomeString.HOME_GENRE_PICKS_LARGEST_SUBTITLE),
             section(HomeSectionId.ShuffleAll, HomeSectionTitle.ShuffleAll),
         ),
     )

@@ -7,7 +7,7 @@ import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.ui.actions.LoadLyrics
 import com.simplecityapps.shuttle.ui.actions.NoOnlineLyrics
 import com.simplecityapps.shuttle.ui.actions.ObserveSongs
-import com.simplecityapps.shuttle.ui.text.StringKey
+import com.simplecityapps.shuttle.ui.text.SongInfoString
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.shouldBe
 import kotlin.test.AfterTest
@@ -64,7 +64,7 @@ class SongInfoViewModelTest {
     fun `the lyrics row shows the lyrics it is given`() {
         val rows = createSong().infoSections(lyrics = "la la la").flatMap { it.rows }.associate { it.label to it.value }
 
-        rows[StringKey.SONG_INFO_LYRICS] shouldBe "la la la"
+        rows[SongInfoString.SONG_INFO_LYRICS] shouldBe "la la la"
     }
 
     @Test
@@ -84,36 +84,36 @@ class SongInfoViewModelTest {
 
         val rows = song.infoSections(lyrics = null).flatMap { it.rows }.associate { it.label to it.value }
 
-        rows[StringKey.SONG_INFO_SIZE] shouldBe "5.00 MB"
-        rows[StringKey.SONG_INFO_BIT_RATE] shouldBe "320 kb/s"
-        rows[StringKey.SONG_INFO_BIT_DEPTH] shouldBe "24-bit"
-        rows[StringKey.SONG_INFO_SAMPLE_RATE] shouldBe "44.1 kHz"
-        rows[StringKey.SONG_INFO_REPLAY_GAIN_TRACK] shouldBe "-6.50 dB"
-        rows[StringKey.SONG_INFO_REPLAY_GAIN_ALBUM] shouldBe null
-        rows[StringKey.SONG_INFO_ARTISTS] shouldBe "A, B"
+        rows[SongInfoString.SONG_INFO_SIZE] shouldBe "5.00 MB"
+        rows[SongInfoString.SONG_INFO_BIT_RATE] shouldBe "320 kb/s"
+        rows[SongInfoString.SONG_INFO_BIT_DEPTH] shouldBe "24-bit"
+        rows[SongInfoString.SONG_INFO_SAMPLE_RATE] shouldBe "44.1 kHz"
+        rows[SongInfoString.SONG_INFO_REPLAY_GAIN_TRACK] shouldBe "-6.50 dB"
+        rows[SongInfoString.SONG_INFO_REPLAY_GAIN_ALBUM] shouldBe null
+        rows[SongInfoString.SONG_INFO_ARTISTS] shouldBe "A, B"
     }
 
     @Test
     fun `source row names the provider`() {
-        fun source(type: MediaProviderType) = createSong().copy(mediaProvider = type).infoSections(lyrics = null).flatMap { it.rows }.first { it.label == StringKey.SONG_INFO_SOURCE }
+        fun source(type: MediaProviderType) = createSong().copy(mediaProvider = type).infoSections(lyrics = null).flatMap { it.rows }.first { it.label == SongInfoString.SONG_INFO_SOURCE }
 
-        source(MediaProviderType.Shuttle) shouldBe SongInfoRow(StringKey.SONG_INFO_SOURCE, value = null, valueKey = StringKey.SONG_INFO_SOURCE_THIS_DEVICE)
-        source(MediaProviderType.MediaStore) shouldBe SongInfoRow(StringKey.SONG_INFO_SOURCE, value = null, valueKey = StringKey.SONG_INFO_SOURCE_THIS_DEVICE)
-        source(MediaProviderType.Jellyfin) shouldBe SongInfoRow(StringKey.SONG_INFO_SOURCE, value = "Jellyfin")
-        source(MediaProviderType.Emby) shouldBe SongInfoRow(StringKey.SONG_INFO_SOURCE, value = "Emby")
-        source(MediaProviderType.Plex) shouldBe SongInfoRow(StringKey.SONG_INFO_SOURCE, value = "Plex")
-        source(MediaProviderType.Subsonic) shouldBe SongInfoRow(StringKey.SONG_INFO_SOURCE, value = "Subsonic")
+        source(MediaProviderType.Shuttle) shouldBe SongInfoRow(SongInfoString.SONG_INFO_SOURCE, value = null, valueKey = SongInfoString.SONG_INFO_SOURCE_THIS_DEVICE)
+        source(MediaProviderType.MediaStore) shouldBe SongInfoRow(SongInfoString.SONG_INFO_SOURCE, value = null, valueKey = SongInfoString.SONG_INFO_SOURCE_THIS_DEVICE)
+        source(MediaProviderType.Jellyfin) shouldBe SongInfoRow(SongInfoString.SONG_INFO_SOURCE, value = "Jellyfin")
+        source(MediaProviderType.Emby) shouldBe SongInfoRow(SongInfoString.SONG_INFO_SOURCE, value = "Emby")
+        source(MediaProviderType.Plex) shouldBe SongInfoRow(SongInfoString.SONG_INFO_SOURCE, value = "Plex")
+        source(MediaProviderType.Subsonic) shouldBe SongInfoRow(SongInfoString.SONG_INFO_SOURCE, value = "Subsonic")
     }
 
     @Test
     fun `rows are grouped into tags - file and playback cards`() {
         val sections = createSong().infoSections(lyrics = null).associate { it.title to it.rows.map(SongInfoRow::label) }
 
-        sections.keys.toList() shouldBe listOf(StringKey.SONG_INFO_SECTION_TAGS, StringKey.SONG_INFO_SECTION_FILE, StringKey.SONG_INFO_SECTION_PLAYBACK)
-        sections.getValue(StringKey.SONG_INFO_SECTION_TAGS) shouldContain StringKey.SONG_INFO_ALBUM
-        val fileRows = sections.getValue(StringKey.SONG_INFO_SECTION_FILE)
-        fileRows.indexOf(StringKey.SONG_INFO_SOURCE) shouldBe fileRows.indexOf(StringKey.SONG_INFO_PATH) - 1
-        sections.getValue(StringKey.SONG_INFO_SECTION_PLAYBACK) shouldContain StringKey.SONG_INFO_PLAY_COUNT
+        sections.keys.toList() shouldBe listOf(SongInfoString.SONG_INFO_SECTION_TAGS, SongInfoString.SONG_INFO_SECTION_FILE, SongInfoString.SONG_INFO_SECTION_PLAYBACK)
+        sections.getValue(SongInfoString.SONG_INFO_SECTION_TAGS) shouldContain SongInfoString.SONG_INFO_ALBUM
+        val fileRows = sections.getValue(SongInfoString.SONG_INFO_SECTION_FILE)
+        fileRows.indexOf(SongInfoString.SONG_INFO_SOURCE) shouldBe fileRows.indexOf(SongInfoString.SONG_INFO_PATH) - 1
+        sections.getValue(SongInfoString.SONG_INFO_SECTION_PLAYBACK) shouldContain SongInfoString.SONG_INFO_PLAY_COUNT
     }
 
     @Test
@@ -146,9 +146,9 @@ class SongInfoViewModelTest {
     fun `zero track - disc and channel count are missing`() {
         val rows = createSong().copy(track = 0, disc = 0, channelCount = 0).infoSections(lyrics = null).flatMap { it.rows }.associate { it.label to it.value }
 
-        rows[StringKey.SONG_INFO_TRACK_NUMBER] shouldBe null
-        rows[StringKey.SONG_INFO_DISC] shouldBe null
-        rows[StringKey.SONG_INFO_CHANNEL_COUNT] shouldBe null
+        rows[SongInfoString.SONG_INFO_TRACK_NUMBER] shouldBe null
+        rows[SongInfoString.SONG_INFO_DISC] shouldBe null
+        rows[SongInfoString.SONG_INFO_CHANNEL_COUNT] shouldBe null
     }
 
     @Test

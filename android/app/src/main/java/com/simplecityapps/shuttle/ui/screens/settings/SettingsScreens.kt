@@ -62,7 +62,7 @@ import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsAction
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsDestination
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsLink
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsScreen
-import com.simplecityapps.shuttle.ui.text.StringKey
+import com.simplecityapps.shuttle.ui.text.SettingsString
 import com.simplecityapps.shuttle.ui.text.UiText
 import com.simplecityapps.shuttle.ui.text.stringResource
 import java.text.DateFormat
@@ -406,9 +406,9 @@ private fun sliderValueLabel(
     PlaybackSettings.PreAmpGain -> String.format(Locale.getDefault(), "%+.1f dB", value)
 
     PlaybackSettings.CrossfadeDuration -> if (value < 500f) {
-        stringResource(StringKey.DSP_REPLAY_GAIN_OFF)
+        stringResource(SettingsString.DSP_REPLAY_GAIN_OFF)
     } else {
-        stringResource(UiText.Resource(StringKey.SETTINGS_CROSSFADE_SECONDS, listOf((value / 1000f).roundToInt())))
+        stringResource(UiText.Resource(SettingsString.SETTINGS_CROSSFADE_SECONDS, listOf((value / 1000f).roundToInt())))
     }
 
     AppearanceSettings.WidgetBackgroundOpacity -> "${value.roundToInt()}%"

@@ -20,6 +20,7 @@ import com.simplecityapps.shuttle.ui.screens.settings.equalizer.nameKey
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingItem
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsAction
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsCatalog
+import com.simplecityapps.shuttle.ui.text.SettingsString
 import com.simplecityapps.shuttle.ui.text.StringKey
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.ContributesIntoMap
@@ -50,7 +51,7 @@ data class SettingsUiState(
 
     /** What the Equalizer row shows: Off, or the preset in use. */
     val equalizerSummary: StringKey
-        get() = if (value(EqualizerSettings.Enabled)) equalizerPreset.nameKey else StringKey.SETTINGS_STATE_OFF
+        get() = if (value(EqualizerSettings.Enabled)) equalizerPreset.nameKey else SettingsString.SETTINGS_STATE_OFF
 }
 
 sealed interface SettingsUiEvent {

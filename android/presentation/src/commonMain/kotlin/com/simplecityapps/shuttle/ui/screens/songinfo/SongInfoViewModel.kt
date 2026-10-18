@@ -8,6 +8,7 @@ import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.query.SongQuery
 import com.simplecityapps.shuttle.ui.actions.LoadLyrics
 import com.simplecityapps.shuttle.ui.actions.ObserveSongs
+import com.simplecityapps.shuttle.ui.text.SongInfoString
 import com.simplecityapps.shuttle.ui.text.StringKey
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.Assisted
@@ -71,39 +72,39 @@ data class SongInfoSection(
 /** Everything song info shows about [this] song and its [lyrics], grouped into its cards, in order. */
 fun Song.infoSections(lyrics: String?): List<SongInfoSection> = listOf(
     SongInfoSection(
-        StringKey.SONG_INFO_SECTION_TAGS,
+        SongInfoString.SONG_INFO_SECTION_TAGS,
         listOf(
-            SongInfoRow(StringKey.SONG_INFO_TRACK_TITLE, name),
-            SongInfoRow(StringKey.SONG_INFO_ARTISTS, artists.takeIf { it.isNotEmpty() }?.joinToString(", ")),
-            SongInfoRow(StringKey.SONG_INFO_ALBUM, album),
-            SongInfoRow(StringKey.SONG_INFO_ALBUM_ARTIST, albumArtist),
-            SongInfoRow(StringKey.SONG_INFO_YEAR, date?.year?.toString()),
-            SongInfoRow(StringKey.SONG_INFO_TRACK_NUMBER, track?.takeIf { it > 0 }?.toString()),
-            SongInfoRow(StringKey.SONG_INFO_DISC, disc?.takeIf { it > 0 }?.toString()),
-            SongInfoRow(StringKey.SONG_INFO_GENRES, genres.takeIf { it.isNotEmpty() }?.joinToString(", ")),
-            SongInfoRow(StringKey.SONG_INFO_LYRICS, lyrics),
+            SongInfoRow(SongInfoString.SONG_INFO_TRACK_TITLE, name),
+            SongInfoRow(SongInfoString.SONG_INFO_ARTISTS, artists.takeIf { it.isNotEmpty() }?.joinToString(", ")),
+            SongInfoRow(SongInfoString.SONG_INFO_ALBUM, album),
+            SongInfoRow(SongInfoString.SONG_INFO_ALBUM_ARTIST, albumArtist),
+            SongInfoRow(SongInfoString.SONG_INFO_YEAR, date?.year?.toString()),
+            SongInfoRow(SongInfoString.SONG_INFO_TRACK_NUMBER, track?.takeIf { it > 0 }?.toString()),
+            SongInfoRow(SongInfoString.SONG_INFO_DISC, disc?.takeIf { it > 0 }?.toString()),
+            SongInfoRow(SongInfoString.SONG_INFO_GENRES, genres.takeIf { it.isNotEmpty() }?.joinToString(", ")),
+            SongInfoRow(SongInfoString.SONG_INFO_LYRICS, lyrics),
         ),
     ),
     SongInfoSection(
-        StringKey.SONG_INFO_SECTION_FILE,
+        SongInfoString.SONG_INFO_SECTION_FILE,
         listOf(
             mediaProvider.songInfoSourceRow(),
-            SongInfoRow(StringKey.SONG_INFO_PATH, displayPath),
-            SongInfoRow(StringKey.SONG_INFO_MIME_TYPE, mimeType),
-            SongInfoRow(StringKey.SONG_INFO_SIZE, "${formatDecimal(size / 1024.0 / 1024.0, 2)} MB"),
-            SongInfoRow(StringKey.SONG_INFO_DURATION, formatDuration(duration.toLong())),
-            SongInfoRow(StringKey.SONG_INFO_BIT_RATE, bitRate?.let(::formatBitRate)),
-            SongInfoRow(StringKey.SONG_INFO_BIT_DEPTH, bitDepth?.let { "$it-bit" }),
-            SongInfoRow(StringKey.SONG_INFO_SAMPLE_RATE, sampleRate?.let(::formatSampleRate)),
-            SongInfoRow(StringKey.SONG_INFO_CHANNEL_COUNT, channelCount?.takeIf { it > 0 }?.toString()),
+            SongInfoRow(SongInfoString.SONG_INFO_PATH, displayPath),
+            SongInfoRow(SongInfoString.SONG_INFO_MIME_TYPE, mimeType),
+            SongInfoRow(SongInfoString.SONG_INFO_SIZE, "${formatDecimal(size / 1024.0 / 1024.0, 2)} MB"),
+            SongInfoRow(SongInfoString.SONG_INFO_DURATION, formatDuration(duration.toLong())),
+            SongInfoRow(SongInfoString.SONG_INFO_BIT_RATE, bitRate?.let(::formatBitRate)),
+            SongInfoRow(SongInfoString.SONG_INFO_BIT_DEPTH, bitDepth?.let { "$it-bit" }),
+            SongInfoRow(SongInfoString.SONG_INFO_SAMPLE_RATE, sampleRate?.let(::formatSampleRate)),
+            SongInfoRow(SongInfoString.SONG_INFO_CHANNEL_COUNT, channelCount?.takeIf { it > 0 }?.toString()),
         ),
     ),
     SongInfoSection(
-        StringKey.SONG_INFO_SECTION_PLAYBACK,
+        SongInfoString.SONG_INFO_SECTION_PLAYBACK,
         listOf(
-            SongInfoRow(StringKey.SONG_INFO_PLAY_COUNT, playCount.toString()),
-            SongInfoRow(StringKey.SONG_INFO_REPLAY_GAIN_TRACK, replayGainTrack?.let(::formatGain)),
-            SongInfoRow(StringKey.SONG_INFO_REPLAY_GAIN_ALBUM, replayGainAlbum?.let(::formatGain)),
+            SongInfoRow(SongInfoString.SONG_INFO_PLAY_COUNT, playCount.toString()),
+            SongInfoRow(SongInfoString.SONG_INFO_REPLAY_GAIN_TRACK, replayGainTrack?.let(::formatGain)),
+            SongInfoRow(SongInfoString.SONG_INFO_REPLAY_GAIN_ALBUM, replayGainAlbum?.let(::formatGain)),
         ),
     ),
 )
@@ -113,11 +114,11 @@ fun Song.infoSections(lyrics: String?): List<SongInfoSection> = listOf(
  * as the Sources screen words it); a server keeps its brand name. The song doesn't carry which server it came from.
  */
 internal fun MediaProviderType.songInfoSourceRow(): SongInfoRow = when (this) {
-    MediaProviderType.Shuttle, MediaProviderType.MediaStore -> SongInfoRow(StringKey.SONG_INFO_SOURCE, value = null, valueKey = StringKey.SONG_INFO_SOURCE_THIS_DEVICE)
-    MediaProviderType.Jellyfin -> SongInfoRow(StringKey.SONG_INFO_SOURCE, value = "Jellyfin")
-    MediaProviderType.Emby -> SongInfoRow(StringKey.SONG_INFO_SOURCE, value = "Emby")
-    MediaProviderType.Plex -> SongInfoRow(StringKey.SONG_INFO_SOURCE, value = "Plex")
-    MediaProviderType.Subsonic -> SongInfoRow(StringKey.SONG_INFO_SOURCE, value = "Subsonic")
+    MediaProviderType.Shuttle, MediaProviderType.MediaStore -> SongInfoRow(SongInfoString.SONG_INFO_SOURCE, value = null, valueKey = SongInfoString.SONG_INFO_SOURCE_THIS_DEVICE)
+    MediaProviderType.Jellyfin -> SongInfoRow(SongInfoString.SONG_INFO_SOURCE, value = "Jellyfin")
+    MediaProviderType.Emby -> SongInfoRow(SongInfoString.SONG_INFO_SOURCE, value = "Emby")
+    MediaProviderType.Plex -> SongInfoRow(SongInfoString.SONG_INFO_SOURCE, value = "Plex")
+    MediaProviderType.Subsonic -> SongInfoRow(SongInfoString.SONG_INFO_SOURCE, value = "Subsonic")
 }
 
 /** The file's headline facts under the artwork, those the song has: its format, bit rate and sample rate. */

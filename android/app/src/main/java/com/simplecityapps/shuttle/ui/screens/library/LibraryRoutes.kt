@@ -8,6 +8,7 @@ import com.simplecityapps.shuttle.model.AlbumGroupKey
 import com.simplecityapps.shuttle.model.SmartPlaylist
 import com.simplecityapps.shuttle.model.SmartPlaylistId
 import com.simplecityapps.shuttle.ui.shell.AlbumRoute
+import com.simplecityapps.shuttle.ui.text.MediaActionString
 import com.simplecityapps.shuttle.ui.text.StringKey
 import kotlinx.serialization.Serializable
 
@@ -50,11 +51,11 @@ data class SmartPlaylistRoute(
 /** [SmartPlaylistId]'s display name. Display resolution is app-side; [SmartPlaylistId] itself is portable. */
 val SmartPlaylistId.nameKey: StringKey
     get() = when (this) {
-        SmartPlaylistId.Favourites -> StringKey.PLAYLIST_TITLE_FAVORITES
-        SmartPlaylistId.RecentlyAdded -> StringKey.PLAYLIST_TITLE_RECENTLY_ADDED
-        SmartPlaylistId.MostPlayed -> StringKey.PLAYLIST_TITLE_MOST_PLAYED
-        SmartPlaylistId.History -> StringKey.PLAYLIST_TITLE_HISTORY
-        SmartPlaylistId.Downloaded -> StringKey.PLAYLIST_TITLE_DOWNLOADED
+        SmartPlaylistId.Favourites -> MediaActionString.PLAYLIST_TITLE_FAVORITES
+        SmartPlaylistId.RecentlyAdded -> MediaActionString.PLAYLIST_TITLE_RECENTLY_ADDED
+        SmartPlaylistId.MostPlayed -> MediaActionString.PLAYLIST_TITLE_MOST_PLAYED
+        SmartPlaylistId.History -> MediaActionString.PLAYLIST_TITLE_HISTORY
+        SmartPlaylistId.Downloaded -> MediaActionString.PLAYLIST_TITLE_DOWNLOADED
     }
 
 val Album.route: AlbumRoute get() = AlbumRoute(albumKey = groupKey?.key, albumArtistKey = groupKey?.albumArtistGroupKey?.key, albumIdentity = groupKey?.identity)

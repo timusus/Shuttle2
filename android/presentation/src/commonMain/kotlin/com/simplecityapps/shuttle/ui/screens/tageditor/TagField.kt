@@ -2,6 +2,7 @@ package com.simplecityapps.shuttle.ui.screens.tageditor
 
 import com.simplecityapps.mediaprovider.model.AudioFile
 import com.simplecityapps.shuttle.ui.text.StringKey
+import com.simplecityapps.shuttle.ui.text.TagEditorString
 
 /** The tags the editor offers. [TagSection] lays them out. */
 enum class TagField(
@@ -9,17 +10,17 @@ enum class TagField(
     /** Whether the field is offered when more than one song is being edited. */
     val batch: Boolean = true,
 ) {
-    Title(StringKey.EDIT_TAGS_HINT_TITLE, batch = false),
-    Artists(StringKey.EDIT_TAGS_HINT_ARTIST),
-    Album(StringKey.EDIT_TAGS_HINT_ALBUM),
-    AlbumArtist(StringKey.EDIT_TAGS_HINT_ALBUM_ARTIST),
-    Year(StringKey.EDIT_TAGS_HINT_YEAR),
-    Track(StringKey.EDIT_TAGS_HINT_TRACK, batch = false),
-    TrackTotal(StringKey.EDIT_TAGS_HINT_TRACK_TOTAL),
-    Disc(StringKey.EDIT_TAGS_HINT_DISC),
-    DiscTotal(StringKey.EDIT_TAGS_HINT_DISC_TOTAL),
-    Genres(StringKey.EDIT_TAGS_HINT_GENRES),
-    Lyrics(StringKey.EDIT_TAGS_HINT_LYRICS),
+    Title(TagEditorString.EDIT_TAGS_HINT_TITLE, batch = false),
+    Artists(TagEditorString.EDIT_TAGS_HINT_ARTIST),
+    Album(TagEditorString.EDIT_TAGS_HINT_ALBUM),
+    AlbumArtist(TagEditorString.EDIT_TAGS_HINT_ALBUM_ARTIST),
+    Year(TagEditorString.EDIT_TAGS_HINT_YEAR),
+    Track(TagEditorString.EDIT_TAGS_HINT_TRACK, batch = false),
+    TrackTotal(TagEditorString.EDIT_TAGS_HINT_TRACK_TOTAL),
+    Disc(TagEditorString.EDIT_TAGS_HINT_DISC),
+    DiscTotal(TagEditorString.EDIT_TAGS_HINT_DISC_TOTAL),
+    Genres(TagEditorString.EDIT_TAGS_HINT_GENRES),
+    Lyrics(TagEditorString.EDIT_TAGS_HINT_LYRICS),
     ;
 
     val numeric: Boolean get() = this == Year || this == Track || this == TrackTotal || this == Disc || this == DiscTotal
@@ -48,10 +49,10 @@ enum class TagSection(
     val title: StringKey,
     val rows: List<List<TagField>>,
 ) {
-    Song(StringKey.EDIT_TAGS_SECTION_SONG, listOf(listOf(TagField.Title), listOf(TagField.Artists), listOf(TagField.Genres))),
-    Album(StringKey.EDIT_TAGS_SECTION_ALBUM, listOf(listOf(TagField.Album), listOf(TagField.AlbumArtist), listOf(TagField.Year))),
-    Numbering(StringKey.EDIT_TAGS_SECTION_NUMBERING, listOf(listOf(TagField.Track, TagField.TrackTotal), listOf(TagField.Disc, TagField.DiscTotal))),
-    Lyrics(StringKey.EDIT_TAGS_SECTION_LYRICS, listOf(listOf(TagField.Lyrics))),
+    Song(TagEditorString.EDIT_TAGS_SECTION_SONG, listOf(listOf(TagField.Title), listOf(TagField.Artists), listOf(TagField.Genres))),
+    Album(TagEditorString.EDIT_TAGS_SECTION_ALBUM, listOf(listOf(TagField.Album), listOf(TagField.AlbumArtist), listOf(TagField.Year))),
+    Numbering(TagEditorString.EDIT_TAGS_SECTION_NUMBERING, listOf(listOf(TagField.Track, TagField.TrackTotal), listOf(TagField.Disc, TagField.DiscTotal))),
+    Lyrics(TagEditorString.EDIT_TAGS_SECTION_LYRICS, listOf(listOf(TagField.Lyrics))),
 }
 
 /**

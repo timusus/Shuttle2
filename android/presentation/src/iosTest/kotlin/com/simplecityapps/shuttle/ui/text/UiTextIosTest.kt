@@ -6,7 +6,7 @@ import kotlin.test.Test
 class UiTextIosTest {
     @Test
     fun aKeyMissingFromTheTableResolvesToItself() {
-        StringKey.MEDIA_ACTION_UNDO.text.resolve() shouldBe "media_action_undo"
+        MediaActionString.MEDIA_ACTION_UNDO.text.resolve() shouldBe "media_action_undo"
     }
 
     @Test

@@ -17,7 +17,7 @@ class StringKeyResourcesTest {
 
     @Test
     fun `every StringKey maps to the string resource of its name`() {
-        StringKey.entries.forEach { key ->
+        allStringKeys.forEach { key ->
             resources.getResourceTypeName(key.resId) shouldBe "string"
             resources.getResourceEntryName(key.resId) shouldBe key.key
             resources.getString(key.resId).shouldNotBeBlank()

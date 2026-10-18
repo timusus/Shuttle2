@@ -2,6 +2,7 @@ package com.simplecityapps.shuttle.ui.screens.settings.model
 
 import com.simplecityapps.shuttle.entitlement.ProFeature
 import com.simplecityapps.shuttle.settings.Setting
+import com.simplecityapps.shuttle.ui.text.SettingsString
 import com.simplecityapps.shuttle.ui.text.StringKey
 
 /** One of the top-level settings screens. [legacyKeys] are the old preference screens whose rows moved here. */
@@ -9,12 +10,12 @@ enum class SettingsDestination(
     val title: StringKey,
     val legacyKeys: List<String>
 ) {
-    Appearance(StringKey.PREF_CATEGORY_TITLE_DISPLAY, listOf("pref_screen_display", "pref_screen_widget")),
-    PlaybackAndSound(StringKey.SETTINGS_DESTINATION_PLAYBACK_AND_SOUND, listOf("pref_screen_playback")),
-    Sources(StringKey.SETTINGS_DESTINATION_SOURCES, emptyList()),
-    Library(StringKey.SETTINGS_DESTINATION_LIBRARY, listOf("pref_screen_media", "pref_screen_artwork")),
-    Privacy(StringKey.PREF_CATEGORY_TITLE_PRIVACY, listOf("pref_screen_privacy")),
-    About(StringKey.SETTINGS_DESTINATION_ABOUT, listOf("pref_screen_app_info", "pref_screen_debug"))
+    Appearance(SettingsString.PREF_CATEGORY_TITLE_DISPLAY, listOf("pref_screen_display", "pref_screen_widget")),
+    PlaybackAndSound(SettingsString.SETTINGS_DESTINATION_PLAYBACK_AND_SOUND, listOf("pref_screen_playback")),
+    Sources(SettingsString.SETTINGS_DESTINATION_SOURCES, emptyList()),
+    Library(SettingsString.SETTINGS_DESTINATION_LIBRARY, listOf("pref_screen_media", "pref_screen_artwork")),
+    Privacy(SettingsString.PREF_CATEGORY_TITLE_PRIVACY, listOf("pref_screen_privacy")),
+    About(SettingsString.SETTINGS_DESTINATION_ABOUT, listOf("pref_screen_app_info", "pref_screen_debug"))
 }
 
 data class SettingsScreen(
