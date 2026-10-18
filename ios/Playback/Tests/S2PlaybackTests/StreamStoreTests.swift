@@ -50,14 +50,23 @@ final class StreamStoreTests: XCTestCase {
         store.completedFile(for: StreamCacheKey.stableURL(for: url))
     }
 
-    /// Waits for the download that just ended to land in the cache, so the absent cases below are not vacuous.
+    /// Waits for the download that just ended to land in the cache, so the absent cases below are not vacuous. The store
+    /// promotes a partial by renaming it into its directory and signals nothing else, so the wait is woken by that
+    /// directory's change; the timeout only bounds a failure.
     private func waitUntilKept(_ url: URL, in store: GrowingFileStore) -> URL? {
-        let deadline = Date().addingTimeInterval(5)
-        while Date() < deadline {
+        let descriptor = open(store.directory.path, O_EVTONLY)
+        guard descriptor >= 0 else { return kept(url, in: store) }
+        let changed = DispatchSemaphore(value: 0)
+        let watcher = DispatchSource.makeFileSystemObjectSource(fileDescriptor: descriptor, eventMask: .write, queue: .global())
+        watcher.setEventHandler { changed.signal() }
+        watcher.setCancelHandler { close(descriptor) }
+        watcher.resume()
+        defer { watcher.cancel() }
+        let deadline = DispatchTime.now() + 5
+        while true {
             if let file = kept(url, in: store) { return file }
-            Thread.sleep(forTimeInterval: 0.02)
+            if changed.wait(timeout: deadline) == .timedOut { return kept(url, in: store) }
         }
-        return nil
     }
 
     func testAWholeDownloadIsKeptForTheNextPlay() throws {
