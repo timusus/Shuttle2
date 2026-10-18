@@ -19,7 +19,7 @@ class MediaStoreFileTagsTest {
     @Test
     fun `playlist entry with a multi-artist tag matches the split artists`() {
         val existing = createMediaStoreSong(name = "T", album = "Al", artists = listOf("A", "B"), albumArtist = "Other")
-        val entry = MediaStoreMediaProvider.MediaStoreSong(1, "T", "Al", "A; B", null, 1000, null, 1, "audio/mpeg", "/x.mp3")
+        val entry = MediaStoreSong(1, "T", "Al", "A; B", null, 1000, null, 1, "audio/mpeg", "/x.mp3")
 
         existing.matchesPlaylistEntry(entry) shouldBe true
     }

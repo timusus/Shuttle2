@@ -23,7 +23,6 @@ import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.MediaProvider
 import com.simplecityapps.mediaprovider.MessageProgress
 import com.simplecityapps.mediaprovider.PlaylistListing
-import com.simplecityapps.mediaprovider.PlaylistUpdateData
 import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.mediaprovider.SongPathRemap
 import com.simplecityapps.mediaprovider.TagReadGuard
@@ -32,7 +31,6 @@ import com.simplecityapps.mediaprovider.splitArtistTag
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.SourceStateStore
-import kotlin.math.abs
 import kotlin.time.Instant
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
@@ -40,7 +38,6 @@ import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectIndexed
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.LocalDate
@@ -293,128 +290,11 @@ class MediaStoreMediaProvider(
         emit(FlowEvent.Success(songs.withGenres(genresBySongId) + keptSongs))
     }
 
-    data class MediaStoreSong(
-        val playOrder: Long,
-        val title: String?,
-        val album: String?,
-        val artist: String?,
-        val albumArtist: String?,
-        val duration: Int,
-        val year: Int?,
-        val track: Int,
-        val mimeType: String,
-        val path: String
-    )
-
     // Playlists
 
-    override fun findPlaylists(existingSongs: List<Song>, knownVersions: Map<String, String>): Flow<FlowEvent<PlaylistListing, MessageProgress>> = flow {
-        val mediaStorePlaylists = findMediaStorePlaylists().toList()
-        val updates =
-            mediaStorePlaylists.mapIndexed { i, mediaStorePlaylist ->
-                val mediaStoreSongs = findSongsForMediaStorePlaylist(mediaStorePlaylist.id)
+    private val playlists = MediaStorePlaylists(context, type)
 
-                // Associate Media Store songs with Shuttle's songs
-                val matchingSongs =
-                    mediaStoreSongs.mapNotNull { mediaStoreSong ->
-                        existingSongs.firstOrNull { existingSong -> existingSong.matchesPlaylistEntry(mediaStoreSong) }
-                    }
-
-                val updateData =
-                    PlaylistUpdateData(
-                        type,
-                        mediaStorePlaylist.name,
-                        matchingSongs,
-                        mediaStorePlaylist.id.toString()
-                    )
-                emit(FlowEvent.Progress(MessageProgress(ImportPhase.Fetching, Progress(i, mediaStorePlaylists.size))))
-                updateData
-            }
-
-        emit(FlowEvent.Success(PlaylistListing(updates.toList())))
-    }
-
-    private suspend fun findSongsForMediaStorePlaylist(mediaStorePlaylistId: Long): List<MediaStoreSong> {
-        return withContext(Dispatchers.IO) {
-            val songs = mutableListOf<MediaStoreSong>()
-
-            val cursor =
-                context.contentResolver.query(
-                    MediaStore.Audio.Playlists.Members.getContentUri("external", mediaStorePlaylistId),
-                    arrayOf(
-                        MediaStore.Audio.Playlists.Members.TITLE,
-                        MediaStore.Audio.Playlists.Members.ALBUM,
-                        MediaStore.Audio.Playlists.Members.ARTIST,
-                        MediaStore.Audio.Playlists.Members.DURATION,
-                        MediaStore.Audio.Playlists.Members.YEAR,
-                        MediaStore.Audio.Media.TRACK,
-                        MediaStore.Audio.Playlists.Members.MIME_TYPE,
-                        MediaStore.Audio.Playlists.Members.DATA,
-                        MediaStore.Audio.Playlists.Members.PLAY_ORDER,
-                        "album_artist"
-                    ),
-                    null,
-                    null,
-                    MediaStore.Audio.Playlists.Members.DEFAULT_SORT_ORDER
-                )
-
-            cursor?.use {
-                while (cursor.moveToNext()) {
-                    if (!isActive) {
-                        return@use
-                    }
-
-                    val rawTrack =
-                        cursor.getInt(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TRACK))
-                    val track = decodeDiscTrack(rawTrack, discNumberColumnValue = null).track
-
-                    songs.add(
-                        MediaStoreSong(
-                            playOrder = cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.Audio.Playlists.Members.PLAY_ORDER)),
-                            title = cursor.getStringOrNull(cursor.getColumnIndexOrThrow(MediaStore.Audio.Playlists.Members.TITLE)),
-                            album = cursor.getStringOrNull(cursor.getColumnIndexOrThrow(MediaStore.Audio.Playlists.Members.ALBUM)),
-                            artist = cursor.getStringOrNull(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST)),
-                            albumArtist = cursor.getStringOrNull(cursor.getColumnIndex("album_artist")),
-                            duration = cursor.getInt(cursor.getColumnIndexOrThrow(MediaStore.Audio.Playlists.Members.DURATION)),
-                            year = cursor.getIntOrNull(cursor.getColumnIndexOrThrow(MediaStore.Audio.Playlists.Members.YEAR)),
-                            track = track,
-                            mimeType = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Playlists.Members.MIME_TYPE)),
-                            path = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Playlists.Members.DATA))
-                        )
-                    )
-                }
-            }
-
-            songs
-        }
-    }
-
-    data class MediaStorePlaylist(val id: Long, val name: String)
-
-    private fun findMediaStorePlaylists(): Flow<MediaStorePlaylist> = flow {
-        val cursor =
-            context.contentResolver.query(
-                MediaStore.Audio.Playlists.EXTERNAL_CONTENT_URI,
-                arrayOf(
-                    MediaStore.Audio.Playlists._ID,
-                    MediaStore.Audio.Playlists.NAME
-                ),
-                null,
-                null,
-                MediaStore.Audio.Playlists.DEFAULT_SORT_ORDER
-            )
-
-        cursor?.use {
-            while (cursor.moveToNext()) {
-                emit(
-                    MediaStorePlaylist(
-                        cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.Audio.Playlists._ID)),
-                        cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Playlists.NAME))
-                    )
-                )
-            }
-        }
-    }
+    override fun findPlaylists(existingSongs: List<Song>, knownVersions: Map<String, String>): Flow<FlowEvent<PlaylistListing, MessageProgress>> = playlists.findPlaylists(existingSongs)
 }
 
 /** A MediaStore listing; [files] null if MediaStore couldn't be queried. */
@@ -480,17 +360,4 @@ internal fun mediaStoreBitDepth(
 /** Each song with the MediaStore genres [genresBySongId] holds for its id ([Song.externalId]) added after its own. */
 internal fun List<Song>.withGenres(genresBySongId: Map<String, List<String>>): List<Song> = map { song ->
     genresBySongId[song.externalId]?.let { genres -> song.copy(genres = song.genres + genres) } ?: song
-}
-
-// We assume two songs are equal, if they have the same title, album, artist & duration. We can't be too specific, as the
-// MediaStore scanner may have interpreted some fields differently to Shuttle's built in scanner. MediaStore's artist is the
-// raw tag, so both sides are split like Shuttle's own (#880; a song scanned before then may still hold the raw tag) and
-// any shared artist counts: one side may list fewer of them.
-internal fun Song.matchesPlaylistEntry(mediaStoreSong: MediaStoreMediaProvider.MediaStoreSong): Boolean {
-    val mediaStoreArtists = mediaStoreSong.artist?.let(::splitArtistTag).orEmpty()
-    val songArtists = artists.flatMap(::splitArtistTag)
-    return name.equals(mediaStoreSong.title, ignoreCase = true) &&
-        album.equals(mediaStoreSong.album, ignoreCase = true) &&
-        (songArtists.any { artist -> mediaStoreArtists.any { it.equals(artist, ignoreCase = true) } } || albumArtist.equals(mediaStoreSong.albumArtist, ignoreCase = true)) &&
-        abs(duration - mediaStoreSong.duration) <= 1000 // song duration is within 1 second
 }
