@@ -96,12 +96,3 @@ object ArtistCredits {
 
     private fun List<String>?.single(): String? = this?.map { it.trim() }?.filter { it.isNotEmpty() }?.singleOrNull()
 }
-
-/** Whether this song is [key]'s: an album artist of its album, or credited on it. */
-fun Song.isByArtist(key: AlbumArtistGroupKey?): Boolean = isAlbumArtist(key) || (key != null && artistCredits.any { it.groupKey == key })
-
-/** Whether [key] is an album artist of this song's album ([AlbumIdentity.albumArtists]): it's among their own albums. */
-fun Song.isAlbumArtist(key: AlbumArtistGroupKey?): Boolean = key != null && key in resolvedAlbumIdentity.albumArtistKeys
-
-/** The media server's own id for the artist [key] on this song ([ArtistCredits.serverArtistId]): whose server image is theirs. */
-fun Song.serverArtistId(key: AlbumArtistGroupKey): String? = ArtistCredits.serverArtistId(identityTags, resolvedAlbumIdentity, key)
