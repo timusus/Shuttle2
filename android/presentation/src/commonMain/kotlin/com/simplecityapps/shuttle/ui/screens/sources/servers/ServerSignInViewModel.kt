@@ -152,8 +152,8 @@ class ServerSignInViewModel @AssistedInject constructor(
     private val serverDiscovery: ServerDiscovery,
     private val localNetworkAccess: LocalNetworkAccess,
     private val readServerHeaders: ReadServerHeaders,
-    private val prepareServerConnection: PrepareServerConnection,
-    private val serverConnections: ServerConnectionStore,
+    prepareServerConnection: PrepareServerConnection,
+    serverConnections: ServerConnectionStore,
 ) : ViewModel() {
     @AssistedFactory
     @ManualViewModelAssistedFactoryKey(Factory::class)
@@ -207,11 +207,13 @@ class ServerSignInViewModel @AssistedInject constructor(
     /** The sign-in to try again once the user trusts the certificate that failed it. */
     private var retryAfterTrust: (() -> Unit)? = null
 
-    /**
-     * The servers whose custom headers or trusted certificate this sign-in may have saved: the one it opened with and
-     * each address it tried. Only the server's saved address keeps them (see [forgetUnusedConnections]).
-     */
-    private val touchedOrigins = listOfNotNull(signedInServer.address?.let(ServerOrigin::parse)).toMutableSet()
+    private val connections = SignInConnections(
+        type,
+        readServerLogin,
+        prepareServerConnection,
+        serverConnections,
+        initial = signedInServer.address?.let(ServerOrigin::parse),
+    )
     private var pinJob: Job? = null
 
     /** The account's servers, once its PIN has been approved: what [ServerSignInStep.ChoosingServer] lists. */
@@ -283,7 +285,7 @@ class ServerSignInViewModel @AssistedInject constructor(
     /** Trusts the certificate [ServerSignInStep.UntrustedCertificate] showed, for its server alone, and signs in again. */
     fun onTrustCertificate() {
         val untrusted = step.value as? ServerSignInStep.UntrustedCertificate ?: return
-        serverConnections.trustCertificate(untrusted.origin, untrusted.fingerprint)
+        connections.trust(untrusted)
         step.value = ServerSignInStep.Form
         retryAfterTrust?.invoke()
     }
@@ -311,11 +313,11 @@ class ServerSignInViewModel @AssistedInject constructor(
             when (val result = signInToServer(type, login, form.rememberPassword)) {
                 SignInToServer.Result.Success -> {
                     onSignedIn(login.address, login.username)
-                    forgetUnusedConnections(inUse = origin)
+                    connections.forgetUnused(inUse = origin)
                     finishSignIn()
                 }
 
-                is SignInToServer.Result.Failure -> step.value = failedStep(origin, result.message)
+                is SignInToServer.Result.Failure -> step.value = connections.failedStep(origin, result.message)
             }
         }
     }
@@ -346,13 +348,13 @@ class ServerSignInViewModel @AssistedInject constructor(
                     SignInWithQuickConnect.State.Success -> {
                         // Quick Connect doesn't take a username, so only a different address tells it's another server
                         onSignedIn(address, username = null)
-                        forgetUnusedConnections(inUse = origin)
+                        connections.forgetUnused(inUse = origin)
                         finishSignIn()
                     }
 
                     SignInWithQuickConnect.State.Expired -> step.value = ServerSignInStep.Failed(QUICK_CONNECT_EXPIRED_MESSAGE)
 
-                    is SignInWithQuickConnect.State.Failed -> step.value = failedStep(origin, state.message)
+                    is SignInWithQuickConnect.State.Failed -> step.value = connections.failedStep(origin, state.message)
                 }
             }
         }
@@ -363,7 +365,7 @@ class ServerSignInViewModel @AssistedInject constructor(
         quickConnectJob?.cancel()
         quickConnectJob = null
         step.value = ServerSignInStep.Form
-        forgetUnusedConnections()
+        connections.forgetUnused()
     }
 
     /**
@@ -423,13 +425,13 @@ class ServerSignInViewModel @AssistedInject constructor(
         when (step.value) {
             is ServerSignInStep.AwaitingCode -> onCancelQuickConnect()
             is ServerSignInStep.AwaitingPin, is ServerSignInStep.ChoosingServer -> onCancelPin()
-            ServerSignInStep.Form, is ServerSignInStep.Failed, is ServerSignInStep.UntrustedCertificate -> forgetUnusedConnections()
+            ServerSignInStep.Form, is ServerSignInStep.Failed, is ServerSignInStep.UntrustedCertificate -> connections.forgetUnused()
             else -> Unit
         }
     }
 
     override fun onCleared() {
-        forgetUnusedConnections()
+        connections.forgetUnused()
     }
 
     fun onEventHandled(id: Long) = events.consume(id)
@@ -472,35 +474,11 @@ class ServerSignInViewModel @AssistedInject constructor(
         signedInServer = SavedServerLogin(address, username ?: previous.username.takeUnless { otherAddress })
     }
 
-    /**
-     * Saves the typed headers for the server at [address] before it's contacted, so the sign-in sends them, and forgets
-     * any certificate it refused before: a refusal recorded from here on is this attempt's, which [retry] repeats.
-     */
+    /** Saves the typed headers for the server at [address] before it's contacted; [retry] repeats the attempt once its certificate is trusted. */
     private fun prepareConnection(address: String, retry: () -> Unit): ServerOrigin? {
-        val origin = ServerOrigin.parse(address) ?: return null
-        forgetUnusedConnections(inUse = origin)
-        touchedOrigins += origin
-        prepareServerConnection(origin, form.value.headers)
+        val origin = connections.prepare(address, form.value.headers) ?: return null
         retryAfterTrust = retry
         return origin
-    }
-
-    /**
-     * Forgets the headers and trusted certificate this sign-in saved for any server but the one whose address is saved
-     * (which removing the server forgets, [ForgetServer]) and [inUse]: an address the user tried and moved on from, or
-     * the server another one replaced, keeps no proxy token or trusted certificate behind.
-     */
-    private fun forgetUnusedConnections(inUse: ServerOrigin? = null) {
-        val saved = readServerLogin(type).address?.let(ServerOrigin::parse)
-        val unused = touchedOrigins.filter { it != saved && it != inUse }
-        unused.forEach { serverConnections.forget(it) }
-        touchedOrigins -= unused.toSet()
-    }
-
-    /** The step a failed sign-in to [origin] shows: the certificate to trust when it refused one, else [message]. */
-    private fun failedStep(origin: ServerOrigin?, message: String): ServerSignInStep {
-        val fingerprint = origin?.let { serverConnections.rejectedCertificate(it) }
-        return if (fingerprint != null) ServerSignInStep.UntrustedCertificate(origin, fingerprint, message) else ServerSignInStep.Failed(message)
     }
 
     private fun missingFields(form: ServerSignInForm): Set<ServerSignInField> = buildSet {
