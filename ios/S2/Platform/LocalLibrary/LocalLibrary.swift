@@ -173,7 +173,6 @@ final class LocalLibrary: NSObject, IosLocalFiles, @unchecked Sendable {
         return lock.withLock { saved.contains { $0.path != path && Self.isInside(path, $0.path) } }
     }
 
-    /// Whether [path] is [folder] or inside it.
     static func isInside(_ path: String, _ folder: String) -> Bool {
         path == folder || path.hasPrefix(folder.hasSuffix("/") ? folder : folder + "/")
     }

@@ -17,10 +17,8 @@ sealed class FlowEvent<out T, out U> {
 
 /** The stage an import has reached, which [MediaImporter] describes to the user in its own words. */
 sealed interface ImportPhase {
-    /** Signing in to a server. */
     data object Connecting : ImportPhase
 
-    /** Asking the provider for its songs or playlists. */
     data object Fetching : ImportPhase
 
     /** Writing the [songCount] songs the provider found to the library. */

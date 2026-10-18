@@ -38,7 +38,6 @@ class PlayAfterWork(
     }
 
     companion object {
-        /** Whether the current song is in a work of the queue. */
         fun offered(queue: List<Song>, currentPosition: Int?): Boolean = currentPosition != null && workRunOf(queue, currentPosition) != null
     }
 }

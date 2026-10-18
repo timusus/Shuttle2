@@ -13,7 +13,6 @@ class ReadLastScanDate @Inject constructor(
     operator fun invoke(): Instant? = sourceState.lastMediaImportDate
 }
 
-/** The equalizer preset in use now. */
 class ReadEqualizerPreset @Inject constructor(
     private val equalizerPresetStore: EqualizerPresetStore
 ) {

@@ -12,7 +12,6 @@ interface LibraryBackupFlow {
     /** Builds the full backup JSON, or null when the library can't be read. */
     suspend fun buildBackupJson(): String?
 
-    /** Writes staged [backupJson] to [destinationUri]. */
     suspend fun writeBackup(destinationUri: String, backupJson: String): Boolean
 
     /** Reads the backup at [sourceUri], merges its stats and playlists and replaces its preferences, or null when it can't be read or is too new. */

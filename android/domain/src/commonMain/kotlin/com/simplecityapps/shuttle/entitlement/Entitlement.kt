@@ -38,7 +38,6 @@ sealed interface Entitlement {
     }
 }
 
-/** What granted Pro. */
 enum class ProSource {
     Lifetime,
     Subscription,

@@ -70,7 +70,6 @@ enum class MediaBrowserServer(
         Emby -> name
     }
 
-    /** The path of the song read from [item]. */
     fun songPath(item: Item): String = "$songPathPrefix${item.id}"
 }
 

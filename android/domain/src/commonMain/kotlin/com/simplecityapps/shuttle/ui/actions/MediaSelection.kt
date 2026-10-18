@@ -44,7 +44,6 @@ sealed interface MediaSelection {
      */
     data class SongsMatching(val query: SongQuery) : MediaSelection
 
-    /** The current play queue. */
     data object Queue : MediaSelection
 
     /** The providers the selection's items come from, where known without resolving its songs; null when not. */

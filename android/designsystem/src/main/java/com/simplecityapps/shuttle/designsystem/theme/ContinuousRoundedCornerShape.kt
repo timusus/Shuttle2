@@ -108,10 +108,8 @@ class ContinuousRoundedCornerShape(
         "bottomStart = $bottomStart, smoothing = $smoothing)"
 }
 
-/** A [ContinuousRoundedCornerShape] with all four corners at [corner]. */
 fun ContinuousRoundedCornerShape(corner: CornerSize, smoothing: Float = DefaultCornerSmoothing) = ContinuousRoundedCornerShape(corner, corner, corner, corner, smoothing)
 
-/** A [ContinuousRoundedCornerShape] with all four corners at [size]. */
 fun ContinuousRoundedCornerShape(size: Dp, smoothing: Float = DefaultCornerSmoothing): ContinuousRoundedCornerShape = CornerSize(size).let { ContinuousRoundedCornerShape(it, it, it, it, smoothing) }
 
 /** A [ContinuousRoundedCornerShape] with all four corners at [percent] of the shorter side; 50 is a capsule. */

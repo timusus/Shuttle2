@@ -28,7 +28,6 @@ class SaveLibraryTabs @Inject constructor(
     }
 }
 
-/** Saves the tab the library opens on next time. */
 class SaveCurrentLibraryTab @Inject constructor(
     private val preferences: GeneralPreferenceManager,
 ) {

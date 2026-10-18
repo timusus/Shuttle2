@@ -1,6 +1,5 @@
 package com.simplecityapps.shuttle.ui.screens.sources
 
-/** Where the music permission stands. */
 enum class MusicAccess {
     NotRequested,
 

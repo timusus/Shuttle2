@@ -20,7 +20,6 @@ interface ServerPlaylistWriter {
         songPaths: List<String>
     ): PlaylistWriteResult<Unit>
 
-    /** Removes the entries with [entryIds] from the playlist. */
     suspend fun remove(
         playlistId: String,
         entryIds: List<String>
@@ -34,13 +33,11 @@ interface ServerPlaylistWriter {
         after: String?
     ): PlaylistWriteResult<Unit>
 
-    /** Gives the playlist the title [name]. */
     suspend fun rename(
         playlistId: String,
         name: String
     ): PlaylistWriteResult<Unit>
 
-    /** Deletes the playlist from the server. */
     suspend fun delete(playlistId: String): PlaylistWriteResult<Unit>
 }
 

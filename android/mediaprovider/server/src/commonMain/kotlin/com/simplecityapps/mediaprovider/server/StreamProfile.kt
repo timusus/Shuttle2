@@ -14,7 +14,6 @@ data class StreamProfile(
     val directPlayContainers: String,
     /** Whether the player plays HLS, so a streamed transcode is segmented and stays seekable. */
     val playsHls: Boolean,
-    /** The codec [TranscodeFormat.Auto] transcodes to. */
     val autoCodec: TranscodeCodec,
     /** The files the player decodes as they are, for a server that serves the original file (Plex). */
     val directPlayFormats: DirectPlayFormats

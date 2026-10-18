@@ -36,13 +36,11 @@ sealed interface PlaylistEdit {
         override val songPaths: List<String>
     ) : Songs
 
-    /** The playlist was given the title [name]. */
     data class Rename(
         override val playlistId: String,
         val name: String
     ) : PlaylistEdit
 
-    /** The playlist was deleted. */
     data class Delete(
         override val playlistId: String
     ) : PlaylistEdit

@@ -99,7 +99,6 @@ fun S2PullToRefreshBox(
     PullToRefreshBox(isRefreshing = isRefreshing, onRefresh = onRefresh, modifier = modifier) { content() }
 }
 
-/** An outlined single-line text field with a [label] and optional [placeholder] and [supportingText]. */
 @Composable
 fun S2TextField(
     value: String,
