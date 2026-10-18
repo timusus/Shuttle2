@@ -129,7 +129,7 @@ abstract class SongDataDao {
     }
 
     /**
-     * Takes each of [songs]' favourite from its server (#497): a server favourite keeps the time it already has, or takes
+     * Takes each of [songs]' favourite from its server: a server favourite keeps the time it already has, or takes
      * the server's ([SongData.favouritedAt]); anything else is cleared. A song with a `pending_favourites` row is skipped:
      * the local toggle not yet sent wins over the server's older state. Read inside the caller's transaction, so a toggle
      * can't land between the outbox check and the write.
@@ -144,7 +144,7 @@ abstract class SongDataDao {
     }
 
     /**
-     * Folds each of [songs]' server play stats into the row (#772): the larger play count and the later last-played time.
+     * Folds each of [songs]' server play stats into the row: the larger play count and the later last-played time.
      * The app reports its own plays to the server, so the server's count already includes them; taking the maximum, rather
      * than adding, never double-counts, and the SQL form means a play finishing during the sync isn't overwritten.
      */
@@ -344,7 +344,7 @@ abstract class SongDataDao {
         now: Instant = Clock.System.now()
     ): Int
 
-    /** Makes the song with [id] a favourite as of [favouritedAt], if it isn't one already: an Undo restoring [Song.favouritedAt] gets its original place back rather than moving to the top (#564). */
+    /** Makes the song with [id] a favourite as of [favouritedAt], if it isn't one already: an Undo restoring [Song.favouritedAt] gets its original place back rather than moving to the top. */
     @Query("UPDATE songs SET favouritedAt = :favouritedAt WHERE id = :id AND favouritedAt IS NULL")
     abstract suspend fun favourite(
         id: Long,
@@ -357,9 +357,9 @@ abstract class SongDataDao {
     /**
      * [favourite] or [unfavourite] [songs], in chunks, as SQLite before 3.32 (below API 31) binds at most 999 variables a
      * statement. A song that already carries a [Song.favouritedAt] (an Undo restoring one just removed) is set to that
-     * exact time rather than now, so it keeps its original place in the list (#564). Every remote-provider song among
+     * exact time rather than now, so it keeps its original place in the list. Every remote-provider song among
      * [songs] also gets a `pending_favourites` row recording the desired state, in the same transaction, for
-     * `FavouriteSender` to push to its server (#497); local songs never enqueue.
+     * `FavouriteSender` to push to its server; local songs never enqueue.
      */
     @Transaction
     open suspend fun setFavourite(
@@ -381,7 +381,7 @@ abstract class SongDataDao {
 
     /**
      * One `pending_favourites` row per remote-provider song among [songs], overwriting any row already pending for it
-     * so only the latest desired state survives to be sent (#497): a favourite then an unfavourite before it is sent
+     * so only the latest desired state survives to be sent: a favourite then an unfavourite before it is sent
      * leaves a single row with the final state, not two queued operations.
      */
     private suspend fun enqueuePendingFavourites(
