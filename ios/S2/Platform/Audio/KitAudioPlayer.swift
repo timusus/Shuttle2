@@ -427,7 +427,7 @@ final class ResolvingByteReader: TimeOffsetByteReader, @unchecked Sendable {
             }
             if cancelled { throw StreamByteReaderError.cancelled }
             if interrupted { throw StreamByteReaderError.interrupted }
-            let answer = answer!
+            guard let answer else { preconditionFailure("the wait ends only on an answer, a cancel or an interrupt") }
             let result = Result { try Self.reader(answer.stream, error: answer.error) }
             inner = result
             return try result.get()
