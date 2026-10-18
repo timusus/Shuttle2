@@ -285,6 +285,10 @@ kotlin {
     }
 }
 
+composeCompiler {
+    stabilityConfigurationFiles.add(layout.projectDirectory.file("compose-stability.conf"))
+}
+
 // The Baseline Profile :android:baselineprofile generates on its managed device (docs/performance/android-startup.md),
 // kept in src/release/generated/baselineProfiles and packaged into release builds. Regenerate before each release.
 baselineProfile {
