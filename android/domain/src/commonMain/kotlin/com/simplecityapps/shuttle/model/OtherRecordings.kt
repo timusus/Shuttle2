@@ -1,6 +1,5 @@
 package com.simplecityapps.shuttle.model
 
-import com.simplecityapps.mediaprovider.search.SearchText
 import dev.zacsweers.metro.Inject
 
 /** One album's movements of a work: another recording of it, as [FindOtherRecordings] finds them. */
@@ -80,11 +79,5 @@ internal class WorkIdentity(work: String) {
     fun matches(other: String): Boolean {
         if (keys.isNotEmpty() && catalogueSearchKeys(other).any { it in keys } && parseWorkTitle(other).catalogue?.normalised() == catalogue) return true
         return other.foldDiacritics().normalised() == title
-    }
-}
-
-internal fun String.foldDiacritics(): String = buildString {
-    for (c in this@foldDiacritics) {
-        if (c.code < 128) append(c) else append(SearchText.fold(c) ?: c.toString())
     }
 }
