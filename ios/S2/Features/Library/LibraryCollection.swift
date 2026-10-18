@@ -94,7 +94,7 @@ struct LibraryGrid<Content: View>: View {
     }
 
     /// The columns the grid lays out in a container `width` wide, with an index strip `indexWidth` wide down its
-    /// trailing edge and the same width kept clear on the leading edge so the margins match (#750). The width left
+    /// trailing edge and the same width kept clear on the leading edge so the margins match. The width left
     /// inside the content insets (and `AdaptiveLayout.contentMaxWidth`) is filled as SwiftUI fills an adaptive
     /// `GridItem`: with as many `minimumTile`s as fit `spacing` apart.
     static func columnCount(
@@ -118,7 +118,7 @@ struct LibraryGrid<Content: View>: View {
                 .frame(maxWidth: .infinity)
             }
             // The strip takes its width from the trailing edge (`letterIndex`); the leading edge gives up the same, so
-            // the tiles sit centred rather than off to one side (#750).
+            // the tiles sit centred rather than off to one side.
             .safeAreaPadding(.leading, index == nil ? 0 : dynamicTypeSize.letterIndexWidth)
             .letterIndex(index) { proxy.scrollTo($0.anchor, anchor: .top) }
         }

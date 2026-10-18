@@ -121,8 +121,8 @@ struct GenreRow: View {
     var artworkSize: CGFloat = ArtworkSize.row
 
     var body: some View {
-        // Trimmed for show only: a server's genre may keep the space after a tag's separator (" Folk"), which set
-        // its title apart from every other list's (#643); the name itself stays the key.
+        // Trimmed for show only: a server's genre may keep the space after a tag's separator (" Folk"), which would set
+        // its title apart from every other list's; the name itself stays the key.
         MediaRow(
             genre.name.trimmingCharacters(in: .whitespacesAndNewlines),
             subtitle: pluralized(Int(genre.songCount), .song),

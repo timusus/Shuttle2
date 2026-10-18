@@ -74,7 +74,7 @@ struct SongListContent: View {
     var onSortOrder: (SongSortOrder) -> Void = { _ in }
 
     @State private var songInfo: SongInfoTarget?
-    /// The Downloaded filter (#851): only the songs on the device, which play offline. Kept across launches.
+    /// The Downloaded filter: only the songs on the device, which play offline. Kept across launches.
     @AppStorage("library.songs.downloadedOnly") private var downloadedOnly = false
     @Environment(\.downloadBadges) private var downloadBadges
 
@@ -158,7 +158,7 @@ struct SongRowMenu: View {
     let onAddToQueue: (Song) -> Void
     let onExclude: (Song) -> Void
     var onSongInfo: ((Song) -> Void)?
-    /// Download and Remove Download for the song (#853); hidden by the default, as for a screen that doesn't offer them.
+    /// Download and Remove Download for the song; hidden by the default, as for a screen that doesn't offer them.
     var downloads = DetailDownloads()
 
     var body: some View {

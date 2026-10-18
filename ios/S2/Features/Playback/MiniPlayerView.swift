@@ -130,8 +130,8 @@ struct MiniPlayerBar: View {
     /// The progress ring's diameter and stroke, around the play/pause glyph inside its 44 pt target.
     static let progressRingDiameter: CGFloat = TouchTarget.disc
     static let progressRingWidth: CGFloat = 2.5
-    /// The transport glyphs stop growing here, like Now Playing's discs (#782): the targets stay 44 pt, so past it
-    /// the glyphs clipped off the trailing edge and squeezed the title to a word (#861).
+    /// The transport glyphs stop growing here, like Now Playing's discs: the targets stay 44 pt, and past this size
+    /// the glyphs would clip off the trailing edge and squeeze the title to a word.
     static let maximumGlyphSize = DynamicTypeSize.accessibility1
 
     /// How far a horizontal drag on the song must go to skip.
@@ -311,8 +311,8 @@ private struct MiniPlayerAccessoryContent: View {
         bar.row(coverSize: MiniPlayerBar.accessoryCover, showsArtist: !isInline, showsNext: !isInline)
             .padding(.leading, Spacing.small)
             .padding(.trailing, Spacing.xsmall)
-            // The glass is clear over what scrolls under it: over pale art it went pale and the primary label
-            // washed out. A thin material under the row gives it a steady ground (#786).
+            // The glass is clear over what scrolls under it: over pale art it goes pale and the primary label
+            // washes out. A thin material under the row gives it a steady ground.
             .background(.thinMaterial, in: Capsule())
     }
 }
@@ -327,9 +327,8 @@ struct MiniPlayerProgressRing: View {
 
     var body: some View {
         let fraction = progress()
-        // Nothing drawn for a paused song at zero: the empty track alone read as a constant loading ring around
-        // Play (#638), so neither is it drawn around the loading spinner. A playing song shows its track, even while
-        // its duration is unknown.
+        // Nothing drawn for a paused song at zero: the empty track alone reads as a constant loading ring around Play,
+        // so neither is it drawn around the loading spinner. A playing song shows its track, even while its duration is unknown.
         ZStack {
             if fraction > 0 || (isPlaying && !isLoading) {
                 Circle()

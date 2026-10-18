@@ -13,7 +13,7 @@ struct DetailHero<Artwork: View>: View {
     var layout: DetailHeroLayout = .stacked
     var onPlay: () -> Void = {}
     var onShuffle: () -> Void = {}
-    /// Whether the screen's songs are downloaded or downloading (#759), shown under the subtitle.
+    /// Whether the screen's songs are downloaded or downloading, shown under the subtitle.
     var downloadStatus: DownloadSummary.Status = .notDownloaded
     @ViewBuilder let artwork: (CGFloat) -> Artwork
 

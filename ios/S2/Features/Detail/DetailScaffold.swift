@@ -160,16 +160,11 @@ private struct DetailScaffoldBody<Hero: View, Backdrop: View, Rows: View>: View 
             rows()
         }
         .listStyle(.plain)
-        // A full-bleed list runs up under the bars itself, so its first row starts at the top of the screen and the
-        // hero is exactly as tall as the backdrop. No row's height may follow the screen's own geometry (#700): the
-        // zoom push lays the screen out in a transition container of its own, without the bars' safe area and in
-        // shifted global coordinates (the bar's bottom read -426 on an iPhone 16), and a hero row sized from that
-        // stayed oversized in its cell after the push, its title and Play row 286 pt down the page. So the backdrop's
-        // height comes from the list's width and the app's height, neither of which a push changes.
+        // A full-bleed list runs up under the bars, so the hero is exactly as tall as the backdrop. No row's height may follow
+        // the screen's geometry, which a zoom push changes; the backdrop sizes from the list's width and the app's height.
         .modifier(UnderTheBars(isActive: backdrop != nil))
-        // The bar's bottom, on a view laid out inside the list's safe area: the title probe's line and how far the
-        // inset hero's wash reaches up. Its own minY, not the list's minY plus its top inset, which counted the bar
-        // twice (#700).
+        // The bar's bottom, on a view laid out inside the list's safe area: the title probe's line and how far the inset
+        // hero's wash reaches up. Its own minY, not the list's minY plus its top inset, which would count the bar twice.
         .overlay(alignment: .top) {
             Color.clear
                 .frame(height: 0)

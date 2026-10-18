@@ -145,7 +145,7 @@ struct HomeContent: View {
                 }
                 .padding(.top, Spacing.small)
                 .padding(.bottom, Spacing.large)
-                // A reload moves, adds and removes sections and tiles by their ids rather than replacing them (#672)
+                // A reload moves, adds and removes sections and tiles by their ids rather than replacing them
                 .animation(reduceMotion ? nil : .default, value: Self.identity(content.sections))
                 .frame(maxWidth: AdaptiveLayout.contentMaxWidth)
                 .frame(maxWidth: .infinity)

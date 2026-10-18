@@ -80,7 +80,7 @@ struct ContentView: View {
             .onChange(of: navigator.categoryPathsSnapshot) { _, new in categoryStorage = new }
     }
 
-    /// Carries out a home-screen quick action (#761) once the shell is up, after the paths are restored.
+    /// Carries out a home-screen quick action once the shell is up, after the paths are restored.
     private func performQuickAction() {
         guard let action = QuickActionRouter.shared.pending else { return }
         QuickActionRouter.shared.pending = nil
@@ -89,7 +89,7 @@ struct ContentView: View {
     }
 
     /// Opens the source setup's welcome, already in place rather than sliding up over the shell, when there's no
-    /// server and the setup was never finished or skipped (`SourceSetupUiState.firstRun`, #624).
+    /// server and the setup was never finished or skipped (`SourceSetupUiState.firstRun`).
     private func openFirstRunIfNeeded(tier: LayoutTier) {
         guard SourceSetupModels.cached(services).setup.uiState.value.firstRun else { return }
         firstRunFullScreen = tier == .compact

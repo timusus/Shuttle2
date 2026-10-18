@@ -112,9 +112,9 @@ struct AlbumArtistDetailContent: View {
 
     private func ready(_ artist: AlbumArtist) -> some View {
         let name = artist.name ?? artist.friendlyArtistName ?? "Unknown Artist"
-        // An artist only credited on others' albums (#637) has none of their own to count
+        // An artist only credited on others' albums has none of their own to count
         let subtitle = eyebrow(state.albums.isEmpty ? nil : pluralized(state.albums.count, .album), pluralized(state.songs.count, .song))
-        // The shared rule's image (#781): the artist's own, the online one only on a confident match, else their top
+        // The shared rule's image: the artist's own, the online one only on a confident match, else their top
         // album's cover. It fills the hero and seeds the tint, so the colours follow the image shown.
         let source = ArtworkSource.artistHero(state.hero ?? ArtistHeroArtwork(artist: artist, onlineLookup: false, fallbackAlbum: nil))
         return ArtistHeroPhotoReader(source: source, preset: heroPhoto) { photo in
@@ -138,7 +138,7 @@ struct AlbumArtistDetailContent: View {
                         albumActions: albumActions
                     )
                 }
-                // Grouped, the album sections are the artist's albums, and Appears On follows them (#788)
+                // Grouped, the album sections are the artist's albums, and Appears On follows them
                 if !state.hasAlbumSections {
                     appearsOnShelf
                 }
@@ -157,7 +157,7 @@ struct AlbumArtistDetailContent: View {
         }
     }
 
-    /// Others' albums crediting the artist (#637), after the artist's own albums (#788).
+    /// Others' albums crediting the artist, after the artist's own albums.
     @ViewBuilder private var appearsOnShelf: some View {
         if !state.appearsOn.isEmpty {
             DetailAlbumShelf(
@@ -239,7 +239,7 @@ struct AlbumArtistDetailContent: View {
         }
     }
 
-    /// One album's section. Collapsed, it's only its header, so the headers stack as a run of compact rows (#678):
+    /// One album's section. Collapsed, it's only its header, so the headers stack as a run of compact rows:
     /// a small constant gap after the section, and the header's own insets rather than the plain list's taller default.
     /// The gap is the same expanded or collapsed, so expanding never shifts what's above it.
     private func albumSection(_ album: Album, songs: [Song], startIndex: Int) -> some View {

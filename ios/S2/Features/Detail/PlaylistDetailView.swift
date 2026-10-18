@@ -90,7 +90,7 @@ struct PlaylistDetailContent: View {
     var onRemove: (PlaylistSong) -> Void = { _ in }
     var onRename: (String) -> Void = { _ in }
     var onDelete: () -> Void = {}
-    /// The playlist's and each song's Download and Remove Download (#759), and the hero's download status.
+    /// The playlist's and each song's Download and Remove Download, and the hero's download status.
     var downloads = DetailDownloads()
 
     @State private var songInfo: SongInfoTarget?

@@ -213,7 +213,7 @@ struct SettingsContent: View {
     var showsAbout = true
     /// The Shuttle Music Pro section, which reads the app's graph; off for tests of the catalog rows.
     var showsPro = false
-    /// The Downloads row, which opens the storage screen (#852); off where Settings shows only some of its screens.
+    /// The Downloads row, which opens the storage screen; off where Settings shows only some of its screens.
     var showsDownloads = false
     var onToggle: (String, Bool) -> Void = { _, _ in }
     var onChoose: (String, Int) -> Void = { _, _ in }

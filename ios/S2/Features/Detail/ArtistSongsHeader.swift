@@ -7,7 +7,7 @@ import SwiftUI
 struct SongsHeader: View {
     let sortOrder: ArtistSongSortOrder
     let allExpanded: Bool
-    /// Whether the song list has at least one collapsible album section (#636): an album order with none, only
+    /// Whether the song list has at least one collapsible album section: an album order with none, only
     /// "Other Songs", hides Expand All / Collapse All rather than showing a toggle with nothing to do.
     var hasAlbumSections: Bool = true
     var onSortOrderSelected: (ArtistSongSortOrder) -> Void = { _ in }

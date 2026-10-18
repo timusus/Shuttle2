@@ -505,7 +505,7 @@ struct NowPlayingContent: View {
         Button { showSleepTimer = true } label: {
             Image(systemName: state.sleepTimerActive ? "moon.zzz.fill" : "moon.zzz")
                 .capsuleGlyph(chromeInk(isOn: state.sleepTimerActive))
-                // The button is the one element; the symbol's own label ("Snooze") would surface beside it (#650).
+                // The button is the one element; the symbol's own label ("Snooze") would surface beside it.
                 .accessibilityHidden(true)
         }
         .buttonStyle(.pressScale)
@@ -527,7 +527,7 @@ struct NowPlayingContent: View {
     // MARK: - Swipe down to dismiss
 
     /// Only the full-screen cover (the form sheet has the system's own), and not behind a player sheet, whose
-    /// exposed upper half would otherwise close the whole player (#684).
+    /// exposed upper half would otherwise close the whole player.
     private var dismissesByDragging: Bool {
         NowPlayingPresentationStyle.resolve(for: tier) == .fullScreenCover && !(showQueue || showAudio || showSleepTimer || songInfo != nil)
     }

@@ -85,9 +85,8 @@ struct MarqueeText: View {
             .accessibilityLabel(text)
     }
 
-    /// One `Text` whether resting or scrolling, so the offset animates from where the line rests. Two views
-    /// (the old truncated/full-width pair) made the full-width line a fresh insertion that appeared at its final
-    /// offset, the tail of the text, and slid back from there (#683).
+    /// One `Text` whether resting or scrolling, so the offset animates from where the line rests. Two views would
+    /// make the full-width line a fresh insertion at its final offset, the tail of the text, and slide back from there.
     private var line: some View {
         Text(text)
             .lineLimit(1)
