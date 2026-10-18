@@ -26,6 +26,11 @@ private val catalogueRef = Regex(
 
 internal val workNumberRef = Regex("""\b(?:No|Nr)\.\s*\d""", RegexOption.IGNORE_CASE)
 
+internal val formWords = Regex(
+    """\b(?:Symphon(?:y|ie)|Sonata|Concerto|Suite|Quartet|Trio|Partita|Mass|Requiem|Variations|Preludes|Études|Etudes|Cantata|Overture|Serenade|Toccata|Fugue|Fantasia|Chaconne)\b""",
+    RegexOption.IGNORE_CASE
+)
+
 private val structuralWords = setOf("part", "prelude", "book", "act", "movement", "no")
 
 // English keys only, and only at the end of the title or before punctuation, so "in A Little Night Music" is left alone.

@@ -86,22 +86,3 @@ private fun stripWorkPrefix(title: String, work: String?): String {
     val stripped = listOf(": ", " - ").firstOrNull { rest.startsWith(it) }?.let { rest.removePrefix(it) }
     return stripped?.trim()?.takeIf { it.isNotEmpty() } ?: title
 }
-
-private val romanNumerals = listOf(
-    1000 to "M", 900 to "CM", 500 to "D", 400 to "CD", 100 to "C", 90 to "XC",
-    50 to "L", 40 to "XL", 10 to "X", 9 to "IX", 5 to "V", 4 to "IV", 1 to "I"
-)
-
-/** Roman numerals for 1..3999; anything else stays as digits. */
-internal fun toRoman(number: Int): String {
-    if (number !in 1..3999) return number.toString()
-    var remaining = number
-    return buildString {
-        for ((value, symbol) in romanNumerals) {
-            while (remaining >= value) {
-                append(symbol)
-                remaining -= value
-            }
-        }
-    }
-}
