@@ -1,3 +1,4 @@
+import AVFoundation
 import Foundation
 import os
 import PlaybackDecode
@@ -29,6 +30,8 @@ final class KitAudioPlayer: NSObject, IosAudioPlayer {
     private var sampleRateListener: ((KotlinInt?) -> Void)?
     private var lastReport: (uid: Int64, state: IosAudioPlayerState)?
     private var ticker: Timer?
+    private var lastLoggedStatus: String?
+    private var routeObserver: NSObjectProtocol?
     private let log = Logger(subsystem: "com.simplecityapps.shuttle2", category: "playback")
     /// When the last start that plays was asked for, until it is heard: the `time to first audio` line (#822).
     private var startRequested: UInt64?
@@ -52,6 +55,7 @@ final class KitAudioPlayer: NSObject, IosAudioPlayer {
         observeState()
         observeSampleRate()
         observeTimes()
+        observeRoute()
         Task { @MainActor [weak self, events = player.events] in
             for await event in events {
                 self?.handle(event)
@@ -65,6 +69,7 @@ final class KitAudioPlayer: NSObject, IosAudioPlayer {
 
     deinit {
         ticker?.invalidate()
+        if let routeObserver { NotificationCenter.default.removeObserver(routeObserver) }
     }
 
     /// The app's player: each item's source reads the stream `resolve` hands it, opened on the decode thread, and plays
@@ -96,9 +101,39 @@ final class KitAudioPlayer: NSObject, IosAudioPlayer {
             _ = (player.state, player.isPlaying, player.playWhenReady, player.currentIndex, player.error != nil)
         } onChange: { [weak self] in
             Task { @MainActor in
+                self?.logStatus()
                 self?.reportState()
                 self?.observeState()
             }
+        }
+    }
+
+    /// The status lines the AirPlay device check reads: one per change, with the position it happened at.
+    @MainActor
+    private func logStatus() {
+        let status = if player.error != nil {
+            "failed"
+        } else {
+            switch player.state {
+            case .idle: "idle"
+            case .buffering: "buffering"
+            case .ready: player.isPlaying ? "playing" : "paused"
+            case .ended: "ended"
+            }
+        }
+        guard status != lastLoggedStatus else { return }
+        lastLoggedStatus = status
+        log.info("status \(status, privacy: .public) at \(self.player.position, format: .fixed(precision: 2), privacy: .public) s")
+    }
+
+    private func observeRoute() {
+        routeObserver = NotificationCenter.default.addObserver(
+            forName: AVAudioSession.routeChangeNotification, object: nil, queue: .main
+        ) { [weak self] note in
+            let reason = (note.userInfo?[AVAudioSessionRouteChangeReasonKey] as? UInt) ?? 0
+            let session = AVAudioSession.sharedInstance()
+            let ports = session.currentRoute.outputs.map(\.portType.rawValue).joined(separator: ",")
+            self?.log.info("route change reason \(reason, privacy: .public), output \(ports, privacy: .public), latency \(session.outputLatency, format: .fixed(precision: 3), privacy: .public) s")
         }
     }
 
@@ -136,6 +171,7 @@ final class KitAudioPlayer: NSObject, IosAudioPlayer {
     @MainActor
     private func firstAudioRendered(_ item: QueueKey?) {
         awaitingFirstAudio = false
+        if let item { log.info("first audio rendered, song \(item.songId, privacy: .public)") }
         guard let start = startRequested, let item else { return }
         startRequested = nil
         let ms = (DispatchTime.now().uptimeNanoseconds - start) / 1_000_000
@@ -166,8 +202,10 @@ final class KitAudioPlayer: NSObject, IosAudioPlayer {
             }
         case let .firstAudioRendered(ref, _):
             firstAudioRendered(ref.item)
-        case .bufferingStarted, .bufferingEnded:
-            break
+        case let .bufferingStarted(ref, position):
+            log.info("underrun: buffering started, song \(ref.item.songId, privacy: .public) at \(position, format: .fixed(precision: 2), privacy: .public) s")
+        case .bufferingEnded:
+            log.info("underrun: buffering ended at \(self.player.position, format: .fixed(precision: 2), privacy: .public) s")
         }
     }
 
