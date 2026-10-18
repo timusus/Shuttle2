@@ -56,11 +56,6 @@ final class StreamWarmUpTests: XCTestCase {
         URL(string: "http://127.0.0.1:\(server.port)/Audio/item789/universal?PlaySessionId=abc&ApiKey=secret-token")!
     }
 
-    private func waitForRequests(_ server: PlaybackStreamingTestSupport.LoopbackMediaServer, count: Int) {
-        let deadline = Date().addingTimeInterval(5)
-        while server.requestHeads.count < count, Date() < deadline { Thread.sleep(forTimeInterval: 0.01) }
-    }
-
     func testNothingIsSentBeforeAnyStream() {
         XCTAssertNil(makeWarmUp().warm())
     }
@@ -79,7 +74,7 @@ final class StreamWarmUpTests: XCTestCase {
         warmUp.noteStreamed(streamURL(server))
 
         XCTAssertNotNil(warmUp.warm())
-        waitForRequests(server, count: 1)
+        XCTAssertTrue(ChangeSignal.shared.wait { !server.requestHeads.isEmpty })
 
         let head = try XCTUnwrap(server.requestHeads.first)
         XCTAssertTrue(head.hasPrefix("HEAD / HTTP/1.1"), head)
@@ -119,7 +114,7 @@ final class StreamWarmUpTests: XCTestCase {
         warmUp.noteStreamed(streamURL(other))
 
         XCTAssertNotNil(warmUp.warm())
-        waitForRequests(other, count: 1)
+        XCTAssertTrue(ChangeSignal.shared.wait { !other.requestHeads.isEmpty })
         XCTAssertEqual(other.requestHeads.count, 1)
     }
 
