@@ -7,6 +7,7 @@ import com.simplecityapps.playback.CastStarter
 import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.PlaybackService
 import com.simplecityapps.playback.PlaybackState
+import com.simplecityapps.playback.PlaybackStateSource
 import com.simplecityapps.playback.mediasession.PlayRequests
 import com.simplecityapps.playback.persistence.QueueStore
 import com.simplecityapps.playback.queue.QueueSongRefresher
@@ -32,6 +33,7 @@ class PlaybackInitializer
 constructor(
     @ApplicationContext private val context: Context,
     private val playbackOperations: PlaybackOperations,
+    private val playbackStateSource: PlaybackStateSource,
     private val recordPlays: RecordPlays,
     private val recordResumePoints: RecordResumePoints,
     private val queueStore: QueueStore,
@@ -63,8 +65,8 @@ constructor(
 
     /** Compared against a snapshot taken here, so the initial state isn't handled as a change, and none made in between is missed. */
     private fun collectPlaybackState() {
-        val playbackState = playbackOperations.playbackStateFlow.value
-        appCoroutineScope.launchCollectingChanges(playbackOperations.playbackStateFlow, playbackState, Dispatchers.Main.immediate) { _, current ->
+        val playbackState = playbackStateSource.playbackStateFlow.value
+        appCoroutineScope.launchCollectingChanges(playbackStateSource.playbackStateFlow, playbackState, Dispatchers.Main.immediate) { _, current ->
             if (current is PlaybackState.Playing) {
                 PlaybackService.start(context)
             }

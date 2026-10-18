@@ -2,8 +2,8 @@ package com.simplecityapps.shuttle.playback
 
 import com.simplecityapps.mediaprovider.repository.playhistory.PlayHistoryRepository
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
-import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.PlaybackState
+import com.simplecityapps.playback.PlaybackStateSource
 import com.simplecityapps.playback.TrackEnd
 import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.shuttle.di.AppCoroutineScope
@@ -26,14 +26,14 @@ import kotlinx.coroutines.launch
 /**
  * Records each song's plays, for Recently Played, Most Played, an artist's Top Songs and the listening history (#633),
  * on both platforms:
- * - a track end ([PlaybackOperations.trackEndedFlow]) counts the song as played through (its play count, last played
+ * - a track end ([PlaybackStateSource.trackEndedFlow]) counts the song as played through (its play count, last played
  *   and last completed);
  * - a play is written to the listening history as soon as it reaches the song's threshold
  *   ([PlayHistoryRepository.listenThresholdMs]: half the song or 4 minutes, whichever comes first, for a song of 30
  *   seconds or more), so a listen isn't lost when the app is killed mid-song or playback stops on the last one (#651);
  *   its track end then marks it completed. A play that doesn't reach the threshold writes nothing, and moving off a
  *   song writes nothing either;
- * - a pause ([PlaybackOperations.pausePositionFlow]) saves its position (and when it was last played).
+ * - a pause ([PlaybackStateSource.pausePositionFlow]) saves its position (and when it was last played).
  *
  * Each play of the current queue item is a listen: it starts when the item becomes current (or when it starts over on
  * repeat), with the queue's [QueueOperations.playContext] as it stands then. It reaches the threshold when a progress
@@ -46,7 +46,7 @@ import kotlinx.coroutines.launch
  * Started once at app start, it runs for the life of the app on main; each write goes to [ioDispatcher].
  */
 class RecordPlays(
-    private val playbackOperations: PlaybackOperations,
+    private val playbackStateSource: PlaybackStateSource,
     private val queueOperations: QueueOperations,
     private val songRepository: SongRepository,
     private val playHistoryRepository: PlayHistoryRepository,
@@ -56,13 +56,13 @@ class RecordPlays(
 ) {
     @Inject
     constructor(
-        playbackOperations: PlaybackOperations,
+        playbackStateSource: PlaybackStateSource,
         queueOperations: QueueOperations,
         songRepository: SongRepository,
         playHistoryRepository: PlayHistoryRepository,
         @AppCoroutineScope appCoroutineScope: CoroutineScope,
         @IoDispatcher ioDispatcher: CoroutineDispatcher
-    ) : this(playbackOperations, queueOperations, songRepository, playHistoryRepository, appCoroutineScope, ioDispatcher, { Clock.System.now() })
+    ) : this(playbackStateSource, queueOperations, songRepository, playHistoryRepository, appCoroutineScope, ioDispatcher, { Clock.System.now() })
 
     private class Listen(
         val uid: Long,
@@ -98,10 +98,10 @@ class RecordPlays(
             }
         }
         appCoroutineScope.launch(Dispatchers.Main.immediate) {
-            playbackOperations.progressFlow.collect { progress ->
+            playbackStateSource.progressFlow.collect { progress ->
                 val current = listen ?: return@collect
                 val position = progress?.position ?: return@collect
-                val playing = playbackOperations.playbackStateFlow.value == PlaybackState.Playing
+                val playing = playbackStateSource.playbackStateFlow.value == PlaybackState.Playing
                 val step = current.lastPositionMs?.let { position - it }
                 if (step != null && step in 1..MAX_TICK_MS && playing) {
                     current.listenedMs += step
@@ -116,13 +116,13 @@ class RecordPlays(
             }
         }
         appCoroutineScope.launch(Dispatchers.Main.immediate) {
-            playbackOperations.trackEndedFlow.collect { end ->
+            playbackStateSource.trackEndedFlow.collect { end ->
                 appCoroutineScope.launch(ioDispatcher) { songRepository.recordPlayedThrough(end.song) }
                 onTrackEnded(end)
             }
         }
         appCoroutineScope.launch(Dispatchers.Main.immediate) {
-            playbackOperations.pausePositionFlow.collect { songPosition ->
+            playbackStateSource.pausePositionFlow.collect { songPosition ->
                 appCoroutineScope.launch(ioDispatcher) { songRepository.setPlaybackPosition(songPosition.song, songPosition.positionMs) }
             }
         }

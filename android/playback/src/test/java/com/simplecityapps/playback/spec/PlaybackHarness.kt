@@ -181,7 +181,8 @@ class PlaybackHarness(
 
     val queueOperations: QueueOperations
 
-    val playbackOperations: PlaybackOperations
+    /** Both [PlaybackOperations] and [PlaybackStateSource], as the app binds it. */
+    val playbackOperations: PlaybackFacade
 
     /** Saves the queue and the position to resume from, and restores them ([restore]). */
     val queueStore: QueueStore

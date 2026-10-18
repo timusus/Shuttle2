@@ -2,8 +2,8 @@ package com.simplecityapps.shuttle.playback
 
 import com.simplecityapps.mediaprovider.repository.playhistory.PlayHistoryRepository
 import com.simplecityapps.mediaprovider.repository.playhistory.ResumePoint
-import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.PlaybackState
+import com.simplecityapps.playback.PlaybackStateSource
 import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.playback.queue.RepeatMode
 import com.simplecityapps.playback.queue.ShuffleMode
@@ -44,7 +44,7 @@ import kotlinx.coroutines.launch
  * Started once at app start next to [RecordPlays], it runs for the life of the app on main.
  */
 class RecordResumePoints(
-    private val playbackOperations: PlaybackOperations,
+    private val playbackStateSource: PlaybackStateSource,
     private val queueOperations: QueueOperations,
     private val playHistoryRepository: PlayHistoryRepository,
     private val appCoroutineScope: CoroutineScope,
@@ -53,12 +53,12 @@ class RecordResumePoints(
 ) {
     @Inject
     constructor(
-        playbackOperations: PlaybackOperations,
+        playbackStateSource: PlaybackStateSource,
         queueOperations: QueueOperations,
         playHistoryRepository: PlayHistoryRepository,
         @AppCoroutineScope appCoroutineScope: CoroutineScope,
         @IoDispatcher ioDispatcher: CoroutineDispatcher
-    ) : this(playbackOperations, queueOperations, playHistoryRepository, appCoroutineScope, ioDispatcher, { Clock.System.now() })
+    ) : this(playbackStateSource, queueOperations, playHistoryRepository, appCoroutineScope, ioDispatcher, { Clock.System.now() })
 
     private class Current(
         val uid: Long,
@@ -113,12 +113,12 @@ class RecordResumePoints(
             }
         }
         appCoroutineScope.launch(Dispatchers.Main.immediate) {
-            playbackOperations.progressFlow.collect { progress ->
+            playbackStateSource.progressFlow.collect { progress ->
                 val point = current ?: return@collect
                 val position = progress?.position ?: return@collect
                 val previous = point.positionMs
                 point.positionMs = position
-                val playing = playbackOperations.playbackStateFlow.value == PlaybackState.Playing
+                val playing = playbackStateSource.playbackStateFlow.value == PlaybackState.Playing
                 if (playing && previous != null && position < previous) point.finished = false
                 val tick = playing && previous != null && position - previous in 1..RecordPlays.MAX_TICK_MS
                 // A restored queue gets its context back after its current item, and a song only settles by playing on.
@@ -129,14 +129,14 @@ class RecordResumePoints(
             }
         }
         appCoroutineScope.launch(Dispatchers.Main.immediate) {
-            playbackOperations.pausePositionFlow.collect { songPosition ->
+            playbackStateSource.pausePositionFlow.collect { songPosition ->
                 val point = current?.takeIf { it.song.id == songPosition.song.id } ?: return@collect
                 point.positionMs = songPosition.positionMs
                 save(point, promptly = true)
             }
         }
         appCoroutineScope.launch(Dispatchers.Main.immediate) {
-            playbackOperations.trackEndedFlow.collect { end ->
+            playbackStateSource.trackEndedFlow.collect { end ->
                 val point = current?.takeIf { it.song.id == end.song.id } ?: return@collect
                 val state = queueOperations.queueStateFlow.value
                 if (state.currentPosition == state.items.lastIndex && queueOperations.getRepeatMode() == RepeatMode.Off) {

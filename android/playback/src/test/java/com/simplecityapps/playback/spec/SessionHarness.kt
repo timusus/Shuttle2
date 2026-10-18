@@ -86,6 +86,7 @@ class SessionHarness(
                 context = context,
                 appCoroutineScope = scope,
                 playbackOperations = playback.playbackOperations,
+                playbackStateSource = playback.playbackOperations,
                 queueOperations = playback.queueOperations,
                 mediaIdHelper = mediaIdHelper,
                 uriSongResolver = UriSongResolver(context, songRepository),

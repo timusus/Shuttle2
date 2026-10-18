@@ -6,9 +6,9 @@ import android.graphics.drawable.Icon
 import android.os.Build
 import android.service.quicksettings.Tile
 import android.service.quicksettings.TileService
-import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.PlaybackServiceAction
 import com.simplecityapps.playback.PlaybackServiceStarter
+import com.simplecityapps.playback.PlaybackStateSource
 import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.di.appGraph
@@ -29,7 +29,7 @@ class PlaybackTileService : TileService() {
     private var listenJob: Job? = null
 
     @Inject
-    lateinit var playbackOperations: PlaybackOperations
+    lateinit var playbackStateSource: PlaybackStateSource
 
     @Inject
     lateinit var queueOperations: QueueOperations
@@ -51,7 +51,7 @@ class PlaybackTileService : TileService() {
         super.onStartListening()
         listenJob =
             scope.launch {
-                combine(playbackOperations.playbackStateFlow, queueOperations.queueStateFlow) { playbackState, queueState ->
+                combine(playbackStateSource.playbackStateFlow, queueOperations.queueStateFlow) { playbackState, queueState ->
                     PlaybackTileState.from(
                         playbackState = playbackState,
                         currentTitle = queueState.currentItem?.song?.name,

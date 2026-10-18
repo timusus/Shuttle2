@@ -2,7 +2,7 @@ package com.simplecityapps.shuttle.scrobbling
 
 import com.simplecityapps.mediaprovider.AggregatePlaybackReporter
 import com.simplecityapps.mediaprovider.settings.LibrarySettings
-import com.simplecityapps.playback.PlaybackOperations
+import com.simplecityapps.playback.PlaybackStateSource
 import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.shuttle.coroutines.launchCollectingChanges
 import com.simplecityapps.shuttle.di.AppCoroutineScope
@@ -26,7 +26,7 @@ import kotlinx.coroutines.launch
 class PlaybackScrobbling
 @Inject
 constructor(
-    private val playbackOperations: PlaybackOperations,
+    private val playbackStateSource: PlaybackStateSource,
     private val queueOperations: QueueOperations,
     private val playbackReporter: AggregatePlaybackReporter,
     private val librarySettings: LibrarySettings,
@@ -45,9 +45,9 @@ constructor(
         )
 
         val queueState = queueOperations.queueStateFlow.value
-        val playbackState = playbackOperations.playbackStateFlow.value
-        val progress = playbackOperations.progressFlow.value
-        val speed = playbackOperations.playbackSpeedFlow.value
+        val playbackState = playbackStateSource.playbackStateFlow.value
+        val progress = playbackStateSource.progressFlow.value
+        val speed = playbackStateSource.playbackSpeedFlow.value
         val serverStreamsFlow = scrobblingSettings.scrobbleServerStreams.stateIn(appCoroutineScope)
         val serverStreams = serverStreamsFlow.value
 
@@ -61,20 +61,20 @@ constructor(
         appCoroutineScope.launchCollectingChanges(serverStreamsFlow, serverStreams, Dispatchers.Main.immediate) { _, current ->
             handle(planner.onScrobbleServerStreamsChanged(current))
         }
-        appCoroutineScope.launchCollectingChanges(playbackOperations.playbackSpeedFlow, speed, Dispatchers.Main.immediate) { _, current ->
+        appCoroutineScope.launchCollectingChanges(playbackStateSource.playbackSpeedFlow, speed, Dispatchers.Main.immediate) { _, current ->
             planner.onPlaybackSpeedChanged(current)
         }
         appCoroutineScope.launchCollectingChanges(queueOperations.queueStateFlow, queueState, Dispatchers.Main.immediate) { _, current ->
             handle(planner.onCurrentItemChanged(current.currentItem))
         }
-        appCoroutineScope.launchCollectingChanges(playbackOperations.playbackStateFlow, playbackState, Dispatchers.Main.immediate) { _, current ->
+        appCoroutineScope.launchCollectingChanges(playbackStateSource.playbackStateFlow, playbackState, Dispatchers.Main.immediate) { _, current ->
             handle(planner.onStateChanged(current))
         }
-        appCoroutineScope.launchCollectingChanges(playbackOperations.progressFlow, progress, Dispatchers.Main.immediate) { _, current ->
+        appCoroutineScope.launchCollectingChanges(playbackStateSource.progressFlow, progress, Dispatchers.Main.immediate) { _, current ->
             current?.let { handle(planner.onProgress(it.position)) }
         }
         appCoroutineScope.launch(Dispatchers.Main.immediate) {
-            playbackOperations.trackEndedFlow.collect { end -> handle(planner.onTrackEnded(end.song)) }
+            playbackStateSource.trackEndedFlow.collect { end -> handle(planner.onTrackEnded(end.song)) }
         }
 
         // Anything queued while it couldn't send, before the app last closed.

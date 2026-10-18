@@ -5,8 +5,8 @@ import android.content.Context
 import android.content.res.Configuration
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.updateAll
-import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.PlaybackState
+import com.simplecityapps.playback.PlaybackStateSource
 import com.simplecityapps.playback.WidgetArtwork
 import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.playback.queue.QueueState
@@ -45,7 +45,7 @@ class WidgetManager
 @Inject
 constructor(
     @ApplicationContext private val context: Context,
-    private val playbackOperations: PlaybackOperations,
+    private val playbackStateSource: PlaybackStateSource,
     private val queueOperations: QueueOperations,
     private val artworkStore: WidgetArtwork,
     private val appearanceSettings: AppearanceSettings,
@@ -87,7 +87,7 @@ constructor(
         if (changesJob == null) {
             changesJob =
                 appCoroutineScope.launchWidgetUpdateRequests(
-                    playbackStateFlow = playbackOperations.playbackStateFlow,
+                    playbackStateFlow = playbackStateSource.playbackStateFlow,
                     queueStateFlow = queueOperations.queueStateFlow,
                     shuffleModeFlow = queueOperations.shuffleModeFlow,
                     repeatModeFlow = queueOperations.repeatModeFlow,
@@ -170,7 +170,7 @@ constructor(
         artworkPath: String?
     ) = nowPlayingWidgetState(
         song = song,
-        playbackState = playbackOperations.playbackState(),
+        playbackState = playbackStateSource.playbackState(),
         shuffleMode = queueOperations.getShuffleMode(),
         repeatMode = queueOperations.getRepeatMode(),
         artworkPath = artworkPath,

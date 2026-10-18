@@ -5,6 +5,7 @@ import com.simplecityapps.playback.Play
 import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.PlaybackProgress
 import com.simplecityapps.playback.PlaybackState
+import com.simplecityapps.playback.PlaybackStateSource
 import com.simplecityapps.playback.SongPosition
 import com.simplecityapps.playback.TrackEnd
 import com.simplecityapps.playback.queue.QueueItem
@@ -15,7 +16,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 
 /** A [PlaybackOperations] that records what it's asked to do and emits only what a test sends it. */
-class FakePlaybackOperations : PlaybackOperations {
+class FakePlaybackOperations :
+    PlaybackOperations,
+    PlaybackStateSource {
     override val playbackStateFlow = MutableStateFlow<PlaybackState>(PlaybackState.Paused)
     override val progressFlow = MutableStateFlow<PlaybackProgress?>(null)
     override val playbackSpeedFlow = MutableStateFlow(1f)

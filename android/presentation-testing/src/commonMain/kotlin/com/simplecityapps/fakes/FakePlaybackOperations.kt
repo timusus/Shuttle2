@@ -5,6 +5,7 @@ import com.simplecityapps.playback.Play
 import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.PlaybackProgress
 import com.simplecityapps.playback.PlaybackState
+import com.simplecityapps.playback.PlaybackStateSource
 import com.simplecityapps.playback.SongPosition
 import com.simplecityapps.playback.TrackEnd
 import com.simplecityapps.playback.queue.QueueItem
@@ -13,7 +14,9 @@ import com.simplecityapps.shuttle.model.Song
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 
-class FakePlaybackOperations : PlaybackOperations {
+class FakePlaybackOperations :
+    PlaybackOperations,
+    PlaybackStateSource {
     override val playbackStateFlow = MutableStateFlow<PlaybackState>(PlaybackState.Paused)
     override val progressFlow = MutableStateFlow<PlaybackProgress?>(null)
     override val playbackSpeedFlow = MutableStateFlow(1f)

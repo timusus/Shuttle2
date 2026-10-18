@@ -2,8 +2,8 @@ package com.simplecityapps.shuttle.playbackreporting
 
 import com.simplecityapps.mediaprovider.AggregatePlaybackReporter
 import com.simplecityapps.mediaprovider.settings.LibrarySettings
-import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.PlaybackState
+import com.simplecityapps.playback.PlaybackStateSource
 import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.playback.queue.QueueState
 import com.simplecityapps.shuttle.coroutines.launchCollectingChanges
@@ -23,7 +23,7 @@ import kotlinx.coroutines.launch
 class PlaybackReporting
 @Inject
 constructor(
-    private val playbackOperations: PlaybackOperations,
+    private val playbackStateSource: PlaybackStateSource,
     private val queueOperations: QueueOperations,
     private val playbackReporter: AggregatePlaybackReporter,
     private val sender: PlaybackReportSender,
@@ -43,9 +43,9 @@ constructor(
         val enabledFlow = librarySettings.reportPlaybackToServer.stateIn(appCoroutineScope)
         val enabled = enabledFlow.value
         val queueState = queueOperations.queueStateFlow.value
-        val play = playbackOperations.playFlow.value
-        val playbackState = playbackOperations.playbackStateFlow.value
-        val progress = playbackOperations.progressFlow.value
+        val play = playbackStateSource.playFlow.value
+        val playbackState = playbackStateSource.playbackStateFlow.value
+        val progress = playbackStateSource.progressFlow.value
         sender.send(planner.onCurrentItemChanged(queueState))
         sender.send(planner.onPlayChanged(play, now()))
         sender.send(planner.onStateChanged(playbackState.toPlannerState(), now()))
@@ -59,17 +59,17 @@ constructor(
         appCoroutineScope.launchCollectingChanges(queueOperations.queueStateFlow, queueState, Dispatchers.Main.immediate) { _, current ->
             sender.send(planner.onCurrentItemChanged(current))
         }
-        appCoroutineScope.launchCollectingChanges(playbackOperations.playFlow, play, Dispatchers.Main.immediate) { _, current ->
+        appCoroutineScope.launchCollectingChanges(playbackStateSource.playFlow, play, Dispatchers.Main.immediate) { _, current ->
             sender.send(planner.onPlayChanged(current, now()))
         }
-        appCoroutineScope.launchCollectingChanges(playbackOperations.playbackStateFlow, playbackState, Dispatchers.Main.immediate) { _, current ->
+        appCoroutineScope.launchCollectingChanges(playbackStateSource.playbackStateFlow, playbackState, Dispatchers.Main.immediate) { _, current ->
             sender.send(planner.onStateChanged(current.toPlannerState(), now()))
         }
-        appCoroutineScope.launchCollectingChanges(playbackOperations.progressFlow, progress, Dispatchers.Main.immediate) { _, current ->
+        appCoroutineScope.launchCollectingChanges(playbackStateSource.progressFlow, progress, Dispatchers.Main.immediate) { _, current ->
             current?.let { sender.send(planner.onProgress(it.position, now())) }
         }
         appCoroutineScope.launch(Dispatchers.Main.immediate) {
-            playbackOperations.trackEndedFlow.collect { end -> sender.send(planner.onTrackEnded(end.song)) }
+            playbackStateSource.trackEndedFlow.collect { end -> sender.send(planner.onTrackEnded(end.song)) }
         }
 
         sender.replayPendingPlays()

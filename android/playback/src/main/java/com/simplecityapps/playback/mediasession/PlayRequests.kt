@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.widget.Toast
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.playback.PlaybackOperations
+import com.simplecityapps.playback.PlaybackStateSource
 import com.simplecityapps.playback.androidauto.MediaIdHelper
 import com.simplecityapps.playback.androidauto.PlayQueue
 import com.simplecityapps.playback.queue.QueueOperations
@@ -45,6 +46,7 @@ constructor(
     @ApplicationContext private val context: Context,
     @AppCoroutineScope private val appCoroutineScope: CoroutineScope,
     private val playbackOperations: PlaybackOperations,
+    private val playbackStateSource: PlaybackStateSource,
     private val queueOperations: QueueOperations,
     private val mediaIdHelper: MediaIdHelper,
     private val uriSongResolver: UriSongResolver,
@@ -175,7 +177,7 @@ constructor(
      * fail where the first load didn't.
      */
     fun launchPlaybackFailureMessages(): Job = appCoroutineScope.launch(Dispatchers.Main.immediate) {
-        playbackOperations.playbackFailureFlow.collect { song ->
+        playbackStateSource.playbackFailureFlow.collect { song ->
             if (!song.isInLibrary) {
                 Toast.makeText(context, com.simplecityapps.core.R.string.open_file_failed, Toast.LENGTH_LONG).show()
             }

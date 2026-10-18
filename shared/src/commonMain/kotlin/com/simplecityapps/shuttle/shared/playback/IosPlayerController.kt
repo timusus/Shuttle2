@@ -6,6 +6,7 @@ import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.PlaybackPolicy
 import com.simplecityapps.playback.PlaybackProgress
 import com.simplecityapps.playback.PlaybackState
+import com.simplecityapps.playback.PlaybackStateSource
 import com.simplecityapps.playback.SongPosition
 import com.simplecityapps.playback.TrackEnd
 import com.simplecityapps.playback.queue.QueueItem
@@ -60,7 +61,8 @@ class IosPlayerController(
     private val random: Random = Random.Default,
     /** Where a play of an item that isn't loaded starts it: the saved position, else the song's own start. */
     private val resumePosition: (Song) -> Int = PlaybackPolicy::startOf
-) : PlaybackOperations {
+) : PlaybackOperations,
+    PlaybackStateSource {
     private val queue = QueueModel(random)
 
     private val log = Logger.tagged("playback")

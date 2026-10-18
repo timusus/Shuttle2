@@ -44,6 +44,7 @@ class PlaybackInitializerTest {
     private val initializer = PlaybackInitializer(
         context = application,
         playbackOperations = playbackOperations,
+        playbackStateSource = playbackOperations,
         recordPlays = RecordPlays(
             playbackOperations,
             FakeQueueOperations(),

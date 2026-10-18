@@ -149,7 +149,7 @@ class PlayerViewModelTest {
             observeNowPlayingDecor = ObserveNowPlayingDecor(ObserveArtworkSeed(seedSource, ObserveSetting(settingsStore)), ObserveSetting(settingsStore), deliveredFormats),
             castAvailability = { false },
             savedNowPlaying = { savedNowPlaying },
-            clearQueue = ClearQueue(queueOperations, playbackOperations),
+            clearQueue = ClearQueue(queueOperations, playbackOperations, playbackOperations),
             restoreQueue = RestoreQueue(queueOperations, playbackOperations),
             availableMediaActions = AvailableMediaActions(mediaActions.resolveSongs, mediaActions.songDownloader, createPlatformFeatures(), queueOperations, ObserveSetting(settingsStore)),
             mediaActionHandler = mediaActions.handler,

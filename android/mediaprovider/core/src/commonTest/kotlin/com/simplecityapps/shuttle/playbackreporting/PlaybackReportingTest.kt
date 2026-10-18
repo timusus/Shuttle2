@@ -6,9 +6,9 @@ import com.simplecityapps.mediaprovider.PlaybackSession
 import com.simplecityapps.mediaprovider.settings.LibrarySettings
 import com.simplecityapps.playback.CastDevice
 import com.simplecityapps.playback.Play
-import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.PlaybackProgress
 import com.simplecityapps.playback.PlaybackState
+import com.simplecityapps.playback.PlaybackStateSource
 import com.simplecityapps.playback.SongPosition
 import com.simplecityapps.playback.TrackEnd
 import com.simplecityapps.playback.queue.QueueItem
@@ -43,7 +43,7 @@ import kotlinx.coroutines.test.setMain
 @OptIn(ExperimentalCoroutinesApi::class)
 class PlaybackReportingTest {
     private val song = createSong(id = 1, duration = 200_000, mediaProvider = MediaProviderType.Jellyfin)
-    private val playbackOperations = FakePlaybackOperations()
+    private val playbackStateSource = FakePlaybackStateSource()
     private val queueOperations = FakeQueueOperations()
     private val reporter = FakeReporter()
     private val playbackReporter = AggregatePlaybackReporter(setOf(reporter))
@@ -55,7 +55,7 @@ class PlaybackReportingTest {
 
     private val playbackReporting by lazy {
         PlaybackReporting(
-            playbackOperations = playbackOperations,
+            playbackStateSource = playbackStateSource,
             queueOperations = queueOperations,
             playbackReporter = playbackReporter,
             sender = PlaybackReportSender(
@@ -89,9 +89,9 @@ class PlaybackReportingTest {
     ) {
         val item = song.toQueueItem(isCurrent = true)
         queueOperations.queueStateFlow.value = QueueState(items = listOf(item), currentItem = item, currentPosition = 0)
-        playbackOperations.playFlow.value = Play(playId, item.uid)
-        playbackOperations.progressFlow.value = PlaybackProgress(position = positionMs, duration = song.duration)
-        playbackOperations.playbackStateFlow.value = PlaybackState.Playing
+        playbackStateSource.playFlow.value = Play(playId, item.uid)
+        playbackStateSource.progressFlow.value = PlaybackProgress(position = positionMs, duration = song.duration)
+        playbackStateSource.playbackStateFlow.value = PlaybackState.Playing
     }
 
     @Test
@@ -108,7 +108,7 @@ class PlaybackReportingTest {
         playSongAt(0, playId = "stream-1")
         playbackReporting.start()
 
-        playbackOperations.playFlow.value = Play("stream-2", playbackOperations.playFlow.value!!.uid)
+        playbackStateSource.playFlow.value = Play("stream-2", playbackStateSource.playFlow.value!!.uid)
 
         reporter.sessionIds shouldBe listOf("stream-1", "stream-1", "stream-2")
     }
@@ -186,7 +186,7 @@ class PlaybackReportingTest {
 /** Every member [PlaybackReporting] doesn't read. */
 private fun unused(): Nothing = error("Not read by PlaybackReporting")
 
-private class FakePlaybackOperations : PlaybackOperations {
+private class FakePlaybackStateSource : PlaybackStateSource {
     override val playbackStateFlow = MutableStateFlow<PlaybackState>(PlaybackState.Paused)
     override val progressFlow = MutableStateFlow<PlaybackProgress?>(null)
     override val playbackSpeedFlow = MutableStateFlow(1f)
@@ -196,26 +196,10 @@ private class FakePlaybackOperations : PlaybackOperations {
     override val pausePositionFlow = MutableSharedFlow<SongPosition>(extraBufferCapacity = 64)
     override val playbackFailureFlow = MutableSharedFlow<Song>(extraBufferCapacity = 64)
 
-    override fun load(seekPosition: Int?, skipUnloadable: Boolean, playWhenReady: Boolean, completion: (Result<Boolean>) -> Unit) = unused()
-    override fun play() = unused()
-    override fun pause() = unused()
-    override suspend fun pauseAtEndOfItem() = unused()
-    override fun togglePlayback() = unused()
-    override fun skipToNext(ignoreRepeat: Boolean, completion: ((Result<Any?>) -> Unit)?) = unused()
-    override fun skipToPrev(force: Boolean, completion: ((Result<Any?>) -> Unit)?) = unused()
-    override fun skipTo(position: Int) = unused()
-    override suspend fun addToQueue(songs: List<Song>) = unused()
-    override suspend fun playNext(songs: List<Song>) = unused()
-    override suspend fun shuffle(songs: List<Song>, context: PlayContext, completion: (Result<Any?>) -> Unit) = unused()
-    override fun seekTo(position: Int) = unused()
     override fun playbackState(): PlaybackState = unused()
     override fun getProgress(): Int? = unused()
     override fun getDuration(): Int? = unused()
     override fun getPlaybackSpeed(): Float = unused()
-    override fun setPlaybackSpeed(multiplier: Float) = unused()
-    override fun moveQueueItem(from: Int, to: Int) = unused()
-    override fun removeQueueItem(queueItem: QueueItem) = unused()
-    override fun clearQueue() = unused()
 }
 
 private class FakeQueueOperations : QueueOperations {

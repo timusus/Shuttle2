@@ -3,6 +3,7 @@ package com.simplecityapps.shuttle.shared.di
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.mediaprovider.server.StreamProfile
 import com.simplecityapps.playback.PlaybackOperations
+import com.simplecityapps.playback.PlaybackStateSource
 import com.simplecityapps.playback.equalizer.EqualizerControl
 import com.simplecityapps.playback.equalizer.EqualizerPresetStore
 import com.simplecityapps.playback.equalizer.KeyValueEqualizerPresetStore
@@ -135,6 +136,9 @@ class IosPlaybackModule {
 
     @Provides
     fun providePlaybackOperations(controller: IosPlayerController): PlaybackOperations = controller
+
+    @Provides
+    fun providePlaybackStateSource(controller: IosPlayerController): PlaybackStateSource = controller
 
     @Provides
     fun provideQueueOperations(controller: IosPlayerController): QueueOperations = controller.queueOperations

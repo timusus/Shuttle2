@@ -66,7 +66,8 @@ class PlaybackFacade(
     isReplaceableTranscode: (Uri) -> Boolean = { false },
     /** Keeps the playback service in the foreground while a play is held for a call (see [CallHold]). */
     foregroundHold: ForegroundHold = ForegroundHold {}
-) : PlaybackOperations {
+) : PlaybackOperations,
+    PlaybackStateSource {
     private val playerThread = PlayerThread(player)
 
     private val handover: CastHandover = CastHandover(player, castDeviceName) { remote -> if (!remote) queueStore.saveHandedBack() }

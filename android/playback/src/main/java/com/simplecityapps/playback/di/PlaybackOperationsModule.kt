@@ -9,6 +9,7 @@ import com.simplecityapps.playback.ForegroundHold
 import com.simplecityapps.playback.PlaybackFacade
 import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.PlaybackService
+import com.simplecityapps.playback.PlaybackStateSource
 import com.simplecityapps.playback.chromecast.CastQueue
 import com.simplecityapps.playback.chromecast.CastSessionManager
 import com.simplecityapps.playback.engine.SongUriResolver
@@ -36,7 +37,7 @@ class PlaybackOperationsModule {
 
     @SingleIn(AppScope::class)
     @Provides
-    fun providePlaybackOperations(
+    fun providePlaybackFacade(
         @ApplicationContext context: Context,
         queueOperations: QueueOperations,
         player: Player,
@@ -47,7 +48,7 @@ class PlaybackOperationsModule {
         castQueue: CastQueue,
         songUriResolver: SongUriResolver,
         foregroundHold: ForegroundHold
-    ): PlaybackOperations = PlaybackFacade(
+    ): PlaybackFacade = PlaybackFacade(
         queueOperations,
         player,
         localPlayer,
@@ -60,4 +61,10 @@ class PlaybackOperationsModule {
         isReplaceableTranscode = songUriResolver::isReplaceableTranscode,
         foregroundHold = foregroundHold
     )
+
+    @Provides
+    fun providePlaybackOperations(facade: PlaybackFacade): PlaybackOperations = facade
+
+    @Provides
+    fun providePlaybackStateSource(facade: PlaybackFacade): PlaybackStateSource = facade
 }
