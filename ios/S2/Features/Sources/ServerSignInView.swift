@@ -281,7 +281,7 @@ struct ServerSignInContent: View {
 
     /// The address as the sign-in will use it (`serverAddress`: scheme added, trailing slashes dropped), or nil.
     private var resolvedAddress: String? {
-        ServerSignInViewModelKt.serverAddress(typed: address)
+        ServerAddressKt.serverAddress(typed: address)
     }
 
     /// The address box holds more than the prefilled scheme, yet no host the sign-in can use.
