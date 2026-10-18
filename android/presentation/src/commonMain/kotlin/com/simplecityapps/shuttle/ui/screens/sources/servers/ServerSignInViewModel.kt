@@ -23,7 +23,6 @@ import dev.zacsweers.metro.AssistedInject
 import dev.zacsweers.metro.ContributesIntoMap
 import dev.zacsweers.metrox.viewmodel.ManualViewModelAssistedFactory
 import dev.zacsweers.metrox.viewmodel.ManualViewModelAssistedFactoryKey
-import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
@@ -184,12 +183,10 @@ class ServerSignInViewModel @AssistedInject constructor(
     private val step = MutableStateFlow<ServerSignInStep>(ServerSignInStep.Form)
     private val events = PendingEvents<ServerSignInEvent>()
     private val needsPro = observeServerStreamingNeedsPro()
-    private val localNetworkRequested = MutableStateFlow(false)
-    private var localNetworkResult: CompletableDeferred<Boolean>? = null
+    private val gate = LocalNetworkGate(localNetworkAccess, ::discoverOnce)
 
     /** What the failed sign-in does when the user taps Retry after refusing the local-network permission. */
     private var retryAfterLocalNetworkDenied: (() -> Unit)? = null
-    private var localNetworkRefused = false
     private val searchesNetwork = type == MediaProviderType.Jellyfin || type == MediaProviderType.Emby
     private var discoveryStarted = false
     private val quickConnectEnabled = form
@@ -199,7 +196,7 @@ class ServerSignInViewModel @AssistedInject constructor(
         .mapLatest { address ->
             serverAddress(address)?.let { url ->
                 // Only Jellyfin's probe reaches the server. A refusal leaves Quick Connect off, as an unreachable server does
-                val reachable = type != MediaProviderType.Jellyfin || awaitLocalNetwork(localNetworkAccess.needsRequest(url))
+                val reachable = type != MediaProviderType.Jellyfin || gate.await(localNetworkAccess.needsRequest(url))
                 reachable && checkQuickConnectAvailable(type, url)
             } ?: false
         }
@@ -226,7 +223,7 @@ class ServerSignInViewModel @AssistedInject constructor(
             step,
             events.flow,
             needsPro,
-            combine(quickConnectEnabled, discoveredServers, localNetworkRequested, ::Triple),
+            combine(quickConnectEnabled, discoveredServers, gate.requested, ::Triple),
         ) { form, step, events, needsPro, (quickConnectEnabled, discoveredServers, localNetworkRequested) ->
             ServerSignInUiState(
                 type,
@@ -247,7 +244,7 @@ class ServerSignInViewModel @AssistedInject constructor(
     init {
         // Looked for once, as the sign-in opens (Jellyfin and Emby only): a server that answers later can still be typed in
         viewModelScope.launch {
-            if (searchesNetwork && awaitLocalNetwork(localNetworkAccess.needsRequestToSearch())) discoverOnce()
+            if (searchesNetwork && gate.await(localNetworkAccess.needsRequestToSearch())) discoverOnce()
         }
     }
 
@@ -257,33 +254,8 @@ class ServerSignInViewModel @AssistedInject constructor(
         viewModelScope.launch { discoveredServers.value = serverDiscovery.discover(type) }
     }
 
-    /**
-     * The screen's answer to [ServerSignInUiState.localNetworkRequested]: whether the user allowed local-network access.
-     * Whatever waited on it carries on, or fails when it was refused. An answer with no request outstanding (a dialog
-     * redelivering its result after the screen was recreated) is ignored.
-     */
-    fun onLocalNetworkResult(granted: Boolean) {
-        val pending = localNetworkResult ?: return
-        localNetworkResult = null
-        localNetworkRequested.value = false
-        pending.complete(granted)
-    }
-
-    /**
-     * True once the user has allowed [needsRequest]'s access, asking the screen first when it must; false if refused.
-     * A refusal is remembered until Retry, so nothing asks again meanwhile.
-     */
-    private suspend fun awaitLocalNetwork(needsRequest: Boolean): Boolean {
-        if (!needsRequest) return true
-        if (localNetworkRefused) return false
-        val result = localNetworkResult ?: CompletableDeferred<Boolean>().also {
-            localNetworkResult = it
-            localNetworkRequested.value = true
-        }
-        val granted = result.await()
-        if (granted) discoverOnce() else localNetworkRefused = true
-        return granted
-    }
+    /** The screen's answer to [ServerSignInUiState.localNetworkRequested]: whether the user allowed local-network access. */
+    fun onLocalNetworkResult(granted: Boolean) = gate.onResult(granted)
 
     private fun localNetworkDenied(retry: () -> Unit) {
         retryAfterLocalNetworkDenied = retry
@@ -335,7 +307,7 @@ class ServerSignInViewModel @AssistedInject constructor(
         val login = ServerLogin(serverAddress(form.address)!!, form.username, form.password)
         val origin = prepareConnection(login.address, ::onAuthenticate)
         viewModelScope.launch {
-            if (!awaitLocalNetwork(localNetworkAccess.needsRequest(login.address))) return@launch localNetworkDenied(::onAuthenticate)
+            if (!gate.await(localNetworkAccess.needsRequest(login.address))) return@launch localNetworkDenied(::onAuthenticate)
             when (val result = signInToServer(type, login, form.rememberPassword)) {
                 SignInToServer.Result.Success -> {
                     onSignedIn(login.address, login.username)
@@ -351,7 +323,7 @@ class ServerSignInViewModel @AssistedInject constructor(
     /** Back to the form after a failed sign-in, which asks for the local-network permission again if that's what failed. */
     fun onRetry() {
         step.value = ServerSignInStep.Form
-        localNetworkRefused = false
+        gate.reset()
         val retry = retryAfterLocalNetworkDenied ?: return
         retryAfterLocalNetworkDenied = null
         retry()
@@ -366,7 +338,7 @@ class ServerSignInViewModel @AssistedInject constructor(
         }
         val origin = prepareConnection(address, ::onUseQuickConnect)
         quickConnectJob = viewModelScope.launch {
-            if (!awaitLocalNetwork(localNetworkAccess.needsRequest(address))) return@launch localNetworkDenied(::onUseQuickConnect)
+            if (!gate.await(localNetworkAccess.needsRequest(address))) return@launch localNetworkDenied(::onUseQuickConnect)
             signInWithQuickConnect(type, address).collect { state ->
                 when (state) {
                     is SignInWithQuickConnect.State.AwaitingApproval -> step.value = ServerSignInStep.AwaitingCode(state.code)
@@ -472,7 +444,7 @@ class ServerSignInViewModel @AssistedInject constructor(
                 localNetworkAccess.needsRequest(connection.uri) ||
                 connection.address?.let(localNetworkAccess::needsRequest) == true
         }
-        if (!awaitLocalNetwork(needsRequest)) return localNetworkDenied { pinJob = viewModelScope.launch { connectTo(server) } }
+        if (!gate.await(needsRequest)) return localNetworkDenied { pinJob = viewModelScope.launch { connectTo(server) } }
         when (val result = connectToAccountServer(type, server)) {
             is ConnectToAccountServer.Result.Success -> {
                 if (result.switchedServer) songDownloader.removeAll(type)
