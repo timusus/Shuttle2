@@ -14,16 +14,11 @@ import com.simplecityapps.playback.queue.QueueState
 import com.simplecityapps.playback.queue.ShuffleMode
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
-import com.simplecityapps.shuttle.model.nowPlayingWork
-import com.simplecityapps.shuttle.settings.AppearanceSettings
-import com.simplecityapps.shuttle.settings.ArtworkSettings
 import com.simplecityapps.shuttle.settings.ObserveSetting
 import com.simplecityapps.shuttle.settings.PlayerSettings
 import com.simplecityapps.shuttle.settings.SaveSetting
 import com.simplecityapps.shuttle.settings.Setting
-import com.simplecityapps.shuttle.streaming.DeliveredFormats
 import com.simplecityapps.shuttle.ui.actions.AvailableMediaActions
-import com.simplecityapps.shuttle.ui.actions.LoadLyrics
 import com.simplecityapps.shuttle.ui.actions.MediaAction
 import com.simplecityapps.shuttle.ui.actions.MediaActionHandler
 import com.simplecityapps.shuttle.ui.actions.MediaActionType
@@ -33,7 +28,6 @@ import com.simplecityapps.shuttle.ui.actions.ToggleFavourite
 import com.simplecityapps.shuttle.ui.common.PendingEvents
 import com.simplecityapps.shuttle.ui.screens.home.HomeItem
 import com.simplecityapps.shuttle.ui.theme.ArtworkSeed
-import com.simplecityapps.shuttle.ui.theme.ObserveArtworkSeed
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
@@ -41,7 +35,6 @@ import dev.zacsweers.metro.AssistedInject
 import dev.zacsweers.metro.ContributesIntoMap
 import dev.zacsweers.metrox.viewmodel.ViewModelAssistedFactory
 import dev.zacsweers.metrox.viewmodel.ViewModelAssistedFactoryKey
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -50,10 +43,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.emitAll
-import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
