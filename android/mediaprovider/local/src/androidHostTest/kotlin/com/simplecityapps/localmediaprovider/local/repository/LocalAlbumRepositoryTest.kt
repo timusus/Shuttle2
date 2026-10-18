@@ -1,18 +1,15 @@
 package com.simplecityapps.localmediaprovider.local.repository
 
-import com.simplecityapps.localmediaprovider.local.data.room.dao.SongDataDao
-import com.simplecityapps.localmediaprovider.local.data.room.entity.PendingFavouriteData
+import com.simplecityapps.localmediaprovider.local.data.room.dao.toSong
 import com.simplecityapps.localmediaprovider.local.data.room.entity.SongData
-import com.simplecityapps.localmediaprovider.local.data.room.entity.SongDataUpdate
 import com.simplecityapps.mediaprovider.repository.albums.AlbumQuery
 import com.simplecityapps.shuttle.model.Album
-import com.simplecityapps.shuttle.model.MediaProviderType
+import com.simplecityapps.shuttle.model.withAlbumIdentities
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
-import kotlin.time.Instant
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.yield
@@ -22,8 +19,7 @@ class LocalAlbumRepositoryTest {
     @Test
     fun `identical re-emission of songs does not produce a new album emission`() = runTest {
         val songsFlow = MutableSharedFlow<List<SongData>>(replay = 1)
-        val dao = FakeSongDataDao(songsFlow)
-        val repository = LocalAlbumRepository(scope = backgroundScope, songDataDao = dao)
+        val repository = LocalAlbumRepository(scope = backgroundScope, songs = songsFlow.map { it.map(SongData::toSong).withAlbumIdentities() })
 
         val emissions = mutableListOf<List<Album>>()
         backgroundScope.launch {
@@ -47,7 +43,7 @@ class LocalAlbumRepositoryTest {
     @Test
     fun `an album's play count is the sum of its songs' play counts`() = runTest {
         val songsFlow = MutableSharedFlow<List<SongData>>(replay = 1)
-        val repository = LocalAlbumRepository(scope = backgroundScope, songDataDao = FakeSongDataDao(songsFlow))
+        val repository = LocalAlbumRepository(scope = backgroundScope, songs = songsFlow.map { it.map(SongData::toSong).withAlbumIdentities() })
 
         songsFlow.emit(
             listOf(

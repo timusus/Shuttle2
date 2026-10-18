@@ -1,19 +1,24 @@
 package com.simplecityapps.localmediaprovider.local.repository
 
+import com.simplecityapps.localmediaprovider.local.data.room.dao.toSong
 import com.simplecityapps.localmediaprovider.local.data.room.entity.SongData
 import com.simplecityapps.mediaprovider.repository.albums.AlbumQuery
 import com.simplecityapps.mediaprovider.repository.artists.AlbumArtistQuery
+import com.simplecityapps.shuttle.model.withAlbumIdentities
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
+
+private fun MutableSharedFlow<List<SongData>>.asSongs() = map { it.map(SongData::toSong).withAlbumIdentities() }
 
 class LocalAlbumArtistRepositoryTest {
     @Test
     fun `an album artist's play count is the sum of their songs' play counts`() = runTest {
         val songsFlow = MutableSharedFlow<List<SongData>>(replay = 1)
-        val repository = LocalAlbumArtistRepository(scope = backgroundScope, songDataDao = FakeSongDataDao(songsFlow))
+        val repository = LocalAlbumArtistRepository(scope = backgroundScope, songs = songsFlow.asSongs())
 
         songsFlow.emit(
             listOf(
@@ -31,8 +36,8 @@ class LocalAlbumArtistRepositoryTest {
     @Test
     fun `a sample library groups into albums and album artists by the identity rule`() = runTest {
         val songsFlow = MutableSharedFlow<List<SongData>>(replay = 1)
-        val albums = LocalAlbumRepository(scope = backgroundScope, songDataDao = FakeSongDataDao(songsFlow))
-        val artists = LocalAlbumArtistRepository(scope = backgroundScope, songDataDao = FakeSongDataDao(songsFlow))
+        val albums = LocalAlbumRepository(scope = backgroundScope, songs = songsFlow.asSongs())
+        val artists = LocalAlbumArtistRepository(scope = backgroundScope, songs = songsFlow.asSongs())
 
         songsFlow.emit(
             listOf(
@@ -65,7 +70,7 @@ class LocalAlbumArtistRepositoryTest {
     @Test
     fun `the Artists list is the album artists - each of an album's - and featured and compilation artists are found as credited ones`() = runTest {
         val songsFlow = MutableSharedFlow<List<SongData>>(replay = 1)
-        val artists = LocalAlbumArtistRepository(scope = backgroundScope, songDataDao = FakeSongDataDao(songsFlow))
+        val artists = LocalAlbumArtistRepository(scope = backgroundScope, songs = songsFlow.asSongs())
 
         songsFlow.emit(
             listOf(

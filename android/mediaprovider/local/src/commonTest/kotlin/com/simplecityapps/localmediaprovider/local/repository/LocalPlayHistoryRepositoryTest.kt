@@ -211,8 +211,8 @@ class LocalPlayHistoryRepositoryTest : InMemoryDatabaseTest() {
 
         val days = repository.albumDays(since = now - 28.days)
 
-        val repositoryAlbums = LocalAlbumRepository(backgroundScope, songDao).getAlbums(AlbumQuery.All()).first()
-        val repositoryArtists = LocalAlbumArtistRepository(backgroundScope, songDao).getAlbumArtists(AlbumArtistQuery.All()).first()
+        val repositoryAlbums = LocalAlbumRepository(backgroundScope, songDao.getAll()).getAlbums(AlbumQuery.All()).first()
+        val repositoryArtists = LocalAlbumArtistRepository(backgroundScope, songDao.getAll()).getAlbumArtists(AlbumArtistQuery.All()).first()
         days.map { Triple(it.groupKey, it.songs, it.trackCount) } shouldBe listOf(Triple(repositoryAlbums.single().groupKey, 3, 3))
         days.single().albumArtistKeys shouldBe listOf(repositoryArtists.single().groupKey)
     }

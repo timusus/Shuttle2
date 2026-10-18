@@ -370,8 +370,8 @@ class LocalSongRepositoryTest {
     @Test
     fun `albums and album artists are built from the songs that pass the minimum`() = runTest {
         val minimum = MutableStateFlow(MinTrackLength.SixtySeconds)
-        val albums = LocalAlbumRepository(backgroundScope, database.songDataDao(), minimum)
-        val artists = LocalAlbumArtistRepository(backgroundScope, database.songDataDao(), minimum)
+        val albums = LocalAlbumRepository(backgroundScope, database.songDataDao().getAll(), minimum)
+        val artists = LocalAlbumArtistRepository(backgroundScope, database.songDataDao().getAll(), minimum)
         database.songDataDao().insert(listOf(songData("Ringtone", "Voice", duration = 4_000), songData("Song", "Band", duration = 240_000)))
 
         albums.getAlbums(AlbumQuery.All()).first().map { album -> album.albumArtist } shouldBe listOf("Band")

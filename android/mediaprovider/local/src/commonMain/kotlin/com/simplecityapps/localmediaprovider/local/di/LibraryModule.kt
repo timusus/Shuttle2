@@ -134,7 +134,7 @@ abstract class LibraryModule {
             database: MediaDatabase,
             @AppCoroutineScope appCoroutineScope: CoroutineScope,
             librarySettings: LibrarySettings
-        ): AlbumRepository = LocalAlbumRepository(appCoroutineScope, database.songDataDao(), librarySettings.minTrackLength.flow)
+        ): AlbumRepository = LocalAlbumRepository(appCoroutineScope, database.songDataDao().getAll(), librarySettings.minTrackLength.flow)
 
         @Provides
         @SingleIn(AppScope::class)
@@ -142,7 +142,7 @@ abstract class LibraryModule {
             database: MediaDatabase,
             @AppCoroutineScope appCoroutineScope: CoroutineScope,
             librarySettings: LibrarySettings
-        ): AlbumArtistRepository = LocalAlbumArtistRepository(appCoroutineScope, database.songDataDao(), librarySettings.minTrackLength.flow)
+        ): AlbumArtistRepository = LocalAlbumArtistRepository(appCoroutineScope, database.songDataDao().getAll(), librarySettings.minTrackLength.flow)
 
         @Provides
         @SingleIn(AppScope::class)

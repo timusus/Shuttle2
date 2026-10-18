@@ -1,11 +1,11 @@
 package com.simplecityapps.localmediaprovider.local.repository
 
-import com.simplecityapps.localmediaprovider.local.data.room.dao.SongDataDao
 import com.simplecityapps.mediaprovider.repository.artists.AlbumArtistQuery
 import com.simplecityapps.mediaprovider.repository.artists.AlbumArtistRepository
 import com.simplecityapps.mediaprovider.repository.artists.comparator
 import com.simplecityapps.shuttle.model.AlbumArtist
 import com.simplecityapps.shuttle.model.MinTrackLength
+import com.simplecityapps.shuttle.model.Song
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -21,11 +21,11 @@ import kotlinx.coroutines.flow.stateIn
 
 class LocalAlbumArtistRepository(
     val scope: CoroutineScope,
-    private val songDataDao: SongDataDao,
+    private val songs: Flow<List<Song>>,
     private val minTrackLength: Flow<MinTrackLength> = flowOf(MinTrackLength.Off)
 ) : AlbumArtistRepository {
     private val albumArtistsRelay: StateFlow<List<AlbumArtist>?> by lazy {
-        combine(songDataDao.getAll(), minTrackLength) { songs, min -> songs.filter(min::keeps) }
+        combine(songs, minTrackLength) { songs, min -> songs.filter(min::keeps) }
             .map { songs -> songs.toArtists() }
             .flowOn(Dispatchers.IO)
             .stateIn(scope, SharingStarted.Lazily, null)

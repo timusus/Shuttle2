@@ -100,9 +100,9 @@ class AlbumKeyMigrationTest {
         )
         // Each moved key names an album the album and artist repositories have
         val songDao = database.songDataDao()
-        val albums = LocalAlbumRepository(backgroundScope, songDao).getAlbums(AlbumQuery.All()).first().map { it.groupKey }
+        val albums = LocalAlbumRepository(backgroundScope, songDao.getAll()).getAlbums(AlbumQuery.All()).first().map { it.groupKey }
         albums shouldContainExactlyInAnyOrder listOf(drive, blue, low)
-        LocalAlbumArtistRepository(backgroundScope, songDao).getAlbumArtists(AlbumArtistQuery.All()).first().map { it.groupKey } shouldContainExactlyInAnyOrder
+        LocalAlbumArtistRepository(backgroundScope, songDao.getAll()).getAlbumArtists(AlbumArtistQuery.All()).first().map { it.groupKey } shouldContainExactlyInAnyOrder
             listOf(AlbumArtistGroupKey("various artists"), AlbumArtistGroupKey("joni mitchell"), AlbumArtistGroupKey("david bowie"))
     }
 
@@ -235,7 +235,7 @@ class AlbumKeyMigrationTest {
             listOf("Artist")
         )
         // Each moved key names an album the album repository has
-        LocalAlbumRepository(backgroundScope, database.songDataDao()).getAlbums(AlbumQuery.All()).first().map { it.groupKey } shouldContainExactlyInAnyOrder
+        LocalAlbumRepository(backgroundScope, database.songDataDao().getAll()).getAlbums(AlbumQuery.All()).first().map { it.groupKey } shouldContainExactlyInAnyOrder
             listOf(duets, mixed, live, low)
     }
 

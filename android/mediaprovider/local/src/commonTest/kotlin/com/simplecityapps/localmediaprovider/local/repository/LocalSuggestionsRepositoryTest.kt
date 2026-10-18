@@ -62,7 +62,7 @@ class LocalSuggestionsRepositoryTest : InMemoryDatabaseTest() {
             createSongData(album = "Kid A", albumArtist = "Radiohead", track = 1),
             createSongData(album = "Blue", albumArtist = "Joni Mitchell", track = 1)
         )
-        val repositoryAlbums = LocalAlbumRepository(backgroundScope, songDao).getAlbums(AlbumQuery.All()).first().associateBy { it.groupKey }
+        val repositoryAlbums = LocalAlbumRepository(backgroundScope, songDao.getAll()).getAlbums(AlbumQuery.All()).first().associateBy { it.groupKey }
         val bends = key("bends", "radiohead")
         val kidA = key("kid a", "radiohead")
 
@@ -77,7 +77,7 @@ class LocalSuggestionsRepositoryTest : InMemoryDatabaseTest() {
             createSongData(album = "Hejira", albumArtist = "Joni Mitchell", track = 1),
             createSongData(album = "Mezzanine", albumArtist = "x", track = 1).copy(albumArtist = null, artists = listOf("The Massive Attack"))
         )
-        val repositoryArtists = LocalAlbumArtistRepository(backgroundScope, songDao).getAlbumArtists(AlbumArtistQuery.All()).first().associateBy { it.groupKey }
+        val repositoryArtists = LocalAlbumArtistRepository(backgroundScope, songDao.getAll()).getAlbumArtists(AlbumArtistQuery.All()).first().associateBy { it.groupKey }
         val joni = AlbumArtistGroupKey("joni mitchell")
         val massive = AlbumArtistGroupKey("massive attack")
 
