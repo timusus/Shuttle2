@@ -3,25 +3,19 @@ package com.simplecityapps.shuttle.ui.screens.library.albums.detail
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.simplecityapps.mediaprovider.repository.albums.AlbumQuery
-import com.simplecityapps.mediaprovider.repository.artists.AlbumArtistQuery
 import com.simplecityapps.shuttle.di.IoDispatcher
 import com.simplecityapps.shuttle.model.Album
-import com.simplecityapps.shuttle.model.AlbumArtistGroupKey
 import com.simplecityapps.shuttle.model.AlbumGroupKey
-import com.simplecityapps.shuttle.model.AlbumIdentityRule
-import com.simplecityapps.shuttle.model.AlbumItem
 import com.simplecityapps.shuttle.model.FindOtherRecordings
 import com.simplecityapps.shuttle.model.OtherRecording
 import com.simplecityapps.shuttle.model.PlayContext
 import com.simplecityapps.shuttle.model.Song
-import com.simplecityapps.shuttle.model.groupWorks
 import com.simplecityapps.shuttle.model.isClassicalBlock
 import com.simplecityapps.shuttle.model.performersLine
 import com.simplecityapps.shuttle.model.playContext
 import com.simplecityapps.shuttle.query.SongQuery
 import com.simplecityapps.shuttle.settings.AppearanceSettings
 import com.simplecityapps.shuttle.settings.ObserveSetting
-import com.simplecityapps.shuttle.sorting.ArtistSongComparator
 import com.simplecityapps.shuttle.ui.actions.ObserveAlbums
 import com.simplecityapps.shuttle.ui.actions.ObserveArtists
 import com.simplecityapps.shuttle.ui.actions.ObserveCurrentSong
@@ -36,21 +30,12 @@ import dev.zacsweers.metro.ContributesIntoMap
 import dev.zacsweers.metrox.viewmodel.ManualViewModelAssistedFactory
 import dev.zacsweers.metrox.viewmodel.ManualViewModelAssistedFactoryKey
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
 
 data class AlbumDetailUiState(
     val album: Album? = null,
@@ -103,8 +88,8 @@ class AlbumDetailViewModel @AssistedInject constructor(
     observeCurrentSong: ObserveCurrentSong,
     observeArtworkSeed: ObserveArtworkSeed,
     observeSetting: ObserveSetting,
-    private val findOtherRecordings: FindOtherRecordings,
-    @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
+    findOtherRecordings: FindOtherRecordings,
+    @IoDispatcher ioDispatcher: CoroutineDispatcher,
 ) : ViewModel() {
 
     @AssistedFactory
@@ -121,102 +106,24 @@ class AlbumDetailViewModel @AssistedInject constructor(
         .map { it.firstOrNull() }
         .shareIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), replay = 1)
 
-    /**
-     * Its album artists' own albums but this one, newest first: each of an album of several, and A's of "A feat. B". Starts
-     * empty so the Ready state never waits on it; it is empty for an album with no album artist, and for a compilation,
-     * whose "Various Artists" is nobody's catalogue.
-     */
-    private val moreByArtistKeys: Flow<Set<AlbumArtistGroupKey>> = album
-        .map { album -> album?.albumArtistKeys.orEmpty().filterTo(LinkedHashSet()) { it.key != null && it.key != AlbumIdentityRule.artistKey(AlbumIdentityRule.VARIOUS_ARTISTS) } }
-        .distinctUntilChanged()
-
-    @OptIn(ExperimentalCoroutinesApi::class)
-    private val moreByArtist: Flow<List<Album>> = moreByArtistKeys
-        .flatMapLatest { artistKeys ->
-            if (artistKeys.isEmpty()) {
-                flowOf(emptyList())
-            } else {
-                observeAlbums(AlbumQuery.ArtistGroupKeys(artistKeys))
-                    .map { albums -> albums.filter { it.groupKey != groupKey }.sortedWith(ArtistSongComparator.albumNewest) }
-            }
-        }
-        .onStart { emit(emptyList()) }
-
-    /** The names of [moreByArtistKeys], in their order, so the shelf is titled from the artists it lists, not from the album's raw tag. */
-    @OptIn(ExperimentalCoroutinesApi::class)
-    private val moreByArtistNames: Flow<List<String>> = moreByArtistKeys
-        .flatMapLatest { artistKeys ->
-            if (artistKeys.isEmpty()) {
-                flowOf(emptyList())
-            } else {
-                observeArtists(AlbumArtistQuery.Credited()).map { artists ->
-                    val namesByKey = artists.associate { it.groupKey to it.name }
-                    artistKeys.mapNotNull { namesByKey[it]?.takeIf { name -> name.isNotBlank() } }
-                }
-            }
-        }
-        .distinctUntilChanged()
-        .onStart { emit(emptyList()) }
-
-    /** Works (by first song id) whose collapse state the user flipped from its default. */
-    private val toggledWorks = MutableStateFlow<Set<Long>>(emptySet())
-
-    fun onToggleWork(firstSongId: Long) {
-        toggledWorks.update { if (firstSongId in it) it - firstSongId else it + firstSongId }
-    }
-
-    private class Extras(val moreByArtist: List<Album>, val moreByArtistNames: List<String>, val classical: Boolean, val grouped: Grouped)
-
-    /** The rows with the songs they were built from: row play indices point into these, so the screen must play from this list. */
-    private class Grouped(val songs: List<Song>, val rows: AlbumRows?, val otherRecordings: Map<Long, List<OtherRecording>>)
-
     private val classicalDisplay = observeSetting(AppearanceSettings.ClassicalDisplay)
 
-    /**
-     * Found once per change to the album's works or the library, off the main thread, never per row. Starts empty so the
-     * Ready state never waits on the library scan. The library is only read while classical display is on and the album
-     * has a strictly classical work, so a pop library is never loaded for its albums.
-     */
-    @OptIn(ExperimentalCoroutinesApi::class)
-    private val otherRecordings: Flow<Map<Long, List<OtherRecording>>> = combine(songs, classicalDisplay.distinctUntilChanged()) { albumSongs, classical ->
-        if (classical) groupWorks(albumSongs).filterIsInstance<AlbumItem.Work>().map { it.block }.filter { it.songs.isClassicalBlock() } else emptyList()
-    }
-        .distinctUntilChanged()
-        .flatMapLatest { works ->
-            if (works.isEmpty()) {
-                flowOf(emptyMap())
-            } else {
-                observeSongs().map { library -> findOtherRecordings(works, library) }.flowOn(ioDispatcher)
-            }
-        }
-        .distinctUntilChanged()
-        .onStart { emit(emptyMap()) }
+    private val classicalRows = ClassicalRows(songs, album, classicalDisplay, observeSongs, findOtherRecordings, ioDispatcher)
 
-    /** The grouping, worked out once per change to the songs, album or settings; a song change in the player leaves it alone. */
-    private val groupedRows: Flow<Grouped> = combine(songs, album, classicalDisplay, toggledWorks, otherRecordings) { songs, album, classical, toggled, otherRecordings ->
-        Grouped(songs, if (classical) buildAlbumRows(songs, album?.albumArtist ?: album?.friendlyArtistName, null, toggled, otherRecordings) else null, otherRecordings)
+    private val moreBy = observeMoreBy(album, groupKey, observeAlbums, observeArtists)
+
+    fun onToggleWork(firstSongId: Long) {
+        classicalRows.toggleWork(firstSongId)
     }
 
-    private fun AlbumRows.withPlaying(songId: Long?): AlbumRows {
-        if (songId == null) return this
-        return copy(
-            rows = rows.map { row ->
-                when (row) {
-                    is AlbumRow.Track -> row.copy(playing = row.song.id == songId)
-                    is AlbumRow.Movement -> row.copy(playing = row.song.id == songId)
-                    is AlbumRow.WorkHeader -> row.copy(playing = row.songs.any { it.id == songId })
-                    else -> row
-                }
-            }
-        )
-    }
+    private class Extras(val moreBy: MoreBy, val classical: Boolean, val grouped: Grouped)
 
     val uiState: StateFlow<AlbumDetailUiState> = combine(
         songs,
         album,
         observeCurrentSong(),
         observeArtworkSeed(songs.map { it.firstOrNull() }),
-        combine(moreByArtist, moreByArtistNames, classicalDisplay, groupedRows, ::Extras),
+        combine(moreBy, classicalDisplay, classicalRows.grouped, ::Extras),
     ) { _, album, currentSong, seed, extras ->
         val songs = extras.grouped.songs
         AlbumDetailUiState(
@@ -229,9 +136,9 @@ class AlbumDetailViewModel @AssistedInject constructor(
                 AlbumDetailUiState.LoadingState.Ready
             },
             seed = seed,
-            moreByArtist = extras.moreByArtist,
+            moreByArtist = extras.moreBy.albums,
             // A credited key with no artist row or a blank name resolves to nothing: fall back to the raw tag
-            moreByArtistNames = extras.moreByArtistNames.ifEmpty { listOfNotNull(album?.albumArtist?.takeIf { it.isNotBlank() }) },
+            moreByArtistNames = extras.moreBy.names.ifEmpty { listOfNotNull(album?.albumArtist?.takeIf { it.isNotBlank() }) },
             classical = extras.classical,
             rows = extras.grouped.rows?.withPlaying(currentSong?.id),
             otherRecordings = extras.grouped.otherRecordings,
