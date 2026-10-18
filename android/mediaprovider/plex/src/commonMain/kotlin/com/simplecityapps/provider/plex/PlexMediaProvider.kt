@@ -56,7 +56,7 @@ class PlexMediaProvider(
 
     /**
      * Every track of every music section, or with [since] only those updated on the server at or after it, plus those
-     * of [existingSongs] whose favourite changed on the server: rating a track doesn't change its updatedAt (#497), and those
+     * of [existingSongs] whose favourite changed on the server: rating a track doesn't change its updatedAt, and those
      * played on the server since (in any client), which doesn't either.
      */
     private fun findSongs(
