@@ -1,70 +1,10 @@
 package com.simplecityapps.shuttle.shared
 
 import androidx.lifecycle.SavedStateHandle
-import com.simplecityapps.localmediaprovider.local.favourites.FavouriteSender
-import com.simplecityapps.mediaprovider.SongImportStateProvider
-import com.simplecityapps.mediaprovider.repository.songs.SongRepository
-import com.simplecityapps.shuttle.analytics.MonetisationAnalytics
-import com.simplecityapps.shuttle.entitlement.ObservePaywallRequests
-import com.simplecityapps.shuttle.model.AlbumIndexProvider
-import com.simplecityapps.shuttle.playback.RecordPlays
-import com.simplecityapps.shuttle.playback.RecordResumePoints
-import com.simplecityapps.shuttle.playbackreporting.PlaybackReporting
-import com.simplecityapps.shuttle.scrobbling.PlaybackScrobbling
-import com.simplecityapps.shuttle.scrobbling.flush.InProcessScrobbleFlushScheduler
-import com.simplecityapps.shuttle.server.ServerConnectionStore
-import com.simplecityapps.shuttle.shared.artwork.ArtworkUrls
-import com.simplecityapps.shuttle.shared.downloads.OfflineDownloads
-import com.simplecityapps.shuttle.shared.downloads.UrlSessionDownloads
-import com.simplecityapps.shuttle.shared.entitlement.CarPlayAccess
-import com.simplecityapps.shuttle.shared.entitlement.StoreEntitlements
-import com.simplecityapps.shuttle.shared.intents.AppIntentLibrary
-import com.simplecityapps.shuttle.shared.intents.VoiceLibrary
 import com.simplecityapps.shuttle.shared.local.IosLocalFiles
-import com.simplecityapps.shuttle.shared.network.ServerRequestPolicy
-import com.simplecityapps.shuttle.shared.platform.BackgroundSync
 import com.simplecityapps.shuttle.shared.playback.IosAudioPlayer
-import com.simplecityapps.shuttle.shared.playback.IosPlayerController
 import com.simplecityapps.shuttle.shared.telemetry.IosTelemetry
-import com.simplecityapps.shuttle.shared.telemetry.IosTelemetryStartup
-import com.simplecityapps.shuttle.ui.actions.ObservePlayablePlaylists
-import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsViewModel
-import com.simplecityapps.shuttle.ui.screens.home.HomeViewModel
-import com.simplecityapps.shuttle.ui.screens.library.GenreDetailCoversViewModel
-import com.simplecityapps.shuttle.ui.screens.library.GenreDetailViewModel
-import com.simplecityapps.shuttle.ui.screens.library.LibraryEmptyViewModel
-import com.simplecityapps.shuttle.ui.screens.library.LibraryViewModel
-import com.simplecityapps.shuttle.ui.screens.library.PlaylistDetailCoversViewModel
-import com.simplecityapps.shuttle.ui.screens.library.PlaylistDetailViewModel
-import com.simplecityapps.shuttle.ui.screens.library.SmartPlaylistDetailViewModel
-import com.simplecityapps.shuttle.ui.screens.library.albumartists.AlbumArtistListViewModel
-import com.simplecityapps.shuttle.ui.screens.library.albumartists.detail.AlbumArtistDetailViewModel
-import com.simplecityapps.shuttle.ui.screens.library.albums.AlbumListViewModel
-import com.simplecityapps.shuttle.ui.screens.library.albums.detail.AlbumDetailViewModel
-import com.simplecityapps.shuttle.ui.screens.library.folders.FolderListViewModel
-import com.simplecityapps.shuttle.ui.screens.library.genres.GenreCoversViewModel
-import com.simplecityapps.shuttle.ui.screens.library.genres.GenreListViewModel
-import com.simplecityapps.shuttle.ui.screens.library.playlists.PlaylistListViewModel
-import com.simplecityapps.shuttle.ui.screens.library.songs.SongListViewModel
-import com.simplecityapps.shuttle.ui.screens.onboarding.SourceSetupViewModel
-import com.simplecityapps.shuttle.ui.screens.search.LibrarySearchIndex
-import com.simplecityapps.shuttle.ui.screens.search.SearchViewModel
-import com.simplecityapps.shuttle.ui.screens.settings.SettingsViewModel
-import com.simplecityapps.shuttle.ui.screens.settings.about.LicencesViewModel
-import com.simplecityapps.shuttle.ui.screens.settings.about.WhatsNewViewModel
-import com.simplecityapps.shuttle.ui.screens.settings.equalizer.EqualizerViewModel
-import com.simplecityapps.shuttle.ui.screens.settings.excluded.ExcludedSongsViewModel
-import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsCatalog
-import com.simplecityapps.shuttle.ui.screens.settings.scrobbling.ScrobblingViewModel
-import com.simplecityapps.shuttle.ui.screens.songinfo.SongInfoViewModel
-import com.simplecityapps.shuttle.ui.screens.sources.FolderRulesViewModel
-import com.simplecityapps.shuttle.ui.screens.sources.MediaSources
-import com.simplecityapps.shuttle.ui.screens.sources.SourcesViewModel
-import com.simplecityapps.shuttle.ui.screens.sources.servers.PrepareServerConnection
-import com.simplecityapps.shuttle.ui.screens.sources.servers.ReadServerLogin
-import com.simplecityapps.shuttle.ui.screens.sources.servers.ServerSignInViewModel
 import com.simplecityapps.shuttle.ui.screens.tageditor.TagEditorViewModel
-import com.simplecityapps.shuttle.ui.shell.ShellViewModel
 import com.simplecityapps.shuttle.ui.shell.player.PlayerViewModel
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.DependencyGraph
@@ -81,6 +21,9 @@ import dev.zacsweers.metrox.viewmodel.ViewModelGraph
  * factory's property instead (`albumDetailViewModelFactory.create(groupKey:)`), a new instance per `create`.
  * [metroViewModelFactory] is there too, but Swift can't build its `KClass` keys.
  *
+ * What Swift reads is declared per feature in the `Ios*Accessors` interfaces, which the graph extends explicitly so
+ * every accessor stays a property of this type: add a feature's accessor to its group, not here.
+ *
  * `SettingsViewModel` reads `IosSettingsCatalog` (only the rows iOS acts on) through `IosSettingsEffects`.
  *
  * `EqualizerViewModel` drives `IosEqualizer`, which designs the S2Playback engine's filters.
@@ -93,135 +36,13 @@ import dev.zacsweers.metrox.viewmodel.ViewModelGraph
     AppScope::class,
     excludes = [TagEditorViewModel.Factory::class],
 )
-interface IosAppGraph : ViewModelGraph {
-    /** Playback: `PlaybackOperations`, and the queue through its `queueOperations`. One for the graph, on main. */
-    val playerController: IosPlayerController
-
-    /** Records each song's plays and pause positions from [playerController]'s events; Swift starts it once, at launch. */
-    val recordPlays: RecordPlays
-
-    /** Keeps where each play context was left (#670) from [playerController]'s events; Swift starts it once, at launch. */
-    val recordResumePoints: RecordResumePoints
-
-    /** Sends the favourites made on Jellyfin, Emby and Plex songs to their servers (#497); Swift starts it once, at launch. */
-    val favouriteSender: FavouriteSender
-
-    /** The album index; making it starts its build in the background, so Swift reads it at launch, ahead of the first content that needs it. */
-    val albumIndexProvider: AlbumIndexProvider
-
-    /** The search index; Swift warms it once, at launch, so the first search doesn't wait for the build. */
-    val librarySearchIndex: LibrarySearchIndex
-
-    /** The library's providers and the import that fills it: the Library's pull-to-refresh and launch import. */
-    val mediaSources: MediaSources
-
-    /** The daily background sync, which Swift's `BGAppRefreshTask` runs. */
-    val backgroundSync: BackgroundSync
-
-    /** Scrobbles to Last.fm from [playerController]'s events (#503); Swift starts it once, at launch. */
-    val playbackScrobbling: PlaybackScrobbling
-
-    /** Sends the queued scrobbles: after each one is queued, and from Swift on foreground and in a `BGAppRefreshTask`. */
-    val scrobbleFlushScheduler: InProcessScrobbleFlushScheduler
-
-    /** The running import's progress, for the Library root. */
-    val songImportStateProvider: SongImportStateProvider
-
-    /** Authenticated artwork urls for songs, albums and album artists; Swift's `ArtworkLoader` fetches and decodes. */
-    val artworkUrls: ArtworkUrls
-
-    /** Reports plays to Jellyfin, Emby and Plex (and replays missed ones); Swift starts it at launch. */
-    val playbackReporting: PlaybackReporting
-
-    /** The user's entitlement, fed from StoreKit by Swift's `StoreKitManager`. */
-    val storeEntitlements: StoreEntitlements
-
-    /** A gated action's paywall requests, which Swift's `PaywallPresenter` answers. */
-    val observePaywallRequests: ObservePaywallRequests
-
-    /** Whether CarPlay is locked behind Shuttle Music Pro, which `CarPlaySceneDelegate` follows. */
-    val carPlayAccess: CarPlayAccess
-
-    /** Crash reporting, analytics and their consent; Swift starts it first of all, at launch. */
-    val telemetryStartup: IosTelemetryStartup
-
-    /** The paywall and purchase events Swift's `PaywallPresenter` and `StoreKitManager` record. */
-    val monetisationAnalytics: MonetisationAnalytics
-
-    /** Offline downloads' state, which detail headers show and whose actions they offer. Swift builds it at launch. */
-    val offlineDownloads: OfflineDownloads
-
-    /** Which playlists have a song that plays offline, given the completed downloads' paths; CarPlay's offline Home (#925). */
-    val observePlayablePlaylists: ObservePlayablePlaylists
-
-    /** Offline downloads' background `URLSession`, which the app delegate hands its background events to. */
-    val urlSessionDownloads: UrlSessionDownloads
-
-    /** A server's custom headers and pinned certificate, for the sessions Swift makes itself (streaming, artwork; #921). */
-    val serverRequestPolicy: ServerRequestPolicy
-
-    /** Saves a server's custom headers, and trusts a certificate for it: the sign-in's, and what tests seed [serverRequestPolicy] with. */
-    val prepareServerConnection: PrepareServerConnection
-    val serverConnections: ServerConnectionStore
-
-    /** The playlists and plays Siri, Shortcuts and Spotlight's App Intents offer (#758). */
-    val appIntentLibrary: AppIntentLibrary
-
-    /** The library, for tests to seed songs into the graph's in-memory database. */
-    val songRepository: SongRepository
-
-    /** What Siri's media domain searches and plays (`INPlayMediaIntent`, #951). */
-    val voiceLibrary: VoiceLibrary
-
-    val shellViewModel: ShellViewModel
-    val homeViewModel: HomeViewModel
-    val libraryViewModel: LibraryViewModel
-    val libraryEmptyViewModel: LibraryEmptyViewModel
-    val songListViewModel: SongListViewModel
-    val albumListViewModel: AlbumListViewModel
-    val albumArtistListViewModel: AlbumArtistListViewModel
-    val genreListViewModel: GenreListViewModel
-
-    /** The genre rows' mosaic covers, apart from `genreListViewModel` so Android's list never queries them. */
-    val genreCoversViewModel: GenreCoversViewModel
-    val playlistListViewModel: PlaylistListViewModel
-    val mediaActionsViewModel: MediaActionsViewModel
-    val excludedSongsViewModel: ExcludedSongsViewModel
-    val licencesViewModel: LicencesViewModel
-    val whatsNewViewModel: WhatsNewViewModel
-    val sourcesViewModel: SourcesViewModel
-    val folderRulesViewModel: FolderRulesViewModel
-    val sourceSetupViewModel: SourceSetupViewModel
-    val settingsViewModel: SettingsViewModel
-    val scrobblingViewModel: ScrobblingViewModel
-    val equalizerViewModel: EqualizerViewModel
-    val searchViewModel: SearchViewModel
-
-    /** The rows `settingsViewModel` stores, for Swift's `SettingsView` to lay out. */
-    val settingsCatalog: SettingsCatalog
-
-    val albumDetailViewModelFactory: AlbumDetailViewModel.Factory
-    val albumArtistDetailViewModelFactory: AlbumArtistDetailViewModel.Factory
-    val genreDetailViewModelFactory: GenreDetailViewModel.Factory
-    val playlistDetailViewModelFactory: PlaylistDetailViewModel.Factory
-    val genreDetailCoversViewModelFactory: GenreDetailCoversViewModel.Factory
-    val playlistDetailCoversViewModelFactory: PlaylistDetailCoversViewModel.Factory
-    val smartPlaylistDetailViewModelFactory: SmartPlaylistDetailViewModel.Factory
-    val songInfoViewModelFactory: SongInfoViewModel.Factory
-    val folderListViewModelFactory: FolderListViewModel.Factory
-
-    /** A Jellyfin, Emby or Plex server's sign-in form, including Jellyfin Quick Connect and Plex's plex.tv PIN. */
-    val serverSignInViewModelFactory: ServerSignInViewModel.Factory
-
-    /** A signed-in Jellyfin, Emby or Plex server's saved address and user, for its row and detail in Sources. */
-    val readServerLogin: ReadServerLogin
-
-    /**
-     * The mini player and Now Playing's ViewModel. Swift builds one through [createPlayerViewModel], which hands it the
-     * saved state it needs.
-     */
-    val playerViewModelFactory: PlayerViewModel.Factory
-
+interface IosAppGraph :
+    ViewModelGraph,
+    IosPlaybackAccessors,
+    IosLibraryAccessors,
+    IosServerAccessors,
+    IosStoreAccessors,
+    IosViewModelAccessors {
     @DependencyGraph.Factory
     fun interface Factory {
         /**
