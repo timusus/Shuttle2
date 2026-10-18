@@ -1,7 +1,7 @@
 import Foundation
 import Shared
 
-/// What plays with no network, for Home (#925): the network path, the downloads, the index built from them and the
+/// What plays with no network, for Home: the network path, the downloads, the index built from them and the
 /// playlists with a song that plays offline. `onChange` is called when Home should redraw.
 @MainActor
 final class CarPlayOfflineState {
@@ -77,7 +77,7 @@ final class CarPlayOfflineState {
         downloads = [:]
     }
 
-    /// Re-asks which playlists have a song that plays offline (#925), for the current playlists and completed downloads.
+    /// Re-asks which playlists have a song that plays offline, for the current playlists and completed downloads.
     /// Only while offline, and only when the playlist ids or the completed download paths changed: `downloads` emits on
     /// every progress tick, and each restart re-reads every playlist's songs.
     private func observePlayablePlaylists() {
