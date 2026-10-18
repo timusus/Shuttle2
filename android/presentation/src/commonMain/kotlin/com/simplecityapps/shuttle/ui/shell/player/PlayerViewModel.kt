@@ -105,14 +105,13 @@ class PlayerViewModel @AssistedInject constructor(
     private val saveSetting: SaveSetting,
     replayGainModeSetting: ReplayGainModeSetting,
     private val setReplayGainMode: SetReplayGainMode,
-    observeArtworkSeed: ObserveArtworkSeed,
+    observeNowPlayingDecor: ObserveNowPlayingDecor,
     castAvailability: CastAvailability,
     savedNowPlaying: SavedNowPlaying,
     private val clearQueue: ClearQueue,
     private val restoreQueue: RestoreQueue,
     private val availableMediaActions: AvailableMediaActions,
     private val mediaActionHandler: MediaActionHandler,
-    deliveredFormats: DeliveredFormats,
     observeLyrics: ObserveLyrics,
     @Assisted private val savedStateHandle: SavedStateHandle,
 ) : ViewModel(),
@@ -154,7 +153,7 @@ class PlayerViewModel @AssistedInject constructor(
 
     private val favouriteIds: Flow<Set<Long>> = observeFavouriteSongIds()
 
-    private val seed: Flow<ArtworkSeed> = observeArtworkSeed(currentSong, observeSetting(ArtworkSettings.NowPlayingArtworkSource))
+    private val seed: Flow<ArtworkSeed> = observeNowPlayingDecor.seed(currentSong)
 
     private val lyrics: Flow<String?> = observeLyrics(currentSong) {
         if (savedStateHandle.get<NowPlayingPanel?>(PANEL_KEY) == NowPlayingPanel.Lyrics) savedStateHandle[PANEL_KEY] = null
@@ -192,21 +191,7 @@ class PlayerViewModel @AssistedInject constructor(
             )
         }.combine(observeSetting(PlayerSettings.ShowRemainingTime)) { state, showRemainingTime ->
             state.copy(showRemainingTime = showRemainingTime)
-        }.combine(observeSetting(ArtworkSettings.NowPlayingArtworkSource)) { state, image ->
-            state.copy(nowPlayingImage = image)
-        }.combine(observeSetting(AppearanceSettings.ClassicalDisplay)) { state, enabled ->
-            val index = state.items.indexOfFirst { it.position == QueuePosition.Current }
-            // A view, not a copy: the work is found from the songs around the current one only.
-            val items = state.items
-            val songs = object : AbstractList<Song>() {
-                override val size get() = items.size
-
-                override fun get(index: Int) = items[index].song
-            }
-            state.copy(work = if (enabled && index >= 0) nowPlayingWork(songs, index) else null)
-        }.combine(deliveredFormats.byPath) { state, delivered ->
-            state.copy(delivered = state.current?.song?.path?.let(delivered::get))
-        }.combine(lyrics) { state, lyrics ->
+        }.let(observeNowPlayingDecor::decorate).combine(lyrics) { state, lyrics ->
             state.copy(lyrics = lyrics)
         }.combine(panel) { state, panel ->
             // An emptied queue takes the player, and its panel, away; so does a song without lyrics the Lyrics panel.
