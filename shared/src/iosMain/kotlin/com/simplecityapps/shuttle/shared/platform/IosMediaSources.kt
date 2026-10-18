@@ -14,7 +14,7 @@ import com.simplecityapps.provider.plex.PlexMediaProvider
 import com.simplecityapps.provider.subsonic.SubsonicMediaProvider
 import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.shuttle.model.MediaProviderType
-import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
+import com.simplecityapps.shuttle.persistence.SourceStateStore
 import com.simplecityapps.shuttle.shared.local.IosLocalMediaProvider
 import com.simplecityapps.shuttle.ui.actions.SongDownloader
 import com.simplecityapps.shuttle.ui.screens.sources.MediaSources
@@ -39,7 +39,7 @@ import kotlinx.coroutines.launch
 @ContributesBinding(AppScope::class)
 class IosMediaSources @Inject constructor(
     private val preferences: PlaybackPreferenceManager,
-    private val generalPreferences: GeneralPreferenceManager,
+    private val sourceState: SourceStateStore,
     private val mediaImporter: MediaImporter,
     private val jellyfinMediaProvider: JellyfinMediaProvider,
     private val embyMediaProvider: EmbyMediaProvider,
@@ -81,7 +81,7 @@ class IosMediaSources @Inject constructor(
         }
     }
 
-    override val hasScanned: Boolean get() = generalPreferences.lastMediaImportDate != null
+    override val hasScanned: Boolean get() = sourceState.lastMediaImportDate != null
 
     override val songTagsOutdated: Boolean get() = mediaImporter.songTagsOutdated
 

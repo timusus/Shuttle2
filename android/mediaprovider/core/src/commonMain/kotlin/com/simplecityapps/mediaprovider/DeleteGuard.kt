@@ -2,7 +2,7 @@ package com.simplecityapps.mediaprovider
 
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
-import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
+import com.simplecityapps.shuttle.persistence.SourceStateStore
 
 /**
  * Which of an import's deletes [MediaImporter] applies. Deleting a song takes its play history and playlist places
@@ -22,7 +22,7 @@ import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
  */
 class DeleteGuard(
     /** Where the songs each source's last complete listing held back as a mass removal are kept, across restarts. */
-    private val preferenceManager: GeneralPreferenceManager
+    private val sourceState: SourceStateStore
 ) {
     /**
      * [decide]s which of [type]'s [deletes] to apply, from a listing [missing] as many songs as it did. A complete listing
@@ -41,10 +41,10 @@ class DeleteGuard(
         missing: Int = 0,
         fullPass: Boolean = true
     ): Decision {
-        val listingComplete = missing == 0 || missing == preferenceManager.listingShortfall(type.name)
-        val decision = decide(existingCount, foundCount, deletes, unreadableRoots, heldLastPass = preferenceManager.heldDeletes(type.name), userRemoval, listingComplete)
-        if (fullPass) preferenceManager.setListingShortfall(type.name, missing)
-        if (listingComplete) preferenceManager.setHeldDeletes(type.name, decision.heldMassRemoval.map { song -> song.id }.toSet())
+        val listingComplete = missing == 0 || missing == sourceState.listingShortfall(type.name)
+        val decision = decide(existingCount, foundCount, deletes, unreadableRoots, heldLastPass = sourceState.heldDeletes(type.name), userRemoval, listingComplete)
+        if (fullPass) sourceState.setListingShortfall(type.name, missing)
+        if (listingComplete) sourceState.setHeldDeletes(type.name, decision.heldMassRemoval.map { song -> song.id }.toSet())
         return decision
     }
 

@@ -32,48 +32,6 @@ class GeneralPreferenceManagerTest {
         preferences.sleepTimerPlayToEnd shouldBe false
         preferences.allLibraryTabs shouldBe LibraryTab.entries
         preferences.enabledLibraryTabs shouldBe LibraryTab.entries - LibraryTab.Folders
-        preferences.songTagsVersion("Jellyfin") shouldBe 0
-        preferences.songTagsRescanVersion shouldBe 0
-        preferences.lastMediaImportDate.shouldBeNull()
-        preferences.lastSyncStart("Jellyfin").shouldBeNull()
-        preferences.lastFullSyncStart("Jellyfin").shouldBeNull()
-        preferences.sourceReachability("Jellyfin").shouldBeNull()
-        preferences.sourceUpdated("Jellyfin").shouldBeNull()
-    }
-
-    @Test
-    fun `a source's updated time is kept per source`() {
-        preferences.setSourceUpdated("Jellyfin", Instant.fromEpochMilliseconds(1_000))
-
-        preferences.sourceUpdated("Jellyfin") shouldBe Instant.fromEpochMilliseconds(1_000)
-        preferences.sourceUpdated("Plex").shouldBeNull()
-    }
-
-    @Test
-    fun `a source's reachability is kept per source - a success clears its error`() {
-        val failed = SourceReachability("Can't reach the server", Instant.fromEpochMilliseconds(1_000))
-        preferences.setSourceReachability("Jellyfin", failed)
-
-        preferences.sourceReachability("Jellyfin") shouldBe failed
-        preferences.sourceReachability("Plex").shouldBeNull()
-
-        val reached = SourceReachability(null, Instant.fromEpochMilliseconds(2_000))
-        preferences.setSourceReachability("Jellyfin", reached)
-        preferences.sourceReachability("Jellyfin") shouldBe reached
-    }
-
-    @Test
-    fun `sync starts are kept per source`() {
-        preferences.setLastSyncStart("Jellyfin", Instant.fromEpochMilliseconds(1_000))
-        preferences.setLastFullSyncStart("Plex", Instant.fromEpochMilliseconds(2_000))
-
-        preferences.lastSyncStart("Jellyfin") shouldBe Instant.fromEpochMilliseconds(1_000)
-        preferences.lastSyncStart("Plex").shouldBeNull()
-        preferences.lastFullSyncStart("Plex") shouldBe Instant.fromEpochMilliseconds(2_000)
-        preferences.lastFullSyncStart("Jellyfin").shouldBeNull()
-
-        preferences.setLastSyncStart("Jellyfin", null)
-        preferences.lastSyncStart("Jellyfin").shouldBeNull()
     }
 
     @Test
@@ -95,9 +53,6 @@ class GeneralPreferenceManagerTest {
         preferences.sleepTimerPlayToEnd = true
         preferences.allLibraryTabs = listOf(LibraryTab.Songs, LibraryTab.Albums)
         preferences.enabledLibraryTabs = listOf(LibraryTab.Songs)
-        preferences.setSongTagsVersion("Jellyfin", 1)
-        preferences.songTagsRescanVersion = 1
-        preferences.lastMediaImportDate = Instant.fromEpochMilliseconds(1_700_000_000_003)
 
         store.values shouldBe mapOf(
             "previous_version_code" to 26092701,
@@ -116,10 +71,7 @@ class GeneralPreferenceManagerTest {
             "search_recent" to "newest\noldest",
             "sleep_timer_play_to_end" to true,
             "pref_library_tabs_all" to "Songs,Albums",
-            "pref_library_tabs_enabled" to "Songs",
-            "song_tags_version_Jellyfin" to 1,
-            "song_tags_rescan_version" to 1,
-            "pref_media_last_rescan_date" to 1_700_000_000_003L
+            "pref_library_tabs_enabled" to "Songs"
         )
     }
 
@@ -129,42 +81,26 @@ class GeneralPreferenceManagerTest {
             InMemoryKeyValueStore(
                 mapOf(
                     "app_purchased_date" to 1_700_000_000_001L,
-                    "last_viewed_rating_flow" to 1_700_000_000_002L,
-                    "pref_media_last_rescan_date" to 1_700_000_000_003L
+                    "last_viewed_rating_flow" to 1_700_000_000_002L
                 )
             )
         )
 
         saved.appPurchasedDate shouldBe Instant.fromEpochMilliseconds(1_700_000_000_001)
         saved.lastViewedRatingFlow shouldBe Instant.fromEpochMilliseconds(1_700_000_000_002)
-        saved.lastMediaImportDate shouldBe Instant.fromEpochMilliseconds(1_700_000_000_003)
     }
 
     @Test
     fun `clearing a date or string removes its key`() {
-        preferences.lastMediaImportDate = Instant.fromEpochMilliseconds(1)
+        preferences.appPurchasedDate = Instant.fromEpochMilliseconds(1)
         preferences.lastViewedChangelogVersion = "1"
         preferences.currentLibraryTab = LibraryTab.Songs
 
-        preferences.lastMediaImportDate = null
+        preferences.appPurchasedDate = null
         preferences.lastViewedChangelogVersion = null
         preferences.currentLibraryTab = null
 
         store.values shouldBe emptyMap()
-    }
-
-    @Test
-    fun `held deletes are saved per source as sorted base-36 gaps - and an unreadable value holds none`() {
-        preferences.setHeldDeletes("Shuttle", setOf(40L, 3L, 1_000_000L))
-        store.getString("held_deletes_Shuttle", null) shouldBe "3,11,lfko"
-        preferences.heldDeletes("Shuttle") shouldBe setOf(3L, 40L, 1_000_000L)
-        preferences.heldDeletes("Jellyfin") shouldBe emptySet()
-
-        preferences.setHeldDeletes("Shuttle", emptySet())
-        store.contains("held_deletes_Shuttle") shouldBe false
-
-        store.edit { putString("held_deletes_Shuttle", "3,!,4") }
-        preferences.heldDeletes("Shuttle") shouldBe emptySet()
     }
 
     @Test

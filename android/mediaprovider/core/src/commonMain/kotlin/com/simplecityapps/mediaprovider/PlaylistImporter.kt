@@ -4,7 +4,7 @@ import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.shuttle.logging.Logger
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
-import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
+import com.simplecityapps.shuttle.persistence.SourceStateStore
 import kotlin.time.TimeSource
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -13,7 +13,7 @@ import kotlinx.coroutines.flow.flow
 internal class PlaylistImporter(
     private val songRepository: SongRepository,
     private val playlistStore: ImportedPlaylistStore,
-    private val preferenceManager: GeneralPreferenceManager,
+    private val sourceState: SourceStateStore,
     /** Sends the edits made in S2 to a server's playlists before that server's playlists are read again (#916). */
     private val playlistSync: ServerPlaylistSync?
 ) {
@@ -46,7 +46,7 @@ internal class PlaylistImporter(
             if (reconcile && reuseVersions) {
                 // Only a playlist still stored, holding songs, can be left as it is
                 val stored = playlistStore.storedPlaylistIds(mediaProvider.type)
-                preferenceManager.playlistVersions(source).filterKeys { externalId -> externalId in stored }
+                sourceState.playlistVersions(source).filterKeys { externalId -> externalId in stored }
             } else {
                 emptyMap()
             }
@@ -87,7 +87,7 @@ internal class PlaylistImporter(
         }
         if (reconcile) {
             val listing = event.result.holdingBack(held)
-            val lastServerSongs = preferenceManager.playlistServerSongs(source)
+            val lastServerSongs = sourceState.playlistServerSongs(source)
             val songIds by lazy { existingSongs.associate { song -> song.path to song.id } }
             playlistStore.reconcilePlaylists(
                 type,
@@ -95,8 +95,8 @@ internal class PlaylistImporter(
                 listingComplete = event.complete,
                 lastServerSongs = lastServerSongs.mapValues { (_, paths) -> paths.mapNotNullTo(HashSet()) { path -> songIds[path] } }
             )
-            preferenceManager.setPlaylistVersions(source, listing.versions)
-            preferenceManager.setPlaylistServerSongs(source, serverSongsAfter(listing, lastServerSongs))
+            sourceState.setPlaylistVersions(source, listing.versions)
+            sourceState.setPlaylistServerSongs(source, serverSongsAfter(listing, lastServerSongs))
         } else {
             event.result.playlists.forEach { playlistUpdateData ->
                 if (playlistUpdateData.songs.isNotEmpty() && playlistUpdateData.externalId !in held) {

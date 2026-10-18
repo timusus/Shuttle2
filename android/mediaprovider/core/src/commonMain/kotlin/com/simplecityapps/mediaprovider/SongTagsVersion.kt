@@ -1,7 +1,7 @@
 package com.simplecityapps.mediaprovider
 
 import com.simplecityapps.shuttle.model.MediaProviderType
-import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
+import com.simplecityapps.shuttle.persistence.SourceStateStore
 
 /**
  * Raised when the importer starts storing a tag it didn't before, so the songs stored already are read again once
@@ -24,4 +24,4 @@ fun requiredSongTagsVersion(type: MediaProviderType): Int = when {
 }
 
 /** Whether [type]'s songs were last imported before [requiredSongTagsVersion]: recorded when its import is stored. */
-fun GeneralPreferenceManager.songTagsOutdated(type: MediaProviderType): Boolean = songTagsVersion(type.name) < requiredSongTagsVersion(type)
+fun SourceStateStore.songTagsOutdated(type: MediaProviderType): Boolean = songTagsVersion(type.name) < requiredSongTagsVersion(type)

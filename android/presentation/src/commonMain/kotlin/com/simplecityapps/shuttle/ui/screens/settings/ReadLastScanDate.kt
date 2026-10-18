@@ -2,15 +2,15 @@ package com.simplecityapps.shuttle.ui.screens.settings
 
 import com.simplecityapps.playback.dsp.equalizer.Equalizer
 import com.simplecityapps.playback.equalizer.EqualizerPresetStore
-import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
+import com.simplecityapps.shuttle.persistence.SourceStateStore
 import dev.zacsweers.metro.Inject
 import kotlin.time.Instant
 
 /** When the library was last scanned, if it has been. */
 class ReadLastScanDate @Inject constructor(
-    private val generalPreferenceManager: GeneralPreferenceManager
+    private val sourceState: SourceStateStore
 ) {
-    operator fun invoke(): Instant? = generalPreferenceManager.lastMediaImportDate
+    operator fun invoke(): Instant? = sourceState.lastMediaImportDate
 }
 
 /** The equalizer preset in use now. */

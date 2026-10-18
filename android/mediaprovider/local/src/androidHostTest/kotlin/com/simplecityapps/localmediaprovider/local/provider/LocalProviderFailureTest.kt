@@ -15,8 +15,8 @@ import com.simplecityapps.mediaprovider.FlowEvent
 import com.simplecityapps.mediaprovider.MediaProvider
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
-import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
+import com.simplecityapps.shuttle.persistence.SourceStateStore
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import kotlinx.coroutines.flow.last
@@ -34,7 +34,7 @@ import org.robolectric.Robolectric
 class LocalProviderFailureTest {
     private val context: Context = ApplicationProvider.getApplicationContext()
 
-    private val mediaStoreProvider = MediaStoreMediaProvider(context, { _, _ -> null }, GeneralPreferenceManager(InMemoryKeyValueStore()), testTagReadGuard())
+    private val mediaStoreProvider = MediaStoreMediaProvider(context, { _, _ -> null }, SourceStateStore(InMemoryKeyValueStore()), testTagReadGuard())
 
     @Test
     fun `MediaStore returning no cursor fails the MediaStore import`() {

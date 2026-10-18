@@ -2,7 +2,7 @@ package com.simplecityapps.mediaprovider
 
 import com.simplecityapps.shuttle.logging.Logger
 import com.simplecityapps.shuttle.model.MediaProviderType
-import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
+import com.simplecityapps.shuttle.persistence.SourceStateStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -67,7 +67,7 @@ sealed interface PlaylistEdit {
  */
 class ServerPlaylistSync(
     writers: Set<ServerPlaylistWriter>,
-    private val preferenceManager: GeneralPreferenceManager,
+    private val sourceState: SourceStateStore,
     private val scope: CoroutineScope,
     /** Held by an edit in S2 from making it until it's queued, and by an import while it reads the queue and writes playlists. Taken before [queueLock]. Tests pass one that reports waiters. */
     private val editLock: Mutex = Mutex()
@@ -215,12 +215,12 @@ class ServerPlaylistSync(
         playlistId: String,
         update: (List<String>) -> List<String>?
     ) {
-        val songs = preferenceManager.playlistServerSongs(type.name)
+        val songs = sourceState.playlistServerSongs(type.name)
         val updated = update(songs[playlistId].orEmpty())
-        preferenceManager.setPlaylistServerSongs(type.name, if (updated == null) songs - playlistId else songs + (playlistId to updated))
+        sourceState.setPlaylistServerSongs(type.name, if (updated == null) songs - playlistId else songs + (playlistId to updated))
     }
 
-    private fun pending(type: MediaProviderType): List<PlaylistEdit> = preferenceManager.pendingPlaylistEdits(type.name)
+    private fun pending(type: MediaProviderType): List<PlaylistEdit> = sourceState.pendingPlaylistEdits(type.name)
         ?.lineSequence()
         ?.mapNotNull { line -> line.decodeEdit() }
         ?.toList()
@@ -229,7 +229,7 @@ class ServerPlaylistSync(
     private fun save(
         type: MediaProviderType,
         edits: List<PlaylistEdit>
-    ) = preferenceManager.setPendingPlaylistEdits(type.name, edits.joinToString("\n") { edit -> edit.encode() })
+    ) = sourceState.setPendingPlaylistEdits(type.name, edits.joinToString("\n") { edit -> edit.encode() })
 }
 
 /** The entries [edit] removes: the first not yet removed for each of its songs, or every one of them when it removes every entry. */

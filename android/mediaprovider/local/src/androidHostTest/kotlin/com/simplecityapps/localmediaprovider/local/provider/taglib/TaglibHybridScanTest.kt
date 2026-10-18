@@ -20,8 +20,8 @@ import com.simplecityapps.mediaprovider.model.AudioFile
 import com.simplecityapps.saf.DocumentNode
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
-import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
+import com.simplecityapps.shuttle.persistence.SourceStateStore
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
 import java.io.File
@@ -48,7 +48,7 @@ private const val MODIFIED = 1_700_000_000_123
 @RunWith(AndroidJUnit4::class)
 class TaglibHybridScanTest {
     private val context: Context = ApplicationProvider.getApplicationContext()
-    private val preferences = GeneralPreferenceManager(InMemoryKeyValueStore())
+    private val preferences = SourceStateStore(InMemoryKeyValueStore())
     private val tagReadGuard = testTagReadGuard(preferences)
     private val tree = DocumentsContract.buildTreeDocumentUri(AUTHORITY, "primary:Music")
 

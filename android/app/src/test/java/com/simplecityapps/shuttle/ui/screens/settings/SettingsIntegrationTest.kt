@@ -3,9 +3,9 @@ package com.simplecityapps.shuttle.ui.screens.settings
 import androidx.compose.ui.test.junit4.createComposeRule
 import com.simplecityapps.playback.equalizer.KeyValueEqualizerPresetStore
 import com.simplecityapps.shuttle.entitlement.TryUseProFeature
-import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import com.simplecityapps.shuttle.persistence.SharedPreferencesKeyValueStore
+import com.simplecityapps.shuttle.persistence.SourceStateStore
 import com.simplecityapps.shuttle.scrobbling.IsLastFmConfigured
 import com.simplecityapps.shuttle.settings.Accent
 import com.simplecityapps.shuttle.settings.AppearanceSettings
@@ -46,7 +46,7 @@ class SettingsIntegrationTest {
     private val backupFlow = FakeLibraryBackupFlow()
     private val robot = SettingsRobot(composeTestRule)
 
-    private val preferences = GeneralPreferenceManager(InMemoryKeyValueStore())
+    private val preferences = SourceStateStore(InMemoryKeyValueStore())
 
     private fun viewModel(): SettingsViewModel {
         val presetStore = KeyValueEqualizerPresetStore(InMemoryKeyValueStore())

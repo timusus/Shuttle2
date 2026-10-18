@@ -1,8 +1,8 @@
 package com.simplecityapps.mediaprovider
 
 import com.simplecityapps.shuttle.model.MediaProviderType
-import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
+import com.simplecityapps.shuttle.persistence.SourceStateStore
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.shouldBe
@@ -21,7 +21,7 @@ import org.junit.Test
 
 /** A guard over a fresh marker folder, as the process [pid], where Android records [processExits]. */
 private fun testTagReadGuard(
-    preferences: GeneralPreferenceManager = GeneralPreferenceManager(InMemoryKeyValueStore()),
+    preferences: SourceStateStore = SourceStateStore(InMemoryKeyValueStore()),
     markerDir: File = Files.createTempDirectory("tag-reads").toFile(),
     processExits: () -> List<ProcessExit>? = { null },
     pid: Int = 1,
@@ -29,7 +29,7 @@ private fun testTagReadGuard(
 ) = TagReadGuard(markerDir, preferences, processExits, TagReadLimiter(permits), pid)
 
 class TagReadGuardTest {
-    private val preferences = GeneralPreferenceManager(InMemoryKeyValueStore())
+    private val preferences = SourceStateStore(InMemoryKeyValueStore())
     private val markerDir: File = Files.createTempDirectory("tag-reads").toFile()
     private val a = TagReadFile("/music/a.flac", 100, 1_000)
     private val b = TagReadFile("/music/b.flac", 200, 2_000)

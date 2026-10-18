@@ -1,8 +1,8 @@
 package com.simplecityapps.mediaprovider
 
 import com.simplecityapps.shuttle.model.MediaProviderType
-import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
+import com.simplecityapps.shuttle.persistence.SourceStateStore
 import io.kotest.matchers.shouldBe
 import kotlin.test.Test
 import kotlinx.coroutines.test.TestScope
@@ -11,7 +11,7 @@ import kotlinx.coroutines.test.runTest
 
 class ServerPlaylistSyncTest {
     private val server = FakeServer()
-    private val preferences = GeneralPreferenceManager(InMemoryKeyValueStore())
+    private val preferences = SourceStateStore(InMemoryKeyValueStore())
     private val source = MediaProviderType.Jellyfin.name
 
     private fun TestScope.sync() = ServerPlaylistSync(setOf(server), preferences, backgroundScope)

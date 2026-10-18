@@ -15,8 +15,8 @@ import com.simplecityapps.shuttle.model.AlbumArtistGroupKey
 import com.simplecityapps.shuttle.model.AlbumGroupKey
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.PlayContext
-import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
+import com.simplecityapps.shuttle.persistence.SourceStateStore
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
 import kotlin.time.Instant
@@ -33,7 +33,7 @@ class AlbumKeyMigrationTest {
     private val database = Room.inMemoryDatabaseBuilder(context, MediaDatabase::class.java)
         .allowMainThreadQueries()
         .build()
-    private val preferences = GeneralPreferenceManager(InMemoryKeyValueStore())
+    private val preferences = SourceStateStore(InMemoryKeyValueStore())
     private val migration = AlbumKeyMigration(database.songDataDao(), database.playEventDao(), database.resumePointDao(), database.pinnedCollectionDao(), preferences)
 
     private val drive = AlbumGroupKey("drive ost", AlbumArtistGroupKey("various artists"), "dir:/music/Drive")

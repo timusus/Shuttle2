@@ -6,8 +6,8 @@ import com.simplecityapps.ktaglib.KTagLib
 import com.simplecityapps.localmediaprovider.local.provider.taglib.FileScanner
 import com.simplecityapps.mediaprovider.TagReadFile
 import com.simplecityapps.mediaprovider.TagReadGuard
-import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
+import com.simplecityapps.shuttle.persistence.SourceStateStore
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.mockk.mockk
@@ -20,7 +20,7 @@ import org.robolectric.RobolectricTestRunner
 /** #874: a file TagLib crashed on is quarantined, so the editor leaves it unread rather than crashing on it again. */
 @RunWith(RobolectricTestRunner::class)
 class DeviceTagFileAccessTest {
-    private val preferences = GeneralPreferenceManager(InMemoryKeyValueStore())
+    private val preferences = SourceStateStore(InMemoryKeyValueStore())
     private val guard = TagReadGuard(Files.createTempDirectory("tag-reads").toFile(), preferences, { null })
 
     // The native library isn't loaded on the JVM: a quarantined file must never reach it

@@ -3,7 +3,7 @@ package com.simplecityapps.mediaprovider
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.shuttle.logging.Logger
 import com.simplecityapps.shuttle.model.Song
-import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
+import com.simplecityapps.shuttle.persistence.SourceStateStore
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Clock
 import kotlin.time.Duration
@@ -29,7 +29,7 @@ internal class ImportTimings {
 internal class SongImporter(
     private val strings: MediaImportStrings,
     private val songRepository: SongRepository,
-    private val preferenceManager: GeneralPreferenceManager,
+    private val sourceState: SourceStateStore,
     private val clock: Clock,
     /** Holds back the deletes of a full import that look like a source failing rather than shrinking. */
     private val deleteGuard: DeleteGuard
@@ -110,25 +110,25 @@ internal class SongImporter(
                             )
                         timings.dbWrite = dbWriteMark.elapsedNow()
                         mediaProvider.songsStored()
-                        preferenceManager.setLastSyncStart(mediaProvider.type.name, start)
+                        sourceState.setLastSyncStart(mediaProvider.type.name, start)
                         if (plan == SyncPlan.Full) {
                             // A full pass tries every file it hasn't stored, so its count of files left unread is the whole of it (#840)
-                            preferenceManager.setSkippedFiles(mediaProvider.type.name, mediaProvider.skippedFiles.size)
+                            sourceState.setSkippedFiles(mediaProvider.type.name, mediaProvider.skippedFiles.size)
                             if (guarded.awaitsFullPass) {
                                 // A held mass removal, or a listing that left songs out, waits on the next full sync, so that's
                                 // the next sync rather than a week on. The songs it held weren't read, so the tags version stays
                                 // as it was.
-                                preferenceManager.setLastFullSyncStart(mediaProvider.type.name, null)
+                                sourceState.setLastFullSyncStart(mediaProvider.type.name, null)
                             } else {
-                                preferenceManager.setLastFullSyncStart(mediaProvider.type.name, start)
+                                sourceState.setLastFullSyncStart(mediaProvider.type.name, start)
                                 // Every song read again, so this source's songs hold every tag this build reads
-                                preferenceManager.setSongTagsVersion(mediaProvider.type.name, requiredSongTagsVersion(mediaProvider.type))
+                                sourceState.setSongTagsVersion(mediaProvider.type.name, requiredSongTagsVersion(mediaProvider.type))
                             }
                         } else if (guarded.awaitsFullPass || (removed?.unfetched ?: 0) > 0) {
                             // Likewise after an incremental sync, which also brings it forward for songs the source holds that
                             // it never fetched (unchanged since before they were in reach): until a full sync stores them, the
                             // count disagrees and every incremental sync would list the paths again. The tags version stays.
-                            preferenceManager.setLastFullSyncStart(mediaProvider.type.name, null)
+                            sourceState.setLastFullSyncStart(mediaProvider.type.name, null)
                         }
                         emit(
                             FlowEvent.Success(
@@ -176,7 +176,7 @@ internal class SongImporter(
         existingSongs: List<Song>,
         inserted: List<Song>
     ): RemovedOnSource? {
-        val expected = existingSongs.size + inserted.size + preferenceManager.listingShortfall(mediaProvider.type.name)
+        val expected = existingSongs.size + inserted.size + sourceState.listingShortfall(mediaProvider.type.name)
         if (mediaProvider.countSongs() == expected) return null
         val listing = mediaProvider.findSongPaths().lastOrNull()
         if (listing !is FlowEvent.Success) {

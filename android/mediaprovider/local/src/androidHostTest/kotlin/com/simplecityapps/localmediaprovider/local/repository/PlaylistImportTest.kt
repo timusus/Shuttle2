@@ -23,8 +23,8 @@ import com.simplecityapps.mediaprovider.ServerPlaylistWriter
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
-import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
+import com.simplecityapps.shuttle.persistence.SourceStateStore
 import com.simplecityapps.shuttle.query.SongQuery
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
@@ -67,14 +67,14 @@ class PlaylistImportTest {
             strings = ResourceMediaImportStrings(context),
             songRepository = songRepository,
             playlistStore = playlistRepository,
-            preferenceManager = GeneralPreferenceManager(InMemoryKeyValueStore()),
+            sourceState = SourceStateStore(InMemoryKeyValueStore()),
             afterImport = {}
         ).apply { mediaProviders += provider }
 
     /** A media server whose playlists are edited through [serverWriter], imported by [syncedImporter] (#916). */
     private val server = FakeProvider(MediaProviderType.Jellyfin)
     private val serverWriter = FakePlaylistWriter(server)
-    private val preferences = GeneralPreferenceManager(InMemoryKeyValueStore())
+    private val preferences = SourceStateStore(InMemoryKeyValueStore())
     private val playlistSync = ServerPlaylistSync(setOf(serverWriter), preferences, scope)
     private val syncedPlaylistRepository =
         LocalPlaylistRepository(scope, database.playlistDataDao(), database.playlistSongJoinDataDao(), SafPlaylistFileSync(context, database.songDataDao()), database.libraryAlbumIndex(), playlistSync)
@@ -83,7 +83,7 @@ class PlaylistImportTest {
             strings = ResourceMediaImportStrings(context),
             songRepository = songRepository,
             playlistStore = syncedPlaylistRepository,
-            preferenceManager = preferences,
+            sourceState = preferences,
             afterImport = {},
             playlistSync = playlistSync
         ).apply { mediaProviders += server }
@@ -446,7 +446,7 @@ class PlaylistImportTest {
                 strings = ResourceMediaImportStrings(context),
                 songRepository = songRepository,
                 playlistStore = racingStore,
-                preferenceManager = preferences,
+                sourceState = preferences,
                 afterImport = {},
                 playlistSync = racingSync
             ).apply { mediaProviders += server }

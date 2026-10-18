@@ -14,8 +14,8 @@ import com.simplecityapps.mediaprovider.PlaylistListing
 import com.simplecityapps.mediaprovider.ResourceMediaImportStrings
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
-import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
+import com.simplecityapps.shuttle.persistence.SourceStateStore
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
 import kotlin.time.Instant
@@ -67,7 +67,7 @@ class ConflictingProviderImportTest {
                 strings = ResourceMediaImportStrings(context),
                 songRepository = LocalSongRepository(scope, database.songDataDao(), database.libraryAlbumIndex()),
                 playlistStore = LocalPlaylistRepository(scope, database.playlistDataDao(), database.playlistSongJoinDataDao(), SafPlaylistFileSync(context, database.songDataDao()), database.libraryAlbumIndex()),
-                preferenceManager = GeneralPreferenceManager(InMemoryKeyValueStore()),
+                sourceState = SourceStateStore(InMemoryKeyValueStore()),
                 afterImport = {}
             )
         importer.mediaProviders += FakeProvider(MediaProviderType.MediaStore)

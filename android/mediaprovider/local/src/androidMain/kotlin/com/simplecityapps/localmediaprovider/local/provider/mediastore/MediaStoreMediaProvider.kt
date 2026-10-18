@@ -31,7 +31,7 @@ import com.simplecityapps.mediaprovider.songTagsOutdated
 import com.simplecityapps.mediaprovider.splitArtistTag
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
-import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
+import com.simplecityapps.shuttle.persistence.SourceStateStore
 import kotlin.math.abs
 import kotlin.time.Instant
 import kotlinx.coroutines.Dispatchers
@@ -49,7 +49,7 @@ import timber.log.Timber
 class MediaStoreMediaProvider(
     private val context: Context,
     private val tagReader: MediaStoreTagReader,
-    private val preferenceManager: GeneralPreferenceManager,
+    private val sourceState: SourceStateStore,
     // Takes the reads a crash interrupted before tags are read again, so a file that crashes TagLib is left unread
     private val tagReadGuard: TagReadGuard,
     // MediaStore's audio files, read only in part where the last stored import's listing allows (#875)
@@ -99,7 +99,7 @@ class MediaStoreMediaProvider(
     }
 
     // An import that reads every file again doesn't trust the stored listing for the rows it wouldn't read
-    private fun readWhole(thorough: Boolean): Boolean = thorough || preferenceManager.songTagsOutdated(type)
+    private fun readWhole(thorough: Boolean): Boolean = thorough || sourceState.songTagsOutdated(type)
 
     private fun findSongs(
         existingSongs: List<Song>,
@@ -109,7 +109,7 @@ class MediaStoreMediaProvider(
         tagReadGuard.recover(type)
         // The importer records the new version once this import's result is stored, so one cancelled part way through
         // reads every file again next time. Only this source's version: another failing doesn't make it read them again
-        val backfillFileTags = preferenceManager.songTagsOutdated(type)
+        val backfillFileTags = sourceState.songTagsOutdated(type)
         val listing = remapListing.also { remapListing = null } ?: RemapListing(withContext(Dispatchers.IO) { mediaStoreFiles.list(whole = readWhole(thorough)) })
         val files = listing.files
         // Without a listing, failing keeps the library as it was: an empty one would remove every song

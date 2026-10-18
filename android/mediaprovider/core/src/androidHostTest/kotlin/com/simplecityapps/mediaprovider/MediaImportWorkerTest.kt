@@ -9,8 +9,8 @@ import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.mediaprovider.worker.MediaImportWorker
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
-import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
+import com.simplecityapps.shuttle.persistence.SourceStateStore
 import com.simplecityapps.shuttle.query.SongQuery
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.CompletableDeferred
@@ -38,7 +38,7 @@ class MediaImportWorkerTest {
     /** What the importer's afterImport throws, which fails the sync itself rather than one source. */
     private var afterImportFailure: Exception? = null
     private val preferences =
-        GeneralPreferenceManager(InMemoryKeyValueStore()).apply {
+        SourceStateStore(InMemoryKeyValueStore()).apply {
             // The library has been imported under this build, so the periodic sync has something to do
             lastMediaImportDate = kotlin.time.Clock.System.now()
             songTagsRescanVersion = SONG_TAGS_VERSION
@@ -59,7 +59,7 @@ class MediaImportWorkerTest {
                     lastServerSongs: Map<String, Set<Long>>
                 ) = Unit
             },
-            preferenceManager = preferences,
+            sourceState = preferences,
             afterImport = { afterImportFailure?.let { throw it } }
         ).apply { mediaProviders += provider }
 

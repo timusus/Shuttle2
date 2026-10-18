@@ -2,7 +2,7 @@ package com.simplecityapps.mediaprovider
 
 import com.simplecityapps.shuttle.logging.Logger
 import com.simplecityapps.shuttle.model.MediaProviderType
-import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
+import com.simplecityapps.shuttle.persistence.SourceStateStore
 import kotlin.time.Clock
 import kotlin.time.Duration
 import kotlin.time.TimeSource
@@ -10,7 +10,7 @@ import kotlin.time.TimeSource
 /** The passes [MediaImporter] runs once it holds the import lock: a full import, or a sync as [SyncPolicy] plans it. */
 internal class ImportPasses(
     private val providers: CopyOnWriteSet<MediaProvider>,
-    private val preferenceManager: GeneralPreferenceManager,
+    private val sourceState: SourceStateStore,
     private val clock: Clock,
     private val afterImport: suspend (songTagsCurrent: Boolean) -> Unit,
     private val providerJobs: ProviderJobs,
@@ -20,7 +20,7 @@ internal class ImportPasses(
 
     suspend fun importAll(foldersChanged: Boolean) {
         logger.debug { "Starting import.." }
-        preferenceManager.songTagsRescanVersion = SONG_TAGS_VERSION
+        sourceState.songTagsRescanVersion = SONG_TAGS_VERSION
         importProviders(
             providers.snapshot.map { mediaProvider -> mediaProvider to SyncPlan.Full },
             showProgress = true,
@@ -43,9 +43,9 @@ internal class ImportPasses(
                 SyncPolicy.plan(
                     trigger = trigger,
                     incremental = mediaProvider is IncrementalMediaProvider,
-                    lastSyncStart = preferenceManager.lastSyncStart(mediaProvider.type.name),
-                    lastFullSyncStart = preferenceManager.lastFullSyncStart(mediaProvider.type.name),
-                    songTagsOutdated = preferenceManager.songTagsOutdated(mediaProvider.type),
+                    lastSyncStart = sourceState.lastSyncStart(mediaProvider.type.name),
+                    lastFullSyncStart = sourceState.lastFullSyncStart(mediaProvider.type.name),
+                    songTagsOutdated = sourceState.songTagsOutdated(mediaProvider.type),
                     now = now
                 )?.let { plan -> mediaProvider to plan }
             }
@@ -92,10 +92,10 @@ internal class ImportPasses(
         var afterImportTime = Duration.ZERO
         val finished = outcomes.values.count { outcome -> outcome is ProviderSyncOutcome.Success || (outcome is ProviderSyncOutcome.Failed && outcome.cause == null) }
         if (finished > 0) {
-            preferenceManager.lastMediaImportDate = clock.now()
+            sourceState.lastMediaImportDate = clock.now()
 
             val afterImportMark = TimeSource.Monotonic.markNow()
-            afterImport(providers.snapshot.none { preferenceManager.songTagsOutdated(it.type) })
+            afterImport(providers.snapshot.none { sourceState.songTagsOutdated(it.type) })
             afterImportTime = afterImportMark.elapsedNow()
         }
 

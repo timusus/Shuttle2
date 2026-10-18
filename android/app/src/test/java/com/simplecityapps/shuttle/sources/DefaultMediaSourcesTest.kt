@@ -13,8 +13,8 @@ import com.simplecityapps.playback.queue.QueueItem
 import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.provider.jellyfin.JellyfinMediaProvider
 import com.simplecityapps.shuttle.model.MediaProviderType
-import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
+import com.simplecityapps.shuttle.persistence.SourceStateStore
 import io.kotest.matchers.shouldBe
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -51,7 +51,7 @@ class DefaultMediaSourcesTest {
 
     private val mediaSources = DefaultMediaSources(
         preferences = preferences,
-        generalPreferences = GeneralPreferenceManager(InMemoryKeyValueStore()),
+        sourceState = SourceStateStore(InMemoryKeyValueStore()),
         mediaImporter = mediaImporter,
         importScheduler = importScheduler,
         taglibMediaProvider = mockk(relaxed = true),

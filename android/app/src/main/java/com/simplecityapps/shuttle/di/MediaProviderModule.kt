@@ -13,7 +13,7 @@ import com.simplecityapps.mediaprovider.TagReadGuard
 import com.simplecityapps.mediaprovider.songTagsOutdated
 import com.simplecityapps.shuttle.di.ApplicationContext
 import com.simplecityapps.shuttle.model.MediaProviderType
-import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
+import com.simplecityapps.shuttle.persistence.SourceStateStore
 import com.simplecityapps.shuttle.sources.SafScannerFolderStore
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer
@@ -32,8 +32,8 @@ class MediaProviderModule {
     @SingleIn(AppScope::class)
     fun provideTagReadGuard(
         @ApplicationContext context: Context,
-        preferenceManager: GeneralPreferenceManager
-    ): TagReadGuard = TagReadGuard(context, preferenceManager)
+        sourceState: SourceStateStore
+    ): TagReadGuard = TagReadGuard(context, sourceState)
 
     @Provides
     @SingleIn(AppScope::class)
@@ -47,14 +47,14 @@ class MediaProviderModule {
         fileScanner: FileScanner,
         tagReadGuard: TagReadGuard,
         folderStore: SafScannerFolderStore,
-        preferenceManager: GeneralPreferenceManager,
+        sourceState: SourceStateStore,
         database: MediaDatabase
     ): TaglibMediaProvider = TaglibMediaProvider(
         context,
         kTagLib,
         fileScanner,
         tagReadGuard,
-        backfillFileTags = { preferenceManager.songTagsOutdated(MediaProviderType.Shuttle) },
+        backfillFileTags = { sourceState.songTagsOutdated(MediaProviderType.Shuttle) },
         mediaStoreFiles = MediaStoreAudioLister.incremental(context, database.mediaStoreFileDao(), MediaProviderType.Shuttle),
         folders = folderStore::scannerFolders
     )
@@ -72,13 +72,13 @@ class MediaProviderModule {
     fun provideMediaStoreSongProvider(
         @ApplicationContext context: Context,
         tagReader: MediaStoreTagReader,
-        preferenceManager: GeneralPreferenceManager,
+        sourceState: SourceStateStore,
         tagReadGuard: TagReadGuard,
         database: MediaDatabase
     ): MediaStoreMediaProvider = MediaStoreMediaProvider(
         context,
         tagReader,
-        preferenceManager,
+        sourceState,
         tagReadGuard,
         MediaStoreAudioLister.incremental(context, database.mediaStoreFileDao(), MediaProviderType.MediaStore)
     )

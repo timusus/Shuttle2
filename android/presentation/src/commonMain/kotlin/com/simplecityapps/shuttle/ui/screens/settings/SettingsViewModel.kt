@@ -6,7 +6,7 @@ import com.simplecityapps.playback.dsp.equalizer.Equalizer
 import com.simplecityapps.playback.equalizer.EqualizerPresetStore
 import com.simplecityapps.shuttle.entitlement.TryUseProFeature
 import com.simplecityapps.shuttle.logging.Logger
-import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
+import com.simplecityapps.shuttle.persistence.SourceStateStore
 import com.simplecityapps.shuttle.scrobbling.IsLastFmConfigured
 import com.simplecityapps.shuttle.settings.EqualizerSettings
 import com.simplecityapps.shuttle.settings.ObserveSetting
@@ -90,7 +90,7 @@ class SettingsViewModel @Inject constructor(
     private val readSetting: ReadSetting,
     private val saveSetting: SaveSetting,
     readLastScanDate: ReadLastScanDate,
-    generalPreferenceManager: GeneralPreferenceManager,
+    sourceState: SourceStateStore,
     equalizerPresetStore: EqualizerPresetStore,
     readEqualizerPreset: ReadEqualizerPreset,
     isLastFmConfigured: IsLastFmConfigured,
@@ -106,7 +106,7 @@ class SettingsViewModel @Inject constructor(
 
     val uiState: StateFlow<SettingsUiState> = combine(
         combine(catalogSettings.map { setting -> observeSetting(setting).map { setting.key to it } }) { it.toMap() },
-        generalPreferenceManager.observeLastMediaImportDate(),
+        sourceState.observeLastMediaImportDate(),
         equalizerPresetStore.observePreset(),
         events.flow
     ) { values, lastScan, preset, events -> SettingsUiState(values = values, lastScanDate = lastScan, equalizerPreset = preset, lastFmConfigured = lastFmConfigured, events = events) }

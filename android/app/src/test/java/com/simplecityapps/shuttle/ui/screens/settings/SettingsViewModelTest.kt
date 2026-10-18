@@ -11,8 +11,8 @@ import com.simplecityapps.shuttle.entitlement.ProFeature
 import com.simplecityapps.shuttle.entitlement.ProSource
 import com.simplecityapps.shuttle.entitlement.ServerAccessGate
 import com.simplecityapps.shuttle.entitlement.TryUseProFeature
-import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
+import com.simplecityapps.shuttle.persistence.SourceStateStore
 import com.simplecityapps.shuttle.scrobbling.IsLastFmConfigured
 import com.simplecityapps.shuttle.settings.AppearanceSettings
 import com.simplecityapps.shuttle.settings.EqualizerSettings
@@ -56,7 +56,7 @@ class SettingsViewModelTest {
     private val prefs = InMemoryKeyValueStore()
     private val effects = FakeSettingsEffects()
     private val backupFlow = FakeLibraryBackupFlow()
-    private val preferenceManager = GeneralPreferenceManager(prefs)
+    private val preferenceManager = SourceStateStore(prefs)
     private lateinit var store: SettingsStore
 
     @Before

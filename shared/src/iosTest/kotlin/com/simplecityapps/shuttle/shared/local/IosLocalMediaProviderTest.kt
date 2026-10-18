@@ -5,8 +5,8 @@ import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.SONG_TAGS_VERSION
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
-import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
+import com.simplecityapps.shuttle.persistence.SourceStateStore
 import com.simplecityapps.shuttle.ui.screens.sources.FolderKind
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.shouldBe
@@ -75,7 +75,7 @@ class IosLocalMediaProviderTest {
     }
 
     private val localFiles = FakeLocalFiles()
-    private val preferences = GeneralPreferenceManager(InMemoryKeyValueStore()).apply { setSongTagsVersion(MediaProviderType.Shuttle.name, SONG_TAGS_VERSION) }
+    private val preferences = SourceStateStore(InMemoryKeyValueStore()).apply { setSongTagsVersion(MediaProviderType.Shuttle.name, SONG_TAGS_VERSION) }
     private val provider = IosLocalMediaProvider(localFiles, preferences).apply { emptyFolderRecheckDelayMs = 0 }
 
     private suspend fun findSongs(existing: List<Song> = emptyList()): List<Song> = provider.findSongs(existing).filterIsInstance<FlowEvent.Success<List<Song>>>().first().result

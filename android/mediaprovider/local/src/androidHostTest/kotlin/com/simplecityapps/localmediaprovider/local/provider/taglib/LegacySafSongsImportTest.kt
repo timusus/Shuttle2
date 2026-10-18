@@ -24,8 +24,8 @@ import com.simplecityapps.mediaprovider.ResourceMediaImportStrings
 import com.simplecityapps.mediaprovider.SongPathRemap
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
-import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
+import com.simplecityapps.shuttle.persistence.SourceStateStore
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
@@ -198,7 +198,7 @@ class LegacySafSongsImportTest {
                 strings = ResourceMediaImportStrings(context),
                 songRepository = LocalSongRepository(scope, database.songDataDao(), database.libraryAlbumIndex()),
                 playlistStore = LocalPlaylistRepository(scope, database.playlistDataDao(), database.playlistSongJoinDataDao(), SafPlaylistFileSync(context, database.songDataDao()), database.libraryAlbumIndex()),
-                preferenceManager = GeneralPreferenceManager(InMemoryKeyValueStore()),
+                sourceState = SourceStateStore(InMemoryKeyValueStore()),
                 afterImport = {}
             )
         importer.mediaProviders += provider

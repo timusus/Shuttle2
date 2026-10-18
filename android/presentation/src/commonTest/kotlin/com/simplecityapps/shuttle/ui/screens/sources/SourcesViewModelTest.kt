@@ -12,10 +12,10 @@ import com.simplecityapps.mediaprovider.server.SavedServerLogin
 import com.simplecityapps.shuttle.entitlement.ObserveAddServerResumes
 import com.simplecityapps.shuttle.entitlement.TryAddServer
 import com.simplecityapps.shuttle.model.MediaProviderType
-import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import com.simplecityapps.shuttle.persistence.SecurePreferenceManager
 import com.simplecityapps.shuttle.persistence.SourceReachability
+import com.simplecityapps.shuttle.persistence.SourceStateStore
 import com.simplecityapps.shuttle.server.ServerConnectionStore
 import com.simplecityapps.shuttle.ui.screens.sources.servers.ForgetServer
 import com.simplecityapps.shuttle.ui.screens.sources.servers.ReadServerAccount
@@ -48,7 +48,7 @@ class SourcesViewModelTest {
 
     private val folderStore = FakeScannerFolderStore()
     private val importState = FakeSongImportStateProvider()
-    private val preferences = GeneralPreferenceManager(InMemoryKeyValueStore())
+    private val preferences = SourceStateStore(InMemoryKeyValueStore())
     private val songs = FakeSongRepository()
 
     /** The paywall gate's answer: whether another server may be added before Pro. */

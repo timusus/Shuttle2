@@ -3,15 +3,15 @@ package com.simplecityapps.mediaprovider
 import com.simplecityapps.mediaprovider.DeleteGuard.Companion.decide
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
-import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
+import com.simplecityapps.shuttle.persistence.SourceStateStore
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe
 import kotlin.test.Test
 
 class DeleteGuardTest {
     private val store = InMemoryKeyValueStore()
-    private val preferences = GeneralPreferenceManager(store)
+    private val preferences = SourceStateStore(store)
 
     @Test
     fun `a few songs gone are deleted`() {
@@ -109,7 +109,7 @@ class DeleteGuardTest {
         DeleteGuard(preferences).deletesToApply(MediaProviderType.Shuttle, existingCount = 40, foundCount = 10, deletes = deletes, unreadableRoots = emptySet()).apply.shouldBeEmpty()
 
         // A new process: only the preferences are left
-        DeleteGuard(GeneralPreferenceManager(store)).deletesToApply(MediaProviderType.Shuttle, existingCount = 40, foundCount = 10, deletes = deletes, unreadableRoots = emptySet()).apply shouldBe deletes
+        DeleteGuard(SourceStateStore(store)).deletesToApply(MediaProviderType.Shuttle, existingCount = 40, foundCount = 10, deletes = deletes, unreadableRoots = emptySet()).apply shouldBe deletes
     }
 
     @Test

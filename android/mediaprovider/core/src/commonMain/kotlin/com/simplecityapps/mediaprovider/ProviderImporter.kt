@@ -1,8 +1,8 @@
 package com.simplecityapps.mediaprovider
 
 import com.simplecityapps.shuttle.logging.Logger
-import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.persistence.SourceReachability
+import com.simplecityapps.shuttle.persistence.SourceStateStore
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Clock
 import kotlinx.coroutines.NonCancellable
@@ -11,7 +11,7 @@ import kotlinx.coroutines.withContext
 /** One source's import within a pass: its songs, then its playlists, and the status it leaves behind. */
 internal class ProviderImporter(
     private val strings: MediaImportStrings,
-    private val preferenceManager: GeneralPreferenceManager,
+    private val sourceState: SourceStateStore,
     private val clock: Clock,
     private val songImporter: SongImporter,
     private val playlistImporter: PlaylistImporter,
@@ -58,7 +58,7 @@ internal class ProviderImporter(
         } catch (e: Exception) {
             logger.error(e) { "$type import failed" }
             if (!quietFailures) {
-                preferenceManager.setSourceReachability(type.name, SourceReachability(error = strings.importError, checkedAt = clock.now()))
+                sourceState.setSourceReachability(type.name, SourceReachability(error = strings.importError, checkedAt = clock.now()))
                 states.complete(type, strings.importError)
             }
             return ProviderSyncOutcome.Failed(strings.importError, cause = e)
@@ -112,8 +112,8 @@ internal class ProviderImporter(
     ) {
         val type = mediaProvider.type
         val completedAt = clock.now()
-        preferenceManager.setSourceReachability(type.name, SourceReachability(error = null, checkedAt = completedAt))
-        preferenceManager.setSourceUpdated(type.name, completedAt)
+        sourceState.setSourceReachability(type.name, SourceReachability(error = null, checkedAt = completedAt))
+        sourceState.setSourceUpdated(type.name, completedAt)
         val changed = result.inserts + result.updates + result.deletes > 0
         // A quiet sync that stored nothing stays silent, unless it clears an earlier failure.
         val clearsError = (states.stateOf(type) as? SongImportState.ImportComplete)?.error != null
@@ -131,7 +131,7 @@ internal class ProviderImporter(
         if (quietFailures) {
             logger.warn { "$type sync failed, leaving its status as it was: $message" }
         } else {
-            preferenceManager.setSourceReachability(type.name, SourceReachability(error = message, checkedAt = clock.now()))
+            sourceState.setSourceReachability(type.name, SourceReachability(error = message, checkedAt = clock.now()))
             states.complete(type, message)
         }
     }

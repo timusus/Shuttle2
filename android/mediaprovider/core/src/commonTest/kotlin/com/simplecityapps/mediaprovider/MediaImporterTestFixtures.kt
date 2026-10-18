@@ -3,8 +3,8 @@ package com.simplecityapps.mediaprovider
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
-import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
+import com.simplecityapps.shuttle.persistence.SourceStateStore
 import com.simplecityapps.shuttle.query.SongQuery
 import kotlin.concurrent.Volatile
 import kotlin.concurrent.atomics.AtomicBoolean
@@ -29,7 +29,7 @@ import kotlinx.coroutines.test.setMain
 @OptIn(ExperimentalCoroutinesApi::class)
 abstract class MediaImporterTestBase {
     protected val provider = GatedProvider()
-    protected val preferences = GeneralPreferenceManager(InMemoryKeyValueStore())
+    protected val preferences = SourceStateStore(InMemoryKeyValueStore())
     protected val clock = FakeClock(Instant.parse("2026-10-04T09:00:00Z"))
     protected val songRepository = FakeSongRepository()
     protected val server = ServerProvider()
@@ -42,7 +42,7 @@ abstract class MediaImporterTestBase {
             strings = FakeMediaImportStrings,
             songRepository = songRepository,
             playlistStore = playlistStore,
-            preferenceManager = preferences,
+            sourceState = preferences,
             afterImport = { songTagsCurrent -> afterImports += songTagsCurrent },
             clock = clock
         ).apply { mediaProviders += provider }
@@ -65,7 +65,7 @@ abstract class MediaImporterTestBase {
         strings = FakeMediaImportStrings,
         songRepository = songRepository,
         playlistStore = playlistStore,
-        preferenceManager = preferences,
+        sourceState = preferences,
         afterImport = {},
         clock = clock
     ).apply { mediaProviders += server }

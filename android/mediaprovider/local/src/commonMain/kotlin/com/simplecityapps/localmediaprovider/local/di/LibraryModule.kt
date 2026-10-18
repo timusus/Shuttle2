@@ -35,7 +35,7 @@ import com.simplecityapps.mediaprovider.repository.suggestions.SuggestionsReposi
 import com.simplecityapps.mediaprovider.settings.LibrarySettings
 import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.shuttle.model.AlbumIndexProvider
-import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
+import com.simplecityapps.shuttle.persistence.SourceStateStore
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer
 import dev.zacsweers.metro.Binds
@@ -88,12 +88,12 @@ abstract class LibraryModule {
             strings: MediaImportStrings,
             songRepository: SongRepository,
             playlistStore: ImportedPlaylistStore,
-            preferenceManager: GeneralPreferenceManager,
+            sourceState: SourceStateStore,
             database: MediaDatabase,
             playlistSync: ServerPlaylistSync
         ): MediaImporter {
-            val albumKeyMigration = AlbumKeyMigration(database.songDataDao(), database.playEventDao(), database.resumePointDao(), database.pinnedCollectionDao(), preferenceManager)
-            return MediaImporter(strings, songRepository, playlistStore, preferenceManager, albumKeyMigration::migrateIfDue, playlistSync)
+            val albumKeyMigration = AlbumKeyMigration(database.songDataDao(), database.playEventDao(), database.resumePointDao(), database.pinnedCollectionDao(), sourceState)
+            return MediaImporter(strings, songRepository, playlistStore, sourceState, albumKeyMigration::migrateIfDue, playlistSync)
         }
 
         /** Sends the edits made to media servers' playlists back to them (#916); each provider module contributes its writer to the set. */
@@ -101,9 +101,9 @@ abstract class LibraryModule {
         @SingleIn(AppScope::class)
         fun provideServerPlaylistSync(
             writers: Set<ServerPlaylistWriter>,
-            preferenceManager: GeneralPreferenceManager,
+            sourceState: SourceStateStore,
             @AppCoroutineScope appCoroutineScope: CoroutineScope
-        ): ServerPlaylistSync = ServerPlaylistSync(writers, preferenceManager, appCoroutineScope + Dispatchers.IO)
+        ): ServerPlaylistSync = ServerPlaylistSync(writers, sourceState, appCoroutineScope + Dispatchers.IO)
 
         /** Each provider module contributes its writer to the set. */
         @Provides

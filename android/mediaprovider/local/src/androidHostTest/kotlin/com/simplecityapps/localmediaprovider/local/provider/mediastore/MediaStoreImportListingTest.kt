@@ -13,8 +13,8 @@ import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.SONG_TAGS_VERSION
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
-import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
+import com.simplecityapps.shuttle.persistence.SourceStateStore
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import kotlin.time.Instant
@@ -28,7 +28,7 @@ import org.junit.runner.RunWith
 class MediaStoreImportListingTest {
     private val context: Context = ApplicationProvider.getApplicationContext()
     private val source = FakeMediaStore().apply { put(MediaStoreAudioRow(file, generation = 0)) }
-    private val preferences = GeneralPreferenceManager(InMemoryKeyValueStore()).apply { setSongTagsVersion(MediaProviderType.MediaStore.name, SONG_TAGS_VERSION) }
+    private val preferences = SourceStateStore(InMemoryKeyValueStore()).apply { setSongTagsVersion(MediaProviderType.MediaStore.name, SONG_TAGS_VERSION) }
 
     // Without a store the lister reads MediaStore whole on every list, so each list is one whole read
     private val provider = MediaStoreMediaProvider(context, { _, _ -> null }, preferences, testTagReadGuard(), MediaStoreAudioLister(source, store = null, incremental = false))

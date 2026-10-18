@@ -4,8 +4,8 @@ import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.mediaprovider.SongImportState
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.shuttle.model.MediaProviderType
-import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.persistence.SourceReachability
+import com.simplecityapps.shuttle.persistence.SourceStateStore
 import dev.zacsweers.metro.Inject
 import kotlin.time.Instant
 import kotlinx.coroutines.flow.Flow
@@ -37,36 +37,36 @@ internal fun sourceStatus(state: SongImportState?, stored: SourceReachability? =
 
 /** When each source's import last completed successfully, now and each time one does (#668). */
 class ObserveSourceUpdated @Inject constructor(
-    private val generalPreferenceManager: GeneralPreferenceManager
+    private val sourceState: SourceStateStore
 ) {
-    operator fun invoke(): Flow<Map<MediaProviderType, Instant?>> = combine(MediaProviderType.entries.map { type -> generalPreferenceManager.observeSourceUpdated(type.name) }) { updated ->
+    operator fun invoke(): Flow<Map<MediaProviderType, Instant?>> = combine(MediaProviderType.entries.map { type -> sourceState.observeSourceUpdated(type.name) }) { updated ->
         MediaProviderType.entries.zip(updated.toList()).toMap()
     }
 }
 
 /** How many songs each server counts but doesn't return, now and each time a full listing changes it (#868). */
 class ObserveListingShortfalls @Inject constructor(
-    private val generalPreferenceManager: GeneralPreferenceManager
+    private val sourceState: SourceStateStore
 ) {
-    operator fun invoke(): Flow<Map<MediaProviderType, Int>> = combine(ServerTypes.map { type -> generalPreferenceManager.observeListingShortfall(type.name) }) { shortfalls ->
+    operator fun invoke(): Flow<Map<MediaProviderType, Int>> = combine(ServerTypes.map { type -> sourceState.observeListingShortfall(type.name) }) { shortfalls ->
         ServerTypes.zip(shortfalls.toList()).toMap()
     }
 }
 
 /** How many files this device's last full import couldn't read and left unread (#840), now and each time one ends. */
 class ObserveDeviceSkippedFiles @Inject constructor(
-    private val generalPreferenceManager: GeneralPreferenceManager
+    private val sourceState: SourceStateStore
 ) {
-    operator fun invoke(): Flow<Int> = combine(LocalTypes.map { type -> generalPreferenceManager.observeSkippedFiles(type.name) }) { counts -> counts.sum() }
+    operator fun invoke(): Flow<Int> = combine(LocalTypes.map { type -> sourceState.observeSkippedFiles(type.name) }) { counts -> counts.sum() }
 }
 
 /** Lets the next import read again the files that crashed a tag read (#840), and clears the count Sources shows until it has. */
 class ClearSkippedFiles @Inject constructor(
-    private val generalPreferenceManager: GeneralPreferenceManager
+    private val sourceState: SourceStateStore
 ) {
     operator fun invoke() {
-        generalPreferenceManager.clearTagReadQuarantine()
-        LocalTypes.forEach { type -> generalPreferenceManager.setSkippedFiles(type.name, 0) }
+        sourceState.clearTagReadQuarantine()
+        LocalTypes.forEach { type -> sourceState.setSkippedFiles(type.name, 0) }
     }
 }
 
@@ -74,9 +74,9 @@ private val LocalTypes = MediaProviderType.entries.filter { it.isLocal }
 
 /** How each server's last import ended, now and each time one ends (#668). */
 class ObserveSourceReachability @Inject constructor(
-    private val generalPreferenceManager: GeneralPreferenceManager
+    private val sourceState: SourceStateStore
 ) {
-    operator fun invoke(): Flow<Map<MediaProviderType, SourceReachability?>> = combine(ServerTypes.map { type -> generalPreferenceManager.observeSourceReachability(type.name) }) { reachabilities ->
+    operator fun invoke(): Flow<Map<MediaProviderType, SourceReachability?>> = combine(ServerTypes.map { type -> sourceState.observeSourceReachability(type.name) }) { reachabilities ->
         ServerTypes.zip(reachabilities.toList()).toMap()
     }
 }

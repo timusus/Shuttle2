@@ -6,7 +6,7 @@ import android.content.Context
 import android.os.Build
 import android.os.Process
 import com.simplecityapps.shuttle.model.MediaProviderType
-import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
+import com.simplecityapps.shuttle.persistence.SourceStateStore
 import java.io.File
 import java.io.IOException
 import java.util.concurrent.ConcurrentHashMap
@@ -43,13 +43,13 @@ data class TagReadFile(
  */
 class TagReadGuard(
     private val markerDir: File,
-    private val preferences: GeneralPreferenceManager,
+    private val preferences: SourceStateStore,
     // How Android recorded this app's processes ending; null where it keeps no record (before 11)
     private val processExits: () -> List<ProcessExit>?,
     private val limiter: TagReadLimiter = TagReadLimiter(),
     private val pid: Int = Process.myPid()
 ) {
-    constructor(context: Context, preferences: GeneralPreferenceManager) : this(
+    constructor(context: Context, preferences: SourceStateStore) : this(
         markerDir = File(context.filesDir, "tag-reads"),
         preferences = preferences,
         processExits = { processExits(context) }

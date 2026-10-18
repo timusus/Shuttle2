@@ -5,7 +5,7 @@ import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.shuttle.logging.Logger
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
-import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
+import com.simplecityapps.shuttle.persistence.SourceStateStore
 import kotlin.concurrent.atomics.AtomicBoolean
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Clock
@@ -16,7 +16,7 @@ class MediaImporter(
     private val strings: MediaImportStrings,
     songRepository: SongRepository,
     playlistStore: ImportedPlaylistStore,
-    private val preferenceManager: GeneralPreferenceManager,
+    private val sourceState: SourceStateStore,
     /**
      * Runs after each import, told whether every source's songs now hold every tag this build reads: what moving the
      * stored album keys to the album identity rule (#637) waits for.
@@ -66,16 +66,16 @@ class MediaImporter(
     private val passes =
         ImportPasses(
             providers,
-            preferenceManager,
+            sourceState,
             clock,
             afterImport,
             providerJobs,
             ProviderImporter(
                 strings,
-                preferenceManager,
+                sourceState,
                 clock,
-                SongImporter(strings, songRepository, preferenceManager, clock, DeleteGuard(preferenceManager)),
-                PlaylistImporter(songRepository, playlistStore, preferenceManager, playlistSync),
+                SongImporter(strings, songRepository, sourceState, clock, DeleteGuard(sourceState)),
+                PlaylistImporter(songRepository, playlistStore, sourceState, playlistSync),
                 playlistSync,
                 states
             )
@@ -89,7 +89,7 @@ class MediaImporter(
      * up on its own next import rather than by importing everything again at each launch.
      */
     val songTagsOutdated: Boolean
-        get() = preferenceManager.songTagsRescanVersion < SONG_TAGS_VERSION && providers.snapshot.any { preferenceManager.songTagsOutdated(it.type) }
+        get() = sourceState.songTagsRescanVersion < SONG_TAGS_VERSION && providers.snapshot.any { sourceState.songTagsOutdated(it.type) }
 
     /**
      * Reads every source in full, as the user asked (a rescan, a change of folders, the first import): an
@@ -143,7 +143,7 @@ class MediaImporter(
         onStart: suspend () -> Unit = {}
     ): SyncResult {
         if (providers.snapshot.isEmpty()) return SyncResult.Skipped
-        if (preferenceManager.lastMediaImportDate == null || songTagsOutdated) {
+        if (sourceState.lastMediaImportDate == null || songTagsOutdated) {
             logger.debug { "A full import is due, skipping the $trigger sync" }
             return SyncResult.Skipped
         }

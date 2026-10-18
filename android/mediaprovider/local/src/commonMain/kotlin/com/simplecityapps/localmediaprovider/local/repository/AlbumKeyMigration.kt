@@ -10,7 +10,7 @@ import com.simplecityapps.shuttle.logging.Logger
 import com.simplecityapps.shuttle.model.AlbumIndex
 import com.simplecityapps.shuttle.model.AlbumKeyChange
 import com.simplecityapps.shuttle.model.PlayContext
-import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
+import com.simplecityapps.shuttle.persistence.SourceStateStore
 
 /**
  * Moves the stored album and album artist keys (the play history's album and album artist contexts, the resume points and
@@ -31,20 +31,20 @@ class AlbumKeyMigration(
     private val playEventDao: PlayEventDao,
     private val resumePointDao: ResumePointDao,
     private val pinnedCollectionDao: PinnedCollectionDao,
-    private val preferenceManager: GeneralPreferenceManager
+    private val sourceState: SourceStateStore
 ) {
     private val logger = Logger.tagged("AlbumKeyMigration")
 
     /** Runs each move that's due: not yet run, and [songTagsCurrent], every source's songs holding every tag read. */
     suspend fun migrateIfDue(songTagsCurrent: Boolean) {
         if (!songTagsCurrent) return
-        if (preferenceManager.albumKeysVersion < IDENTITY_RULE_KEYS) {
+        if (sourceState.albumKeysVersion < IDENTITY_RULE_KEYS) {
             moveToIdentityRule()
-            preferenceManager.albumKeysVersion = IDENTITY_RULE_KEYS
+            sourceState.albumKeysVersion = IDENTITY_RULE_KEYS
         }
-        if (preferenceManager.albumKeysVersion < SPLIT_ARTIST_KEYS) {
+        if (sourceState.albumKeysVersion < SPLIT_ARTIST_KEYS) {
             splitLocalArtists()
-            preferenceManager.albumKeysVersion = SPLIT_ARTIST_KEYS
+            sourceState.albumKeysVersion = SPLIT_ARTIST_KEYS
         }
     }
 

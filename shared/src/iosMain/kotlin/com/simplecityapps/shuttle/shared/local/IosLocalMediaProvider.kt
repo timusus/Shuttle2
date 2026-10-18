@@ -14,7 +14,7 @@ import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.mediaprovider.songTagsOutdated
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
-import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
+import com.simplecityapps.shuttle.persistence.SourceStateStore
 import dev.zacsweers.metro.Inject
 import kotlin.concurrent.atomics.AtomicReference
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
@@ -42,7 +42,7 @@ import kotlinx.coroutines.flow.flowOn
 @Inject
 class IosLocalMediaProvider(
     private val localFiles: IosLocalFiles,
-    private val preferenceManager: GeneralPreferenceManager
+    private val sourceState: SourceStateStore
 ) : MediaProvider {
     override val type = MediaProviderType.Shuttle
 
@@ -52,7 +52,7 @@ class IosLocalMediaProvider(
     override fun findSongs(existingSongs: List<Song>): Flow<FlowEvent<List<Song>, MessageProgress>> = flow {
         pending.store(null)
         val listing = confirmEmptyFolders(localFiles.audioFiles(), existingSongs)
-        val reread = preferenceManager.songTagsOutdated(type)
+        val reread = sourceState.songTagsOutdated(type)
         val existingByPath = existingSongs.associateBy { it.path }
         val offloaded = listing.offloaded.toSet()
         val keptFolders = listing.unread.toSet() + listing.emptyFolders()

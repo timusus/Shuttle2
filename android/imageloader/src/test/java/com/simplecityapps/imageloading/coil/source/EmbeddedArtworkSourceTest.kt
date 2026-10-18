@@ -5,8 +5,8 @@ import com.simplecityapps.mediaprovider.TagReadFile
 import com.simplecityapps.mediaprovider.TagReadGuard
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
-import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
+import com.simplecityapps.shuttle.persistence.SourceStateStore
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
@@ -25,7 +25,7 @@ class EmbeddedArtworkSourceTest {
     val folder = TemporaryFolder()
 
     private val context = ApplicationProvider.getApplicationContext<android.app.Application>()
-    private val preferences = GeneralPreferenceManager(InMemoryKeyValueStore())
+    private val preferences = SourceStateStore(InMemoryKeyValueStore())
     private var reads = 0
     private val tagReader = ArtworkTagReader { _, _ -> byteArrayOf(1, 2, 3).also { reads++ } }
     private val guard = TagReadGuard(Files.createTempDirectory("tag-reads").toFile(), preferences, { null })
