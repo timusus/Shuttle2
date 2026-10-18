@@ -29,7 +29,8 @@ android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/sources/servers/
 android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/sources/servers/ServerSignInScreen.kt|Icon|1
 android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/sources/servers/ServerSignInScreen.kt|OutlinedTextField|5
 android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/sources/servers/ServerSignInScreen.kt|Switch|2
-android/app/src/main/java/com/simplecityapps/shuttle/ui/shell/AppShell.kt|Surface|2
+android/app/src/main/java/com/simplecityapps/shuttle/ui/shell/AppShell.kt|Surface|1
+android/app/src/main/java/com/simplecityapps/shuttle/ui/shell/ShellScaffolds.kt|Surface|1
 android/app/src/main/java/com/simplecityapps/shuttle/ui/shell/ShellSheetSceneStrategy.kt|ModalBottomSheet|1
 android/app/src/main/java/com/simplecityapps/shuttle/ui/shell/player/FullPlayer.kt|Text|2
 android/app/src/main/java/com/simplecityapps/shuttle/ui/shell/player/NowPlaying.kt|Text|3
