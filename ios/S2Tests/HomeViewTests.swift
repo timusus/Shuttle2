@@ -297,7 +297,7 @@ struct HomeViewTests {
 
     @Test func aSectionShowsItsSubtitleUnderItsTitle() throws {
         let sut = HomeContent(state: content([
-            section(.heavyRotation, .heavyRotation, [HomeItemAlbumItem(album: album("Mezzanine"))], subtitle: .homeHeavyRotationSubtitle),
+            section(.heavyRotation, .heavyRotation, [HomeItemAlbumItem(album: album("Mezzanine"))], subtitle: HomeString.homeHeavyRotationSubtitle),
         ]))
         #expect((try? sut.inspect().find(text: "Heavy Rotation")) != nil)
         #expect((try? sut.inspect().find(text: "What you've played most in the last 4 weeks")) != nil)

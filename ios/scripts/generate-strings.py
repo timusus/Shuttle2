@@ -61,7 +61,12 @@ def enum_keys(source, enum_name):
 
 
 def string_keys():
-    return enum_keys(STRING_KEY.read_text(), "StringKey")
+    # StringKey is a sealed interface; allStringKeys names its per-feature enums in order, each in <Enum>.kt beside it.
+    source = STRING_KEY.read_text()
+    declaration = source[source.index("val allStringKeys"):]
+    declaration = declaration[:declaration.index("\n\n")]
+    enums = re.findall(r"(\w+)\.entries", declaration)
+    return [key for enum in enums for key in enum_keys((STRING_KEY.parent / f"{enum}.kt").read_text(), enum)]
 
 
 def plural_keys():
