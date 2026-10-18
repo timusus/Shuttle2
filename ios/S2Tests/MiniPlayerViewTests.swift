@@ -27,7 +27,7 @@ struct MiniPlayerViewTests {
         let probe = FrameProbe()
         let view = ProgressView().dockedAtBottom {
             Color.red.frame(height: 50)
-                .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { probe.frame = $0 }
+                .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { probe.report($0) }
         }
         let scene = try #require(UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first)
         let window = UIWindow(windowScene: scene)
@@ -36,9 +36,7 @@ struct MiniPlayerViewTests {
         window.makeKeyAndVisible()
         defer { window.isHidden = true }
         window.layoutIfNeeded()
-        for _ in 0..<20 where probe.frame == .zero {
-            try await Task.sleep(for: .milliseconds(50))
-        }
+        await probe.firstFrame()
 
         let bottom = window.bounds.height - window.safeAreaInsets.bottom
         #expect(abs(probe.frame.maxY - bottom) < 1, "bar ends at \(probe.frame.maxY), the safe area at \(bottom)")
@@ -99,5 +97,19 @@ struct MiniPlayerViewTests {
 
 @MainActor
 private final class FrameProbe {
-    var frame: CGRect = .zero
+    private(set) var frame: CGRect = .zero
+    private var waiter: CheckedContinuation<Void, Never>?
+
+    func report(_ new: CGRect) {
+        frame = new
+        guard new != .zero else { return }
+        waiter?.resume()
+        waiter = nil
+    }
+
+    /// Returns once layout has reported a non-empty frame (immediately if it already has).
+    func firstFrame() async {
+        guard frame == .zero else { return }
+        await withCheckedContinuation { waiter = $0 }
+    }
 }
