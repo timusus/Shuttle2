@@ -14,15 +14,6 @@ sealed interface StringKey {
     val key: String get() = name.lowercase()
 }
 
-/** Every [StringKey] entry of every feature enum. */
-val allStringKeys: List<StringKey> =
-    SongInfoString.entries +
-        MediaActionString.entries +
-        SettingsString.entries +
-        TagEditorString.entries +
-        EqualizerPresetString.entries +
-        HomeString.entries
-
 /** A plural string shared code names; keyed like [StringKey] (`R.plurals.<key>`, the iOS `.stringsdict` key). */
 enum class PluralKey {
     QUEUE_SONGS_ADDED,
