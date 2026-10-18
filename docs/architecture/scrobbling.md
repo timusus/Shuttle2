@@ -24,10 +24,10 @@ plain JVM test (`ScrobblePlannerTest`).
 | Call | Fed from |
 |---|---|
 | `onCurrentItemChanged(QueueItem?)` | `QueueOperations.queueStateFlow.currentItem` |
-| `onStateChanged(PlaybackState)` | `PlaybackOperations.playbackStateFlow` |
-| `onProgress(positionMs)` | `PlaybackOperations.progressFlow` |
-| `onPlaybackSpeedChanged(speed)` | `PlaybackOperations.playbackSpeedFlow` |
-| `onTrackEnded(Song)` | `PlaybackOperations.trackEndedFlow` |
+| `onStateChanged(PlaybackState)` | `PlaybackStateSource.playbackStateFlow` |
+| `onProgress(positionMs)` | `PlaybackStateSource.progressFlow` |
+| `onPlaybackSpeedChanged(speed)` | `PlaybackStateSource.playbackSpeedFlow` |
+| `onTrackEnded(Song)` | `PlaybackStateSource.trackEndedFlow` |
 | `onScrobbleServerStreamsChanged(enabled)` | the "Scrobble server streams too" setting |
 
 Constructor: `isServerSong(Song)` says a song's server already hears of the play (slice 4 passes

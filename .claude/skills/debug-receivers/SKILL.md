@@ -43,7 +43,7 @@ Replies: `<ACTION> ok[: detail]` (e.g. `PLAY_ALL ok: 5 songs from index 0`,
 `REMOVE_QUEUE_ITEM ok: <removed title>`) or `<ACTION> error: <reason>`. An action not in the
 manifest's intent filter is never delivered, so the wrapper times out on typos.
 
-`DUMP_STATE` fields: `state` (`PlaybackOperations.playbackState()`), `reportedState` (the
+`DUMP_STATE` fields: `state` (`PlaybackStateSource.playbackState()`), `reportedState` (the
 `playbackStateFlow` value), `positionMs` (`getProgress()`), `progressMs` (`progressFlow`),
 `durationMs`, `savedPositionMs` (the persisted resume position), `queuePosition`, `queueSize`,
 `title` (current song), `inLibrary` (false for a file opened from another app that isn't in the library,
