@@ -28,6 +28,7 @@ internal fun WorkMovementSheet(
             S2Text(work.work, style = MaterialTheme.typography.titleLarge)
         }
         LazyColumn {
+            // codehealth-ignore compose-lazy-items-without-key: a fixed list never reordered while shown; a song id repeats when a movement is queued twice
             itemsIndexed(work.tracks) { index, track ->
                 MovementRow(
                     numeral = track.numeral,
