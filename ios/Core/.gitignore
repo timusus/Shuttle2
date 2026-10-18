@@ -1,5 +1,2 @@
 .build/
 .swiftpm/
-# Where the retired ios/scripts/build-ffmpeg.sh installed its frameworks (before #957; FFmpeg now comes
-# from shuttle-playback). Ignored so a worktree that still has a stale copy never commits it.
-Frameworks/
