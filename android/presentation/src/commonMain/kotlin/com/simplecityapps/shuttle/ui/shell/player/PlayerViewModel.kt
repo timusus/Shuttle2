@@ -48,21 +48,6 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-/** Whether the Cast framework could start on this device. */
-fun interface CastAvailability {
-    fun isAvailable(): Boolean
-}
-
-/** The song the saved queue was left on (see [NowPlayingSnapshot]), shown until the queue is restored. */
-fun interface SavedNowPlaying {
-    fun snapshot(): NowPlayingSnapshot?
-}
-
-/** A queued song, each time it's skipped because streaming it needs S2 Pro. */
-fun interface ObserveGatedServerSkip {
-    operator fun invoke(): Flow<Song>
-}
-
 /**
  * The player surfaces' state and actions (docs/architecture/app-shell.md, sections 1 and 5): the
  * queue, playback state and modes, favourite, sleep timer, speed and ReplayGain, the now-playing
