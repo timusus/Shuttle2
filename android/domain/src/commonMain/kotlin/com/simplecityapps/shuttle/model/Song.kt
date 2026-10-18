@@ -147,3 +147,23 @@ data class Song(
     val isInLibrary: Boolean
         get() = id >= 0
 }
+
+/** The tags [AlbumIdentityRule] reads from this song. */
+val Song.identityTags: AlbumIdentityTags
+    get() = AlbumIdentityTags(
+        songId = id,
+        album = album,
+        albumArtist = albumArtist,
+        albumArtists = albumArtists,
+        artists = artists,
+        compilation = compilation,
+        mbAlbumId = mbAlbumId,
+        serverAlbumId = serverAlbumId,
+        mediaProvider = mediaProvider,
+        path = path,
+        artistsTag = artistsTag,
+        mbArtistIds = mbArtistIds,
+        mbAlbumArtistIds = mbAlbumArtistIds,
+        serverArtistIds = serverArtistIds,
+        serverAlbumArtistIds = serverAlbumArtistIds
+    )

@@ -1,25 +1,5 @@
 package com.simplecityapps.shuttle.model
 
-/** The tags [AlbumIdentityRule] reads from this song. */
-val Song.identityTags: AlbumIdentityTags
-    get() = AlbumIdentityTags(
-        songId = id,
-        album = album,
-        albumArtist = albumArtist,
-        albumArtists = albumArtists,
-        artists = artists,
-        compilation = compilation,
-        mbAlbumId = mbAlbumId,
-        serverAlbumId = serverAlbumId,
-        mediaProvider = mediaProvider,
-        path = path,
-        artistsTag = artistsTag,
-        mbArtistIds = mbArtistIds,
-        mbAlbumArtistIds = mbAlbumArtistIds,
-        serverArtistIds = serverArtistIds,
-        serverAlbumArtistIds = serverAlbumArtistIds
-    )
-
 /** These songs, each holding the album identity [AlbumIdentityRule] gives it among them: a whole library's songs. */
 fun List<Song>.withAlbumIdentities(): List<Song> {
     // Resolved by position, not id: songs not yet stored all have id 0
