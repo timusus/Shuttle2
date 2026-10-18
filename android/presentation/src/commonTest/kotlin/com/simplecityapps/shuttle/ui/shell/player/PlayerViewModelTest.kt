@@ -154,7 +154,7 @@ class PlayerViewModelTest {
             availableMediaActions = AvailableMediaActions(mediaActions.resolveSongs, mediaActions.songDownloader, createPlatformFeatures(), queueOperations, ObserveSetting(settingsStore)),
             mediaActionHandler = mediaActions.handler,
             deliveredFormats = deliveredFormats,
-            loadLyrics = LoadLyrics(songRepository, onlineLyrics),
+            observeLyrics = ObserveLyrics(LoadLyrics(songRepository, onlineLyrics)),
             savedStateHandle = savedStateHandle,
         ).also { viewModel ->
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.uiState.collect {} }

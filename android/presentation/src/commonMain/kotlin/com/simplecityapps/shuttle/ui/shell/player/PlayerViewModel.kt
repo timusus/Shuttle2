@@ -113,7 +113,7 @@ class PlayerViewModel @AssistedInject constructor(
     private val availableMediaActions: AvailableMediaActions,
     private val mediaActionHandler: MediaActionHandler,
     deliveredFormats: DeliveredFormats,
-    private val loadLyrics: LoadLyrics,
+    observeLyrics: ObserveLyrics,
     @Assisted private val savedStateHandle: SavedStateHandle,
 ) : ViewModel(),
     PlayerActions {
@@ -156,36 +156,8 @@ class PlayerViewModel @AssistedInject constructor(
 
     private val seed: Flow<ArtworkSeed> = observeArtworkSeed(currentSong, observeSetting(ArtworkSettings.NowPlayingArtworkSource))
 
-    // Songs don't carry their lyrics (#873); null until loaded, so loading never holds the rest of the player back.
-    // The online setting re-runs the lookup but only a new song blanks the lyrics, so toggling it doesn't flash them.
-    private val lyrics: Flow<String?> = flow {
-        var shownId: Any? = Any()
-        emitAll(
-            combine(
-                currentSong.distinctUntilChanged { old, new -> old?.id == new?.id },
-                loadLyrics.onlineEnabled.distinctUntilChanged(),
-            ) { song, _ -> song }.flatMapLatest { song ->
-                val newSong = song?.id != shownId
-                shownId = song?.id
-                lyricsFor(song, resetFirst = newSong)
-            },
-        )
-    }.distinctUntilChanged()
-
-    private fun lyricsFor(song: Song?, resetFirst: Boolean): Flow<String?> = if (song == null) {
-        flowOf(null)
-    } else {
-        flow {
-            val text = try {
-                loadLyrics(song)
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                null
-            }
-            if (text == null && savedStateHandle.get<NowPlayingPanel?>(PANEL_KEY) == NowPlayingPanel.Lyrics) savedStateHandle[PANEL_KEY] = null
-            emit(text)
-        }.onStart { if (resetFirst) emit(null) }
+    private val lyrics: Flow<String?> = observeLyrics(currentSong) {
+        if (savedStateHandle.get<NowPlayingPanel?>(PANEL_KEY) == NowPlayingPanel.Lyrics) savedStateHandle[PANEL_KEY] = null
     }
 
     // None until it's resolved, so resolving it never holds the rest of the player back.
