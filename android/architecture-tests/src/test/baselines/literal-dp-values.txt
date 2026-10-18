@@ -16,5 +16,6 @@ android/app/src/main/java/com/simplecityapps/shuttle/ui/shell/player/NowPlayingP
 android/app/src/main/java/com/simplecityapps/shuttle/ui/shell/player/PlayerContent.kt|dp|1
 android/app/src/main/java/com/simplecityapps/shuttle/ui/shell/player/PlayerPane.kt|dp|2
 android/app/src/main/java/com/simplecityapps/shuttle/ui/shell/player/QueueList.kt|dp|3
-android/app/src/main/java/com/simplecityapps/shuttle/ui/widgets/NowPlayingWidget.kt|dp|2
+android/app/src/main/java/com/simplecityapps/shuttle/ui/widgets/NowPlayingArtwork.kt|dp|1
+android/app/src/main/java/com/simplecityapps/shuttle/ui/widgets/NowPlayingControls.kt|dp|1
 android/app/src/main/java/com/simplecityapps/shuttle/ui/widgets/WidgetLayout.kt|dp|20
