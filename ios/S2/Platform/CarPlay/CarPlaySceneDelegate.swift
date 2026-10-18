@@ -18,7 +18,7 @@ final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegat
     private var nowPlaying: CarPlayNowPlayingController?
     private var actions: MediaActionsViewModel?
     private var home: HomeViewModel?
-    private var network: CarPlayNetworkMonitor?
+    private var offline: CarPlayOfflineState?
     /// The tabs' view models and their observers, for the connection's life.
     private var viewModels: [Lifecycle_viewmodelViewModel] = []
     private var tasks: [Task<Void, Never>] = []
@@ -53,20 +53,8 @@ final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegat
     private var playlists: [String: Playlist] = [:]
     private var smartPlaylists: [String: SmartPlaylist] = [:]
     private var songs: [Song] = []
-    private var downloads: [String: OfflineDownload] = [:]
-    /// What plays offline, built when Home is drawn offline and dropped when the library or the downloads change.
-    private var offlineIndex: CarPlayOfflineIndex?
-    /// The ids of the playlists with a song that plays offline, nil until known; restarted when the playlists or the downloads change.
-    private var playablePlaylists: Set<Int64>?
-    private var playablePlaylistsTask: Task<Void, Never>?
-    private var playablePlaylistsInputs: PlayablePlaylistsInputs?
 
-    private struct PlayablePlaylistsInputs: Equatable {
-        let playlistIds: Set<Int64>
-        let downloaded: Set<String>
-    }
-
-    private var isOffline: Bool { !(network?.isOnline ?? true) }
+    private var isOffline: Bool { offline?.isOffline ?? false }
 
     private struct PushedList {
         let viewModel: Lifecycle_viewmodelViewModel
@@ -144,10 +132,6 @@ final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegat
         nowPlaying.attach { [weak self] in self?.pushQueue() }
         self.nowPlaying = nowPlaying
         actions = graph.mediaActionsViewModel
-        network = CarPlayNetworkMonitor { [weak self] _ in
-            self?.observePlayablePlaylists()
-            self?.renderHome()
-        }
 
         observeHome(graph.homeViewModel)
         observePlaylists(graph.playlistListViewModel)
@@ -155,7 +139,10 @@ final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegat
         observeArtists(graph.albumArtistListViewModel)
         observeGenres(graph.genreListViewModel)
         observeSongs(graph.songListViewModel)
-        observeDownloads(graph.offlineDownloads)
+        let offline = CarPlayOfflineState(graph: graph, offlineDownloads: graph.offlineDownloads) { [weak self] in self?.renderHome() }
+        // The playlists observer has already delivered its first state, before there was anyone to tell
+        offline.playlistsChanged(Array(playlists.values))
+        self.offline = offline
     }
 
     func templateApplicationScene(
@@ -176,10 +163,8 @@ final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegat
     private func stopLibrary() {
         tasks.forEach { $0.cancel() }
         tasks.removeAll()
-        playablePlaylistsTask?.cancel()
-        playablePlaylistsTask = nil
-        playablePlaylistsInputs = nil
-        playablePlaylists = nil
+        offline?.stop()
+        offline = nil
         viewModels.forEach { $0.clear() }
         viewModels.removeAll()
         pushed.values.forEach { $0.task.cancel(); $0.viewModel.clear() }
@@ -187,10 +172,7 @@ final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegat
         actions?.clear()
         actions = nil
         home = nil
-        network?.cancel()
-        network = nil
         openShelf = nil
-        offlineIndex = nil
         nowPlaying?.detach()
         nowPlaying = nil
         lastRendered.removeAll()
@@ -262,7 +244,7 @@ final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegat
 
     /// Home's shelves from its state, in its order; Shuffle All's prompt holds no items and isn't one.
     private func sections(_ content: HomeUiStateContent) -> [CarPlayHomeSection] {
-        let index = isOffline ? currentOfflineIndex() : nil
+        let index = offline?.index(songs: songs)
         var items: [String: HomeItem] = [:]
         let sections = content.sections.filter { $0.id != .shuffleAll }.map { section in
             let resumes = section.id == .jumpBackIn
@@ -276,7 +258,7 @@ final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegat
                     artwork: Self.artwork(item, covers: content.covers),
                     progress: resumes ? section.progress[item.key].map { Double($0.fraction) } : nil,
                     symbol: Self.symbol(item),
-                    playableOffline: index?.isPlayable(item, playablePlaylists: playablePlaylists) ?? true
+                    playableOffline: index?.isPlayable(item, playablePlaylists: offline?.playablePlaylists) ?? true
                 )
             }
             return CarPlayHomeSection(id: "\(section.id)", header: HomeContent.title(section.title), entries: entries, resumes: resumes)
@@ -285,63 +267,10 @@ final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegat
         return sections
     }
 
-    private func currentOfflineIndex() -> CarPlayOfflineIndex {
-        if let offlineIndex { return offlineIndex }
-        let index = CarPlayOfflineIndex(songs: songs, downloads: downloads)
-        offlineIndex = index
-        return index
-    }
-
     private func renderOpenShelf() {
         guard let (id, template) = openShelf else { return }
         let section = homeSections.first { $0.id == id } ?? CarPlayHomeSection(id: id, header: template.title ?? "", entries: [])
         render(CarPlayCatalog.shelf(section, offline: isOffline, limit: Self.rowLimit()), into: template) { [weak self] in self?.performHome($0) }
-    }
-
-    private func observeDownloads(_ offlineDownloads: OfflineDownloads) {
-        let flow = offlineDownloads.downloads
-        downloads = flow.value
-        tasks.append(Task { [weak self] in
-            for await downloads in flow {
-                guard let self else { return }
-                self.downloads = downloads
-                self.observePlayablePlaylists()
-                self.libraryChanged()
-            }
-        })
-    }
-
-    /// Re-asks which playlists have a song that plays offline (#925), for the current playlists and completed downloads.
-    /// Only while offline, and only when the playlist ids or the completed download paths changed: `downloads` emits on
-    /// every progress tick, and each restart re-reads every playlist's songs.
-    private func observePlayablePlaylists() {
-        guard isOffline else {
-            playablePlaylistsTask?.cancel()
-            playablePlaylistsTask = nil
-            playablePlaylistsInputs = nil
-            playablePlaylists = nil
-            return
-        }
-        let downloaded = Set(downloads.compactMap { $0.value.state == .completed ? $0.key : nil })
-        let inputs = PlayablePlaylistsInputs(playlistIds: Set(playlists.values.map(\.id)), downloaded: downloaded)
-        guard inputs != playablePlaylistsInputs else { return }
-        playablePlaylistsInputs = inputs
-        playablePlaylistsTask?.cancel()
-        guard let graph = dependencies?.graph else { return }
-        let flow = graph.observePlayablePlaylists.invoke(playlists: Array(playlists.values), downloadedPaths: downloaded)
-        playablePlaylistsTask = Task { [weak self] in
-            for await ids in flow {
-                guard let self else { return }
-                self.playablePlaylists = Set(ids.map(\.int64Value))
-                self.libraryChanged()
-            }
-        }
-    }
-
-    /// The library or the downloads changed: what plays offline may have too.
-    private func libraryChanged() {
-        offlineIndex = nil
-        if isOffline { renderHome() }
     }
 
     private func observePlaylists(_ viewModel: PlaylistListViewModel) {
@@ -351,7 +280,7 @@ final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegat
     private func updatePlaylists(_ state: PlaylistListUiState) {
         playlists = Dictionary(state.playlists.map { ("\($0.id)", $0) }, uniquingKeysWith: { first, _ in first })
         smartPlaylists = Dictionary(state.smartPlaylists.map { (Self.smartKey($0), $0) }, uniquingKeysWith: { first, _ in first })
-        observePlayablePlaylists()
+        offline?.playlistsChanged(Array(playlists.values))
         let smart = state.smartPlaylists.map { smartPlaylist in
             CarPlayEntry(id: Self.smartKey(smartPlaylist), title: smartPlaylist.id.title, subtitle: nil, symbol: smartPlaylist.id.symbol)
         }
@@ -425,7 +354,7 @@ final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegat
     private func updateSongs(_ state: SongListUiState) {
         if state.songs != songs {
             songs = state.songs
-            libraryChanged()
+            offline?.songsChanged()
         }
         let sections: [CarPlaySectionModel] = switch state.loadingState {
         case .empty: CarPlayCatalog.message(CarPlayText.libraryEmpty, detail: CarPlayText.libraryEmptyDetail)
