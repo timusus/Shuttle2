@@ -3,9 +3,7 @@ package com.simplecityapps.shuttle.shared.di
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.mediaprovider.server.StreamProfile
 import com.simplecityapps.playback.PlaybackOperations
-import com.simplecityapps.playback.dsp.equalizer.DefaultEqualizerFrequencyResponse
 import com.simplecityapps.playback.equalizer.EqualizerControl
-import com.simplecityapps.playback.equalizer.EqualizerFrequencyResponse
 import com.simplecityapps.playback.equalizer.EqualizerPresetStore
 import com.simplecityapps.playback.equalizer.KeyValueEqualizerPresetStore
 import com.simplecityapps.playback.equalizer.restorePreset
@@ -96,9 +94,6 @@ class IosPlaybackModule {
 
     @Provides
     fun provideEqualizerControl(equalizer: IosEqualizer): EqualizerControl = equalizer
-
-    @Provides
-    fun provideEqualizerFrequencyResponse(): EqualizerFrequencyResponse = DefaultEqualizerFrequencyResponse()
 
     /**
      * On the main thread, as the controller needs (`immediate`, so a call made there runs straight away), under the
