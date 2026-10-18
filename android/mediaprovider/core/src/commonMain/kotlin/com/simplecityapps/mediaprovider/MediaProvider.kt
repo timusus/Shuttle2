@@ -32,7 +32,7 @@ interface MediaProvider {
     suspend fun songsStored() {}
 
     /**
-     * The paths of the files the last [findSongs] left unread, because reading one crashed the app before (#840). A stored
+     * The paths of the files the last [findSongs] left unread, because reading one crashed the app before. A stored
      * song among them keeps its row; a new file isn't added. The import records how many, for Sources to say.
      */
     val skippedFiles: Set<String> get() = emptySet()
@@ -72,7 +72,7 @@ interface IndexedMediaProvider : MediaProvider {
 
 /**
  * A source that lists its songs a page at a time by offset, so a song going mid-listing shifts the pages and can skip
- * another that's still there (#934). The importer removes a song only if a second [findSongPaths] listing lacks it too.
+ * another that's still there. The importer removes a song only if a second [findSongPaths] listing lacks it too.
  */
 interface PathListingMediaProvider : MediaProvider {
     /**
@@ -84,10 +84,10 @@ interface PathListingMediaProvider : MediaProvider {
 }
 
 /**
- * A source that can list just what changed since a time, so a sync doesn't fetch the whole library again (#771). What
+ * A source that can list just what changed since a time, so a sync doesn't fetch the whole library again. What
  * [findSongsChangedSince] finds is stored over the last import; it can't say what's gone, so the importer asks
  * [countSongs] and, if the count isn't the one it expects, [findSongPaths] which songs the source still holds, and removes
- * the others (#845), rather than leaving them to the next full [findSongs].
+ * the others, rather than leaving them to the next full [findSongs].
  */
 interface IncrementalMediaProvider : PathListingMediaProvider {
     /** How many songs the source holds, in one cheap request, or null if it can't be read. */
