@@ -114,7 +114,9 @@ fun SettingsRootScreen(
     selected: SettingsDestination? = null
 ) {
     val viewState = settingsRootViewState(uiState, pro)
-    SettingsScaffold(title = stringResource(R.string.settings_menu_settings), onNavigateUp = onNavigateUp, modifier = modifier, root = true) {
+    val callbacks = SettingsCallbacks(onNavigateUp = onNavigateUp, onOpenPro = onOpenPro, onOpenDestination = onOpenDestination)
+    val onEvent: (SettingsEvent) -> Unit = callbacks::onEvent
+    SettingsScaffold(title = stringResource(R.string.settings_menu_settings), onNavigateUp = { onEvent(SettingsEvent.NavigateUp) }, modifier = modifier, root = true) {
         item {
             SettingsGroup(
                 rows = listOf { shapes: ListItemShapes ->
@@ -125,7 +127,7 @@ fun SettingsRootScreen(
                             SettingsRootViewState.ProSummary.Owned -> stringResource(R.string.paywall_settings_summary_pro)
                             SettingsRootViewState.ProSummary.Upsell -> stringResource(R.string.paywall_settings_summary)
                         },
-                        onClick = onOpenPro,
+                        onClick = { onEvent(SettingsEvent.OpenPro) },
                         icon = Icons.Rounded.WorkspacePremium,
                         shapes = shapes
                     )
@@ -139,7 +141,7 @@ fun SettingsRootScreen(
                         LinkSetting(
                             title = stringResource(row.destination.title),
                             summary = rootSummary(row.summary),
-                            onClick = { onOpenDestination(row.destination) },
+                            onClick = { onEvent(row.tapEvent()) },
                             icon = row.destination.icon,
                             selected = selected?.let { row.destination == it },
                             shapes = shapes
@@ -199,10 +201,19 @@ fun SettingsDestinationScreen(
     var pendingAction by rememberSaveable { mutableStateOf<SettingsAction?>(null) }
 
     val viewState = settingsDestinationViewState(screen, uiState, sdkInt, versionName)
+    val callbacks = SettingsCallbacks(
+        onNavigateUp = onNavigateUp ?: {},
+        onSwitchChange = onSwitchChange,
+        onChoiceSelect = onChoiceSelect,
+        onSliderChange = onSliderChange,
+        onAction = onAction,
+        onOpenLink = onOpenLink
+    )
+    val onEvent: (SettingsEvent) -> Unit = callbacks::onEvent
 
     SettingsScaffold(
         title = stringResource(screen.destination.title),
-        onNavigateUp = onNavigateUp,
+        onNavigateUp = onNavigateUp?.let { { onEvent(SettingsEvent.NavigateUp) } },
         modifier = modifier,
         snackbarHostState = snackbarHostState
     ) {
@@ -216,15 +227,13 @@ fun SettingsDestinationScreen(
                             SettingRow(
                                 row = row,
                                 shapes = shapes,
-                                onSwitchChange = onSwitchChange,
-                                onSliderChange = onSliderChange,
+                                onEvent = onEvent,
                                 onOpenChoice = { openChoiceKey = onChoiceDialogEvent(openChoiceKey, ChoiceDialogEvent.Open(it.key)).openKey },
                                 onAction = { item ->
                                     val step = onActionEvent(pendingAction, ActionEvent.Tap(item))
                                     pendingAction = step.pending
-                                    step.run?.let(onAction)
-                                },
-                                onOpenLink = onOpenLink
+                                    step.event()?.let(onEvent)
+                                }
                             )
                         }
                     }
@@ -251,7 +260,7 @@ fun SettingsDestinationScreen(
                 onSelect = { index ->
                     val step = onChoiceDialogEvent(openChoiceKey, ChoiceDialogEvent.Select(index))
                     openChoiceKey = step.openKey
-                    step.picked?.let { onChoiceSelect(choice, it.index) }
+                    step.event(choice)?.let(onEvent)
                 }
             )
         }
@@ -265,7 +274,7 @@ fun SettingsDestinationScreen(
             onConfirm = {
                 val step = onActionEvent(pendingAction, ActionEvent.Confirm)
                 pendingAction = step.pending
-                step.run?.let(onAction)
+                step.event()?.let(onEvent)
             },
             dismissLabel = stringResource(android.R.string.cancel),
             destructive = dialog.destructive
@@ -279,18 +288,16 @@ fun SettingsDestinationScreen(
 private fun SettingRow(
     row: SettingsDestinationViewState.Row,
     shapes: ListItemShapes,
-    onSwitchChange: (SettingItem.Switch, Boolean) -> Unit,
-    onSliderChange: (SettingItem.Slider<*>, Float) -> Unit,
+    onEvent: (SettingsEvent) -> Unit,
     onOpenChoice: (SettingItem.Choice<*>) -> Unit,
-    onAction: (SettingItem.Action) -> Unit,
-    onOpenLink: (SettingsLink) -> Unit
+    onAction: (SettingItem.Action) -> Unit
 ) {
     val summary = row.item.summary?.let { stringResource(it) }
     when (row) {
         is SettingsDestinationViewState.Row.Switch -> SwitchSetting(
             title = stringResource(row.item.title),
             checked = row.checked,
-            onCheckedChange = { onSwitchChange(row.item, it) },
+            onCheckedChange = { onEvent(row.tapEvent()) },
             summary = summary,
             enabled = row.enabled,
             shapes = shapes
@@ -308,7 +315,7 @@ private fun SettingRow(
         is SettingsDestinationViewState.Row.Slider -> SliderSetting(
             title = stringResource(row.item.title),
             value = row.value,
-            onValueChange = { onSliderChange(row.item, it) },
+            onValueChange = { onEvent(SettingsEvent.ChangeSlider(row.item, it)) },
             valueRange = row.item.range,
             steps = row.item.steps,
             valueLabel = sliderValueLabel(row.valueLabel),
@@ -319,7 +326,7 @@ private fun SettingRow(
 
         is SettingsDestinationViewState.Row.Navigate -> LinkSetting(
             title = stringResource(row.item.title),
-            onClick = { onOpenLink(row.item.target) },
+            onClick = { onEvent(row.tapEvent()) },
             summary = row.summary?.let { stringResource(it) },
             enabled = row.enabled,
             shapes = shapes
