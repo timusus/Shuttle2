@@ -866,7 +866,7 @@ run_changed_tests_mode() {
   echo "Changed files: $(printf '%s\n' "${changed_files}" | grep -c .)"
   echo
 
-  local overall_rc=0 whole_batch=() m mid unmappable_file classes_file classes_sorted count preview
+  local overall_rc=0 whole_batch=() run_tasks=() m mid unmappable_file classes_file classes_sorted count preview
   while IFS= read -r m; do
     mid="$(module_id "${m}")"
     unmappable_file="${WORK_DIR}/${mid}.unmappable"
@@ -895,16 +895,19 @@ run_changed_tests_mode() {
     fi
     echo "${m}: ${count} class(es): ${preview}"
 
-    local filter_args=() cls_line
+    # --tests binds to the task before it, so every module's filter can share one invocation.
+    local cls_line
+    run_tasks+=("${m}:testDebugUnitTest")
     while IFS= read -r cls_line; do
       [ -z "${cls_line}" ] && continue
-      filter_args+=(--tests "${cls_line}")
+      run_tasks+=(--tests "${cls_line}")
     done <<< "${classes_sorted}"
-    print_and_run "${m}:testDebugUnitTest" "${filter_args[@]}" || overall_rc=$?
   done < <(sort -u "${WORK_DIR}/modules_seen")
 
-  if [ "${#whole_batch[@]}" -gt 0 ]; then
-    print_and_run "${whole_batch[@]}" || overall_rc=$?
+  # One Gradle start for all modules instead of one each; --continue keeps a failing module from
+  # hiding the others' results, as separate invocations did.
+  if [ "${#run_tasks[@]}" -gt 0 ] || [ "${#whole_batch[@]}" -gt 0 ]; then
+    print_and_run --continue ${run_tasks[@]+"${run_tasks[@]}"} ${whole_batch[@]+"${whole_batch[@]}"} || overall_rc=$?
   fi
 
   return "${overall_rc}"
