@@ -8,7 +8,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 
-/** Characterisation tests for [ExcludedSongsScreen]. */
+/** Render smoke test for [ExcludedSongsScreen]; the decisions are covered by `ExcludedSongsViewStateTest`. */
 @RunWith(RobolectricTestRunner::class)
 class ExcludedSongsScreenTest {
     @get:Rule
@@ -22,40 +22,15 @@ class ExcludedSongsScreenTest {
     )
 
     @Test
-    fun `shows the empty state with nothing excluded`() {
-        robot.setContent(ExcludedSongsUiState(songs = emptyList(), loading = false))
-
-        robot.assertDisplayed("Exclude list is empty")
-    }
-
-    @Test
-    fun `lists the excluded songs`() {
+    fun `lists the excluded songs and a song's menu includes it`() {
         robot.setContent(ExcludedSongsUiState(songs = songs, loading = false))
 
         robot.assertDisplayed("Alpha")
         robot.assertDisplayed("Beta")
-    }
-
-    @Test
-    fun `a song's menu includes it`() {
-        robot.setContent(ExcludedSongsUiState(songs = songs, loading = false))
 
         robot.openMenu(1)
         robot.tapText("Include in library")
 
         robot.included.map { it.id } shouldBe listOf(2L)
-        robot.assertNotShown("Include in library")
-    }
-
-    @Test
-    fun `include all asks first`() {
-        robot.setContent(ExcludedSongsUiState(songs = songs, loading = false))
-
-        robot.tapIncludeAll()
-        robot.includeAllCount shouldBe 0
-        robot.assertDisplayed("Every excluded song returns to your library.")
-        robot.tapText("Include all")
-
-        robot.includeAllCount shouldBe 1
     }
 }

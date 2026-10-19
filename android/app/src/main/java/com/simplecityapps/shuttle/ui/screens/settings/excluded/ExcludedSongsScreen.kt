@@ -36,6 +36,7 @@ fun ExcludedSongsScreen(
     onIncludeAll: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val viewState = excludedSongsViewState(uiState)
     var confirmIncludeAll by rememberSaveable { mutableStateOf(false) }
     var menuSongId by rememberSaveable { mutableStateOf<Long?>(null) }
 
@@ -46,7 +47,7 @@ fun ExcludedSongsScreen(
         contentPadding = PaddingValues(),
         verticalArrangement = Arrangement.Top,
         actions = {
-            if (uiState.songs.isNotEmpty()) {
+            if (viewState.showIncludeAll) {
                 S2IconButton(
                     icon = Icons.Rounded.ClearAll,
                     contentDescription = stringResource(R.string.excluded_songs_include_all),
@@ -55,19 +56,20 @@ fun ExcludedSongsScreen(
             }
         }
     ) {
-        when {
-            uiState.loading -> item(key = "loading") { LoadingState() }
+        when (val content = viewState.content) {
+            ExcludedSongsViewState.Content.Loading -> item(key = "loading") { LoadingState() }
 
-            uiState.songs.isEmpty() -> item(key = "empty") {
+            ExcludedSongsViewState.Content.Empty -> item(key = "empty") {
                 EmptyState(title = stringResource(R.string.dialog_exclude_list_empty), icon = Icons.Rounded.Block)
             }
 
-            else -> items(uiState.songs, key = { it.id }) { song ->
+            is ExcludedSongsViewState.Content.Songs -> items(content.rows, key = { it.song.id }) { row ->
+                val song = row.song
                 val openMenu = { menuSongId = song.id }
                 Box {
                     SongRow(
-                        title = song.name.orEmpty(),
-                        subtitle = listOfNotNull(song.friendlyArtistName, song.album).joinToString(" · "),
+                        title = row.title,
+                        subtitle = row.subtitle,
                         onClick = openMenu,
                         onMore = openMenu
                     )
