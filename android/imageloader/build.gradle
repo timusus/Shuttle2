@@ -60,6 +60,7 @@ dependencies {
 
     testImplementation libs.junit
     testImplementation libs.kotest
+    testImplementation libs.kotlinx.coroutinesTest
     // Song.date is a kotlinx.datetime.LocalDate
     testImplementation libs.kotlinx.datetime
     // The fetcher tests decode through Coil and read Android framework classes

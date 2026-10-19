@@ -17,15 +17,19 @@ import coil3.toBitmap
 import coil3.transform.Transformation
 import com.simplecityapps.imageloading.ArtworkImageLoader
 import com.simplecityapps.shuttle.di.ApplicationContext
+import com.simplecityapps.shuttle.di.DefaultDispatcher
+import com.simplecityapps.shuttle.di.IoDispatcher
 import dev.zacsweers.metro.Inject
 import java.io.ByteArrayOutputStream
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 
 class CoilArtworkImageLoader @Inject constructor(
     @ApplicationContext private val context: Context,
     private val imageLoader: ImageLoader,
-    private val sessionArtworkCache: LruCache<String, Bitmap>
+    private val sessionArtworkCache: LruCache<String, Bitmap>,
+    @DefaultDispatcher private val defaultDispatcher: CoroutineDispatcher,
+    @IoDispatcher private val ioDispatcher: CoroutineDispatcher
 ) : ArtworkImageLoader {
     override fun loadBitmap(
         data: Any,
@@ -54,7 +58,7 @@ class CoilArtworkImageLoader @Inject constructor(
 
     override suspend fun loadBitmap(data: Any): ByteArray? {
         val result = imageLoader.execute(bitmapRequest(data).size(Size.ORIGINAL).build()) as? SuccessResult ?: return null
-        return withContext(Dispatchers.Default) {
+        return withContext(defaultDispatcher) {
             ByteArrayOutputStream().use { output ->
                 result.image.toBitmap().compress(Bitmap.CompressFormat.JPEG, 100, output)
                 output.toByteArray()
@@ -66,7 +70,7 @@ class CoilArtworkImageLoader @Inject constructor(
         // The media session's bitmaps are kept apart from Coil's, and would otherwise outlive the clear
         synchronized(sessionArtworkCache) { sessionArtworkCache.evictAll() }
         imageLoader.memoryCache?.clear()
-        withContext(Dispatchers.IO) { imageLoader.diskCache?.clear() }
+        withContext(ioDispatcher) { imageLoader.diskCache?.clear() }
     }
 
     // These bitmaps are drawn into notifications, widgets and Cast artwork, or compressed, none of which take a hardware bitmap

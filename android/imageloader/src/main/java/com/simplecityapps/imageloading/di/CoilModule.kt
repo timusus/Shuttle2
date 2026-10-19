@@ -43,6 +43,7 @@ import com.simplecityapps.mediaprovider.S2ArtworkApi
 import com.simplecityapps.mediaprovider.TagReadGuard
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.shuttle.di.ApplicationContext
+import com.simplecityapps.shuttle.di.IoDispatcher
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.ArtistHeroArtwork
 import com.simplecityapps.shuttle.model.Song
@@ -55,6 +56,7 @@ import dev.zacsweers.metro.Multibinds
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.SingleIn
 import java.io.IOException
+import kotlinx.coroutines.CoroutineDispatcher
 import okhttp3.Credentials
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
@@ -85,7 +87,8 @@ object CoilModule {
         tagReadGuard: TagReadGuard,
         remoteArtworkProvider: AggregateRemoteArtworkProvider,
         loadArtistArtwork: LoadArtistArtwork,
-        @RemoteArtworkInterceptor remoteArtworkInterceptors: Set<@JvmSuppressWildcards Interceptor>
+        @RemoteArtworkInterceptor remoteArtworkInterceptors: Set<@JvmSuppressWildcards Interceptor>,
+        @IoDispatcher ioDispatcher: CoroutineDispatcher
     ): ImageLoader {
         val artworkClient = artworkHttpClient(context, okHttpClient, artworkSettings, remoteArtworkInterceptors)
 
@@ -98,7 +101,7 @@ object CoilModule {
         val songSources =
             buildList<ArtworkSource<Song>> {
                 add(FolderSongArtworkSource(context, sharedStorageListsImages))
-                add(EmbeddedSongArtworkSource(context, ArtworkTagReader(kTagLib::getArtwork), tagReadGuard))
+                add(EmbeddedSongArtworkSource(context, ArtworkTagReader(kTagLib::getArtwork), tagReadGuard, ioDispatcher))
                 if (!sharedStorageListsImages) add(MediaStoreSongArtworkSource(context))
                 add(MediaServerSongArtworkSource(artworkSettings, remoteArtworkProvider))
                 add(S2SongArtworkSource(artworkSettings))
@@ -106,7 +109,7 @@ object CoilModule {
         val albumSources =
             buildList<ArtworkSource<Album>> {
                 add(FolderAlbumArtworkSource(context, songRepository, sharedStorageListsImages))
-                add(EmbeddedAlbumArtworkSource(context, ArtworkTagReader(kTagLib::getArtwork), tagReadGuard, songRepository))
+                add(EmbeddedAlbumArtworkSource(context, ArtworkTagReader(kTagLib::getArtwork), tagReadGuard, songRepository, ioDispatcher))
                 if (!sharedStorageListsImages) add(MediaStoreAlbumArtworkSource(context, songRepository))
                 add(MediaServerAlbumArtworkSource(artworkSettings, songRepository, remoteArtworkProvider))
                 add(S2AlbumArtworkSource(artworkSettings))

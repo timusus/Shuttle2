@@ -13,6 +13,7 @@ import io.kotest.matchers.shouldBe
 import java.io.File
 import java.nio.file.Files
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
@@ -29,7 +30,7 @@ class EmbeddedArtworkSourceTest {
     private var reads = 0
     private val tagReader = ArtworkTagReader { _, _ -> byteArrayOf(1, 2, 3).also { reads++ } }
     private val guard = TagReadGuard(Files.createTempDirectory("tag-reads").toFile(), preferences, { null })
-    private val source = EmbeddedSongArtworkSource(context, tagReader, guard)
+    private val source = EmbeddedSongArtworkSource(context, tagReader, guard, UnconfinedTestDispatcher())
 
     private fun songAt(file: File) = song(file.path, size = file.length())
 

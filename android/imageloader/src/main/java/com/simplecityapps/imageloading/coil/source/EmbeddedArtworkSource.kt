@@ -11,7 +11,7 @@ import com.simplecityapps.shuttle.model.Song
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.InputStream
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 
@@ -19,9 +19,10 @@ import timber.log.Timber
 internal class EmbeddedSongArtworkSource(
     private val context: Context,
     private val tagReader: ArtworkTagReader,
-    private val tagReadGuard: TagReadGuard
+    private val tagReadGuard: TagReadGuard,
+    private val ioDispatcher: CoroutineDispatcher
 ) : ArtworkSource.Local<Song> {
-    override suspend fun open(model: Song): InputStream? = openEmbeddedArtwork(context, tagReader, tagReadGuard, model)
+    override suspend fun open(model: Song): InputStream? = openEmbeddedArtwork(context, tagReader, tagReadGuard, ioDispatcher, model)
 }
 
 /** The picture embedded in the album's first song. */
@@ -29,9 +30,10 @@ internal class EmbeddedAlbumArtworkSource(
     private val context: Context,
     private val tagReader: ArtworkTagReader,
     private val tagReadGuard: TagReadGuard,
-    private val songRepository: SongRepository
+    private val songRepository: SongRepository,
+    private val ioDispatcher: CoroutineDispatcher
 ) : ArtworkSource.Local<Album> {
-    override suspend fun open(model: Album): InputStream? = songRepository.firstSongOf(model)?.let { song -> openEmbeddedArtwork(context, tagReader, tagReadGuard, song) }
+    override suspend fun open(model: Album): InputStream? = songRepository.firstSongOf(model)?.let { song -> openEmbeddedArtwork(context, tagReader, tagReadGuard, ioDispatcher, song) }
 }
 
 /** The song's embedded picture, or null without reading a file [tagReadGuard] quarantined for crashing TagLib. */
@@ -39,6 +41,7 @@ private suspend fun openEmbeddedArtwork(
     context: Context,
     tagReader: ArtworkTagReader,
     tagReadGuard: TagReadGuard,
+    ioDispatcher: CoroutineDispatcher,
     song: Song
 ): InputStream? {
     val uri: Uri =
@@ -49,7 +52,7 @@ private suspend fun openEmbeddedArtwork(
         }
     val file = TagReadFile(song.path, song.size, song.lastModified?.toEpochMilliseconds() ?: 0L)
     return tagReadGuard.read(file, song.mediaProvider) {
-        withContext(Dispatchers.IO) {
+        withContext(ioDispatcher) {
             try {
                 context.contentResolver.openFileDescriptor(uri, "r")?.use { pfd ->
                     tagReader.read(pfd.fd, uri.lastPathSegment)?.inputStream()

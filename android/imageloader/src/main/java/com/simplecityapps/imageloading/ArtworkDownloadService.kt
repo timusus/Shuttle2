@@ -22,6 +22,8 @@ import com.simplecityapps.mediaprovider.repository.albums.AlbumRepository
 import com.simplecityapps.mediaprovider.repository.artists.AlbumArtistQuery
 import com.simplecityapps.mediaprovider.repository.artists.AlbumArtistRepository
 import com.simplecityapps.shuttle.coroutines.concurrentMap
+import com.simplecityapps.shuttle.di.IoDispatcher
+import com.simplecityapps.shuttle.di.MainDispatcher
 import com.simplecityapps.shuttle.di.appGraph
 import com.simplecityapps.shuttle.pendingintent.PendingIntentCompat
 import com.simplecityapps.shuttle.settings.ArtworkSettings
@@ -29,9 +31,9 @@ import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.ContributesTo
 import dev.zacsweers.metro.Inject
 import kotlin.coroutines.CoroutineContext
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.asFlow
@@ -70,6 +72,14 @@ class ArtworkDownloadService :
     @Inject
     lateinit var imageLoader: ImageLoader
 
+    @Inject
+    @MainDispatcher
+    lateinit var mainDispatcher: CoroutineDispatcher
+
+    @Inject
+    @IoDispatcher
+    lateinit var ioDispatcher: CoroutineDispatcher
+
     private var job = SupervisorJob()
 
     private val exceptionHandler by lazy {
@@ -77,7 +87,7 @@ class ArtworkDownloadService :
     }
 
     override val coroutineContext: CoroutineContext
-        get() = job + exceptionHandler + Dispatchers.Main
+        get() = job + exceptionHandler + mainDispatcher
 
     // Lifecycle
 
@@ -137,7 +147,7 @@ class ArtworkDownloadService :
                     }
                     null
                 }
-                .flowOn(Dispatchers.IO)
+                .flowOn(ioDispatcher)
                 .collectIndexed { index, _ ->
                     notificationBuilder.setProgress(models.size, index, false)
                     notificationManager?.notify(NOTIFICATION_ID, notificationBuilder.build())
