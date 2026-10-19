@@ -16,8 +16,6 @@ com.simplecityapps.shuttle.ui.screens.settings.AndroidSettingsEffects -> com.sim
 com.simplecityapps.shuttle.ui.screens.settings.AndroidSettingsEffects -> com.simplecityapps.playback.settings.PlaybackSettings (:android:playback:core)
 com.simplecityapps.shuttle.ui.screens.settings.AndroidSettingsEffects -> com.simplecityapps.shuttle.debug.DebugLoggingTree (app-only)
 com.simplecityapps.shuttle.ui.screens.settings.AndroidSettingsEffects -> com.simplecityapps.shuttle.ui.ThemeManager (app-only)
-com.simplecityapps.shuttle.ui.screens.settings.SettingsScreens -> com.simplecityapps.mediaprovider.settings.LibrarySettings (:android:mediaprovider:core)
-com.simplecityapps.shuttle.ui.screens.settings.SettingsScreens -> com.simplecityapps.playback.settings.PlaybackSettings (:android:playback:core)
 com.simplecityapps.shuttle.ui.screens.settings.model.AndroidSettingsCatalog -> com.simplecityapps.mediaprovider.settings.LibrarySettings (:android:mediaprovider:core)
 com.simplecityapps.shuttle.ui.screens.settings.model.AndroidSettingsCatalog -> com.simplecityapps.mediaprovider.worker.ImportFrequency (:android:mediaprovider:core)
 com.simplecityapps.shuttle.ui.screens.settings.model.AndroidSettingsCatalog -> com.simplecityapps.playback.dsp.replaygain.MAX_REPLAY_GAIN_PREAMP_DB (:android:playback:core)

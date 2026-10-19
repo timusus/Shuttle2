@@ -115,9 +115,19 @@ sealed interface SettingItem {
         override val minSdk: Int = 1,
         override val dependsOn: Setting<Boolean>? = null,
         /** Only while its switch's row is shown: a switch hidden below its API level takes nothing over. */
-        val overriddenBy: SettingOverride? = null
+        val overriddenBy: SettingOverride? = null,
+        /** The row and the Settings root add the date of the last library scan to this choice's label. */
+        val showsLastScan: Boolean = false
     ) : SettingItem {
         override val key: String get() = setting.key
+    }
+
+    /** How a [SettingItem.Slider] writes its position beside the track. */
+    enum class SliderLabel {
+        None,
+        DecibelsSigned,
+        CrossfadeSeconds,
+        Percent
     }
 
     /** [fromFloat] converts the slider position back to the stored type; [steps] as in Compose's Slider. */
@@ -129,7 +139,8 @@ sealed interface SettingItem {
         val fromFloat: (Float) -> T,
         override val summary: StringKey? = null,
         override val minSdk: Int = 1,
-        override val dependsOn: Setting<Boolean>? = null
+        override val dependsOn: Setting<Boolean>? = null,
+        val label: SliderLabel = SliderLabel.None
     ) : SettingItem {
         override val key: String get() = setting.key
     }

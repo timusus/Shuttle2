@@ -36,8 +36,6 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import com.simplecityapps.mediaprovider.settings.LibrarySettings
-import com.simplecityapps.playback.settings.PlaybackSettings
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.designsystem.component.ChoiceSetting
 import com.simplecityapps.shuttle.designsystem.component.InfoSetting
@@ -51,13 +49,7 @@ import com.simplecityapps.shuttle.designsystem.component.SettingsGroup
 import com.simplecityapps.shuttle.designsystem.component.SliderSetting
 import com.simplecityapps.shuttle.designsystem.component.SwitchSetting
 import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
-import com.simplecityapps.shuttle.settings.AppearanceSettings
-import com.simplecityapps.shuttle.settings.EqualizerSettings
-import com.simplecityapps.shuttle.settings.Setting
-import com.simplecityapps.shuttle.settings.StreamingSettings
-import com.simplecityapps.shuttle.ui.screens.settings.model.AndroidSettingsCatalog
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingItem
-import com.simplecityapps.shuttle.ui.screens.settings.model.SettingOverride
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsAction
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsDestination
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsLink
@@ -68,7 +60,6 @@ import com.simplecityapps.shuttle.ui.text.stringResource
 import java.text.DateFormat
 import java.util.Date
 import java.util.Locale
-import kotlin.math.roundToInt
 
 /** The Settings root takes the collapsing large top bar; sub-pages take the standard bar so they read as a level down. */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -143,14 +134,14 @@ fun SettingsRootScreen(
         }
         item {
             SettingsGroup(
-                rows = SettingsDestination.entries.map { destination ->
+                rows = settingsRootViewState(uiState).rows.map { row ->
                     { shapes: ListItemShapes ->
                         LinkSetting(
-                            title = stringResource(destination.title),
-                            summary = destinationSummary(destination, uiState),
-                            onClick = { onOpenDestination(destination) },
-                            icon = destination.icon,
-                            selected = selected?.let { destination == it },
+                            title = stringResource(row.destination.title),
+                            summary = rootSummary(row.summary),
+                            onClick = { onOpenDestination(row.destination) },
+                            icon = row.destination.icon,
+                            selected = selected?.let { row.destination == it },
                             shapes = shapes
                         )
                     }
@@ -160,44 +151,15 @@ fun SettingsRootScreen(
     }
 }
 
-/** The current value a root row shows under its [destination]'s title, or null where nothing one-line sums it up. */
 @Composable
-private fun destinationSummary(
-    destination: SettingsDestination,
-    uiState: SettingsUiState
-): String? = when (destination) {
-    SettingsDestination.Appearance -> choiceLabel(destination, uiState, AppearanceSettings.Theme)
-
-    SettingsDestination.Sources -> choiceLabel(destination, uiState, StreamingSettings.MeteredQuality)
-        ?.let { stringResource(R.string.settings_sources_summary_streaming, it) }
-
-    SettingsDestination.Library -> choiceLabel(destination, uiState, LibrarySettings.RescanFrequency)
-        ?.let { stringResource(R.string.settings_library_summary_rescan, it) }
-
-    SettingsDestination.PlaybackAndSound -> if (uiState.value(EqualizerSettings.Enabled)) {
-        stringResource(R.string.settings_playback_summary_equalizer_preset, stringResource(uiState.equalizerSummary))
-    } else {
-        stringResource(R.string.settings_playback_summary_equalizer_off)
-    }
-
-    SettingsDestination.Privacy -> stringResource(R.string.settings_privacy_summary)
-
-    else -> null
-}
-
-/** The label of the option [setting] is on, from the choice row [destination] shows for it. */
-@Composable
-private fun <T> choiceLabel(
-    destination: SettingsDestination,
-    uiState: SettingsUiState,
-    setting: Setting<T>
-): String? {
-    val value = uiState.value(setting)
-    return AndroidSettingsCatalog.screen(destination).items
-        .filterIsInstance<SettingItem.Choice<*>>()
-        .firstOrNull { it.setting.key == setting.key }
-        ?.options?.firstOrNull { it.value == value }
-        ?.let { stringResource(it.label) }
+private fun rootSummary(summary: SettingsRootViewState.Summary): String? = when (summary) {
+    SettingsRootViewState.Summary.None -> null
+    is SettingsRootViewState.Summary.Option -> stringResource(summary.label)
+    is SettingsRootViewState.Summary.Streaming -> stringResource(R.string.settings_sources_summary_streaming, stringResource(summary.quality))
+    is SettingsRootViewState.Summary.Rescan -> stringResource(R.string.settings_library_summary_rescan, stringResource(summary.frequency))
+    is SettingsRootViewState.Summary.EqualizerPreset -> stringResource(R.string.settings_playback_summary_equalizer_preset, stringResource(summary.preset))
+    SettingsRootViewState.Summary.EqualizerOff -> stringResource(R.string.settings_playback_summary_equalizer_off)
+    SettingsRootViewState.Summary.Privacy -> stringResource(R.string.settings_privacy_summary)
 }
 
 private val SettingsDestination.icon: ImageVector
@@ -236,10 +198,7 @@ fun SettingsDestinationScreen(
     var openChoiceKey by rememberSaveable { mutableStateOf<String?>(null) }
     var pendingAction by rememberSaveable { mutableStateOf<SettingsAction?>(null) }
 
-    val groups = screen.groups
-        .map { group -> group to group.items.filter { it.minSdk <= sdkInt } }
-        .filter { (_, items) -> items.isNotEmpty() }
-    val shownKeys = groups.flatMap { (_, items) -> items.mapNotNull { it.key } }.toSet()
+    val viewState = settingsDestinationViewState(screen, uiState, sdkInt, versionName)
 
     SettingsScaffold(
         title = stringResource(screen.destination.title),
@@ -248,16 +207,14 @@ fun SettingsDestinationScreen(
         snackbarHostState = snackbarHostState
     ) {
         leadingContent()
-        groups.forEach { (group, items) ->
-            item(key = group.title ?: items.first().title) {
+        viewState.groups.forEach { group ->
+            item(key = group.key) {
                 SettingsGroup(
                     title = group.title?.let { stringResource(it) },
-                    rows = items.map { item ->
+                    rows = group.rows.map { row ->
                         { shapes: ListItemShapes ->
                             SettingRow(
-                                item = item,
-                                uiState = uiState,
-                                override = (item as? SettingItem.Choice<*>)?.overriddenBy?.takeIf { it.setting.key in shownKeys && uiState.value(it.setting) },
+                                row = row,
                                 shapes = shapes,
                                 onSwitchChange = onSwitchChange,
                                 onSliderChange = onSliderChange,
@@ -272,9 +229,9 @@ fun SettingsDestinationScreen(
                 )
             }
         }
-        if (versionName != null && screen.destination == SettingsDestination.About) {
+        viewState.version?.let { version ->
             item(key = "version") {
-                InfoSetting(title = stringResource(R.string.settings_version_title), summary = versionName)
+                InfoSetting(title = stringResource(R.string.settings_version_title), summary = version)
             }
         }
     }
@@ -316,9 +273,7 @@ fun SettingsDestinationScreen(
 
 @Composable
 private fun SettingRow(
-    item: SettingItem,
-    uiState: SettingsUiState,
-    override: SettingOverride?,
+    row: SettingsDestinationViewState.Row,
     shapes: ListItemShapes,
     onSwitchChange: (SettingItem.Switch, Boolean) -> Unit,
     onSliderChange: (SettingItem.Slider<*>, Float) -> Unit,
@@ -326,89 +281,70 @@ private fun SettingRow(
     onAction: (SettingItem.Action) -> Unit,
     onOpenLink: (SettingsLink) -> Unit
 ) {
-    val enabled = item.dependsOn?.let { uiState.value(it) } ?: true
-    val summary = item.summary?.let { stringResource(it) }
-    when (item) {
-        is SettingItem.Switch -> SwitchSetting(
-            title = stringResource(item.title),
-            checked = uiState.value(item.setting),
-            onCheckedChange = { onSwitchChange(item, it) },
+    val summary = row.item.summary?.let { stringResource(it) }
+    when (row) {
+        is SettingsDestinationViewState.Row.Switch -> SwitchSetting(
+            title = stringResource(row.item.title),
+            checked = row.checked,
+            onCheckedChange = { onSwitchChange(row.item, it) },
             summary = summary,
-            enabled = enabled,
+            enabled = row.enabled,
             shapes = shapes
         )
 
-        is SettingItem.Choice<*> -> ChoiceSetting(
-            title = stringResource(item.title),
-            value = override?.let { stringResource(it.hint) } ?: choiceValueLabel(item, uiState),
+        is SettingsDestinationViewState.Row.Choice -> ChoiceSetting(
+            title = stringResource(row.item.title),
+            value = row.override?.let { stringResource(it) } ?: choiceValueLabel(row),
             summary = summary,
-            onClick = { onOpenChoice(item) },
-            enabled = enabled && override == null,
+            onClick = { onOpenChoice(row.item) },
+            enabled = row.enabled,
             shapes = shapes
         )
 
-        is SettingItem.Slider<*> -> {
-            // A restored preference can sit outside the range; the row shows the clamped position.
-            val value = uiState.value(item.setting).toFloat().coerceIn(item.range.start, item.range.endInclusive)
-            SliderSetting(
-                title = stringResource(item.title),
-                value = value,
-                onValueChange = { onSliderChange(item, it) },
-                valueRange = item.range,
-                steps = item.steps,
-                valueLabel = sliderValueLabel(item, value),
-                enabled = enabled,
-                modifier = Modifier.testTag(item.key),
-                shapes = shapes
-            )
-        }
-
-        is SettingItem.Navigate -> LinkSetting(
-            title = stringResource(item.title),
-            onClick = { onOpenLink(item.target) },
-            summary = if (item.target == SettingsLink.Equalizer) stringResource(uiState.equalizerSummary) else summary,
-            enabled = enabled,
+        is SettingsDestinationViewState.Row.Slider -> SliderSetting(
+            title = stringResource(row.item.title),
+            value = row.value,
+            onValueChange = { onSliderChange(row.item, it) },
+            valueRange = row.item.range,
+            steps = row.item.steps,
+            valueLabel = sliderValueLabel(row.valueLabel),
+            enabled = row.enabled,
+            modifier = Modifier.testTag(row.item.key),
             shapes = shapes
         )
 
-        is SettingItem.Action -> LinkSetting(
-            title = stringResource(item.title),
-            onClick = { onAction(item) },
+        is SettingsDestinationViewState.Row.Navigate -> LinkSetting(
+            title = stringResource(row.item.title),
+            onClick = { onOpenLink(row.item.target) },
+            summary = row.summary?.let { stringResource(it) },
+            enabled = row.enabled,
+            shapes = shapes
+        )
+
+        is SettingsDestinationViewState.Row.Action -> LinkSetting(
+            title = stringResource(row.item.title),
+            onClick = { onAction(row.item) },
             summary = summary,
-            enabled = enabled,
+            enabled = row.enabled,
             shapes = shapes
         )
     }
 }
 
 @Composable
-private fun choiceValueLabel(
-    item: SettingItem.Choice<*>,
-    uiState: SettingsUiState
-): String {
-    val current = uiState.value(item.setting)
-    val label = item.options.firstOrNull { it.value == current }?.let { stringResource(it.label) }.orEmpty()
-    val lastScan = uiState.lastScanDate
-    if (item.setting != LibrarySettings.RescanFrequency || lastScan == null) return label
+private fun choiceValueLabel(row: SettingsDestinationViewState.Row.Choice): String {
+    val label = row.label?.let { stringResource(it) }.orEmpty()
+    val lastScan = row.lastScan ?: return label
     val resources = LocalContext.current.resources
     val date = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).format(Date(lastScan.toEpochMilliseconds()))
     return "$label ${resources.getString(R.string.pref_last_scan_date, date)}"
 }
 
 @Composable
-private fun sliderValueLabel(
-    item: SettingItem.Slider<*>,
-    value: Float
-): String? = when (item.setting) {
-    PlaybackSettings.PreAmpGain -> String.format(Locale.getDefault(), "%+.1f dB", value)
-
-    PlaybackSettings.CrossfadeDuration -> if (value < 500f) {
-        stringResource(SettingsString.DSP_REPLAY_GAIN_OFF)
-    } else {
-        stringResource(UiText.Resource(SettingsString.SETTINGS_CROSSFADE_SECONDS, listOf((value / 1000f).roundToInt())))
-    }
-
-    AppearanceSettings.WidgetBackgroundOpacity -> "${value.roundToInt()}%"
-
-    else -> null
+private fun sliderValueLabel(text: SettingsDestinationViewState.SliderText): String? = when (text) {
+    SettingsDestinationViewState.SliderText.None -> null
+    is SettingsDestinationViewState.SliderText.Decibels -> String.format(Locale.getDefault(), "%+.1f dB", text.value)
+    SettingsDestinationViewState.SliderText.Off -> stringResource(SettingsString.DSP_REPLAY_GAIN_OFF)
+    is SettingsDestinationViewState.SliderText.Seconds -> stringResource(UiText.Resource(SettingsString.SETTINGS_CROSSFADE_SECONDS, listOf(text.seconds)))
+    is SettingsDestinationViewState.SliderText.Percent -> "${text.percent}%"
 }

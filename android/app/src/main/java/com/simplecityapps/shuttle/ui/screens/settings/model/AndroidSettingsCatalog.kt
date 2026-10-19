@@ -95,7 +95,8 @@ object AndroidSettingsCatalog : SettingsCatalog {
                         title = SettingsString.PREF_WIDGET_OPACITY_TITLE,
                         range = 0f..100f,
                         steps = 0,
-                        fromFloat = { it.roundToInt() }
+                        fromFloat = { it.roundToInt() },
+                        label = SettingItem.SliderLabel.Percent
                     )
                 )
             ),
@@ -158,14 +159,16 @@ object AndroidSettingsCatalog : SettingsCatalog {
                         title = SettingsString.DSP_PREAMP,
                         range = -MAX_REPLAY_GAIN_PREAMP_DB.toFloat()..MAX_REPLAY_GAIN_PREAMP_DB.toFloat(),
                         steps = 0,
-                        fromFloat = { it }
+                        fromFloat = { it },
+                        label = SettingItem.SliderLabel.DecibelsSigned
                     ),
                     SettingItem.Slider(
                         setting = PlaybackSettings.CrossfadeDuration,
                         title = SettingsString.PREF_CROSSFADE_TITLE,
                         range = 0f..12_000f,
                         steps = 11,
-                        fromFloat = { it.roundToInt() }
+                        fromFloat = { it.roundToInt() },
+                        label = SettingItem.SliderLabel.CrossfadeSeconds
                     )
                 )
             )
@@ -260,7 +263,8 @@ object AndroidSettingsCatalog : SettingsCatalog {
                             ChoiceOption(ImportFrequency.Never, SettingsString.PREF_RESCAN_FREQUENCY_NEVER),
                             ChoiceOption(ImportFrequency.Daily, SettingsString.PREF_RESCAN_FREQUENCY_DAILY),
                             ChoiceOption(ImportFrequency.Weekly, SettingsString.PREF_RESCAN_FREQUENCY_WEEKLY)
-                        )
+                        ),
+                        showsLastScan = true
                     ),
                     SettingItem.Navigate(
                         target = SettingsLink.ExcludedSongs,
