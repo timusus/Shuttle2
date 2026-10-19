@@ -1,0 +1,6 @@
+date	key	commit	result	note
+2026-10-19	test-mode:unit-test-changed-tests	53c710469	kept	run every module's changed tests in one Gradle --continue call
+2026-10-19	test-mode:unit-test-changed-tests		slower	narrowing unmapped files to tests naming their declarations: real-run median 7s -> 12s; not committed
+2026-10-19	slow-test:com.simplecityapps.provider.plex.PlexMediaProviderTest	811fdeacc	kept	runTest skips the PagedFlow.retrying backoff
+2026-10-19	slow-test:com.simplecityapps.provider.jellyfin.JellyfinMediaProviderTest	811fdeacc	kept	runTest skips the PagedFlow.retrying backoff
+2026-10-19	land-precheck:architecture	b3d11c6d8	kept	architecture phase right after lint in land-verify; worker-finish runs the architecture tests
