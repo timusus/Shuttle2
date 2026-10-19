@@ -17,7 +17,7 @@ import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.io.InputStream
 import javax.imageio.ImageIO
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import okio.Buffer
 import okio.Path.Companion.toOkioPath
 import org.junit.Rule
@@ -70,7 +70,7 @@ class ArtworkFetcherTest {
             .build()
 
     @Test
-    fun `falls through sources with nothing or that fail to the first with artwork`() = runBlocking<Unit> {
+    fun `falls through sources with nothing or that fail to the first with artwork`() = runTest {
         val result =
             fetch(
                 localSource { null },
@@ -83,14 +83,14 @@ class ArtworkFetcherTest {
     }
 
     @Test
-    fun `fails when no source has artwork`() {
+    fun `fails when no source has artwork`() = runTest {
         shouldThrow<ArtworkNotFoundException> {
-            runBlocking { fetch(localSource { null }, remoteSource { null }) }
+            fetch(localSource { null }, remoteSource { null })
         }
     }
 
     @Test
-    fun `local artwork is cached under the model's key, so the next load skips the sources`() = runBlocking<Unit> {
+    fun `local artwork is cached under the model's key, so the next load skips the sources`() = runTest {
         fetch(localSource { "cover".byteInputStream() }).readUtf8()
 
         val cached = fetch(localSource { throw AssertionError("the cache should answer first") })
@@ -100,7 +100,7 @@ class ArtworkFetcherTest {
     }
 
     @Test
-    fun `remote artwork is fetched through the network fetcher under the model's key`() = runBlocking<Unit> {
+    fun `remote artwork is fetched through the network fetcher under the model's key`() = runTest {
         val result = fetch(localSource { null }, remoteSource { "https://example.com/cover.jpg" })
 
         result.readUtf8() shouldBe "https://example.com/cover.jpg"
@@ -108,26 +108,26 @@ class ArtworkFetcherTest {
     }
 
     @Test
-    fun `a local image under the source's minimum size counts as absent`() = runBlocking<Unit> {
+    fun `a local image under the source's minimum size counts as absent`() = runTest {
         val result = fetch(localSource(minimumSize = 500) { png(250, 250).inputStream() }, localSource { png(600, 600).inputStream() })
 
         result.imageSize() shouldBe (600 to 600)
     }
 
     @Test
-    fun `an image is measured on its shorter side`() = runBlocking<Unit> {
+    fun `an image is measured on its shorter side`() = runTest {
         val result = fetch(localSource(minimumSize = 500) { png(1000, 400).inputStream() }, localSource { png(600, 600).inputStream() })
 
         result.imageSize() shouldBe (600 to 600)
     }
 
     @Test
-    fun `an image at the minimum size is taken`() = runBlocking<Unit> {
+    fun `an image at the minimum size is taken`() = runTest {
         fetch(localSource(minimumSize = 500) { png(500, 800).inputStream() }).imageSize() shouldBe (500 to 800)
     }
 
     @Test
-    fun `a remote image under the minimum size falls through, and isn't left in the cache`() = runBlocking<Unit> {
+    fun `a remote image under the minimum size falls through, and isn't left in the cache`() = runTest {
         images["https://example.com/thumb.jpg"] = png(250, 250)
 
         fetch(remoteSource(minimumSize = 500) { "https://example.com/thumb.jpg" }, localSource { png(600, 600).inputStream() }).imageSize() shouldBe (600 to 600)
@@ -137,11 +137,11 @@ class ArtworkFetcherTest {
     }
 
     @Test
-    fun `with nothing else, an image under the minimum size leaves no artwork`() {
+    fun `with nothing else, an image under the minimum size leaves no artwork`() = runTest {
         images["https://example.com/thumb.jpg"] = png(250, 250)
 
         shouldThrow<ArtworkNotFoundException> {
-            runBlocking { fetch(remoteSource(minimumSize = 500) { "https://example.com/thumb.jpg" }) }
+            fetch(remoteSource(minimumSize = 500) { "https://example.com/thumb.jpg" })
         }
         imageLoader.diskCache!!.openSnapshot(MODEL_KEY) shouldBe null
     }

@@ -12,8 +12,8 @@ import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import java.io.File
 import java.nio.file.Files
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.runTest
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
@@ -30,19 +30,20 @@ class EmbeddedArtworkSourceTest {
     private var reads = 0
     private val tagReader = ArtworkTagReader { _, _ -> byteArrayOf(1, 2, 3).also { reads++ } }
     private val guard = TagReadGuard(Files.createTempDirectory("tag-reads").toFile(), preferences, { null })
-    private val source = EmbeddedSongArtworkSource(context, tagReader, guard, UnconfinedTestDispatcher())
+    private val dispatcher = UnconfinedTestDispatcher()
+    private val source = EmbeddedSongArtworkSource(context, tagReader, guard, dispatcher)
 
     private fun songAt(file: File) = song(file.path, size = file.length())
 
     @Test
-    fun `a file TagLib hasn't crashed on has its artwork read`() = runBlocking<Unit> {
+    fun `a file TagLib hasn't crashed on has its artwork read`() = runTest(dispatcher) {
         val file = folder.newFile("a.mp3").apply { writeText("audio") }
 
         source.open(songAt(file)).shouldNotBeNull()
     }
 
     @Test
-    fun `a quarantined file returns no artwork without reaching TagLib`() = runBlocking<Unit> {
+    fun `a quarantined file returns no artwork without reaching TagLib`() = runTest(dispatcher) {
         val file = folder.newFile("bad.mp3").apply { writeText("audio") }
         val song = songAt(file)
         preferences.quarantineTagRead(TagReadFile(song.path, song.size, 0L).key)
@@ -52,7 +53,7 @@ class EmbeddedArtworkSourceTest {
     }
 
     @Test
-    fun `a file replaced since it was quarantined is read again`() = runBlocking<Unit> {
+    fun `a file replaced since it was quarantined is read again`() = runTest(dispatcher) {
         val file = folder.newFile("fixed.mp3").apply { writeText("audio") }
         val song = songAt(file)
         preferences.quarantineTagRead(TagReadFile(song.path, size = song.size + 1, lastModified = 0L).key)

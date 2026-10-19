@@ -7,7 +7,7 @@ import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -32,7 +32,7 @@ class MediaStoreArtworkSourceTest {
     }
 
     @Test
-    fun `album art comes from the first song with a MediaStore id, skipping songs from other providers`() = runBlocking<Unit> {
+    fun `album art comes from the first song with a MediaStore id, skipping songs from other providers`() = runTest {
         val songs =
             listOf(
                 createSong(MediaProviderType.Jellyfin, externalId = "remote"),
@@ -46,7 +46,7 @@ class MediaStoreArtworkSourceTest {
     }
 
     @Test
-    fun `nothing is fetched when no song has a MediaStore id`() = runBlocking<Unit> {
+    fun `nothing is fetched when no song has a MediaStore id`() = runTest {
         val songs = listOf(createSong(MediaProviderType.Jellyfin, externalId = "remote"))
 
         MediaStoreAlbumArtworkSource(context, FakeSongRepository(songs)).open(createAlbum()) shouldBe null

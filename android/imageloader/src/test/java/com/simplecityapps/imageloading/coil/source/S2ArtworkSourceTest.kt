@@ -8,20 +8,20 @@ import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import com.simplecityapps.shuttle.settings.ArtworkSettings
 import com.simplecityapps.shuttle.settings.SettingsStore
 import io.kotest.matchers.shouldBe
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import org.junit.Test
 
 class S2ArtworkSourceTest {
     private val artworkSettings = ArtworkSettings(SettingsStore(InMemoryKeyValueStore()))
 
     @Test
-    fun `album art is looked up by encoded album artist and album name`() = runBlocking<Unit> {
+    fun `album art is looked up by encoded album artist and album name`() = runTest {
         S2AlbumArtworkSource(artworkSettings).url(createAlbum(name = "Rock & Roll", albumArtist = "AC/DC")) shouldBe
             "https://api.shuttlemusicplayer.app/v1/artwork?artist=AC%2FDC&album=Rock+%26+Roll"
     }
 
     @Test
-    fun `artist art is looked up by encoded artist name`() = runBlocking<Unit> {
+    fun `artist art is looked up by encoded artist name`() = runTest {
         S2AlbumArtistArtworkSource(artworkSettings).url(createAlbumArtist(name = "Sigur Rós")) shouldBe
             "https://api.shuttlemusicplayer.app/v1/artwork?artist=Sigur+R%C3%B3s"
     }

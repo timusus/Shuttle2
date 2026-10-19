@@ -5,7 +5,7 @@ import com.simplecityapps.shuttle.model.AlbumArtistGroupKey
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import io.kotest.matchers.shouldBe
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import org.junit.Test
 
 /** Which of an artist's songs stand in for them when a source finds artwork through a song. */
@@ -21,7 +21,7 @@ class FirstSongTest {
     )
 
     @Test
-    fun `an artist's own albums come first including one featuring another or of several album artists`() = runBlocking<Unit> {
+    fun `an artist's own albums come first including one featuring another or of several album artists`() = runTest {
         val credited = song(1, albumArtist = "Björk", artists = listOf("Björk", "Radiohead"))
         val featuring = song(2, albumArtist = "Radiohead feat. Björk")
         val several = song(3, albumArtist = null, albumArtists = listOf("Thom Yorke", "Radiohead"))
