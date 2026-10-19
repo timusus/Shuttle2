@@ -3,9 +3,9 @@ package com.simplecityapps.playback.chromecast
 import com.simplecityapps.mediaprovider.MediaInfoProvider
 import com.simplecityapps.playback.queue.QueueEntry
 import java.security.MessageDigest
-import java.security.SecureRandom
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.coroutines.CoroutineContext
+import kotlin.random.Random
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -29,12 +29,11 @@ import timber.log.Timber
  */
 class CastStreams(
     private val mediaInfoProvider: MediaInfoProvider,
-    private val ioContext: CoroutineContext
+    private val ioContext: CoroutineContext,
+    private val secureRandom: Random
 ) {
     /** An entry's stream: its content type, and for a remote-provider song, where its server streams it from. */
     private class Stream(val contentType: String, val url: String?)
-
-    private val random = SecureRandom()
 
     /** By entry uid. */
     private val streams = ConcurrentHashMap<Long, Stream>()
@@ -100,7 +99,7 @@ class CastStreams(
         return stream
     }
 
-    private fun newKey(): String = ByteArray(KEY_BYTES).also(random::nextBytes).joinToString("") { "%02x".format(it) }
+    private fun newKey(): String = ByteArray(KEY_BYTES).also(secureRandom::nextBytes).joinToString("") { "%02x".format(it) }
 
     companion object {
         private const val KEY_BYTES = 16

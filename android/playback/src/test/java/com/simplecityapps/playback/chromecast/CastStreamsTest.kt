@@ -8,6 +8,7 @@ import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import kotlin.coroutines.EmptyCoroutineContext
+import kotlin.random.Random
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Before
@@ -23,7 +24,21 @@ class CastStreamsTest {
 
     private val provider = FakeMediaInfoProvider()
 
-    private val streams = CastStreams(provider, EmptyCoroutineContext)
+    private val streams = CastStreams(provider, EmptyCoroutineContext, Random(0))
+
+    @Test
+    fun `the key comes from the injected random and is replaced by a new session`() {
+        val first = CastStreams(provider, EmptyCoroutineContext, Random(5))
+        val second = CastStreams(provider, EmptyCoroutineContext, Random(5))
+
+        first.key shouldBe second.key
+        first.key.length shouldBe 32
+        val before = first.key
+
+        first.newSession()
+
+        first.key shouldNotBe before
+    }
 
     @Test
     fun `a remote entry's stream is resolved as the receiver can play it, under the entry's play id`() = runTest {

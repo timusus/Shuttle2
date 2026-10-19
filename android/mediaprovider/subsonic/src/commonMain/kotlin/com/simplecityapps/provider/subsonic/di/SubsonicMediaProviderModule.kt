@@ -19,6 +19,7 @@ import com.simplecityapps.provider.subsonic.SubsonicServerAuthentication
 import com.simplecityapps.provider.subsonic.SubsonicStreamUrlProvider
 import com.simplecityapps.provider.subsonic.SubsonicStreams
 import com.simplecityapps.provider.subsonic.http.SubsonicService
+import com.simplecityapps.shuttle.di.SecureRandom
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.persistence.SecurePreferenceManager
 import dev.zacsweers.metro.AppScope
@@ -30,6 +31,7 @@ import dev.zacsweers.metro.Named
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.SingleIn
 import io.ktor.client.HttpClient
+import kotlin.random.Random
 
 /**
  * The Subsonic service, sign-in, sync, streams, playback reporting, favourites and artwork. Each platform supplies the
@@ -42,8 +44,9 @@ class SubsonicMediaProviderModule {
     @SingleIn(AppScope::class)
     fun provideSubsonicService(
         @Named("SubsonicHttpClient") httpClient: HttpClient,
-        clientIdentity: ClientIdentity
-    ): SubsonicService = SubsonicService(httpClient, clientIdentity.clientName)
+        clientIdentity: ClientIdentity,
+        @SecureRandom secureRandom: Random
+    ): SubsonicService = SubsonicService(httpClient, clientIdentity.clientName, secureRandom)
 
     @Provides
     @SingleIn(AppScope::class)

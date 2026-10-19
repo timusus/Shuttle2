@@ -11,6 +11,7 @@ import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import com.simplecityapps.shuttle.persistence.SecurePreferenceManager
 import io.ktor.client.request.HttpRequestData
+import kotlin.random.Random
 
 /** [ServerStrings] for tests, which assert on these rather than on a platform's string resources. */
 object TestServerStrings : ServerStrings {
@@ -27,7 +28,7 @@ object TestServerStrings : ServerStrings {
 class TestSubsonic : AutoCloseable {
     val server = FixtureServer("subsonic")
 
-    val service = SubsonicService(createHttpClient(server.engine), clientName = "Shuttle")
+    val service = SubsonicService(createHttpClient(server.engine), clientName = "Shuttle", secureRandom = Random(1))
 
     private val preferences = SecurePreferenceManager(InMemoryKeyValueStore())
 

@@ -12,6 +12,7 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.types.shouldBeSameInstanceAs
 import kotlin.coroutines.EmptyCoroutineContext
+import kotlin.random.Random
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -20,7 +21,7 @@ import org.robolectric.RobolectricTestRunner
 // Robolectric: the Google Cast SDK's MediaMetadata.putString() calls real android.text.TextUtils.
 @RunWith(RobolectricTestRunner::class)
 class CastMediaItemConverterTest {
-    private val streams = CastStreams(FakeMediaInfoProvider(), EmptyCoroutineContext)
+    private val streams = CastStreams(FakeMediaInfoProvider(), EmptyCoroutineContext, Random(0))
 
     private val converter = CastMediaItemConverter(hostAddress = { "192.168.1.20" }, streams = streams, unknown = "Unknown")
 
@@ -124,7 +125,7 @@ class CastMediaItemConverterTest {
 
     @Test
     fun `an item this phone sent before S2 was stopped comes back with its song, though not its entry`() {
-        val earlier = CastMediaItemConverter({ "192.168.1.20" }, CastStreams(FakeMediaInfoProvider(), EmptyCoroutineContext), "Unknown")
+        val earlier = CastMediaItemConverter({ "192.168.1.20" }, CastStreams(FakeMediaInfoProvider(), EmptyCoroutineContext, Random(1)), "Unknown")
         val queueItem = earlier.toMediaQueueItem(QueueEntry(uid = 42, song = song).toMediaItem())
 
         val reported = converter.toMediaItem(queueItem)
@@ -135,7 +136,7 @@ class CastMediaItemConverterTest {
 
     @Test
     fun `an item another phone sent comes back without a song`() {
-        val otherPhone = CastMediaItemConverter({ "192.168.1.30" }, CastStreams(FakeMediaInfoProvider(), EmptyCoroutineContext), "Unknown")
+        val otherPhone = CastMediaItemConverter({ "192.168.1.30" }, CastStreams(FakeMediaInfoProvider(), EmptyCoroutineContext, Random(2)), "Unknown")
         val queueItem = otherPhone.toMediaQueueItem(QueueEntry(uid = 42, song = song).toMediaItem())
 
         converter.toMediaItem(queueItem).castSongId.shouldBeNull()

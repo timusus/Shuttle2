@@ -19,11 +19,13 @@ import com.simplecityapps.playback.chromecast.HttpServer
 import com.simplecityapps.playback.exoplayer.ExoPlayerFactory
 import com.simplecityapps.shuttle.di.ApplicationContext
 import com.simplecityapps.shuttle.di.IoDispatcher
+import com.simplecityapps.shuttle.di.SecureRandom
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer
 import dev.zacsweers.metro.ContributesTo
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.SingleIn
+import kotlin.random.Random
 import kotlinx.coroutines.CoroutineDispatcher
 
 @ContributesTo(AppScope::class)
@@ -43,8 +45,9 @@ class CastModule {
     @Provides
     fun provideCastStreams(
         mediaInfoProvider: AggregateMediaInfoProvider,
-        @IoDispatcher ioDispatcher: CoroutineDispatcher
-    ): CastStreams = CastStreams(mediaInfoProvider, ioDispatcher)
+        @IoDispatcher ioDispatcher: CoroutineDispatcher,
+        @SecureRandom secureRandom: Random
+    ): CastStreams = CastStreams(mediaInfoProvider, ioDispatcher, secureRandom)
 
     @SingleIn(AppScope::class)
     @Provides

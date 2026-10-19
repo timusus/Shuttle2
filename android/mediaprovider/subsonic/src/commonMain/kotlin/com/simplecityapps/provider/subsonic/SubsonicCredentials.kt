@@ -22,12 +22,13 @@ data class SubsonicAuth(
     val credentials: SubsonicCredentials,
     val sendPassword: Boolean = false
 ) {
-    fun parameters(): List<Pair<String, String>> = when (credentials) {
+    /** [random] must be cryptographically secure: it makes the salt. */
+    fun parameters(random: Random): List<Pair<String, String>> = when (credentials) {
         is SubsonicCredentials.Token ->
             if (sendPassword) {
                 listOf("u" to credentials.username, "p" to "enc:" + credentials.password.encodeToByteArray().toHex())
             } else {
-                val salt = Random.nextBytes(SALT_BYTES).toHex()
+                val salt = random.nextBytes(SALT_BYTES).toHex()
                 listOf("u" to credentials.username, "t" to md5Hex(credentials.password + salt), "s" to salt)
             }
 

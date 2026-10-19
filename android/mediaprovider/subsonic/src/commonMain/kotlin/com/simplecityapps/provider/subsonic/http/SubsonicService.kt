@@ -11,6 +11,7 @@ import io.ktor.http.ContentType
 import io.ktor.http.URLBuilder
 import io.ktor.http.appendPathSegments
 import io.ktor.http.contentType
+import kotlin.random.Random
 
 /**
  * The Subsonic REST API (`/rest/<method>.view`), JSON flavoured. Every request carries the protocol version, the client
@@ -18,7 +19,8 @@ import io.ktor.http.contentType
  */
 class SubsonicService(
     private val client: HttpClient,
-    private val clientName: String
+    private val clientName: String,
+    private val secureRandom: Random
 ) {
     suspend fun ping(address: String, auth: SubsonicAuth): NetworkResult<SubsonicResponse> = get(address, "ping", auth)
 
@@ -130,7 +132,7 @@ class SubsonicService(
     }.buildString()
 
     private fun URLBuilder.appendCommonParameters(auth: SubsonicAuth) {
-        (auth.parameters() + listOf("v" to API_VERSION, "c" to clientName)).forEach { (name, value) -> parameters.append(name, value) }
+        (auth.parameters(secureRandom) + listOf("v" to API_VERSION, "c" to clientName)).forEach { (name, value) -> parameters.append(name, value) }
     }
 
     companion object {

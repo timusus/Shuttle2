@@ -20,6 +20,7 @@ import io.kotest.matchers.ints.shouldBeGreaterThan
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import kotlin.coroutines.EmptyCoroutineContext
+import kotlin.random.Random
 import kotlinx.coroutines.flow.map
 import org.junit.After
 import org.junit.Test
@@ -32,7 +33,7 @@ import org.robolectric.RobolectricTestRunner
  */
 @RunWith(RobolectricTestRunner::class)
 class CastSpecTest {
-    private val streams = CastStreams(FakeMediaInfoProvider(), EmptyCoroutineContext)
+    private val streams = CastStreams(FakeMediaInfoProvider(), EmptyCoroutineContext, Random(0))
 
     private val converter = CastMediaItemConverter({ "10.0.0.2" }, streams, "Unknown")
 
@@ -127,7 +128,7 @@ class CastSpecTest {
         index: Int,
         positionMs: Long
     ) {
-        val earlierRun = CastMediaItemConverter({ "10.0.0.2" }, CastStreams(FakeMediaInfoProvider(), EmptyCoroutineContext), "Unknown")
+        val earlierRun = CastMediaItemConverter({ "10.0.0.2" }, CastStreams(FakeMediaInfoProvider(), EmptyCoroutineContext, Random(1)), "Unknown")
         val queueItems = songIds.mapIndexed { uid, id -> earlierRun.toMediaQueueItem(QueueEntry(uid.toLong(), song(id)).toMediaItem()) }
         receiver.playingFromEarlierRun(queueItems, index, positionMs)
     }

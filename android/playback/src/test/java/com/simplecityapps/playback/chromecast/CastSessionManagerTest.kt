@@ -4,6 +4,7 @@ import com.google.android.gms.cast.framework.CastSession
 import io.kotest.matchers.shouldBe
 import io.mockk.mockk
 import kotlin.coroutines.EmptyCoroutineContext
+import kotlin.random.Random
 import kotlinx.coroutines.Dispatchers
 import org.junit.After
 import org.junit.Test
@@ -19,7 +20,7 @@ import org.robolectric.RuntimeEnvironment
 // Robolectric: runs a real HTTP server against RuntimeEnvironment.getApplication().
 @RunWith(RobolectricTestRunner::class)
 class CastSessionManagerTest {
-    private val streams = CastStreams(FakeMediaInfoProvider(), EmptyCoroutineContext)
+    private val streams = CastStreams(FakeMediaInfoProvider(), EmptyCoroutineContext, Random(0))
 
     private val server = HttpServer(
         CastService(RuntimeEnvironment.getApplication(), FakeSongRepository(emptyList()), FakeArtworkImageLoader(ByteArray(0)), streams, Dispatchers.IO),

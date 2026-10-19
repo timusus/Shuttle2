@@ -8,6 +8,7 @@ import java.io.File
 import java.net.HttpURLConnection
 import java.net.URL
 import kotlin.coroutines.EmptyCoroutineContext
+import kotlin.random.Random
 import kotlinx.coroutines.Dispatchers
 import org.junit.After
 import org.junit.Before
@@ -25,7 +26,7 @@ class HttpServerTest {
     @get:Rule
     val folder = TemporaryFolder()
 
-    private val streams = CastStreams(FakeMediaInfoProvider(), EmptyCoroutineContext)
+    private val streams = CastStreams(FakeMediaInfoProvider(), EmptyCoroutineContext, Random(0))
 
     private lateinit var localFile: File
 

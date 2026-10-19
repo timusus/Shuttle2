@@ -17,6 +17,7 @@ import com.simplecityapps.playback.queue.toMediaItem
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import kotlin.coroutines.EmptyCoroutineContext
+import kotlin.random.Random
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -44,7 +45,7 @@ class CastQueueTest {
 
     private val provider = FakeMediaInfoProvider()
 
-    private val streams = CastStreams(provider, EmptyCoroutineContext)
+    private val streams = CastStreams(provider, EmptyCoroutineContext, Random(0))
 
     private val converter = CastMediaItemConverter({ "10.0.0.2" }, streams, "Unknown")
 
