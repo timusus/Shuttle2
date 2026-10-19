@@ -40,17 +40,18 @@ fun DownloadsScreen(
     modifier: Modifier = Modifier
 ) {
     val viewState = downloadsViewState(uiState)
+    val onEvent = DownloadsCallbacks(onNavigateUp, onRemoveAll, onOpenAlbum)::onEvent
     var confirmRemoveAll by rememberSaveable { mutableStateOf(false) }
     val confirm = { event: ConfirmEvent ->
         val step = onConfirmEvent(confirmRemoveAll, event)
         confirmRemoveAll = step.showing
-        if (step.confirmed) onRemoveAll()
+        if (step.confirmed) onEvent(DownloadsEvent.RemoveAll)
     }
     val context = LocalContext.current
 
     SettingsScaffold(
         title = stringResource(R.string.downloads_title),
-        onNavigateUp = onNavigateUp,
+        onNavigateUp = { onEvent(DownloadsEvent.NavigateUp) },
         modifier = modifier,
         contentPadding = PaddingValues(),
         verticalArrangement = Arrangement.Top,
@@ -80,7 +81,7 @@ fun DownloadsScreen(
                     AlbumRow(
                         title = row.title ?: stringResource(com.simplecityapps.core.R.string.unknown),
                         artist = row.artist,
-                        onClick = { onOpenAlbum(album) },
+                        onClick = { onEvent(DownloadsEvent.OpenAlbum(album)) },
                         artwork = { LibraryArtwork(album.cover, ArtworkPlaceholder.Album) },
                         meta = pluralStringResource(R.plurals.downloads_album_meta, album.songCount, album.songCount, Formatter.formatShortFileSize(context, album.bytes))
                     )
