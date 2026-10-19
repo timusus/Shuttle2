@@ -6,11 +6,11 @@ import io.kotest.matchers.shouldBe
 import kotlin.test.Test
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 
 class MediaImporterRemovalTest : MediaImporterTestBase() {
     @Test
-    fun `a listing that came up short deletes nothing and makes the next sync full - which deletes as usual`() = runBlocking<Unit> {
+    fun `a listing that came up short deletes nothing and makes the next sync full - which deletes as usual`() = runTest {
         importer.mediaProviders -= provider
         importer.mediaProviders += server
         songRepository.stored = listOf(song())
@@ -35,7 +35,7 @@ class MediaImporterRemovalTest : MediaImporterTestBase() {
     }
 
     @Test
-    fun `a server short by as many songs every full sync deletes from the second - and keeps its full-sync time`() = runBlocking<Unit> {
+    fun `a server short by as many songs every full sync deletes from the second - and keeps its full-sync time`() = runTest {
         importer.mediaProviders -= provider
         importer.mediaProviders += server
         songRepository.stored = listOf(song())
@@ -58,7 +58,7 @@ class MediaImporterRemovalTest : MediaImporterTestBase() {
     }
 
     @Test
-    fun `an incremental sync that came up short leaves the next full sync where it was`() = runBlocking<Unit> {
+    fun `an incremental sync that came up short leaves the next full sync where it was`() = runTest {
         importer.mediaProviders -= provider
         importer.mediaProviders += server
         songRepository.stored = listOf(song())
@@ -86,7 +86,7 @@ class MediaImporterRemovalTest : MediaImporterTestBase() {
     }
 
     @Test
-    fun `an incremental sync removes the songs the server no longer lists`() = runBlocking<Unit> {
+    fun `an incremental sync removes the songs the server no longer lists`() = runTest {
         incrementalServer()
         server.count = 2
         server.held = listOf("/1", "/3")
@@ -99,7 +99,7 @@ class MediaImporterRemovalTest : MediaImporterTestBase() {
     }
 
     @Test
-    fun `an incremental sync keeps a song a shifted listing page skipped - and removes the one the server did drop`() = runBlocking<Unit> {
+    fun `an incremental sync keeps a song a shifted listing page skipped - and removes the one the server did drop`() = runTest {
         incrementalServer()
         server.count = 2
         // Song 1 went mid-listing, so a page shifted and skipped song 2; the second listing has it
@@ -112,7 +112,7 @@ class MediaImporterRemovalTest : MediaImporterTestBase() {
     }
 
     @Test
-    fun `an incremental sync whose confirming listing fails removes nothing`() = runBlocking<Unit> {
+    fun `an incremental sync whose confirming listing fails removes nothing`() = runTest {
         incrementalServer()
         server.count = 2
         server.earlierListings += listOf("/1", "/3")
@@ -124,7 +124,7 @@ class MediaImporterRemovalTest : MediaImporterTestBase() {
     }
 
     @Test
-    fun `an incremental sync whose server count is what is stored lists nothing`() = runBlocking<Unit> {
+    fun `an incremental sync whose server count is what is stored lists nothing`() = runTest {
         incrementalServer()
         server.count = 3
 
@@ -135,7 +135,7 @@ class MediaImporterRemovalTest : MediaImporterTestBase() {
     }
 
     @Test
-    fun `an incremental sync counts the songs it added as held`() = runBlocking<Unit> {
+    fun `an incremental sync counts the songs it added as held`() = runTest {
         incrementalServer()
         server.found = listOf(song(4, "/4"))
         server.count = 4
@@ -147,7 +147,7 @@ class MediaImporterRemovalTest : MediaImporterTestBase() {
     }
 
     @Test
-    fun `an incremental sync adding a song while another is gone still removes it`() = runBlocking<Unit> {
+    fun `an incremental sync adding a song while another is gone still removes it`() = runTest {
         incrementalServer()
         server.found = listOf(song(4, "/4"))
         server.count = 3
@@ -160,7 +160,7 @@ class MediaImporterRemovalTest : MediaImporterTestBase() {
     }
 
     @Test
-    fun `an incremental sync with a count it cannot read lists the songs`() = runBlocking<Unit> {
+    fun `an incremental sync with a count it cannot read lists the songs`() = runTest {
         incrementalServer()
         server.count = null
         server.held = listOf("/1", "/2")
@@ -172,7 +172,7 @@ class MediaImporterRemovalTest : MediaImporterTestBase() {
     }
 
     @Test
-    fun `an incremental sync whose path listing fails removes nothing - and still stores what it found`() = runBlocking<Unit> {
+    fun `an incremental sync whose path listing fails removes nothing - and still stores what it found`() = runTest {
         incrementalServer()
         server.found = listOf(song(4, "/4"))
         server.count = 2
@@ -185,7 +185,7 @@ class MediaImporterRemovalTest : MediaImporterTestBase() {
     }
 
     @Test
-    fun `an incremental sync whose path listing came up short removes nothing`() = runBlocking<Unit> {
+    fun `an incremental sync whose path listing came up short removes nothing`() = runTest {
         incrementalServer()
         server.count = 2
         server.held = listOf("/1")
@@ -200,7 +200,7 @@ class MediaImporterRemovalTest : MediaImporterTestBase() {
     }
 
     @Test
-    fun `an incremental sync that would remove every song holds the removal back - until the full sync it brings forward finds them gone too`() = runBlocking<Unit> {
+    fun `an incremental sync that would remove every song holds the removal back - until the full sync it brings forward finds them gone too`() = runTest {
         incrementalServer()
         server.count = 0
         server.held = emptyList()
@@ -219,7 +219,7 @@ class MediaImporterRemovalTest : MediaImporterTestBase() {
     }
 
     @Test
-    fun `songs an incremental sync finds out of reach go once - through the full sync it brings forward when there are many`() = runBlocking<Unit> {
+    fun `songs an incremental sync finds out of reach go once - through the full sync it brings forward when there are many`() = runTest {
         // 30 audiobooks stored before the sync left their library out, and three songs
         val audiobooks = (10L..39L).map { id -> song(id, "/book/$id") }
         importer.mediaProviders -= provider
@@ -253,7 +253,7 @@ class MediaImporterRemovalTest : MediaImporterTestBase() {
     }
 
     @Test
-    fun `an incremental sync counts the songs the last full sync came up short by as held - and lists nothing`() = runBlocking<Unit> {
+    fun `an incremental sync counts the songs the last full sync came up short by as held - and lists nothing`() = runTest {
         incrementalServer()
         preferences.setListingShortfall(server.type.name, 2)
         server.count = 5
@@ -264,7 +264,7 @@ class MediaImporterRemovalTest : MediaImporterTestBase() {
     }
 
     @Test
-    fun `an incremental sync whose server holds songs it never fetched brings the full sync forward`() = runBlocking<Unit> {
+    fun `an incremental sync whose server holds songs it never fetched brings the full sync forward`() = runTest {
         incrementalServer()
         server.count = 4
         server.held = listOf("/1", "/2", "/3", "/old-but-unseen")
@@ -276,7 +276,7 @@ class MediaImporterRemovalTest : MediaImporterTestBase() {
     }
 
     @Test
-    fun `a full import keeps a song a shifted listing page skipped - and removes the one the server did drop`() = runBlocking<Unit> {
+    fun `a full import keeps a song a shifted listing page skipped - and removes the one the server did drop`() = runTest {
         val songs = (1L..30L).map { id -> song(id = id, path = "jellyfin://item/$id") }
         songRepository.stored = songs
         // Song 1 went mid-listing, so a page shifted and skipped song 2: the listing lacks both, the confirming one has song 2
@@ -289,7 +289,7 @@ class MediaImporterRemovalTest : MediaImporterTestBase() {
     }
 
     @Test
-    fun `a full import whose confirming listing fails removes nothing`() = runBlocking<Unit> {
+    fun `a full import whose confirming listing fails removes nothing`() = runTest {
         val songs = (1L..30L).map { id -> song(id = id, path = "jellyfin://item/$id") }
         songRepository.stored = songs
         server.found = songs.drop(1)
@@ -301,7 +301,7 @@ class MediaImporterRemovalTest : MediaImporterTestBase() {
     }
 
     @Test
-    fun `a full import that would remove most of a source's songs keeps them until the next one finds them gone too`() = runBlocking<Unit> {
+    fun `a full import that would remove most of a source's songs keeps them until the next one finds them gone too`() = runTest {
         val songs = (1L..30L).map { id -> song(id = id, path = "jellyfin://item/$id") }
         songRepository.stored = songs
         server.found = songs.take(5)
@@ -316,7 +316,7 @@ class MediaImporterRemovalTest : MediaImporterTestBase() {
     }
 
     @Test
-    fun `an import after the user changed folders removes this device's songs at once - but keeps those under an unreadable root and a server's`() = runBlocking<Unit> {
+    fun `an import after the user changed folders removes this device's songs at once - but keeps those under an unreadable root and a server's`() = runTest {
         val device = ServerProvider(MediaProviderType.Shuttle)
         val deviceSongs = (1L..30L).map { id -> song(id = id, path = "/storage/emulated/0/Music/$id.mp3") }
         val cardSongs = (31L..32L).map { id -> song(id = id, path = "/storage/CARD/Music/$id.mp3") }
@@ -334,7 +334,7 @@ class MediaImporterRemovalTest : MediaImporterTestBase() {
     }
 
     @Test
-    fun `a folder change requested while an import runs applies its removal in the follow-up pass`() = runBlocking<Unit> {
+    fun `a folder change requested while an import runs applies its removal in the follow-up pass`() = runTest {
         val device = ServerProvider(MediaProviderType.Shuttle)
         val deviceSongs = (1L..30L).map { id -> song(id = id, path = "/storage/emulated/0/Music/$id.mp3") }
         songRepository.stored = deviceSongs
@@ -355,7 +355,7 @@ class MediaImporterRemovalTest : MediaImporterTestBase() {
     }
 
     @Test
-    fun `a full sync that holds back a mass removal makes the next sync full - to apply it`() = runBlocking<Unit> {
+    fun `a full sync that holds back a mass removal makes the next sync full - to apply it`() = runTest {
         val songs = (1L..30L).map { id -> song(id = id, path = "jellyfin://item/$id") }
         songRepository.stored = songs
         server.found = songs.take(5)
@@ -378,7 +378,7 @@ class MediaImporterRemovalTest : MediaImporterTestBase() {
     }
 
     @Test
-    fun `a full import keeps the songs under a root the source couldn't read`() = runBlocking<Unit> {
+    fun `a full import keeps the songs under a root the source couldn't read`() = runTest {
         songRepository.stored = listOf(song(id = 1, path = "jellyfin://library/a/1"), song(id = 2, path = "jellyfin://library/b/2"), song(id = 3))
         server.found = listOf(song(id = 3))
         server.held = server.found.map { it.path }

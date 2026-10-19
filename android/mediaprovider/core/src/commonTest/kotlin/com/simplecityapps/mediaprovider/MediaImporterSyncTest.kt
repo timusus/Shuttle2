@@ -9,15 +9,15 @@ import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.runTest
 
 class MediaImporterSyncTest : MediaImporterTestBase() {
     @Test
-    fun `a quiet sync that fails records nothing`() = runBlocking<Unit> {
+    fun `a quiet sync that fails records nothing`() = runTest {
         importer.mediaProviders -= provider
         importer.mediaProviders += server
         server.failure = "Unreachable"
@@ -29,7 +29,7 @@ class MediaImporterSyncTest : MediaImporterTestBase() {
     }
 
     @Test
-    fun `a quiet sync that succeeds clears an error stored earlier`() = runBlocking<Unit> {
+    fun `a quiet sync that succeeds clears an error stored earlier`() = runTest {
         importer.mediaProviders -= provider
         importer.mediaProviders += server
         preferences.setSourceReachability(server.type.name, SourceReachability(error = "Unreachable", checkedAt = clock.time - 1.hours))
@@ -41,7 +41,7 @@ class MediaImporterSyncTest : MediaImporterTestBase() {
     }
 
     @Test
-    fun `a sync where every source succeeds reports each as a success and says it started`() = runBlocking<Unit> {
+    fun `a sync where every source succeeds reports each as a success and says it started`() = runTest {
         importer.mediaProviders -= provider
         importer.mediaProviders += server
         var started = 0
@@ -54,7 +54,7 @@ class MediaImporterSyncTest : MediaImporterTestBase() {
     }
 
     @Test
-    fun `a sync that is skipped says so and never says it started`() = runBlocking<Unit> {
+    fun `a sync that is skipped says so and never says it started`() = runTest {
         importer.mediaProviders -= provider
         importer.mediaProviders += server
         preferences.lastMediaImportDate = null
@@ -68,7 +68,7 @@ class MediaImporterSyncTest : MediaImporterTestBase() {
     }
 
     @Test
-    fun `a sync where every source was synced recently never says it started`() = runBlocking<Unit> {
+    fun `a sync where every source was synced recently never says it started`() = runTest {
         importer.mediaProviders -= provider
         importer.mediaProviders += server
         preferences.setSongTagsVersion(server.type.name, SONG_TAGS_VERSION)
@@ -83,9 +83,9 @@ class MediaImporterSyncTest : MediaImporterTestBase() {
     }
 
     @Test
-    fun `a sync cancelled mid-way rethrows the cancellation rather than reporting it aborted`() = runBlocking<Unit> {
+    fun `a sync cancelled mid-way rethrows the cancellation rather than reporting it aborted`() = runTest {
         val outcome = CompletableDeferred<Result<SyncResult>>()
-        val run = launch(Dispatchers.Default) { outcome.complete(runCatching { importer.sync(SyncTrigger.Periodic) }) }
+        val run = launch { outcome.complete(runCatching { importer.sync(SyncTrigger.Periodic) }) }
         provider.started.receive()
 
         run.cancelAndJoin()
@@ -94,10 +94,10 @@ class MediaImporterSyncTest : MediaImporterTestBase() {
     }
 
     @Test
-    fun `an import requested during a sync follows it and its failure makes the sync worth retrying`() = runBlocking<Unit> {
+    fun `an import requested during a sync follows it and its failure makes the sync worth retrying`() = runTest {
         val result = CompletableDeferred<SyncResult>()
         var started = 0
-        launch(Dispatchers.Default) { result.complete(importer.sync(SyncTrigger.Periodic, onStart = { started++ })) }
+        launch { result.complete(importer.sync(SyncTrigger.Periodic, onStart = { started++ })) }
         provider.started.receive()
 
         importer.import() // requested while the sync runs: left for the sync to run after it
@@ -112,7 +112,7 @@ class MediaImporterSyncTest : MediaImporterTestBase() {
     }
 
     @Test
-    fun `a sync where one source fails and another succeeds reports both and is worth retrying`() = runBlocking<Unit> {
+    fun `a sync where one source fails and another succeeds reports both and is worth retrying`() = runTest {
         importer.mediaProviders += server
         server.failure = "Unreachable"
         provider.gate.trySend(Unit)
@@ -130,7 +130,7 @@ class MediaImporterSyncTest : MediaImporterTestBase() {
     }
 
     @Test
-    fun `a source that throws during a sync is a failure carrying what it threw`() = runBlocking<Unit> {
+    fun `a source that throws during a sync is a failure carrying what it threw`() = runTest {
         provider.failNext.store(true)
         provider.gate.trySend(Unit)
 
@@ -141,11 +141,11 @@ class MediaImporterSyncTest : MediaImporterTestBase() {
     }
 
     @Test
-    fun `a source removed during a sync is cancelled and not worth retrying`() = runBlocking<Unit> {
+    fun `a source removed during a sync is cancelled and not worth retrying`() = runTest {
         val removed = GatedProvider(MediaProviderType.Jellyfin)
         importer.mediaProviders += removed
         val result = CompletableDeferred<SyncResult>()
-        launch(Dispatchers.Default) { result.complete(importer.sync(SyncTrigger.Periodic)) }
+        launch { result.complete(importer.sync(SyncTrigger.Periodic)) }
         provider.started.receive()
         removed.started.receive()
 
@@ -163,7 +163,7 @@ class MediaImporterSyncTest : MediaImporterTestBase() {
     }
 
     @Test
-    fun `a sync on return to the app asks a server only for what changed since its last sync - and leaves this device alone`() = runBlocking<Unit> {
+    fun `a sync on return to the app asks a server only for what changed since its last sync - and leaves this device alone`() = runTest {
         importer.mediaProviders += server
         songRepository.stored = listOf(song())
         preferences.setSongTagsVersion(server.type.name, SONG_TAGS_VERSION)
@@ -181,11 +181,11 @@ class MediaImporterSyncTest : MediaImporterTestBase() {
     }
 
     @Test
-    fun `a sync shows no progress - which would replace the library with the scanning state - only how it ended`() = runBlocking<Unit> {
+    fun `a sync shows no progress - which would replace the library with the scanning state - only how it ended`() = runTest {
         importer.mediaProviders -= provider
         importer.mediaProviders += server
         val states = mutableListOf<SongImportState>()
-        val collecting = launch(Dispatchers.Unconfined) { importer.songImportState.toList(states) }
+        val collecting = launch(UnconfinedTestDispatcher(testScheduler)) { importer.songImportState.toList(states) }
 
         importer.sync(SyncTrigger.Foreground)
         collecting.cancel()
@@ -195,12 +195,12 @@ class MediaImporterSyncTest : MediaImporterTestBase() {
     }
 
     @Test
-    fun `a sync that stored a change says so - so what shows the library reloads`() = runBlocking<Unit> {
+    fun `a sync that stored a change says so - so what shows the library reloads`() = runTest {
         importer.mediaProviders -= provider
         importer.mediaProviders += server
         server.found = listOf(song())
         val states = mutableListOf<SongImportState>()
-        val collecting = launch(Dispatchers.Unconfined) { importer.songImportState.toList(states) }
+        val collecting = launch(UnconfinedTestDispatcher(testScheduler)) { importer.songImportState.toList(states) }
 
         importer.sync(SyncTrigger.Foreground)
         collecting.cancel()
@@ -209,7 +209,7 @@ class MediaImporterSyncTest : MediaImporterTestBase() {
     }
 
     @Test
-    fun `a server that can't be reached on return to the app keeps its status - but the daily sync reports it`() = runBlocking<Unit> {
+    fun `a server that can't be reached on return to the app keeps its status - but the daily sync reports it`() = runTest {
         importer.mediaProviders -= provider
         importer.mediaProviders += server
         server.failure = "Unreachable"
@@ -222,7 +222,7 @@ class MediaImporterSyncTest : MediaImporterTestBase() {
     }
 
     @Test
-    fun `a quiet sync that stores nothing still clears an earlier failure`() = runBlocking<Unit> {
+    fun `a quiet sync that stores nothing still clears an earlier failure`() = runTest {
         importer.mediaProviders -= provider
         importer.mediaProviders += server
         songRepository.stored = listOf(song())
@@ -240,7 +240,7 @@ class MediaImporterSyncTest : MediaImporterTestBase() {
     }
 
     @Test
-    fun `a sync waits for the first import - and for the one a build with new tags is due`() = runBlocking<Unit> {
+    fun `a sync waits for the first import - and for the one a build with new tags is due`() = runTest {
         importer.mediaProviders -= provider
         importer.mediaProviders += server
 
@@ -254,7 +254,7 @@ class MediaImporterSyncTest : MediaImporterTestBase() {
     }
 
     @Test
-    fun `a server synced in the last few minutes is left alone`() = runBlocking<Unit> {
+    fun `a server synced in the last few minutes is left alone`() = runTest {
         importer.mediaProviders -= provider
         importer.mediaProviders += server
         preferences.setLastSyncStart(server.type.name, clock.time - 5.minutes)
@@ -265,7 +265,7 @@ class MediaImporterSyncTest : MediaImporterTestBase() {
     }
 
     @Test
-    fun `a server with nothing stored is synced in full - whenever it last synced`() = runBlocking<Unit> {
+    fun `a server with nothing stored is synced in full - whenever it last synced`() = runTest {
         importer.mediaProviders += server
         preferences.setLastSyncStart(server.type.name, clock.time - 1.hours)
         preferences.setLastFullSyncStart(server.type.name, clock.time - 1.days)
@@ -277,7 +277,7 @@ class MediaImporterSyncTest : MediaImporterTestBase() {
     }
 
     @Test
-    fun `the daily sync reads this device in full and fetches every source's playlists`() = runBlocking<Unit> {
+    fun `the daily sync reads this device in full and fetches every source's playlists`() = runTest {
         importer.mediaProviders += server
         songRepository.stored = listOf(song())
         preferences.setSongTagsVersion(server.type.name, SONG_TAGS_VERSION)

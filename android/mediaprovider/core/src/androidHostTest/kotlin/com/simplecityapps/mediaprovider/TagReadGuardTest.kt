@@ -13,9 +13,9 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 
@@ -49,10 +49,10 @@ class TagReadGuardTest {
     private fun markers() = markerDir.listFiles().orEmpty().map { it.readText() }
 
     /** Starts reads of [files] in a process [pid] that dies while they run, leaving their markers behind. */
-    private fun crashDuring(
+    private suspend fun crashDuring(
         vararg files: TagReadFile,
         pid: Int = 1
-    ) = runBlocking {
+    ) = coroutineScope {
         // Its own folder and preferences, so its first read doesn't recover the markers earlier crashes left in markerDir
         val crashDir = Files.createTempDirectory("tag-reads-crash").toFile()
         val guard = testTagReadGuard(markerDir = crashDir, pid = pid)

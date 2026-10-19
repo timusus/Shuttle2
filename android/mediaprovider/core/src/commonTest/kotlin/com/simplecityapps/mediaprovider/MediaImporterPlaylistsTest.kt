@@ -4,11 +4,11 @@ import io.kotest.matchers.shouldBe
 import kotlin.test.Test
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.minutes
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 
 class MediaImporterPlaylistsTest : MediaImporterTestBase() {
     @Test
-    fun `the daily sync fetches the playlists of a server synced in the last few minutes`() = runBlocking<Unit> {
+    fun `the daily sync fetches the playlists of a server synced in the last few minutes`() = runTest {
         importer.mediaProviders -= provider
         importer.mediaProviders += server
         songRepository.stored = listOf(song())
@@ -21,7 +21,7 @@ class MediaImporterPlaylistsTest : MediaImporterTestBase() {
     }
 
     @Test
-    fun `an incremental sync that added no songs passes the playlist versions of the playlists still stored - and keeps the new ones`() = runBlocking<Unit> {
+    fun `an incremental sync that added no songs passes the playlist versions of the playlists still stored - and keeps the new ones`() = runTest {
         importer.mediaProviders -= provider
         importer.mediaProviders += server
         songRepository.stored = listOf(song())
@@ -41,7 +41,7 @@ class MediaImporterPlaylistsTest : MediaImporterTestBase() {
     }
 
     @Test
-    fun `a sync that added songs reads every playlist again`() = runBlocking<Unit> {
+    fun `a sync that added songs reads every playlist again`() = runTest {
         importer.mediaProviders -= provider
         importer.mediaProviders += server
         songRepository.stored = listOf(song())
@@ -58,7 +58,7 @@ class MediaImporterPlaylistsTest : MediaImporterTestBase() {
     }
 
     @Test
-    fun `a full sync reads every playlist again`() = runBlocking<Unit> {
+    fun `a full sync reads every playlist again`() = runTest {
         importer.mediaProviders -= provider
         importer.mediaProviders += server
         songRepository.stored = listOf(song())

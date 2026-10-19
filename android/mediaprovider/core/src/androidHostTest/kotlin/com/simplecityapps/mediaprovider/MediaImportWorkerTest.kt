@@ -14,7 +14,6 @@ import com.simplecityapps.shuttle.persistence.SourceStateStore
 import com.simplecityapps.shuttle.query.SongQuery
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.cancelAndJoin
@@ -24,7 +23,7 @@ import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withTimeoutOrNull
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -87,14 +86,14 @@ class MediaImportWorkerTest {
         .build()
 
     @Test
-    fun `a sync that succeeds is a success`() = runBlocking<Unit> {
+    fun `a sync that succeeds is a success`() = runTest {
         worker().doWork() shouldBe Result.success()
 
         provider.scans shouldBe 1
     }
 
     @Test
-    fun `a periodic sync never goes to the foreground`() = runBlocking<Unit> {
+    fun `a periodic sync never goes to the foreground`() = runTest {
         worker().doWork() shouldBe Result.success()
 
         provider.scans shouldBe 1
@@ -102,7 +101,7 @@ class MediaImportWorkerTest {
     }
 
     @Test
-    fun `a sync where only one of two sources fails is retried`() = runBlocking<Unit> {
+    fun `a sync where only one of two sources fails is retried`() = runTest {
         importer.mediaProviders += ScanProvider(MediaProviderType.Jellyfin)
         provider.failure = "Server unreachable"
 
@@ -110,7 +109,7 @@ class MediaImportWorkerTest {
     }
 
     @Test
-    fun `a sync where every source succeeds is a success`() = runBlocking<Unit> {
+    fun `a sync where every source succeeds is a success`() = runTest {
         val other = ScanProvider(MediaProviderType.Jellyfin)
         importer.mediaProviders += other
 
@@ -121,9 +120,9 @@ class MediaImportWorkerTest {
     }
 
     @Test
-    fun `a cancelled sync is cancelled, not retried`() = runBlocking<Unit> {
+    fun `a cancelled sync is cancelled, not retried`() = runTest {
         provider.hang = true
-        val run = launch(Dispatchers.Default) { worker().doWork() }
+        val run = launch { worker().doWork() }
         provider.started.receive()
 
         run.cancelAndJoin()
@@ -132,14 +131,14 @@ class MediaImportWorkerTest {
     }
 
     @Test
-    fun `a sync that throws is retried`() = runBlocking<Unit> {
+    fun `a sync that throws is retried`() = runTest {
         afterImportFailure = IllegalStateException("afterImport failed")
 
         worker().doWork() shouldBe Result.retry()
     }
 
     @Test
-    fun `a sync skipped before the first import is a success even after an earlier failure`() = runBlocking<Unit> {
+    fun `a sync skipped before the first import is a success even after an earlier failure`() = runTest {
         provider.failure = "Server unreachable"
         worker().doWork() shouldBe Result.retry()
 
@@ -149,14 +148,14 @@ class MediaImportWorkerTest {
     }
 
     @Test
-    fun `a sync that fails is retried`() = runBlocking<Unit> {
+    fun `a sync that fails is retried`() = runTest {
         provider.failure = "Server unreachable"
 
         worker().doWork() shouldBe Result.retry()
     }
 
     @Test
-    fun `a sync that fails again with the same error is retried again`() = runBlocking<Unit> {
+    fun `a sync that fails again with the same error is retried again`() = runTest {
         provider.failure = "Server unreachable"
 
         worker().doWork() shouldBe Result.retry()
@@ -164,7 +163,7 @@ class MediaImportWorkerTest {
     }
 
     @Test
-    fun `a sync that is skipped is a success and shows no notification`() = runBlocking<Unit> {
+    fun `a sync that is skipped is a success and shows no notification`() = runTest {
         preferences.lastMediaImportDate = null
 
         worker().doWork() shouldBe Result.success()
@@ -174,14 +173,14 @@ class MediaImportWorkerTest {
     }
 
     @Test
-    fun `a sync that keeps failing gives up at the attempt cap`() = runBlocking<Unit> {
+    fun `a sync that keeps failing gives up at the attempt cap`() = runTest {
         provider.failure = "Server unreachable"
 
         worker(attempt = 2).doWork() shouldBe Result.success()
     }
 
     @Test
-    fun `a requested import runs in the foreground even before the first import`() = runBlocking<Unit> {
+    fun `a requested import runs in the foreground even before the first import`() = runTest {
         preferences.lastMediaImportDate = null
 
         worker(fullImport = true).doWork() shouldBe Result.success()
@@ -191,14 +190,14 @@ class MediaImportWorkerTest {
     }
 
     @Test
-    fun `a requested import that fails is not retried`() = runBlocking<Unit> {
+    fun `a requested import that fails is not retried`() = runTest {
         afterImportFailure = IllegalStateException("afterImport failed")
 
         worker(fullImport = true).doWork() shouldBe Result.failure()
     }
 
     @Test
-    fun `a requested import with nothing to import shows no notification`() = runBlocking<Unit> {
+    fun `a requested import with nothing to import shows no notification`() = runTest {
         importer.mediaProviders.clear()
 
         worker(fullImport = true).doWork() shouldBe Result.success()
@@ -207,11 +206,11 @@ class MediaImportWorkerTest {
     }
 
     @Test
-    fun `a requested import waits for the import already running`() = runBlocking<Unit> {
+    fun `a requested import waits for the import already running`() = runTest {
         provider.hold = CompletableDeferred()
-        val running = launch(Dispatchers.Default) { importer.import() }
+        val running = launch { importer.import() }
         provider.started.receive()
-        val requested = async(Dispatchers.Default) { worker(fullImport = true).doWork() }
+        val requested = async { worker(fullImport = true).doWork() }
 
         withTimeoutOrNull(200) { requested.await() } shouldBe null
 

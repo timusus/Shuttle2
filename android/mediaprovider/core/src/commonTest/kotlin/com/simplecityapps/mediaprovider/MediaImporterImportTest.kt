@@ -8,23 +8,22 @@ import io.kotest.matchers.types.shouldBeInstanceOf
 import kotlin.test.Test
 import kotlin.time.Duration.Companion.days
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.yield
 
 class MediaImporterImportTest : MediaImporterTestBase() {
     @Test
-    fun `imports started together while one is running coalesce into one follow-up pass`() = runBlocking<Unit> {
+    fun `imports started together while one is running coalesce into one follow-up pass`() = runTest {
         val returned = Channel<Unit>(Channel.UNLIMITED)
-        launch(Dispatchers.Default) { importer.import().also { returned.send(Unit) } }
+        launch { importer.import().also { returned.send(Unit) } }
         provider.started.receive()
 
         // Every import started while the first pass runs returns without waiting for it, requesting a follow-up pass
-        repeat(IMPORTS) { launch(Dispatchers.Default) { importer.import().also { returned.send(Unit) } } }
+        repeat(IMPORTS) { launch { importer.import().also { returned.send(Unit) } } }
         repeat(IMPORTS) { returned.receive() }
         importer.isImporting shouldBe true
 
@@ -38,11 +37,11 @@ class MediaImporterImportTest : MediaImporterTestBase() {
     }
 
     @Test
-    fun `an import that waits for the running one returns only once its follow-up pass is done`() = runBlocking<Unit> {
-        launch(Dispatchers.Default) { importer.import() }
+    fun `an import that waits for the running one returns only once its follow-up pass is done`() = runTest {
+        launch { importer.import() }
         provider.started.receive()
         val waited = CompletableDeferred<Unit>()
-        launch(Dispatchers.Default) { importer.importAndWait().also { waited.complete(Unit) } }
+        launch { importer.importAndWait().also { waited.complete(Unit) } }
 
         withTimeoutOrNull(200) { waited.await() } shouldBe null
 
@@ -57,7 +56,7 @@ class MediaImporterImportTest : MediaImporterTestBase() {
     }
 
     @Test
-    fun `an import after one has finished scans again`() = runBlocking<Unit> {
+    fun `an import after one has finished scans again`() = runTest {
         provider.gate.trySend(Unit)
         provider.gate.trySend(Unit)
 
@@ -68,9 +67,9 @@ class MediaImporterImportTest : MediaImporterTestBase() {
     }
 
     @Test
-    fun `an import requested while one is running triggers exactly one follow-up pass`() = runBlocking<Unit> {
+    fun `an import requested while one is running triggers exactly one follow-up pass`() = runTest {
         val returned = Channel<Unit>(Channel.UNLIMITED)
-        launch(Dispatchers.Default) { importer.import().also { returned.send(Unit) } }
+        launch { importer.import().also { returned.send(Unit) } }
         provider.started.receive()
 
         importer.import() // requested while the first pass is running; returns immediately rather than scanning
@@ -86,9 +85,9 @@ class MediaImporterImportTest : MediaImporterTestBase() {
     }
 
     @Test
-    fun `repeated imports requested while one is running still trigger only one follow-up pass`() = runBlocking<Unit> {
+    fun `repeated imports requested while one is running still trigger only one follow-up pass`() = runTest {
         val returned = Channel<Unit>(Channel.UNLIMITED)
-        launch(Dispatchers.Default) { importer.import().also { returned.send(Unit) } }
+        launch { importer.import().also { returned.send(Unit) } }
         provider.started.receive()
 
         repeat(3) { importer.import() } // three requests while the first pass is running
@@ -103,7 +102,7 @@ class MediaImporterImportTest : MediaImporterTestBase() {
     }
 
     @Test
-    fun `an import requested as the last pass finishes still runs another pass`() = runBlocking<Unit> {
+    fun `an import requested as the last pass finishes still runs another pass`() = runTest {
         repeat(2) { provider.gate.trySend(Unit) }
         var requested = false
         // Requested after the running import has found no request pending, but before it releases the lock
@@ -121,10 +120,10 @@ class MediaImporterImportTest : MediaImporterTestBase() {
     }
 
     @Test
-    fun `an import requested during a pass that fails still runs`() = runBlocking<Unit> {
+    fun `an import requested during a pass that fails still runs`() = runTest {
         provider.failNext.store(true)
         val result = CompletableDeferred<Result<Unit>>()
-        launch(Dispatchers.Default) { result.complete(runCatching { importer.import() }) }
+        launch { result.complete(runCatching { importer.import() }) }
         provider.started.receive()
 
         importer.import() // requested while the first pass is running
@@ -139,7 +138,7 @@ class MediaImporterImportTest : MediaImporterTestBase() {
     }
 
     @Test
-    fun `a failing import with nothing requested throws rather than retrying`() = runBlocking<Unit> {
+    fun `a failing import with nothing requested throws rather than retrying`() = runTest {
         provider.failNext.store(true)
         provider.gate.trySend(Unit)
 
@@ -150,9 +149,9 @@ class MediaImporterImportTest : MediaImporterTestBase() {
     }
 
     @Test
-    fun `a collector that arrives mid-import sees the import in progress and then how it ended`() = runBlocking<Unit> {
+    fun `a collector that arrives mid-import sees the import in progress and then how it ended`() = runTest {
         provider.scanFailure = "Server unreachable"
-        val import = launch(Dispatchers.Default) { importer.import() }
+        val import = launch { importer.import() }
         provider.started.receive()
 
         importer.songImportState.value shouldBe SongImportState.ImportProgress(MediaProviderType.Shuttle, "Fetching", progress = null)
@@ -164,10 +163,10 @@ class MediaImporterImportTest : MediaImporterTestBase() {
     }
 
     @Test
-    fun `each provider keeps how its own import ended whichever reported last`() = runBlocking<Unit> {
+    fun `each provider keeps how its own import ended whichever reported last`() = runTest {
         val server = GatedProvider(MediaProviderType.Jellyfin).apply { scanFailure = "Server unreachable" }
         importer.mediaProviders += server
-        val import = launch(Dispatchers.Default) { importer.import() }
+        val import = launch { importer.import() }
         provider.started.receive()
         server.started.receive()
 
@@ -186,7 +185,7 @@ class MediaImporterImportTest : MediaImporterTestBase() {
     }
 
     @Test
-    fun `each source's import ending counts as a completion - though the overall state is the same after the second`() = runBlocking<Unit> {
+    fun `each source's import ending counts as a completion - though the overall state is the same after the second`() = runTest {
         val server = GatedProvider(MediaProviderType.Jellyfin)
         importer.mediaProviders += server
         provider.gate.trySend(Unit)
@@ -199,7 +198,7 @@ class MediaImporterImportTest : MediaImporterTestBase() {
     }
 
     @Test
-    fun `a source that fails stays outdated while the others are marked current and the launch re-import runs once`() = runBlocking<Unit> {
+    fun `a source that fails stays outdated while the others are marked current and the launch re-import runs once`() = runTest {
         val server = GatedProvider(MediaProviderType.Jellyfin).apply { scanFailure = "Server unreachable" }
         importer.mediaProviders += server
         preferences.songTagsRescanVersion = 0
@@ -255,7 +254,7 @@ class MediaImporterImportTest : MediaImporterTestBase() {
     }
 
     @Test
-    fun `an import that throws leaves the source outdated`() = runBlocking<Unit> {
+    fun `an import that throws leaves the source outdated`() = runTest {
         provider.failNext.store(true)
         provider.gate.trySend(Unit)
 
@@ -265,7 +264,7 @@ class MediaImporterImportTest : MediaImporterTestBase() {
     }
 
     @Test
-    fun `an import that succeeds records the source as reachable and when it was updated`() = runBlocking<Unit> {
+    fun `an import that succeeds records the source as reachable and when it was updated`() = runTest {
         provider.gate.trySend(Unit)
 
         importer.import()
@@ -275,7 +274,7 @@ class MediaImporterImportTest : MediaImporterTestBase() {
     }
 
     @Test
-    fun `an import whose source reports a failure records its message and leaves the updated time alone`() = runBlocking<Unit> {
+    fun `an import whose source reports a failure records its message and leaves the updated time alone`() = runTest {
         val updated = clock.time - 1.days
         preferences.setSourceUpdated(provider.type.name, updated)
         provider.scanFailure = "Server unreachable"
@@ -288,7 +287,7 @@ class MediaImporterImportTest : MediaImporterTestBase() {
     }
 
     @Test
-    fun `an import that throws records the failure and leaves the updated time alone`() = runBlocking<Unit> {
+    fun `an import that throws records the failure and leaves the updated time alone`() = runTest {
         val updated = clock.time - 1.days
         preferences.setSourceUpdated(provider.type.name, updated)
         provider.failNext.store(true)
@@ -301,8 +300,8 @@ class MediaImporterImportTest : MediaImporterTestBase() {
     }
 
     @Test
-    fun `an import cancelled mid-way records nothing`() = runBlocking<Unit> {
-        val import = launch(Dispatchers.Default) { importer.import() }
+    fun `an import cancelled mid-way records nothing`() = runTest {
+        val import = launch { importer.import() }
         provider.started.receive()
 
         import.cancelAndJoin()
@@ -312,7 +311,7 @@ class MediaImporterImportTest : MediaImporterTestBase() {
     }
 
     @Test
-    fun `a provider hears its songs are stored only when the import succeeds`() = runBlocking<Unit> {
+    fun `a provider hears its songs are stored only when the import succeeds`() = runTest {
         provider.scanFailure = "Unreadable"
         provider.gate.trySend(Unit)
         importer.import()
@@ -325,7 +324,7 @@ class MediaImporterImportTest : MediaImporterTestBase() {
     }
 
     @Test
-    fun `a full import notes when each source's sync started - once it succeeds`() = runBlocking<Unit> {
+    fun `a full import notes when each source's sync started - once it succeeds`() = runTest {
         provider.scanFailure = "Unreachable"
         provider.gate.trySend(Unit)
         importer.import()
@@ -339,7 +338,7 @@ class MediaImporterImportTest : MediaImporterTestBase() {
     }
 
     @Test
-    fun `an import that finds the stored songs unchanged writes no rows`() = runBlocking<Unit> {
+    fun `an import that finds the stored songs unchanged writes no rows`() = runTest {
         importer.mediaProviders -= provider
         importer.mediaProviders += server
         songRepository.stored = listOf(song(), song().copy(id = 2, path = "jellyfin://item/2"))
@@ -351,7 +350,7 @@ class MediaImporterImportTest : MediaImporterTestBase() {
     }
 
     @Test
-    fun `an import the user asks for looks past a source's index - a scheduled sync trusts it`() = runBlocking<Unit> {
+    fun `an import the user asks for looks past a source's index - a scheduled sync trusts it`() = runTest {
         val indexed = IndexedProvider()
         importer.mediaProviders -= provider
         importer.mediaProviders += indexed
@@ -365,7 +364,7 @@ class MediaImporterImportTest : MediaImporterTestBase() {
     }
 
     @Test
-    fun `a source without an index records its unread files too`() = runBlocking<Unit> {
+    fun `a source without an index records its unread files too`() = runTest {
         provider.skippedFiles = setOf("/music/a.flac")
         provider.gate.trySend(Unit)
         importer.import()
@@ -374,7 +373,7 @@ class MediaImporterImportTest : MediaImporterTestBase() {
     }
 
     @Test
-    fun `a full import records how many files the source left unread`() = runBlocking<Unit> {
+    fun `a full import records how many files the source left unread`() = runTest {
         val indexed = IndexedProvider()
         importer.mediaProviders -= provider
         importer.mediaProviders += indexed
@@ -389,8 +388,8 @@ class MediaImporterImportTest : MediaImporterTestBase() {
     }
 
     @Test
-    fun `a sync asked for while an import runs returns at once`() = runBlocking<Unit> {
-        val running = launch(Dispatchers.Default) { importer.import() }
+    fun `a sync asked for while an import runs returns at once`() = runTest {
+        val running = launch { importer.import() }
         provider.started.receive()
 
         // A scan of its own would wait on the gate
@@ -402,12 +401,12 @@ class MediaImporterImportTest : MediaImporterTestBase() {
     }
 
     @Test
-    fun `a source added while an import runs is read by the follow-up pass - and changing the sources never disturbs one`() = runBlocking<Unit> {
-        val import = launch(Dispatchers.Default) { importer.import() }
+    fun `a source added while an import runs is read by the follow-up pass - and changing the sources never disturbs one`() = runTest {
+        val import = launch { importer.import() }
         provider.started.receive()
 
         // Sources changing from another thread while the import reads them, and while each pass's end reads them again
-        val churn = launch(Dispatchers.Default) {
+        val churn = launch {
             repeat(CHURN) { i ->
                 val other = ServerProvider(if (i % 2 == 0) MediaProviderType.Emby else MediaProviderType.Plex)
                 importer.mediaProviders += other
@@ -433,11 +432,11 @@ class MediaImporterImportTest : MediaImporterTestBase() {
     }
 
     @Test
-    fun `a source that throws leaves the others to finish - and says how it ended rather than staying in progress`() = runBlocking<Unit> {
+    fun `a source that throws leaves the others to finish - and says how it ended rather than staying in progress`() = runTest {
         val server = GatedProvider(MediaProviderType.Jellyfin)
         importer.mediaProviders += server
         val result = CompletableDeferred<Result<Unit>>()
-        launch(Dispatchers.Default) { result.complete(runCatching { importer.import() }) }
+        launch { result.complete(runCatching { importer.import() }) }
         provider.started.receive()
         server.started.receive()
 
@@ -456,7 +455,7 @@ class MediaImporterImportTest : MediaImporterTestBase() {
     }
 
     @Test
-    fun `a source that throws still lets what the others stored count as imported`() = runBlocking<Unit> {
+    fun `a source that throws still lets what the others stored count as imported`() = runTest {
         val server = GatedProvider(MediaProviderType.Jellyfin)
         importer.mediaProviders += server
         preferences.lastMediaImportDate = null
@@ -472,7 +471,7 @@ class MediaImporterImportTest : MediaImporterTestBase() {
     }
 
     @Test
-    fun `an import where every source throws isn't recorded`() = runBlocking<Unit> {
+    fun `an import where every source throws isn't recorded`() = runTest {
         preferences.lastMediaImportDate = null
         provider.failNext.store(true)
         provider.gate.trySend(Unit)
@@ -484,10 +483,10 @@ class MediaImporterImportTest : MediaImporterTestBase() {
     }
 
     @Test
-    fun `the overall progress is every running source's - not whichever reported last`() = runBlocking<Unit> {
+    fun `the overall progress is every running source's - not whichever reported last`() = runTest {
         val server = GatedProvider(MediaProviderType.Jellyfin)
         importer.mediaProviders += server
-        val import = launch(Dispatchers.Default) { importer.import() }
+        val import = launch { importer.import() }
         provider.started.receive()
         server.started.receive()
 
@@ -504,7 +503,7 @@ class MediaImporterImportTest : MediaImporterTestBase() {
     }
 
     @Test
-    fun `a cancelled import reports no completion - and its source goes back to how it stood`() = runBlocking<Unit> {
+    fun `a cancelled import reports no completion - and its source goes back to how it stood`() = runTest {
         provider.scanFailure = "Server unreachable"
         provider.gate.trySend(Unit)
         importer.import()
@@ -512,7 +511,7 @@ class MediaImporterImportTest : MediaImporterTestBase() {
         val completions = importer.importsCompleted.value
 
         provider.scanFailure = null
-        val import = launch(Dispatchers.Default) { importer.import() }
+        val import = launch { importer.import() }
         provider.started.receive()
         importer.songImportState.value.shouldBeInstanceOf<SongImportState.ImportProgress>()
         import.cancelAndJoin()
@@ -522,8 +521,8 @@ class MediaImporterImportTest : MediaImporterTestBase() {
     }
 
     @Test
-    fun `a cancelled first import leaves the source with no state rather than scanning`() = runBlocking<Unit> {
-        val import = launch(Dispatchers.Default) { importer.import() }
+    fun `a cancelled first import leaves the source with no state rather than scanning`() = runTest {
+        val import = launch { importer.import() }
         provider.started.receive()
         import.cancelAndJoin()
 
@@ -533,10 +532,10 @@ class MediaImporterImportTest : MediaImporterTestBase() {
     }
 
     @Test
-    fun `a source removed while its import runs stores nothing after - and the others finish`() = runBlocking<Unit> {
+    fun `a source removed while its import runs stores nothing after - and the others finish`() = runTest {
         val server = GatedProvider(MediaProviderType.Jellyfin).apply { found = listOf(song()) }
         importer.mediaProviders += server
-        val import = launch(Dispatchers.Default) { importer.import() }
+        val import = launch { importer.import() }
         provider.started.receive()
         server.started.receive()
 
