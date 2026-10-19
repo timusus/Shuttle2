@@ -15,9 +15,8 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import java.io.IOException
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.runTest
 import okio.Buffer
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -31,9 +30,11 @@ class CoilArtworkSeedSourceTest {
     /** Serves each song's artwork from [artwork], by title and then by album, failing the load when it has none. */
     private val artwork = mutableMapOf<String, ByteArray>()
 
+    private val dispatcher = UnconfinedTestDispatcher()
+
     private val imageLoader =
         ImageLoader.Builder(context)
-            .coroutineContext(Dispatchers.Unconfined)
+            .coroutineContext(dispatcher)
             .memoryCache(null)
             .diskCache(null)
             .components {
@@ -48,22 +49,22 @@ class CoilArtworkSeedSourceTest {
             }
             .build()
 
-    private val seedSource = CoilArtworkSeedSource(context, imageLoader, SeedColorCache(UnconfinedTestDispatcher()))
+    private val seedSource = CoilArtworkSeedSource(context, imageLoader, SeedColorCache(dispatcher))
 
     @Test
-    fun `artwork of a solid colour seeds the scheme`() = runBlocking<Unit> {
+    fun `artwork of a solid colour seeds the scheme`() = runTest(dispatcher) {
         artwork["Blue"] = solidPng(0xFF1E88E5.toInt())
 
         seedSource.seedFor(createSong(album = "Blue")).shouldBeInstanceOf<ArtworkSeed.Available>()
     }
 
     @Test
-    fun `artwork that fails to load gives no seed`() = runBlocking<Unit> {
+    fun `artwork that fails to load gives no seed`() = runTest(dispatcher) {
         seedSource.seedFor(createSong(album = "Missing")) shouldBe ArtworkSeed.None
     }
 
     @Test
-    fun `a failed load isn't remembered, so the album seeds once its artwork loads`() = runBlocking<Unit> {
+    fun `a failed load isn't remembered, so the album seeds once its artwork loads`() = runTest(dispatcher) {
         val song = createSong(album = "Late")
         seedSource.seedFor(song) shouldBe ArtworkSeed.None
 
@@ -73,7 +74,7 @@ class CoilArtworkSeedSourceTest {
     }
 
     @Test
-    fun `tracks on one album with their own artwork get their own seeds`() = runBlocking<Unit> {
+    fun `tracks on one album with their own artwork get their own seeds`() = runTest(dispatcher) {
         artwork["Red"] = solidPng(0xFFE53935.toInt())
         artwork["Blue"] = solidPng(0xFF1E88E5.toInt())
 
