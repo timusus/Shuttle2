@@ -35,19 +35,31 @@ enum StartupTrace {
     /// without allocating a `String`.
     private static var appMilestones = Set<UInt>()
 
+    /// The monotonic clock every duration here is read from; tests replace it.
+    static var now: () -> ContinuousClock.Instant = { .now }
+
     /// When the kernel started this process, the earliest point there is: what runs before `S2App.init` (dyld, the
-    /// static initialisers, UIKit's launch) counts too.
-    private static let processStart: TimeInterval = {
+    /// static initialisers, UIKit's launch) counts too. The kernel records it on the wall clock, so that is read once,
+    /// to place it on the monotonic one.
+    private static let processStart: ContinuousClock.Instant = {
+        let current = now()
         var info = kinfo_proc()
         var size = MemoryLayout<kinfo_proc>.stride
         var mib: [Int32] = [CTL_KERN, KERN_PROC, KERN_PROC_PID, getpid()]
-        guard sysctl(&mib, 4, &info, &size, nil, 0) == 0 else { return Date().timeIntervalSince1970 }
+        guard sysctl(&mib, 4, &info, &size, nil, 0) == 0 else { return current }
         let start = info.kp_proc.p_starttime
-        return TimeInterval(start.tv_sec) + TimeInterval(start.tv_usec) / 1_000_000
+        var wall = timeval()
+        gettimeofday(&wall, nil)
+        let sinceStart = Double(wall.tv_sec - start.tv_sec) + Double(wall.tv_usec - Int32(start.tv_usec)) / 1_000_000
+        return current - .seconds(sinceStart)
     }()
 
+    private static func milliseconds(_ duration: Duration) -> Double {
+        Double(duration.components.seconds) * 1000 + Double(duration.components.attoseconds) / 1e15
+    }
+
     private static var sinceProcessStart: Int {
-        Int((Date().timeIntervalSince1970 - processStart) * 1000)
+        Int(milliseconds(now() - processStart))
     }
 
     /// An app-wide milestone (the app's init, the first frame), logged the first time only.
@@ -74,10 +86,10 @@ enum StartupTrace {
     /// Runs one launch step as a signposted interval, logging how long it took.
     static func step<T>(_ name: StaticString, _ body: () throws -> T) rethrows -> T {
         let state = signposter.beginInterval(name)
-        let started = DispatchTime.now().uptimeNanoseconds
+        let started = now()
         defer {
             signposter.endInterval(name, state)
-            let elapsed = Double(DispatchTime.now().uptimeNanoseconds - started) / 1_000_000
+            let elapsed = milliseconds(now() - started)
             logger.notice("step \(name.description, privacy: .public) took \(elapsed, format: .fixed(precision: 1)) ms")
         }
         return try body()
