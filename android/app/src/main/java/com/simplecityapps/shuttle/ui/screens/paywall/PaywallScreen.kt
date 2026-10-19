@@ -106,31 +106,35 @@ fun PaywallScreen(
                 }
             }
             viewState.offer?.let { offer -> item(key = "offer") { LifetimeOffer(offer) } }
-            if (viewState.showAccountActions) {
-                if (viewState.showPricesError) {
-                    item(key = "error") {
-                        ErrorState(
-                            title = stringResource(R.string.paywall_prices_unavailable),
-                            message = stringResource(R.string.paywall_prices_unavailable_message),
-                            action = StateAction(stringResource(R.string.paywall_retry), onRetry)
-                        )
-                    }
+            if (viewState.showPricesError) {
+                item(key = "error") {
+                    ErrorState(
+                        title = stringResource(R.string.paywall_prices_unavailable),
+                        message = stringResource(R.string.paywall_prices_unavailable_message),
+                        action = StateAction(stringResource(R.string.paywall_retry), onRetry)
+                    )
                 }
+            }
+            if (viewState.showRestore || viewState.showRedeemCode) {
                 item(key = "account") {
                     Column(verticalArrangement = Arrangement.spacedBy(S2Spacing.small)) {
-                        S2Button(
-                            text = stringResource(R.string.paywall_restore),
-                            onClick = onRestore,
-                            style = S2ButtonStyle.Text,
-                            enabled = viewState.restoreEnabled,
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                        S2Button(
-                            text = stringResource(R.string.paywall_redeem_code),
-                            onClick = onRedeemCode,
-                            style = S2ButtonStyle.Text,
-                            modifier = Modifier.fillMaxWidth()
-                        )
+                        if (viewState.showRestore) {
+                            S2Button(
+                                text = stringResource(R.string.paywall_restore),
+                                onClick = onRestore,
+                                style = S2ButtonStyle.Text,
+                                enabled = viewState.restoreEnabled,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+                        if (viewState.showRedeemCode) {
+                            S2Button(
+                                text = stringResource(R.string.paywall_redeem_code),
+                                onClick = onRedeemCode,
+                                style = S2ButtonStyle.Text,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
                     }
                 }
             }
@@ -168,29 +172,19 @@ private fun PurchaseBar(
     onStartTrial: () -> Unit
 ) {
     S2BottomActionBar {
-        when (bar.action) {
-            PaywallPrimaryAction.StartTrial -> {
-                S2Button(
-                    text = stringResource(R.string.paywall_start_trial),
-                    onClick = onStartTrial,
-                    size = S2ButtonSize.Medium,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                S2Button(
-                    text = stringResource(R.string.paywall_buy_now),
-                    onClick = onPurchase,
-                    style = S2ButtonStyle.Outlined,
-                    size = S2ButtonSize.Medium,
-                    enabled = bar.purchaseEnabled,
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-
-            PaywallPrimaryAction.Purchase -> S2Button(
-                text = stringResource(R.string.paywall_purchase),
-                onClick = onPurchase,
+        bar.buttons.forEach { button ->
+            S2Button(
+                text = stringResource(button.label),
+                onClick = when (button.tap) {
+                    PaywallViewState.Tap.StartTrial -> onStartTrial
+                    PaywallViewState.Tap.Purchase -> onPurchase
+                },
+                style = when (button.emphasis) {
+                    PaywallViewState.Emphasis.Filled -> S2ButtonStyle.Filled
+                    PaywallViewState.Emphasis.Outlined -> S2ButtonStyle.Outlined
+                },
                 size = S2ButtonSize.Medium,
-                enabled = bar.purchaseEnabled,
+                enabled = button.enabled,
                 modifier = Modifier.fillMaxWidth()
             )
         }
@@ -199,18 +193,10 @@ private fun PurchaseBar(
 
 @Composable
 private fun StatusCard(
-    status: PaywallViewState.StatusMessage,
+    status: PaywallViewState.Copy,
     explainsTrialEnd: Boolean
 ) {
-    val text = when (status) {
-        PaywallViewState.StatusMessage.Checking -> stringResource(R.string.paywall_status_checking)
-        PaywallViewState.StatusMessage.TrialAvailable -> stringResource(R.string.paywall_status_trial_available)
-        PaywallViewState.StatusMessage.TrialEnded -> stringResource(R.string.paywall_status_trial_ended)
-        is PaywallViewState.StatusMessage.Trial -> pluralStringResource(R.plurals.paywall_status_trial, status.daysLeft, status.daysLeft)
-        PaywallViewState.StatusMessage.PurchasePending -> stringResource(R.string.paywall_status_purchase_pending)
-        PaywallViewState.StatusMessage.Pro -> stringResource(R.string.paywall_status_pro)
-        PaywallViewState.StatusMessage.ProLegacy -> stringResource(R.string.paywall_status_pro_legacy)
-    }
+    val text = status.resolve()
     Surface(
         color = MaterialTheme.colorScheme.primaryContainer,
         contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -280,24 +266,26 @@ private val BenefitLeadingWidth = ServerMarkSize * ServerTypes.size + ServerMark
 private val HeroIconSize = 32.dp
 
 @Composable
+private fun PaywallViewState.Copy.resolve(): String = when (this) {
+    is PaywallViewState.Copy.Res -> stringResource(id, *args.toTypedArray())
+    is PaywallViewState.Copy.Plural -> pluralStringResource(id, count, count)
+}
+
+@Composable
 private fun SectionTitle(text: String) {
     S2Text(text, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
 }
 
 /** The one-time unlock with Play's price, or a placeholder while prices load or can't be loaded. */
 @Composable
-private fun LifetimeOffer(offer: PaywallViewState.Offer) {
+private fun LifetimeOffer(offer: PaywallViewState.Copy) {
     Column(verticalArrangement = Arrangement.spacedBy(S2Spacing.small)) {
         SectionTitle(stringResource(R.string.paywall_offer_heading))
         OutlinedCard(modifier = Modifier.fillMaxWidth()) {
             Column(Modifier.padding(S2Spacing.medium)) {
                 S2Text(stringResource(R.string.paywall_plan_lifetime), style = MaterialTheme.typography.titleMedium)
                 S2Text(
-                    when (offer) {
-                        is PaywallViewState.Offer.Price -> stringResource(R.string.paywall_price_once, offer.formatted)
-                        PaywallViewState.Offer.Loading -> stringResource(R.string.paywall_price_loading)
-                        PaywallViewState.Offer.Unavailable -> stringResource(R.string.paywall_price_unavailable)
-                    },
+                    offer.resolve(),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
