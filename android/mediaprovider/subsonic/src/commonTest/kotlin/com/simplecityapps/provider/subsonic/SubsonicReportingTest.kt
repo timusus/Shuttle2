@@ -11,7 +11,7 @@ import io.ktor.http.Url
 import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.time.Instant
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 
 /** Plays reported through `scrobble`, favourites written as stars, and artwork urls that carry no credentials. */
 class SubsonicReportingTest {
@@ -23,15 +23,13 @@ class SubsonicReportingTest {
     fun tearDown() = subsonic.close()
 
     @Test
-    fun `a start is reported as now playing and a finished play with when it was played`() {
+    fun `a start is reported as now playing and a finished play with when it was played`() = runTest {
         subsonic.signIn()
         server.respond(SCROBBLE, "ok.json")
         val reporter = SubsonicPlaybackReporter(subsonic.authenticationManager, subsonic.service)
 
-        runBlocking {
-            reporter.start(PlaybackSession(song, "play-1"), positionMs = 0) shouldBe true
-            reporter.markPlayed(song, Instant.fromEpochMilliseconds(1_790_000_000_000)) shouldBe true
-        }
+        reporter.start(PlaybackSession(song, "play-1"), positionMs = 0) shouldBe true
+        reporter.markPlayed(song, Instant.fromEpochMilliseconds(1_790_000_000_000)) shouldBe true
 
         val (start, played) = server.requestsTo(SCROBBLE)
         start.parameter("id") shouldBe "5zTXFMk8oDiQF9kh1gqcJE"
@@ -43,36 +41,34 @@ class SubsonicReportingTest {
     }
 
     @Test
-    fun `a failed scrobble reports failure`() {
+    fun `a failed scrobble reports failure`() = runTest {
         subsonic.signIn()
         server.respond(SCROBBLE, "error_not_found.json")
         val reporter = SubsonicPlaybackReporter(subsonic.authenticationManager, subsonic.service)
 
-        runBlocking { reporter.markPlayed(song, Instant.fromEpochMilliseconds(0)) } shouldBe false
+        reporter.markPlayed(song, Instant.fromEpochMilliseconds(0)) shouldBe false
     }
 
     @Test
-    fun `a favourite is a star and clearing it unstars`() {
+    fun `a favourite is a star and clearing it unstars`() = runTest {
         subsonic.signIn()
         server.respond(STAR, "ok.json")
         server.respond(UNSTAR, "ok.json")
         val writer = SubsonicFavouriteWriter(subsonic.authenticationManager, subsonic.service)
 
-        runBlocking {
-            writer.setFavourite(song, favourite = true) shouldBe true
-            writer.setFavourite(song, favourite = false) shouldBe true
-        }
+        writer.setFavourite(song, favourite = true) shouldBe true
+        writer.setFavourite(song, favourite = false) shouldBe true
 
         server.requestsTo(STAR).single().parameter("id") shouldBe "5zTXFMk8oDiQF9kh1gqcJE"
         server.requestsTo(UNSTAR).single().parameter("id") shouldBe "5zTXFMk8oDiQF9kh1gqcJE"
     }
 
     @Test
-    fun `album art is the song's cover art - with no credentials in the url`() {
+    fun `album art is the song's cover art - with no credentials in the url`() = runTest {
         subsonic.signIn()
         val artwork = SubsonicRemoteArtworkProvider(subsonic.authenticationManager, subsonic.service)
 
-        val url = Url(runBlocking { artwork.getAlbumArtworkUrl(song.copy(artworkVersion = "mf-5zTXFMk8oDiQF9kh1gqcJE")) }!!)
+        val url = Url(artwork.getAlbumArtworkUrl(song.copy(artworkVersion = "mf-5zTXFMk8oDiQF9kh1gqcJE"))!!)
 
         url.encodedPath shouldBe "/rest/getCoverArt.view"
         url.parameters["id"] shouldBe "mf-5zTXFMk8oDiQF9kh1gqcJE"
@@ -81,12 +77,12 @@ class SubsonicReportingTest {
     }
 
     @Test
-    fun `where the image loader can't sign a request - the url comes signed`() {
+    fun `where the image loader can't sign a request - the url comes signed`() = runTest {
         subsonic.signIn()
         val artwork = SubsonicRemoteArtworkProvider(subsonic.authenticationManager, subsonic.service)
         val signed = SignedSubsonicArtworkProvider(artwork, subsonic.authenticationManager, subsonic.service)
 
-        val unsigned = runBlocking { signed.getAlbumArtworkUrl(song.copy(artworkVersion = "mf-5zTXFMk8oDiQF9kh1gqcJE")) }!!
+        val unsigned = signed.getAlbumArtworkUrl(song.copy(artworkVersion = "mf-5zTXFMk8oDiQF9kh1gqcJE"))!!
         val url = Url(signed.requestUrl(unsigned)!!)
 
         Url(unsigned).parameters["u"] shouldBe null
@@ -98,22 +94,22 @@ class SubsonicReportingTest {
     }
 
     @Test
-    fun `album art falls back to the album's cover`() {
+    fun `album art falls back to the album's cover`() = runTest {
         subsonic.signIn()
         val artwork = SubsonicRemoteArtworkProvider(subsonic.authenticationManager, subsonic.service)
 
-        val url = Url(runBlocking { artwork.getAlbumArtworkUrl(song.copy(artworkVersion = null)) }!!)
+        val url = Url(artwork.getAlbumArtworkUrl(song.copy(artworkVersion = null))!!)
 
         url.parameters["id"] shouldBe "4nxF0cOO4HAm80KTNDfkof"
     }
 
     @Test
-    fun `artist art is the named artist's cover art`() {
+    fun `artist art is the named artist's cover art`() = runTest {
         subsonic.signIn()
         server.respond(ARTIST, "artist.json", query = mapOf("id" to "07LA8XP6U5De7mzuoBVPz4"))
         val artwork = SubsonicRemoteArtworkProvider(subsonic.authenticationManager, subsonic.service)
 
-        val url = Url(runBlocking { artwork.getArtistArtworkUrl(song, "07LA8XP6U5De7mzuoBVPz4") }!!)
+        val url = Url(artwork.getArtistArtworkUrl(song, "07LA8XP6U5De7mzuoBVPz4")!!)
 
         url.parameters["id"] shouldBe "ar-07LA8XP6U5De7mzuoBVPz4_0"
         url.parameters["u"].shouldBeNull()

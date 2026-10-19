@@ -13,7 +13,7 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import kotlin.test.AfterTest
 import kotlin.test.Test
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 
 /** Signing in with `ping`, recording what the server supports, and the fallbacks for servers that refuse tokens. */
 class SubsonicSignInTest {
@@ -25,7 +25,7 @@ class SubsonicSignInTest {
     fun tearDown() = subsonic.close()
 
     @Test
-    fun `signing in to an OpenSubsonic server records what it supports`() {
+    fun `signing in to an OpenSubsonic server records what it supports`() = runTest {
         subsonic.signIn()
 
         authenticationManager.serverInfo shouldBe SubsonicServerInfo(
@@ -39,11 +39,11 @@ class SubsonicSignInTest {
     }
 
     @Test
-    fun `the ping is signed with a salted token - never the password`() {
+    fun `the ping is signed with a salted token - never the password`() = runTest {
         server.respond(PING, "ping.json")
         server.respond(EXTENSIONS, "extensions.json")
 
-        runBlocking { authenticationManager.authenticate(server.address, LoginCredentials(TestSubsonic.USERNAME, TestSubsonic.PASSWORD)) }
+        authenticationManager.authenticate(server.address, LoginCredentials(TestSubsonic.USERNAME, TestSubsonic.PASSWORD))
 
         val ping = server.requestsTo(PING).single()
         ping.parameter("u") shouldBe TestSubsonic.USERNAME
@@ -55,7 +55,7 @@ class SubsonicSignInTest {
     }
 
     @Test
-    fun `a plain Subsonic server isn't asked for extensions`() {
+    fun `a plain Subsonic server isn't asked for extensions`() = runTest {
         subsonic.signIn(ping = "ping_subsonic.json")
 
         authenticationManager.serverInfo?.openSubsonic shouldBe false
@@ -63,11 +63,11 @@ class SubsonicSignInTest {
     }
 
     @Test
-    fun `wrong credentials fail with the server's message and store nothing`() {
+    fun `wrong credentials fail with the server's message and store nothing`() = runTest {
         server.respond(PING, "error_wrong_credentials.json")
         val authentication = SubsonicServerAuthentication(authenticationManager)
 
-        val result = runBlocking { authentication.authenticate(ServerLogin(server.address, TestSubsonic.USERNAME, "wrong")) }
+        val result = authentication.authenticate(ServerLogin(server.address, TestSubsonic.USERNAME, "wrong"))
 
         result.exceptionOrNull()?.message shouldBe "Wrong username or password"
         result.exceptionOrNull()?.cause.shouldBeInstanceOf<SubsonicError.WrongCredentials>()
@@ -75,14 +75,14 @@ class SubsonicSignInTest {
     }
 
     @Test
-    fun `a server that refuses tokens is signed in to with the password and sent it from then on`() {
+    fun `a server that refuses tokens is signed in to with the password and sent it from then on`() = runTest {
         server.respond(PING, "error_token_not_supported.json")
         server.respond(PING, "ping_subsonic.json", where = { it.parameter("p") != null })
         server.respond(STAR, "ok.json", where = { it.parameter("p") != null })
 
-        runBlocking { authenticationManager.authenticate(server.address, LoginCredentials(TestSubsonic.USERNAME, TestSubsonic.PASSWORD)).getOrThrow() }
+        authenticationManager.authenticate(server.address, LoginCredentials(TestSubsonic.USERNAME, TestSubsonic.PASSWORD)).getOrThrow()
         authenticationManager.setAddress(server.address)
-        val star = runBlocking { authenticationManager.request { address, auth -> subsonic.service.star(address, auth, "song-1") } }
+        val star = authenticationManager.request { address, auth -> subsonic.service.star(address, auth, "song-1") }
 
         server.requestsTo(PING).map { it.parameter("p") } shouldBe listOf(null, "enc:736573616d65")
         star.shouldBeInstanceOf<NetworkResult.Success<*>>()
@@ -90,34 +90,34 @@ class SubsonicSignInTest {
     }
 
     @Test
-    fun `a request refused a token is made again with the password`() {
+    fun `a request refused a token is made again with the password`() = runTest {
         subsonic.signIn()
         server.respond(STAR, "error_token_not_supported.json")
         server.respond(STAR, "ok.json", where = { it.parameter("p") != null })
 
-        val star = runBlocking { authenticationManager.request { address, auth -> subsonic.service.star(address, auth, "song-1") } }
+        val star = authenticationManager.request { address, auth -> subsonic.service.star(address, auth, "song-1") }
 
         star.shouldBeInstanceOf<NetworkResult.Success<*>>()
         server.requestsTo(STAR).map { it.parameter("p") } shouldBe listOf(null, "enc:736573616d65")
     }
 
     @Test
-    fun `with no username the password is an API key`() {
+    fun `with no username the password is an API key`() = runTest {
         server.respond(PING, "ping.json", where = { it.parameter("apiKey") == "key-123" && it.parameter("u") == null })
         server.respond(EXTENSIONS, "extensions_api_key.json")
 
-        runBlocking { authenticationManager.authenticate(server.address, LoginCredentials("", "key-123")).getOrThrow() }
+        authenticationManager.authenticate(server.address, LoginCredentials("", "key-123")).getOrThrow()
 
         authenticationManager.serverInfo?.supports(SubsonicServerInfo.API_KEY_AUTHENTICATION) shouldBe true
         authenticationManager.credentials(authenticationManager.getAuthenticatedCredentials()!!) shouldBe SubsonicCredentials.ApiKey("key-123")
     }
 
     @Test
-    fun `a rejection mid-session signs out`() {
+    fun `a rejection mid-session signs out`() = runTest {
         subsonic.signIn()
         server.respond(STAR, "error_wrong_credentials.json")
 
-        val star = runBlocking { authenticationManager.request { address, auth -> subsonic.service.star(address, auth, "song-1") } }
+        val star = authenticationManager.request { address, auth -> subsonic.service.star(address, auth, "song-1") }
 
         (star as NetworkResult.Failure).error.shouldBeInstanceOf<SubsonicError.WrongCredentials>()
         authenticationManager.getAuthenticatedCredentials().shouldBeNull()

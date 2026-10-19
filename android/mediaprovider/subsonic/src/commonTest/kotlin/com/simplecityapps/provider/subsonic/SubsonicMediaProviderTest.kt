@@ -19,7 +19,7 @@ import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.time.Instant
 import kotlinx.coroutines.flow.toList
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.LocalDate
 
 /** The Subsonic sync against fixtures captured from Navidrome: search3 paging, the album-by-album fallback, playlists. */
@@ -34,7 +34,7 @@ class SubsonicMediaProviderTest {
     // Songs
 
     @Test
-    fun `songs are read a page at a time until a page comes back empty`() {
+    fun `songs are read a page at a time until a page comes back empty`() = runTest {
         subsonic.signIn()
         server.respond(SEARCH, "search3_page_1.json", query = mapOf("songOffset" to "0"))
         server.respond(SEARCH, "search3_page_2.json", query = mapOf("songOffset" to "3"))
@@ -52,7 +52,7 @@ class SubsonicMediaProviderTest {
     }
 
     @Test
-    fun `a song maps its artists - album artists - genres - ids and audio details`() {
+    fun `a song maps its artists - album artists - genres - ids and audio details`() = runTest {
         subsonic.signIn()
         server.respond(SEARCH, "search3_page_1.json", query = mapOf("songOffset" to "0"))
         server.respond(SEARCH, "search3_empty.json", query = mapOf("songOffset" to "3"))
@@ -86,7 +86,7 @@ class SubsonicMediaProviderTest {
     }
 
     @Test
-    fun `ReplayGain is kept when tagged and empty when the server sends none`() {
+    fun `ReplayGain is kept when tagged and empty when the server sends none`() = runTest {
         subsonic.signIn()
         server.respond(SEARCH, "search3_page_1.json", query = mapOf("songOffset" to "0"))
         server.respond(SEARCH, "search3_empty.json", query = mapOf("songOffset" to "3"))
@@ -99,7 +99,7 @@ class SubsonicMediaProviderTest {
     }
 
     @Test
-    fun `a starred song is a favourite - with its play count`() {
+    fun `a starred song is a favourite - with its play count`() = runTest {
         subsonic.signIn()
         server.respond(SEARCH, "search3_page_1.json", query = mapOf("songOffset" to "0"))
         server.respond(SEARCH, "search3_empty.json", query = mapOf("songOffset" to "3"))
@@ -122,7 +122,7 @@ class SubsonicMediaProviderTest {
     }
 
     @Test
-    fun `a plain Subsonic server that finds nothing for an empty search is read album by album`() {
+    fun `a plain Subsonic server that finds nothing for an empty search is read album by album`() = runTest {
         subsonic.signIn(ping = "ping_subsonic.json")
         server.respond(SEARCH, "search3_empty.json")
         server.respond(ALBUM_LIST, "album_list.json", query = mapOf("offset" to "0"))
@@ -138,7 +138,7 @@ class SubsonicMediaProviderTest {
     }
 
     @Test
-    fun `an OpenSubsonic server that finds nothing for an empty search is read album by album too`() {
+    fun `an OpenSubsonic server that finds nothing for an empty search is read album by album too`() = runTest {
         subsonic.signIn()
         server.respond(SEARCH, "search3_empty.json")
         server.respond(ALBUM_LIST, "album_list.json", query = mapOf("offset" to "0"))
@@ -149,7 +149,7 @@ class SubsonicMediaProviderTest {
     }
 
     @Test
-    fun `an empty library has no songs - after one look for albums`() {
+    fun `an empty library has no songs - after one look for albums`() = runTest {
         subsonic.signIn()
         server.respond(SEARCH, "search3_empty.json")
         server.respond(ALBUM_LIST, "album_list_empty.json")
@@ -173,11 +173,11 @@ class SubsonicMediaProviderTest {
     }
 
     @Test
-    fun `rejected credentials fail the sync and sign out`() {
+    fun `rejected credentials fail the sync and sign out`() = runTest {
         subsonic.signIn()
         server.respond(SEARCH, "error_wrong_credentials.json")
 
-        val events = runBlocking { provider.findSongs(emptyList()).toList() }
+        val events = provider.findSongs(emptyList()).toList()
 
         events.last().let { it as FlowEvent.Failure }
         subsonic.authenticationManager.getAuthenticatedCredentials().shouldBeNull()
@@ -186,7 +186,7 @@ class SubsonicMediaProviderTest {
     // Playlists
 
     @Test
-    fun `playlists hold the library's songs in order - skipping what the library doesn't have`() {
+    fun `playlists hold the library's songs in order - skipping what the library doesn't have`() = runTest {
         subsonic.signIn()
         server.respond(PLAYLISTS, "playlists.json")
         server.respond(PLAYLIST, "playlist.json")
@@ -201,20 +201,20 @@ class SubsonicMediaProviderTest {
     }
 
     @Test
-    fun `a server with no playlists has none`() {
+    fun `a server with no playlists has none`() = runTest {
         subsonic.signIn()
         server.respond(PLAYLISTS, "playlists_empty.json")
 
         syncPlaylists(emptyList()).shouldBeEmpty()
     }
 
-    private fun syncSongs(): List<Song> {
-        val events = runBlocking { provider.findSongs(emptyList()).toList() }
+    private suspend fun syncSongs(): List<Song> {
+        val events = provider.findSongs(emptyList()).toList()
         return (events.last() as FlowEvent.Success).result
     }
 
-    private fun syncPlaylists(library: List<Song>): List<PlaylistUpdateData> {
-        val events = runBlocking { provider.findPlaylists(library).toList() }
+    private suspend fun syncPlaylists(library: List<Song>): List<PlaylistUpdateData> {
+        val events = provider.findPlaylists(library).toList()
         return (events.last() as FlowEvent.Success).result.playlists
     }
 }

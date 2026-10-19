@@ -19,7 +19,7 @@ import io.kotest.matchers.string.shouldContain
 import io.ktor.http.Url
 import kotlin.test.AfterTest
 import kotlin.test.Test
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 
 /** Which stream a song plays from under the bitrate cap: the original, the server's transcode decision, or the classic transcode. */
 class SubsonicStreamsTest {
@@ -40,10 +40,10 @@ class SubsonicStreamsTest {
     fun tearDown() = subsonic.close()
 
     @Test
-    fun `with no cap a decodable song streams its original file`() {
+    fun `with no cap a decodable song streams its original file`() = runTest {
         subsonic.signIn()
 
-        val stream = runBlocking { streams.stream(flac) }
+        val stream = streams.stream(flac)
 
         val url = Url(stream.url)
         url.encodedPath shouldBe "/rest/stream.view"
@@ -56,30 +56,30 @@ class SubsonicStreamsTest {
     }
 
     @Test
-    fun `each stream url carries a fresh salt`() {
+    fun `each stream url carries a fresh salt`() = runTest {
         subsonic.signIn()
 
-        val first = Url(runBlocking { streams.stream(flac) }.url)
-        val second = Url(runBlocking { streams.stream(flac) }.url)
+        val first = Url(streams.stream(flac).url)
+        val second = Url(streams.stream(flac).url)
 
         first.parameters["s"] shouldNotBe second.parameters["s"]
     }
 
     @Test
-    fun `a song within the cap streams its original file`() {
+    fun `a song within the cap streams its original file`() = runTest {
         subsonic.signIn()
         streamingSettings.unmeteredQuality.value = StreamingQuality.Kbps320
 
-        Url(runBlocking { streams.stream(mp3) }.url).parameters["format"] shouldBe "raw"
+        Url(streams.stream(mp3).url).parameters["format"] shouldBe "raw"
     }
 
     @Test
-    fun `past the cap - a server with transcoding streams what it decides`() {
+    fun `past the cap - a server with transcoding streams what it decides`() = runTest {
         subsonic.signIn()
         streamingSettings.unmeteredQuality.value = StreamingQuality.Kbps128
         server.respond(TRANSCODE_DECISION, "transcode_decision.json", method = "POST")
 
-        val stream = runBlocking { streams.stream(flac) }
+        val stream = streams.stream(flac)
 
         val decision = server.requestsTo(TRANSCODE_DECISION).single()
         decision.parameter("mediaId") shouldBe "5zTXFMk8oDiQF9kh1gqcJE"
@@ -98,34 +98,34 @@ class SubsonicStreamsTest {
     }
 
     @Test
-    fun `a decided transcode seeks by its own offset - without the transcodeOffset extension`() {
+    fun `a decided transcode seeks by its own offset - without the transcodeOffset extension`() = runTest {
         subsonic.signIn(extensions = "extensions_transcoding.json")
         streamingSettings.unmeteredQuality.value = StreamingQuality.Kbps128
         server.respond(TRANSCODE_DECISION, "transcode_decision.json", method = "POST")
 
-        val stream = runBlocking { streams.stream(flac) }
+        val stream = streams.stream(flac)
 
         Url(stream.url).encodedPath shouldBe "/rest/getTranscodeStream.view"
         Url(stream.timeSeek.shouldNotBeNull().urlAt(30)).parameters["offset"] shouldBe "30"
     }
 
     @Test
-    fun `the transcode decision is asked for no more than a lossy source's bitrate`() {
+    fun `the transcode decision is asked for no more than a lossy source's bitrate`() = runTest {
         subsonic.signIn()
         server.respond(TRANSCODE_DECISION, "transcode_decision.json", method = "POST")
 
-        runBlocking { streams.stream(wma) }
+        streams.stream(wma)
 
         val body = server.requestsTo(TRANSCODE_DECISION).single().bodyText
         body shouldContain "\"maxTranscodingAudioBitrate\":96000"
     }
 
     @Test
-    fun `past the cap - a server without transcoding streams the classic MP3 transcode`() {
+    fun `past the cap - a server without transcoding streams the classic MP3 transcode`() = runTest {
         subsonic.signIn(extensions = "extensions_transcode_offset.json")
         streamingSettings.unmeteredQuality.value = StreamingQuality.Kbps128
 
-        val stream = runBlocking { streams.stream(flac) }
+        val stream = streams.stream(flac)
 
         val url = Url(stream.url)
         url.encodedPath shouldBe "/rest/stream.view"
@@ -138,12 +138,12 @@ class SubsonicStreamsTest {
     }
 
     @Test
-    fun `the classic transcode can't be seeked on a server without the transcodeOffset extension`() {
+    fun `the classic transcode can't be seeked on a server without the transcodeOffset extension`() = runTest {
         subsonic.signIn(extensions = "ok.json")
         streamingSettings.unmeteredQuality.value = StreamingQuality.Kbps128
         val provider = SubsonicStreamUrlProvider(streams)
 
-        val stream = runBlocking { streams.stream(flac) }
+        val stream = streams.stream(flac)
 
         Url(stream.url).parameters["format"] shouldBe "mp3"
         stream.timeSeek.shouldBeNull()
@@ -151,10 +151,10 @@ class SubsonicStreamsTest {
     }
 
     @Test
-    fun `a lossy source transcodes at no more than its own bitrate`() {
+    fun `a lossy source transcodes at no more than its own bitrate`() = runTest {
         subsonic.signIn(extensions = "extensions_transcode_offset.json")
 
-        val stream = runBlocking { streams.stream(wma) }
+        val stream = streams.stream(wma)
 
         Url(stream.url).parameters["maxBitRate"] shouldBe "96"
         stream.timeSeek.shouldNotBeNull().bitrateKbps shouldBe 96
@@ -162,11 +162,11 @@ class SubsonicStreamsTest {
     }
 
     @Test
-    fun `a lossy source over the cap transcodes at the cap`() {
+    fun `a lossy source over the cap transcodes at the cap`() = runTest {
         subsonic.signIn(extensions = "extensions_transcode_offset.json")
         streamingSettings.unmeteredQuality.value = StreamingQuality.Kbps128
 
-        val stream = runBlocking { streams.stream(wma.copy(bitRate = 192)) }
+        val stream = streams.stream(wma.copy(bitRate = 192))
 
         Url(stream.url).parameters["maxBitRate"] shouldBe "128"
     }
@@ -181,29 +181,29 @@ class SubsonicStreamsTest {
     }
 
     @Test
-    fun `a failed transcode decision falls back to the classic transcode`() {
+    fun `a failed transcode decision falls back to the classic transcode`() = runTest {
         subsonic.signIn()
         streamingSettings.unmeteredQuality.value = StreamingQuality.Kbps128
         server.respond(TRANSCODE_DECISION, "error_not_found.json", method = "POST")
 
-        val url = Url(runBlocking { streams.stream(flac) }.url)
+        val url = Url(streams.stream(flac).url)
 
         url.parameters["format"] shouldBe "mp3"
         url.parameters["maxBitRate"] shouldBe "128"
     }
 
     @Test
-    fun `a song the player can't decode is transcoded even with no cap`() {
+    fun `a song the player can't decode is transcoded even with no cap`() = runTest {
         subsonic.signIn(extensions = "ok.json")
 
-        val stream = runBlocking { streams.stream(alac) }
+        val stream = streams.stream(alac)
 
         Url(stream.url).parameters["maxBitRate"] shouldBe "320"
         stream.mimeType shouldBe "audio/mpeg"
     }
 
     @Test
-    fun `Cast gets the classic transcode - which it can seek itself`() {
+    fun `Cast gets the classic transcode - which it can seek itself`() = runTest {
         subsonic.signIn()
         streamingSettings.unmeteredQuality.value = StreamingQuality.Kbps128
 
@@ -214,7 +214,7 @@ class SubsonicStreamsTest {
     }
 
     @Test
-    fun `a decodable song downloads its original file at Original download quality - ignoring the stream cap`() {
+    fun `a decodable song downloads its original file at Original download quality - ignoring the stream cap`() = runTest {
         subsonic.signIn()
         streamingSettings.unmeteredQuality.value = StreamingQuality.Kbps128
 
@@ -226,7 +226,7 @@ class SubsonicStreamsTest {
     }
 
     @Test
-    fun `a song the player can't decode downloads as an MP3`() {
+    fun `a song the player can't decode downloads as an MP3`() = runTest {
         subsonic.signIn()
 
         val download = streams.downloadSource(alac).shouldNotBeNull()
@@ -236,7 +236,7 @@ class SubsonicStreamsTest {
     }
 
     @Test
-    fun `a song over the download cap downloads as a transcode at the cap in the chosen codec`() {
+    fun `a song over the download cap downloads as a transcode at the cap in the chosen codec`() = runTest {
         subsonic.signIn()
         streamingSettings.downloadQuality.value = StreamingQuality.Kbps192
         streamingSettings.transcodeFormat.value = TranscodeFormat.Opus
@@ -249,7 +249,7 @@ class SubsonicStreamsTest {
     }
 
     @Test
-    fun `a song within the download cap downloads its original file`() {
+    fun `a song within the download cap downloads its original file`() = runTest {
         subsonic.signIn()
         streamingSettings.downloadQuality.value = StreamingQuality.Kbps320
 
@@ -257,19 +257,19 @@ class SubsonicStreamsTest {
     }
 
     @Test
-    fun `the classic transcode is in the chosen codec`() {
+    fun `the classic transcode is in the chosen codec`() = runTest {
         subsonic.signIn(extensions = "extensions_transcode_offset.json")
         streamingSettings.unmeteredQuality.value = StreamingQuality.Kbps128
         streamingSettings.transcodeFormat.value = TranscodeFormat.Aac
 
-        val stream = runBlocking { streams.stream(flac) }
+        val stream = streams.stream(flac)
 
         Url(stream.url).parameters["format"] shouldBe "aac"
         stream.mimeType shouldBe "audio/aac"
     }
 
     @Test
-    fun `a streamed Opus transcode is MP3 on Android - whose time seeking needs a constant bitrate - and Opus on iOS`() {
+    fun `a streamed Opus transcode is MP3 on Android - whose time seeking needs a constant bitrate - and Opus on iOS`() = runTest {
         subsonic.signIn()
         streamingSettings.unmeteredQuality.value = StreamingQuality.Kbps128
         streamingSettings.transcodeFormat.value = TranscodeFormat.Opus
@@ -287,7 +287,7 @@ class SubsonicStreamsTest {
     }
 
     @Test
-    fun `Cast gets an MP3 transcode whatever the chosen codec`() {
+    fun `Cast gets an MP3 transcode whatever the chosen codec`() = runTest {
         subsonic.signIn()
         streamingSettings.unmeteredQuality.value = StreamingQuality.Kbps128
         streamingSettings.transcodeFormat.value = TranscodeFormat.Aac
@@ -296,13 +296,13 @@ class SubsonicStreamsTest {
     }
 
     @Test
-    fun `nothing streams before a sign-in`() {
-        runCatching { runBlocking { streams.stream(flac) } }.isFailure shouldBe true
+    fun `nothing streams before a sign-in`() = runTest {
+        runCatching { streams.stream(flac) }.isFailure shouldBe true
         streams.downloadSource(flac).shouldBeNull()
     }
 
     @Test
-    fun `the player and downloads stream through the url provider without asking the server`() {
+    fun `the player and downloads stream through the url provider without asking the server`() = runTest {
         subsonic.signIn()
         streamingSettings.unmeteredQuality.value = StreamingQuality.Kbps128
         val provider = SubsonicStreamUrlProvider(streams)

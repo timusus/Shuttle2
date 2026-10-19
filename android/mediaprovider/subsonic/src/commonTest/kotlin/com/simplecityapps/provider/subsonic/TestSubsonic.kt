@@ -11,7 +11,6 @@ import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import com.simplecityapps.shuttle.persistence.SecurePreferenceManager
 import io.ktor.client.request.HttpRequestData
-import kotlinx.coroutines.runBlocking
 
 /** [ServerStrings] for tests, which assert on these rather than on a platform's string resources. */
 object TestServerStrings : ServerStrings {
@@ -37,7 +36,7 @@ class TestSubsonic : AutoCloseable {
     val authenticationManager = SubsonicAuthenticationManager(service, credentialStore, preferences)
 
     /** Signs in to a server that answers `ping` with [ping] (and lists [extensions]), then forgets the requests it took. */
-    fun signIn(
+    suspend fun signIn(
         ping: String = "ping.json",
         extensions: String = "extensions.json",
         login: LoginCredentials = LoginCredentials(USERNAME, PASSWORD)
@@ -45,7 +44,7 @@ class TestSubsonic : AutoCloseable {
         server.respond(PING, ping)
         server.respond(EXTENSIONS, extensions)
         authenticationManager.setAddress(server.address)
-        runBlocking { authenticationManager.authenticate(server.address, login).getOrThrow() }
+        authenticationManager.authenticate(server.address, login).getOrThrow()
         server.clearRequests()
     }
 
