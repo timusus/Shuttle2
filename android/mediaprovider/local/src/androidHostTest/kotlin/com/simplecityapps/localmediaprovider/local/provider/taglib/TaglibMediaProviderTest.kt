@@ -31,11 +31,13 @@ import java.io.File
 import java.io.FileNotFoundException
 import java.util.Collections
 import kotlin.time.Instant
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.toList
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.TestCoroutineScheduler
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -49,10 +51,13 @@ private const val MODIFIED = 1_700_000_000_000
 private val queried: MutableList<String> = Collections.synchronizedList(mutableListOf())
 
 /** Music tree: a.mp3, b.mp3, c.mp3 (new), Skip/d.mp3 and Skip/Deep/e.mp3; Skip is an excluded folder. */
+@OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(AndroidJUnit4::class)
 class TaglibMediaProviderTest {
     private val context: Context = ApplicationProvider.getApplicationContext()
     private val preferences = SourceStateStore(InMemoryKeyValueStore())
+    private val testScheduler = TestCoroutineScheduler()
+    private val dispatcher = UnconfinedTestDispatcher(testScheduler)
     private val tagReadGuard = testTagReadGuard(preferences)
     private val tree = DocumentsContract.buildTreeDocumentUri(AUTHORITY, "primary:Music")
 
@@ -69,7 +74,7 @@ class TaglibMediaProviderTest {
     private val unreadable: MutableSet<String> = Collections.synchronizedSet(mutableSetOf())
 
     private val scanner =
-        object : FileScanner(Dispatchers.Unconfined) {
+        object : FileScanner(dispatcher) {
             override suspend fun getAudioFile(
                 context: Context,
                 kTagLib: KTagLib,
@@ -118,7 +123,7 @@ class TaglibMediaProviderTest {
     }
 
     @Test
-    fun `playlists in a shared storage tree come from MediaStore without walking the tree`() {
+    fun `playlists in a shared storage tree come from MediaStore without walking the tree`() = runTest(dispatcher) {
         FakeMediaProvider.playlistRows =
             listOf(
                 "$primary/Music/Lists/a.m3u" to "a.m3u",
@@ -139,7 +144,7 @@ class TaglibMediaProviderTest {
     }
 
     @Test
-    fun `a playlist MediaStore lists outside every granted folder is imported, its relative entries resolved against its folder`() {
+    fun `a playlist MediaStore lists outside every granted folder is imported, its relative entries resolved against its folder`() = runTest(dispatcher) {
         FakeMediaProvider.playlistRows = listOf("$primary/Playlists/mix.m3u" to "mix.m3u")
         FakeMediaProvider.playlistContents = mapOf("$primary/Playlists/mix.m3u" to "#EXTM3U\n../Music/a.mp3\nmissing.mp3\n")
 
@@ -153,17 +158,17 @@ class TaglibMediaProviderTest {
     }
 
     @Test
-    fun `a playlist MediaStore lists in an excluded folder isn't imported`() {
+    fun `a playlist MediaStore lists in an excluded folder isn't imported`() = runTest(dispatcher) {
         FakeMediaProvider.playlistRows = listOf("$primary/Playlists/mix.m3u" to "mix.m3u", "$primary/Music/keep.m3u" to "keep.m3u")
         FakeMediaProvider.playlistContents = mapOf("$primary/Playlists/mix.m3u" to "../Music/a.mp3\n", "$primary/Music/keep.m3u" to "a.mp3\n")
 
-        val playlists = runBlocking { provider(excludes = listOf("$primary/Playlists"), trees = emptyList()).playlists() }
+        val playlists = provider(excludes = listOf("$primary/Playlists"), trees = emptyList()).playlists()
 
         playlists.map { it.externalId } shouldBe listOf(fileId("$primary/Music/keep.m3u"))
     }
 
     @Test
-    fun `an HLS index and a list of streams aren't imported as playlists`() {
+    fun `an HLS index and a list of streams aren't imported as playlists`() = runTest(dispatcher) {
         FakeMediaProvider.playlistRows =
             listOf(
                 "$primary/Movies/index.m3u8" to "index.m3u8",
@@ -184,65 +189,61 @@ class TaglibMediaProviderTest {
     }
 
     @Test
-    fun `a playlist of content URIs is imported, as SAF-walked songs are at those`() {
+    fun `a playlist of content URIs is imported, as SAF-walked songs are at those`() = runTest(dispatcher) {
         val song = storedSong("a.mp3", size = 10, lastModified = MODIFIED)
         FakeMediaProvider.playlistRows = listOf("$primary/Music/saf.m3u" to "saf.m3u")
         FakeMediaProvider.playlistContents = mapOf("$primary/Music/saf.m3u" to "${song.path}\n")
 
         val playlists =
-            runBlocking {
-                provider(excludes = emptyList(), trees = emptyList(), grantedTrees = emptyList()).findPlaylists(listOf(song))
-                    .filterIsInstance<FlowEvent.Success<PlaylistListing>>()
-                    .first()
-                    .result
-                    .playlists
-            }
+            provider(excludes = emptyList(), trees = emptyList(), grantedTrees = emptyList()).findPlaylists(listOf(song))
+                .filterIsInstance<FlowEvent.Success<PlaylistListing>>()
+                .first()
+                .result
+                .playlists
 
         playlists.map { it.externalId } shouldBe listOf(fileId("$primary/Music/saf.m3u"))
     }
 
     @Test
-    fun `a playlist in an extra tree that can't be walked keeps the id the walk gave it, from MediaStore`() {
+    fun `a playlist in an extra tree that can't be walked keeps the id the walk gave it, from MediaStore`() = runTest(dispatcher) {
         val locked = DocumentsContract.buildTreeDocumentUri(AUTHORITY, "primary:Locked")
         FakeMediaProvider.playlistRows = listOf("$primary/Locked/x.m3u" to "x.m3u")
         FakeMediaProvider.playlistContents = mapOf("$primary/Locked/x.m3u" to "/storage/emulated/0/Music/a.mp3\n")
         val provider = provider(excludes = emptyList(), trees = listOf(locked), grantedTrees = listOf(locked))
 
-        val playlists = runBlocking { provider.playlists() }
+        val playlists = provider.playlists()
 
         playlists.map { it.externalId } shouldBe listOf(fileId("$primary/Locked/x.m3u"))
     }
 
     @Test
-    fun `a relative entry names the song beside the playlist, not one of the same name elsewhere`() {
+    fun `a relative entry names the song beside the playlist, not one of the same name elsewhere`() = runTest(dispatcher) {
         FakeMediaProvider.playlistRows = listOf("$primary/Music/mix.m3u" to "mix.m3u")
         FakeMediaProvider.playlistContents = mapOf("$primary/Music/mix.m3u" to "a.mp3\n")
         val beside = mediaStoreSong("a.mp3", size = 10, lastModified = MODIFIED)
         val elsewhere = beside.copy(path = "$primary/Other/a.mp3")
 
         val playlists =
-            runBlocking {
-                provider(excludes = emptyList(), trees = emptyList(), grantedTrees = emptyList()).findPlaylists(listOf(elsewhere, beside))
-                    .filterIsInstance<FlowEvent.Success<PlaylistListing>>().first().result.playlists
-            }
+            provider(excludes = emptyList(), trees = emptyList(), grantedTrees = emptyList()).findPlaylists(listOf(elsewhere, beside))
+                .filterIsInstance<FlowEvent.Success<PlaylistListing>>().first().result.playlists
 
         playlists.single().songs.map { it.path } shouldBe listOf(beside.path)
     }
 
     @Test
-    fun `a playlist both a granted folder and MediaStore give is one playlist, under its file path`() {
+    fun `a playlist both a granted folder and MediaStore give is one playlist, under its file path`() = runTest(dispatcher) {
         FakeMediaProvider.playlistRows = listOf("$primary/Music/p.m3u" to "p.m3u")
         FakeMediaProvider.playlistContents = mapOf("$primary/Music/p.m3u" to "/storage/emulated/0/Music/a.mp3\n")
         // The extra tree is walked, so its playlist isn't taken from MediaStore's listing
         val provider = provider(excludes = emptyList(), trees = listOf(tree), grantedTrees = listOf(tree))
 
-        val playlists = runBlocking { provider.playlists() }
+        val playlists = provider.playlists()
 
         playlists.map { it.externalId } shouldBe listOf(fileId("$primary/Music/p.m3u"))
     }
 
     @Test
-    fun `a playlist in a granted folder isn't imported again from MediaStore`() {
+    fun `a playlist in a granted folder isn't imported again from MediaStore`() = runTest(dispatcher) {
         FakeMediaProvider.playlistRows = listOf("$primary/Music/Lists/a.m3u" to "a.m3u")
         FakeMediaProvider.playlistContents = mapOf("$primary/Music/Lists/a.m3u" to "/storage/emulated/0/Music/a.mp3\n")
 
@@ -263,7 +264,7 @@ class TaglibMediaProviderTest {
     }
 
     @Test
-    fun `playlists in a tree MediaStore can't see are found by walking it`() {
+    fun `playlists in a tree MediaStore can't see are found by walking it`() = runTest(dispatcher) {
         val cloud = DocumentsContract.buildTreeDocumentUri(CLOUD_AUTHORITY, "cloud")
 
         val playlists = findPlaylists(trees = listOf(cloud))
@@ -272,30 +273,30 @@ class TaglibMediaProviderTest {
     }
 
     @Test
-    fun `an extra tree the song scan walked isn't walked again for playlists`() {
+    fun `an extra tree the song scan walked isn't walked again for playlists`() = runTest(dispatcher) {
         val provider = provider(excludes = emptyList(), trees = listOf(tree), grantedTrees = listOf(tree))
-        runBlocking { provider.findSongs(emptyList()).filterIsInstance<FlowEvent.Success<List<Song>>>().first() }
+        provider.findSongs(emptyList()).filterIsInstance<FlowEvent.Success<List<Song>>>().first()
         queried.clear()
 
-        val playlists = runBlocking { provider.playlists() }
+        val playlists = provider.playlists()
 
         playlists.map { it.externalId } shouldBe listOf(fileId("$primary/Music/p.m3u"))
         queried.toList() shouldBe emptyList()
     }
 
     @Test
-    fun `an extra tree is walked for playlists, not looked up in MediaStore, which skips it`() {
+    fun `an extra tree is walked for playlists, not looked up in MediaStore, which skips it`() = runTest(dispatcher) {
         // As when the song scan's walk of it failed, or hasn't run
         FakeMediaProvider.playlistRows = listOf("$primary/Music/stale.m3u" to "stale.m3u")
         val provider = provider(excludes = emptyList(), trees = listOf(tree), grantedTrees = listOf(tree))
 
-        val playlists = runBlocking { provider.playlists() }
+        val playlists = provider.playlists()
 
         playlists.map { it.externalId } shouldBe listOf(fileId("$primary/Music/p.m3u"))
     }
 
     @Test
-    fun `a playlist MediaStore lists that can't be opened is skipped, the others still import`() {
+    fun `a playlist MediaStore lists that can't be opened is skipped, the others still import`() = runTest(dispatcher) {
         FakeMediaProvider.playlistRows = listOf("$primary/Music/ghost.m3u" to "ghost.m3u", "$primary/Music/a.m3u" to "a.m3u")
 
         val playlists = findPlaylists(trees = listOf(tree))
@@ -304,13 +305,13 @@ class TaglibMediaProviderTest {
     }
 
     @Test
-    fun `playlists in an excluded folder of an extra tree are still found`() {
+    fun `playlists in an excluded folder of an extra tree are still found`() = runTest(dispatcher) {
         @Suppress("DEPRECATION")
         val hidden = "${android.os.Environment.getExternalStorageDirectory().path}/Lists/Hidden"
         val provider = provider(excludes = listOf(hidden), trees = listOf(listsTree), grantedTrees = listOf(listsTree))
-        runBlocking { provider.findSongs(emptyList()).filterIsInstance<FlowEvent.Success<List<Song>>>().first() }
+        provider.findSongs(emptyList()).filterIsInstance<FlowEvent.Success<List<Song>>>().first()
 
-        val playlists = runBlocking { provider.playlists() }
+        val playlists = provider.playlists()
 
         playlists.map { it.externalId } shouldContainExactlyInAnyOrder
             listOf(
@@ -320,19 +321,19 @@ class TaglibMediaProviderTest {
     }
 
     @Test
-    fun `a findSongs that fails doesn't leave the last import's playlist walk in use`() {
+    fun `a findSongs that fails doesn't leave the last import's playlist walk in use`() = runTest(dispatcher) {
         var calls = 0
         val provider =
-            TaglibMediaProvider(context, kTagLibWithoutNativeLibrary(), scanner, tagReadGuard, Dispatchers.Unconfined, grantedTrees = { listOf(tree) }) {
+            TaglibMediaProvider(context, kTagLibWithoutNativeLibrary(), scanner, tagReadGuard, dispatcher, grantedTrees = { listOf(tree) }) {
                 // The second call is the failing findSongs' own, before it walks anything
                 if (++calls == 2) throw IllegalStateException("no folders")
                 ScannerFolders(extraTrees = listOf(tree))
             }
-        runBlocking { provider.findSongs(emptyList()).filterIsInstance<FlowEvent.Success<List<Song>>>().first() }
-        runCatching { runBlocking { provider.findSongs(emptyList()).toList() } }
+        provider.findSongs(emptyList()).filterIsInstance<FlowEvent.Success<List<Song>>>().first()
+        runCatching { provider.findSongs(emptyList()).toList() }
         queried.clear()
 
-        val playlists = runBlocking { provider.playlists() }
+        val playlists = provider.playlists()
 
         playlists.map { it.externalId } shouldBe listOf(fileId("$primary/Music/p.m3u"))
         // Walked again, not read from the map of the import before
@@ -340,20 +341,20 @@ class TaglibMediaProviderTest {
     }
 
     @Test
-    fun `a walked tree that is no longer an extra tree is looked up in MediaStore`() {
+    fun `a walked tree that is no longer an extra tree is looked up in MediaStore`() = runTest(dispatcher) {
         var extra = listOf(tree)
-        val provider = TaglibMediaProvider(context, kTagLibWithoutNativeLibrary(), scanner, tagReadGuard, Dispatchers.Unconfined, grantedTrees = { listOf(tree) }) { ScannerFolders(extraTrees = extra) }
-        runBlocking { provider.findSongs(emptyList()).filterIsInstance<FlowEvent.Success<List<Song>>>().first() }
+        val provider = TaglibMediaProvider(context, kTagLibWithoutNativeLibrary(), scanner, tagReadGuard, dispatcher, grantedTrees = { listOf(tree) }) { ScannerFolders(extraTrees = extra) }
+        provider.findSongs(emptyList()).filterIsInstance<FlowEvent.Success<List<Song>>>().first()
         extra = emptyList()
         FakeMediaProvider.playlistRows = listOf("$primary/Music/Lists/a.m3u" to "a.m3u")
 
-        val playlists = runBlocking { provider.playlists() }
+        val playlists = provider.playlists()
 
         playlists.map { it.externalId } shouldBe listOf(fileId("$primary/Music/Lists/a.m3u"))
     }
 
     @Test
-    fun `a file that was imported before and can't be read now keeps its song, a new one is skipped`() {
+    fun `a file that was imported before and can't be read now keeps its song, a new one is skipped`() = runTest(dispatcher) {
         unreadable += listOf("b.mp3", "c.mp3")
         val existing = listOf(storedSong("b.mp3", size = 999, lastModified = MODIFIED))
 
@@ -364,7 +365,7 @@ class TaglibMediaProviderTest {
     }
 
     @Test
-    fun `a quarantined file isn't read and keeps its stored song while a new one is left out`() {
+    fun `a quarantined file isn't read and keeps its stored song while a new one is left out`() = runTest(dispatcher) {
         val b = DocumentsContract.buildDocumentUriUsingTree(tree, "primary:Music/b.mp3").toString()
         val c = DocumentsContract.buildDocumentUriUsingTree(tree, "primary:Music/c.mp3").toString()
         preferences.quarantineTagRead(TagReadFile(b, 10, MODIFIED).key)
@@ -372,7 +373,7 @@ class TaglibMediaProviderTest {
         val existing = listOf(storedSong("b.mp3", size = 999, lastModified = MODIFIED))
         val provider = provider(excludes = listOf(skipFolder), trees = listOf(tree))
 
-        val songs = runBlocking { provider.findSongs(existing).filterIsInstance<FlowEvent.Success<List<Song>>>().first().result }
+        val songs = provider.findSongs(existing).filterIsInstance<FlowEvent.Success<List<Song>>>().first().result
 
         songs.map { it.name } shouldContainExactlyInAnyOrder listOf("Read a.mp3", "Stored b.mp3")
         read shouldContainExactlyInAnyOrder listOf("a.mp3")
@@ -390,19 +391,17 @@ class TaglibMediaProviderTest {
     }
 
     @Test
-    fun `an extra tree that can't be read is reported unreadable, while the others are still read and pruned`() {
+    fun `an extra tree that can't be read is reported unreadable, while the others are still read and pruned`() = runTest(dispatcher) {
         val locked = DocumentsContract.buildTreeDocumentUri(AUTHORITY, "primary:Locked")
         val provider = provider(excludes = listOf(skipFolder), trees = listOf(tree, locked))
 
-        val songs = runBlocking { provider.findSongs(emptyList()).filterIsInstance<FlowEvent.Success<List<Song>>>().first().result }
+        val songs = provider.findSongs(emptyList()).filterIsInstance<FlowEvent.Success<List<Song>>>().first().result
 
         songs.map { it.name } shouldContainExactlyInAnyOrder listOf("Read a.mp3", "Read b.mp3", "Read c.mp3")
         provider.unreadableRoots shouldBe setOf("$locked/document/")
     }
 
-    private fun findPlaylists(trees: List<Uri>): List<PlaylistUpdateData> = runBlocking {
-        provider(excludes = emptyList(), trees = emptyList(), grantedTrees = trees).playlists()
-    }
+    private suspend fun findPlaylists(trees: List<Uri>): List<PlaylistUpdateData> = provider(excludes = emptyList(), trees = emptyList(), grantedTrees = trees).playlists()
 
     private suspend fun TaglibMediaProvider.playlists(): List<PlaylistUpdateData> = findPlaylists(listOf(mediaStoreSong("a.mp3", size = 10, lastModified = MODIFIED)))
         .filterIsInstance<FlowEvent.Success<PlaylistListing>>()
@@ -411,7 +410,7 @@ class TaglibMediaProviderTest {
         .playlists
 
     @Test
-    fun `an unchanged MediaStore file is reused without being read, a changed one is read`() {
+    fun `an unchanged MediaStore file is reused without being read, a changed one is read`() = runTest(dispatcher) {
         FakeMediaProvider.rows = listOf(mediaRow(1, "m1.mp3", size = 10), mediaRow(2, "m2.mp3", size = 11))
         FakeMediaProvider.rows = FakeMediaProvider.rows + listOf(mediaRow(3, "m3.mp3", size = 12))
         val existing =
@@ -428,27 +427,24 @@ class TaglibMediaProviderTest {
     }
 
     @Test
-    fun `an import with no legacy songs to move lists MediaStore once, routine or thorough`() {
+    fun `an import with no legacy songs to move lists MediaStore once, routine or thorough`() = runTest(dispatcher) {
         FakeMediaProvider.rows = listOf(mediaRow(1, "m1.mp3", size = 10))
         FakeMediaProvider.audioQueries.set(0)
         val existing = listOf(mediaStoreSong("m1.mp3", size = 10, lastModified = MODIFIED))
         val provider = provider(excludes = emptyList(), trees = emptyList())
 
-        runBlocking {
-            provider.remapLegacySongs(existing, thorough = false)
-            provider.findSongs(existing).filterIsInstance<FlowEvent.Success<List<Song>>>().first()
-        }
+        provider.remapLegacySongs(existing, thorough = false)
+        provider.findSongs(existing).filterIsInstance<FlowEvent.Success<List<Song>>>().first()
         FakeMediaProvider.audioQueries.get() shouldBe 1
 
-        runBlocking {
-            provider.remapLegacySongs(existing, thorough = true)
-            provider.findSongsThoroughly(existing).filterIsInstance<FlowEvent.Success<List<Song>>>().first()
-        }.result.map { it.name } shouldBe listOf("Stored m1.mp3")
+        provider.remapLegacySongs(existing, thorough = true)
+        provider.findSongsThoroughly(existing).filterIsInstance<FlowEvent.Success<List<Song>>>().first()
+            .result.map { it.name } shouldBe listOf("Stored m1.mp3")
         FakeMediaProvider.audioQueries.get() shouldBe 2
     }
 
     @Test
-    fun `a file with no modified date is always read`() {
+    fun `a file with no modified date is always read`() = runTest(dispatcher) {
         val songs = findSongs(listOf(storedSong("zero.mp3", size = 10, lastModified = 0, folder = "Zero")), excludes = emptyList(), trees = listOf(zeroTree))
 
         read shouldBe listOf("zero.mp3")
@@ -456,7 +452,7 @@ class TaglibMediaProviderTest {
     }
 
     @Test
-    fun `every file is read again while the stored tags are outdated`() {
+    fun `every file is read again while the stored tags are outdated`() = runTest(dispatcher) {
         val songs = findSongs(listOf(storedSong("a.mp3", size = 10, lastModified = MODIFIED)), excludes = listOf(skipFolder), backfill = true)
 
         songs.first { it.path.endsWith("a.mp3") }.name shouldBe "Read a.mp3"
@@ -464,14 +460,14 @@ class TaglibMediaProviderTest {
     }
 
     @Test
-    fun `no song in an excluded folder is read`() {
+    fun `no song in an excluded folder is read`() = runTest(dispatcher) {
         findSongs(emptyList(), excludes = listOf(skipFolder))
 
         read shouldContainExactlyInAnyOrder listOf("a.mp3", "b.mp3", "c.mp3")
     }
 
     @Test
-    fun `excluding a folder leaves a sibling that shares its name as a prefix`() {
+    fun `excluding a folder leaves a sibling that shares its name as a prefix`() = runTest(dispatcher) {
         @Suppress("DEPRECATION")
         val foo = "${android.os.Environment.getExternalStorageDirectory().path}/Names/Foo"
 
@@ -481,7 +477,7 @@ class TaglibMediaProviderTest {
     }
 
     @Test
-    fun `a nested excluded folder is skipped with what's beneath it`() {
+    fun `a nested excluded folder is skipped with what's beneath it`() = runTest(dispatcher) {
         @Suppress("DEPRECATION")
         val deep = "${android.os.Environment.getExternalStorageDirectory().path}/Music/Skip/Deep"
 
@@ -491,7 +487,7 @@ class TaglibMediaProviderTest {
     }
 
     @Test
-    fun `unchanged files are reused, changed and new files are read, deleted files and excluded folders are absent`() {
+    fun `unchanged files are reused, changed and new files are read, deleted files and excluded folders are absent`() = runTest(dispatcher) {
         val existing =
             listOf(
                 storedSong("a.mp3", size = 10, lastModified = MODIFIED),
@@ -508,33 +504,31 @@ class TaglibMediaProviderTest {
     }
 
     @Test
-    fun `a file with a different modified date is read again`() {
+    fun `a file with a different modified date is read again`() = runTest(dispatcher) {
         val songs = findSongs(listOf(storedSong("a.mp3", size = 10, lastModified = MODIFIED - 1)), excludes = listOf(skipFolder))
 
         songs.first { it.path.endsWith("a.mp3") }.name shouldBe "Read a.mp3"
     }
 
     @Test
-    fun `without an exclude, every folder is walked`() {
+    fun `without an exclude, every folder is walked`() = runTest(dispatcher) {
         val songs = findSongs(emptyList(), excludes = emptyList())
 
         read shouldContainExactlyInAnyOrder listOf("a.mp3", "b.mp3", "c.mp3", "d.mp3", "e.mp3")
         songs.size shouldBe 5
     }
 
-    private fun findSongs(
+    private suspend fun findSongs(
         existingSongs: List<Song>,
         excludes: List<String>,
         trees: List<Uri> = listOf(tree),
         backfill: Boolean = false
     ): List<Song> {
         val provider = provider(excludes, trees, backfill = backfill)
-        return runBlocking {
-            provider.findSongs(existingSongs)
-                .filterIsInstance<FlowEvent.Success<List<Song>>>()
-                .first()
-                .result
-        }
+        return provider.findSongs(existingSongs)
+            .filterIsInstance<FlowEvent.Success<List<Song>>>()
+            .first()
+            .result
     }
 
     private fun provider(
@@ -542,7 +536,7 @@ class TaglibMediaProviderTest {
         trees: List<Uri>,
         backfill: Boolean = false,
         grantedTrees: List<Uri> = emptyList()
-    ) = TaglibMediaProvider(context, kTagLibWithoutNativeLibrary(), scanner, tagReadGuard, Dispatchers.Unconfined, backfillFileTags = { backfill }, grantedTrees = { grantedTrees }) {
+    ) = TaglibMediaProvider(context, kTagLibWithoutNativeLibrary(), scanner, tagReadGuard, dispatcher, backfillFileTags = { backfill }, grantedTrees = { grantedTrees }) {
         ScannerFolders(filter = FolderFilter(excludes = excludes), extraTrees = trees)
     }
 

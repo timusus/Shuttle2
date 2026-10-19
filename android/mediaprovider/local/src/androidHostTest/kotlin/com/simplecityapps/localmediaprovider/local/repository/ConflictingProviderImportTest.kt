@@ -26,9 +26,10 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.TestCoroutineScheduler
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Before
@@ -47,10 +48,12 @@ class ConflictingProviderImportTest {
     private val context: Context = ApplicationProvider.getApplicationContext()
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val database = Room.inMemoryDatabaseBuilder(context, MediaDatabase::class.java).trackingIdentityChanges().allowMainThreadQueries().build()
+    private val testScheduler = TestCoroutineScheduler()
+    private val dispatcher = UnconfinedTestDispatcher(testScheduler)
 
     @Before
     fun setUp() {
-        Dispatchers.setMain(UnconfinedTestDispatcher())
+        Dispatchers.setMain(dispatcher)
     }
 
     @After
@@ -61,12 +64,12 @@ class ConflictingProviderImportTest {
     }
 
     @Test
-    fun `importing the same path from two providers keeps one row per provider`() = runBlocking<Unit> {
+    fun `importing the same path from two providers keeps one row per provider`() = runTest(dispatcher) {
         val importer =
             MediaImporter(
                 strings = ResourceMediaImportStrings(context),
-                songRepository = LocalSongRepository(scope, UnconfinedTestDispatcher(), database.songDataDao(), database.libraryAlbumIndex()),
-                playlistStore = LocalPlaylistRepository(scope, UnconfinedTestDispatcher(), database.playlistDataDao(), database.playlistSongJoinDataDao(), SafPlaylistFileSync(context, database.songDataDao(), Dispatchers.Unconfined), database.libraryAlbumIndex()),
+                songRepository = LocalSongRepository(scope, dispatcher, database.songDataDao(), database.libraryAlbumIndex()),
+                playlistStore = LocalPlaylistRepository(scope, dispatcher, database.playlistDataDao(), database.playlistSongJoinDataDao(), SafPlaylistFileSync(context, database.songDataDao(), Dispatchers.Unconfined), database.libraryAlbumIndex()),
                 sourceState = SourceStateStore(InMemoryKeyValueStore()),
                 afterImport = {}
             )

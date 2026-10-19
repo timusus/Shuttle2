@@ -9,7 +9,7 @@ import com.simplecityapps.shuttle.model.leadPerformer
 import io.kotest.matchers.shouldBe
 import kotlin.time.Instant
 import kotlinx.coroutines.flow.toList
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.LocalDate
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -25,21 +25,21 @@ class MediaStoreFileTagsTest {
     }
 
     @Test
-    fun `song gets ReplayGain values from the tag reader`() {
+    fun `song gets ReplayGain values from the tag reader`() = runTest {
         val reader = MediaStoreTagReader { _, _ -> fileTags(replayGainTrack = -3.5, replayGainAlbum = -4.2) }
 
-        val result = runBlocking { createMediaStoreSong().withFileTags(reader) }
+        val result = createMediaStoreSong().withFileTags(reader)
 
         result.replayGainTrack shouldBe -3.5
         result.replayGainAlbum shouldBe -4.2
     }
 
     @Test
-    fun `genres, lyrics, grouping and audio properties come from the file's tags`() {
+    fun `genres, lyrics, grouping and audio properties come from the file's tags`() = runTest {
         val tags = fileTags().copy(genres = listOf("R&B/Soul"), lyrics = "la la", grouping = "Set A", bitRate = 320, bitDepth = 16, sampleRate = 44100, channelCount = 2)
         val reader = MediaStoreTagReader { _, _ -> tags }
 
-        val result = runBlocking { createMediaStoreSong().withFileTags(reader) }
+        val result = createMediaStoreSong().withFileTags(reader)
 
         result.genres shouldBe listOf("R&B/Soul")
         result.lyrics shouldBe "la la"
@@ -51,16 +51,16 @@ class MediaStoreFileTagsTest {
     }
 
     @Test
-    fun `a file without genre tags keeps the MediaStore genres`() {
+    fun `a file without genre tags keeps the MediaStore genres`() = runTest {
         val reader = MediaStoreTagReader { _, _ -> fileTags() }
 
-        val result = runBlocking { createMediaStoreSong().copy(genres = listOf("Rock")).withFileTags(reader) }
+        val result = createMediaStoreSong().copy(genres = listOf("Rock")).withFileTags(reader)
 
         result.genres shouldBe listOf("Rock")
     }
 
     @Test
-    fun `Mahler's conductor shows from the tags as a file carries them`() {
+    fun `Mahler's conductor shows from the tags as a file carries them`() = runTest {
         val tags =
             mapOf(
                 "TITLE" to listOf("Symphony no. 2 in C minor “Resurrection”: III. In ruhig fliessender Bewegung"),
@@ -71,46 +71,46 @@ class MediaStoreFileTagsTest {
             ).toFileTags()
         val reader = MediaStoreTagReader { _, _ -> tags }
 
-        val result = runBlocking { createMediaStoreSong().withFileTags(reader) }
+        val result = createMediaStoreSong().withFileTags(reader)
 
         result.leadPerformer() shouldBe "Simon Rattle"
     }
 
     @Test
-    fun `a failing read leaves ReplayGain values null`() {
+    fun `a failing read leaves ReplayGain values null`() = runTest {
         val reader = MediaStoreTagReader { _, _ -> null }
 
-        val result = runBlocking { createMediaStoreSong().withFileTags(reader) }
+        val result = createMediaStoreSong().withFileTags(reader)
 
         result.replayGainTrack shouldBe null
         result.replayGainAlbum shouldBe null
     }
 
     @Test
-    fun `a reader that throws leaves ReplayGain values null`() {
+    fun `a reader that throws leaves ReplayGain values null`() = runTest {
         val reader = MediaStoreTagReader { _, _ -> throw IllegalStateException("corrupt file") }
 
-        val result = runBlocking { createMediaStoreSong().withFileTags(reader) }
+        val result = createMediaStoreSong().withFileTags(reader)
 
         result.replayGainTrack shouldBe null
         result.replayGainAlbum shouldBe null
     }
 
     @Test
-    fun `one unreadable file doesn't stop the other songs importing`() {
+    fun `one unreadable file doesn't stop the other songs importing`() = runTest {
         val reader = MediaStoreTagReader { uri, _ ->
             if (uri.lastPathSegment == "2") throw IllegalArgumentException("corrupt file")
             fileTags(replayGainTrack = -3.5, replayGainAlbum = -4.2)
         }
         val songs = (1..3).map { id -> createMediaStoreSong(externalId = "$id", path = "/music/$id.mp3") }
 
-        val result = runBlocking { songs.withFileTags(emptyList(), reader, readUnchanged = false).toList() }
+        val result = songs.withFileTags(emptyList(), reader, readUnchanged = false).toList()
 
         result.sortedBy { it.path }.map { it.replayGainTrack } shouldBe listOf(-3.5, null, -3.5)
     }
 
     @Test
-    fun `an unchanged file keeps its stored values without being read`() {
+    fun `an unchanged file keeps its stored values without being read`() = runTest {
         var readCount = 0
         val reader = MediaStoreTagReader { _, _ ->
             readCount++
@@ -118,7 +118,7 @@ class MediaStoreFileTagsTest {
         }
         val existing = createMediaStoreSong(replayGainTrack = -3.5, replayGainAlbum = -4.2)
 
-        val result = runBlocking { listOf(createMediaStoreSong()).withFileTags(listOf(existing), reader, readUnchanged = false).toList() }
+        val result = listOf(createMediaStoreSong()).withFileTags(listOf(existing), reader, readUnchanged = false).toList()
 
         readCount shouldBe 0
         result.single().replayGainTrack shouldBe -3.5
@@ -126,7 +126,7 @@ class MediaStoreFileTagsTest {
     }
 
     @Test
-    fun `a new, modified or resized file is read`() {
+    fun `a new, modified or resized file is read`() = runTest {
         val reader = MediaStoreTagReader { _, _ -> fileTags(replayGainTrack = -1.0, replayGainAlbum = -2.0) }
         val existing =
             listOf(
@@ -140,13 +140,13 @@ class MediaStoreFileTagsTest {
                 createMediaStoreSong(path = "/music/resized.mp3", size = 2048L)
             )
 
-        val result = runBlocking { songs.withFileTags(existing, reader, readUnchanged = false).toList() }
+        val result = songs.withFileTags(existing, reader, readUnchanged = false).toList()
 
         result.map { it.replayGainTrack } shouldBe listOf(-1.0, -1.0, -1.0)
     }
 
     @Test
-    fun `an unchanged file keeps its stored raw artist tags and ids`() {
+    fun `an unchanged file keeps its stored raw artist tags and ids`() = runTest {
         val reader = MediaStoreTagReader { _, _ -> error("an unchanged file isn't read") }
         val existing =
             createMediaStoreSong().copy(
@@ -158,7 +158,7 @@ class MediaStoreFileTagsTest {
                 mbAlbumArtistIds = listOf("89ad4ac3-39f7-470e-963a-56509c546377")
             )
 
-        val result = runBlocking { listOf(createMediaStoreSong()).withFileTags(listOf(existing), reader, readUnchanged = false).toList() }.single()
+        val result = listOf(createMediaStoreSong()).withFileTags(listOf(existing), reader, readUnchanged = false).toList().single()
 
         result.albumArtists shouldBe listOf("Various Artists")
         result.artistsTag shouldBe listOf("A", "B")
@@ -190,18 +190,18 @@ class MediaStoreFileTagsTest {
     }
 
     @Test
-    fun `the backfill reads unchanged files too`() {
+    fun `the backfill reads unchanged files too`() = runTest {
         val reader = MediaStoreTagReader { _, _ -> fileTags(replayGainTrack = -3.5, replayGainAlbum = -4.2) }
         val existing = createMediaStoreSong()
 
-        val result = runBlocking { listOf(createMediaStoreSong()).withFileTags(listOf(existing), reader, readUnchanged = true).toList() }
+        val result = listOf(createMediaStoreSong()).withFileTags(listOf(existing), reader, readUnchanged = true).toList()
 
         result.single().replayGainTrack shouldBe -3.5
         result.single().replayGainAlbum shouldBe -4.2
     }
 
     @Test
-    fun `a song without a MediaStore id is left untouched`() {
+    fun `a song without a MediaStore id is left untouched`() = runTest {
         var readCalled = false
         val reader = MediaStoreTagReader { _, _ ->
             readCalled = true
@@ -209,14 +209,14 @@ class MediaStoreFileTagsTest {
         }
         val song = createMediaStoreSong(externalId = null)
 
-        val result = runBlocking { song.withFileTags(reader) }
+        val result = song.withFileTags(reader)
 
         result shouldBe song
         readCalled shouldBe false
     }
 
     @Test
-    fun `a Matroska file's tags replace the file and folder names MediaStore falls back to`() {
+    fun `a Matroska file's tags replace the file and folder names MediaStore falls back to`() = runTest {
         // MediaStore doesn't read Matroska tags: it titles the song after the file and names the album after the folder
         val song = createMediaStoreSong(name = "gapless2", artists = emptyList(), albumArtist = null, album = "gapless", track = null, date = null)
         val reader =
@@ -224,7 +224,7 @@ class MediaStoreFileTagsTest {
                 fileTags(title = "Gapless Two", artists = listOf("Gapless Artist"), albumArtist = "Gapless Artist", album = "Gapless Album", track = 2, year = "2023")
             }
 
-        val result = runBlocking { song.withFileTags(reader) }
+        val result = song.withFileTags(reader)
 
         result.name shouldBe "Gapless Two"
         result.artists shouldBe listOf("Gapless Artist")
@@ -235,11 +235,11 @@ class MediaStoreFileTagsTest {
     }
 
     @Test
-    fun `a field the file doesn't tag keeps MediaStore's value`() {
+    fun `a field the file doesn't tag keeps MediaStore's value`() = runTest {
         val song = createMediaStoreSong(name = "gapless2")
         val reader = MediaStoreTagReader { _, _ -> fileTags(album = "Gapless Album") }
 
-        val result = runBlocking { song.withFileTags(reader) }
+        val result = song.withFileTags(reader)
 
         result.name shouldBe "gapless2"
         result.album shouldBe "Gapless Album"
@@ -248,7 +248,7 @@ class MediaStoreFileTagsTest {
     }
 
     @Test
-    fun `non-ASCII tags come from the file, not MediaStore's mis-decoded copy`() {
+    fun `non-ASCII tags come from the file, not MediaStore's mis-decoded copy`() = runTest {
         // #150: MediaStore decoded this UTF-16 ID3v2.3 title as Windows-1252 bytes
         val song = createMediaStoreSong(name = "Chanson dâ€™un jour dâ€™hiver", artists = listOf("Ã‘engo Flow"), album = "æ±äº¬")
         val reader =
@@ -256,7 +256,7 @@ class MediaStoreFileTagsTest {
                 fileTags(title = "Chanson d’un jour d’hiver", artists = listOf("Ñengo Flow"), album = "東京 🎵")
             }
 
-        val result = runBlocking { song.withFileTags(reader) }
+        val result = song.withFileTags(reader)
 
         result.name shouldBe "Chanson d’un jour d’hiver"
         result.artists shouldBe listOf("Ñengo Flow")
@@ -264,21 +264,21 @@ class MediaStoreFileTagsTest {
     }
 
     @Test
-    fun `a file TagLib can't parse keeps MediaStore's values`() {
+    fun `a file TagLib can't parse keeps MediaStore's values`() = runTest {
         val song = createMediaStoreSong()
         val reader = MediaStoreTagReader { _, _ -> null }
 
-        val result = runBlocking { song.withFileTags(reader) }
+        val result = song.withFileTags(reader)
 
         result shouldBe song
     }
 
     @Test
-    fun `an unchanged file keeps its stored tags without being read`() {
+    fun `an unchanged file keeps its stored tags without being read`() = runTest {
         val reader = MediaStoreTagReader { _, _ -> fileTags(title = "Read again", album = "Read again") }
         val existing = createMediaStoreSong(name = "Gapless Two", album = "Gapless Album", artists = listOf("Gapless Artist"), track = 2)
 
-        val result = runBlocking { listOf(createMediaStoreSong(name = "gapless2", album = "gapless")).withFileTags(listOf(existing), reader, readUnchanged = false).toList() }
+        val result = listOf(createMediaStoreSong(name = "gapless2", album = "gapless")).withFileTags(listOf(existing), reader, readUnchanged = false).toList()
 
         result.single().name shouldBe "Gapless Two"
         result.single().album shouldBe "Gapless Album"

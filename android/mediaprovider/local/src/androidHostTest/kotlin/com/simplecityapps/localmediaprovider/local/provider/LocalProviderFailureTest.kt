@@ -19,9 +19,11 @@ import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import com.simplecityapps.shuttle.persistence.SourceStateStore
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.last
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.TestCoroutineScheduler
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.runTest
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.Robolectric
@@ -31,28 +33,31 @@ import org.robolectric.Robolectric
  * all. (The scanner's TaglibMediaProvider does the same when it has no extra folders to read, but needs KTagLib's native
  * library, which doesn't load on the JVM; what it keeps when it reads only those is in StorageVolumesTest.)
  */
+@OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(AndroidJUnit4::class)
 class LocalProviderFailureTest {
     private val context: Context = ApplicationProvider.getApplicationContext()
+    private val testScheduler = TestCoroutineScheduler()
+    private val dispatcher = UnconfinedTestDispatcher(testScheduler)
 
-    private val mediaStoreProvider = MediaStoreMediaProvider(context, { _, _ -> null }, SourceStateStore(InMemoryKeyValueStore()), testTagReadGuard(), Dispatchers.Unconfined)
+    private val mediaStoreProvider = MediaStoreMediaProvider(context, { _, _ -> null }, SourceStateStore(InMemoryKeyValueStore()), testTagReadGuard(), dispatcher)
 
     @Test
-    fun `MediaStore returning no cursor fails the MediaStore import`() {
+    fun `MediaStore returning no cursor fails the MediaStore import`() = runTest(dispatcher) {
         mediaStore<NoCursorMediaStore>()
 
         lastEvent(mediaStoreProvider).shouldBeInstanceOf<FlowEvent.Failure>()
     }
 
     @Test
-    fun `MediaStore refusing access fails the MediaStore import`() {
+    fun `MediaStore refusing access fails the MediaStore import`() = runTest(dispatcher) {
         mediaStore<DeniedMediaStore>()
 
         lastEvent(mediaStoreProvider).shouldBeInstanceOf<FlowEvent.Failure>()
     }
 
     @Test
-    fun `songs on a volume that isn't mounted are reported unreadable`() {
+    fun `songs on a volume that isn't mounted are reported unreadable`() = runTest(dispatcher) {
         mediaStore<EmptyMediaStore>()
 
         lastEvent(mediaStoreProvider, existingSongs = listOf(song("/storage/ABCD-EF01/Music/a.mp3"))).shouldBeInstanceOf<FlowEvent.Success<*>>()
@@ -64,10 +69,10 @@ class LocalProviderFailureTest {
         Robolectric.buildContentProvider(T::class.java).create(ProviderInfo().apply { authority = MediaStore.AUTHORITY })
     }
 
-    private fun lastEvent(
+    private suspend fun lastEvent(
         provider: MediaProvider,
         existingSongs: List<Song> = emptyList()
-    ) = runBlocking { provider.findSongs(existingSongs).last() }
+    ) = provider.findSongs(existingSongs).last()
 
     private fun song(path: String) = Song(
         id = 1,

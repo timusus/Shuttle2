@@ -18,50 +18,53 @@ import com.simplecityapps.shuttle.persistence.SourceStateStore
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import kotlin.time.Instant
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.last
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.TestCoroutineScheduler
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.runTest
 import org.junit.Test
 import org.junit.runner.RunWith
 
 /** An import lists MediaStore once: the remap's listing is the one findSongs takes. */
+@OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(AndroidJUnit4::class)
 class MediaStoreImportListingTest {
     private val context: Context = ApplicationProvider.getApplicationContext()
+    private val testScheduler = TestCoroutineScheduler()
+    private val dispatcher = UnconfinedTestDispatcher(testScheduler)
     private val source = FakeMediaStore().apply { put(MediaStoreAudioRow(file, generation = 0)) }
     private val preferences = SourceStateStore(InMemoryKeyValueStore()).apply { setSongTagsVersion(MediaProviderType.MediaStore.name, SONG_TAGS_VERSION) }
 
     // Without a store the lister reads MediaStore whole on every list, so each list is one whole read
-    private val provider = MediaStoreMediaProvider(context, { _, _ -> null }, preferences, testTagReadGuard(), Dispatchers.Unconfined, MediaStoreAudioLister(source, store = null, incremental = false))
+    private val provider = MediaStoreMediaProvider(context, { _, _ -> null }, preferences, testTagReadGuard(), dispatcher, MediaStoreAudioLister(source, store = null, incremental = false))
 
     @Test
-    fun `a routine import lists MediaStore once`() {
+    fun `a routine import lists MediaStore once`() = runTest(dispatcher) {
         val songs = listOf(song())
-        runBlocking { provider.remapLegacySongs(songs, thorough = false) }
+        provider.remapLegacySongs(songs, thorough = false)
 
-        runBlocking { provider.findSongs(songs).last() }.shouldBeInstanceOf<FlowEvent.Success<List<Song>>>().result.map { it.path } shouldBe listOf(file.path)
+        provider.findSongs(songs).last().shouldBeInstanceOf<FlowEvent.Success<List<Song>>>().result.map { it.path } shouldBe listOf(file.path)
 
         source.wholeReads shouldBe 1
     }
 
     @Test
-    fun `a thorough import lists MediaStore once`() {
+    fun `a thorough import lists MediaStore once`() = runTest(dispatcher) {
         val songs = listOf(song())
-        runBlocking { provider.remapLegacySongs(songs, thorough = true) }
+        provider.remapLegacySongs(songs, thorough = true)
 
-        runBlocking { provider.findSongsThoroughly(songs).last() }.shouldBeInstanceOf<FlowEvent.Success<List<Song>>>()
+        provider.findSongsThoroughly(songs).last().shouldBeInstanceOf<FlowEvent.Success<List<Song>>>()
 
         source.wholeReads shouldBe 1
     }
 
     @Test
-    fun `the next import lists MediaStore again`() {
+    fun `the next import lists MediaStore again`() = runTest(dispatcher) {
         val songs = listOf(song())
-        runBlocking {
-            provider.remapLegacySongs(songs, thorough = false)
-            provider.findSongs(songs).last()
-            provider.findSongs(songs).last()
-        }
+        provider.remapLegacySongs(songs, thorough = false)
+        provider.findSongs(songs).last()
+        provider.findSongs(songs).last()
 
         source.wholeReads shouldBe 2
     }

@@ -37,9 +37,10 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.TestCoroutineScheduler
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Before
@@ -73,6 +74,8 @@ class LegacySafSongsImportTest {
     private val context: Context = ApplicationProvider.getApplicationContext()
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private lateinit var database: MediaDatabase
+    private val testScheduler = TestCoroutineScheduler()
+    private val dispatcher = UnconfinedTestDispatcher(testScheduler)
 
     // MediaStore's listing after the upgrade
     private val primarySong = file(id = 100, path = "/storage/emulated/0/Music/Album/Primary.mp3")
@@ -84,7 +87,7 @@ class LegacySafSongsImportTest {
 
     @Before
     fun setUp() {
-        Dispatchers.setMain(UnconfinedTestDispatcher())
+        Dispatchers.setMain(dispatcher)
         helper.createDatabase(TEST_DB, SCHEMA_1_0_10).apply {
             insertSong(id = 1, path = "$MUSIC_TREE/document/primary%3AMusic%2FAlbum%2FPrimary.mp3", playCount = 5, lastPlayed = 1_750_000_000_000, lastCompleted = 1_750_000_000_000)
             insertSong(id = 2, path = "$SD_CARD_TREE/document/04B9-1208%3AMusic%2FSD%20Card.flac", playCount = 1, excluded = true)
@@ -116,7 +119,7 @@ class LegacySafSongsImportTest {
     }
 
     @Test
-    fun `the first import after the upgrade keeps each matched song's row, plays, exclude flag and playlists`() = runBlocking<Unit> {
+    fun `the first import after the upgrade keeps each matched song's row, plays, exclude flag and playlists`() = runTest(dispatcher) {
         import()
 
         val songs = shuttleSongs().associateBy { song -> song.path }
@@ -149,14 +152,14 @@ class LegacySafSongsImportTest {
     }
 
     @Test
-    fun `a remapped song keeps the play history 1_0_10 seeded`() = runBlocking<Unit> {
+    fun `a remapped song keeps the play history 1_0_10 seeded`() = runTest(dispatcher) {
         import()
 
         database.playEventDao().completedSongDays(since = Instant.fromEpochMilliseconds(0), utcOffsetMs = 0).map { row -> row.songId } shouldBe listOf(1L)
     }
 
     @Test
-    fun `a later import finds nothing left to remap and changes nothing`() = runBlocking<Unit> {
+    fun `a later import finds nothing left to remap and changes nothing`() = runTest(dispatcher) {
         val provider = import()
         val afterFirstImport = database.songDataDao().get().map { song -> song.id to song.path }
 
@@ -167,7 +170,7 @@ class LegacySafSongsImportTest {
     }
 
     @Test
-    fun `a remap that fails keeps the old songs for the next import`() = runBlocking<Unit> {
+    fun `a remap that fails keeps the old songs for the next import`() = runTest(dispatcher) {
         import(FakeTaglibMediaProvider(mediaStore, failRemap = true))
 
         shuttleSongs().map { song -> song.id } shouldBe listOf(1L, 2L, 3L, 4L, 5L)
@@ -176,7 +179,7 @@ class LegacySafSongsImportTest {
     }
 
     @Test
-    fun `a remap onto a path another provider's song already has succeeds, but onto the same provider's is skipped`() = runBlocking<Unit> {
+    fun `a remap onto a path another provider's song already has succeeds, but onto the same provider's is skipped`() = runTest(dispatcher) {
         val remaps =
             listOf(
                 // Song 6 holds this path as a MediaStore song, so it's no longer a conflict for a Shuttle remap (#420)
@@ -186,7 +189,7 @@ class LegacySafSongsImportTest {
                 SongPathRemap(songId = 4, path = "$MUSIC_TREE/document/primary%3AMusic%2FAlbum%2FPrimary.mp3")
             )
 
-        LocalSongRepository(scope, UnconfinedTestDispatcher(), database.songDataDao(), database.libraryAlbumIndex()).remapPaths(remaps, MediaProviderType.Shuttle) shouldBe listOf(remaps[0], remaps[1])
+        LocalSongRepository(scope, dispatcher, database.songDataDao(), database.libraryAlbumIndex()).remapPaths(remaps, MediaProviderType.Shuttle) shouldBe listOf(remaps[0], remaps[1])
 
         database.songDataDao().get().single { song -> song.id == 2L }.path shouldBe "/storage/emulated/0/Music/Other.mp3"
         database.songDataDao().get().single { song -> song.id == 4L }.path shouldBe "$MUSIC_TREE/document/primary%3AMusic%2FDeleted.mp3"
@@ -196,8 +199,8 @@ class LegacySafSongsImportTest {
         val importer =
             MediaImporter(
                 strings = ResourceMediaImportStrings(context),
-                songRepository = LocalSongRepository(scope, UnconfinedTestDispatcher(), database.songDataDao(), database.libraryAlbumIndex()),
-                playlistStore = LocalPlaylistRepository(scope, UnconfinedTestDispatcher(), database.playlistDataDao(), database.playlistSongJoinDataDao(), SafPlaylistFileSync(context, database.songDataDao(), Dispatchers.Unconfined), database.libraryAlbumIndex()),
+                songRepository = LocalSongRepository(scope, dispatcher, database.songDataDao(), database.libraryAlbumIndex()),
+                playlistStore = LocalPlaylistRepository(scope, dispatcher, database.playlistDataDao(), database.playlistSongJoinDataDao(), SafPlaylistFileSync(context, database.songDataDao(), Dispatchers.Unconfined), database.libraryAlbumIndex()),
                 sourceState = SourceStateStore(InMemoryKeyValueStore()),
                 afterImport = {}
             )

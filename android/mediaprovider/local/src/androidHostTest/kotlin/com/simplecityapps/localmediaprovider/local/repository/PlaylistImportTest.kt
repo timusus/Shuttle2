@@ -42,10 +42,11 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.test.TestCoroutineScheduler
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Before
@@ -59,8 +60,10 @@ class PlaylistImportTest {
     private val context: Context = ApplicationProvider.getApplicationContext()
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val database = Room.inMemoryDatabaseBuilder(context, MediaDatabase::class.java).trackingIdentityChanges().allowMainThreadQueries().build()
-    private val songRepository = LaggingSongRepository(LocalSongRepository(scope, UnconfinedTestDispatcher(), database.songDataDao(), database.libraryAlbumIndex()))
-    private val playlistRepository = LocalPlaylistRepository(scope, UnconfinedTestDispatcher(), database.playlistDataDao(), database.playlistSongJoinDataDao(), SafPlaylistFileSync(context, database.songDataDao(), Dispatchers.Unconfined), database.libraryAlbumIndex())
+    private val testScheduler = TestCoroutineScheduler()
+    private val dispatcher = UnconfinedTestDispatcher(testScheduler)
+    private val songRepository = LaggingSongRepository(LocalSongRepository(scope, dispatcher, database.songDataDao(), database.libraryAlbumIndex()))
+    private val playlistRepository = LocalPlaylistRepository(scope, dispatcher, database.playlistDataDao(), database.playlistSongJoinDataDao(), SafPlaylistFileSync(context, database.songDataDao(), Dispatchers.Unconfined), database.libraryAlbumIndex())
     private val provider = FakeProvider()
     private val importer =
         MediaImporter(
@@ -77,7 +80,7 @@ class PlaylistImportTest {
     private val preferences = SourceStateStore(InMemoryKeyValueStore())
     private val playlistSync = ServerPlaylistSync(setOf(serverWriter), preferences, scope)
     private val syncedPlaylistRepository =
-        LocalPlaylistRepository(scope, UnconfinedTestDispatcher(), database.playlistDataDao(), database.playlistSongJoinDataDao(), SafPlaylistFileSync(context, database.songDataDao(), Dispatchers.Unconfined), database.libraryAlbumIndex(), playlistSync)
+        LocalPlaylistRepository(scope, dispatcher, database.playlistDataDao(), database.playlistSongJoinDataDao(), SafPlaylistFileSync(context, database.songDataDao(), Dispatchers.Unconfined), database.libraryAlbumIndex(), playlistSync)
     private val syncedImporter =
         MediaImporter(
             strings = ResourceMediaImportStrings(context),
@@ -90,7 +93,7 @@ class PlaylistImportTest {
 
     @Before
     fun setUp() {
-        Dispatchers.setMain(UnconfinedTestDispatcher())
+        Dispatchers.setMain(dispatcher)
     }
 
     @After
@@ -101,7 +104,7 @@ class PlaylistImportTest {
     }
 
     @Test
-    fun `the first import creates the playlist even while the shared song list hasn't caught up with the new songs`() = runBlocking<Unit> {
+    fun `the first import creates the playlist even while the shared song list hasn't caught up with the new songs`() = runTest(dispatcher) {
         provider.songPaths = listOf(A, B, C)
         provider.playlists = mapOf(PLAYLIST_ID to listOf(A, B, C))
 
@@ -111,7 +114,7 @@ class PlaylistImportTest {
     }
 
     @Test
-    fun `a rescan gives an m3u playlist the songs the file now lists, in its order`() = runBlocking<Unit> {
+    fun `a rescan gives an m3u playlist the songs the file now lists, in its order`() = runTest(dispatcher) {
         provider.songPaths = listOf(A, B, C, D)
         provider.playlists = mapOf(PLAYLIST_ID to listOf(A, B, C))
         importer.import()
@@ -123,7 +126,7 @@ class PlaylistImportTest {
     }
 
     @Test
-    fun `importing an m3u playlist leaves the file as it is`() = runBlocking<Unit> {
+    fun `importing an m3u playlist leaves the file as it is`() = runTest(dispatcher) {
         val file = File.createTempFile("stuff", ".m3u").apply { deleteOnExit() }
         val contents = "#EXTM3U\n#EXTINF:180,Artist - Remix\nhttp://example.com/remix.mp3\nA/a.mp3\nD/d.mp3\nC/c.mp3\n"
         file.writeText(contents)
@@ -140,7 +143,7 @@ class PlaylistImportTest {
     }
 
     @Test
-    fun `an m3u playlist named like one made in S2 is imported as a playlist of its own`() = runBlocking<Unit> {
+    fun `an m3u playlist named like one made in S2 is imported as a playlist of its own`() = runTest(dispatcher) {
         provider.songPaths = listOf(A, B, C)
         provider.playlists = mapOf(PLAYLIST_ID to listOf(A, C))
         importer.import()
@@ -155,7 +158,7 @@ class PlaylistImportTest {
     }
 
     @Test
-    fun `a rescan keeps the songs added in S2 to a playlist from a media server`() = runBlocking<Unit> {
+    fun `a rescan keeps the songs added in S2 to a playlist from a media server`() = runTest(dispatcher) {
         val provider = serverProvider()
         provider.songPaths = listOf(A, B, C)
         provider.playlists = mapOf(PLAYLIST_ID to listOf(A, B))
@@ -169,7 +172,7 @@ class PlaylistImportTest {
     }
 
     @Test
-    fun `a rescan follows the server's removals and order and keeps the songs added in S2 after them`() = runBlocking<Unit> {
+    fun `a rescan follows the server's removals and order and keeps the songs added in S2 after them`() = runTest(dispatcher) {
         val provider = serverProvider()
         provider.songPaths = listOf(A, B, C, D)
         provider.playlists = mapOf(PLAYLIST_ID to listOf(A, B))
@@ -184,7 +187,7 @@ class PlaylistImportTest {
     }
 
     @Test
-    fun `a rescan follows the songs removed from and reordered in a playlist on the server`() = runBlocking<Unit> {
+    fun `a rescan follows the songs removed from and reordered in a playlist on the server`() = runTest(dispatcher) {
         val provider = serverProvider()
         provider.songPaths = listOf(A, B, C, D)
         provider.playlists = mapOf(PLAYLIST_ID to listOf(A, B, C))
@@ -197,7 +200,7 @@ class PlaylistImportTest {
     }
 
     @Test
-    fun `a playlist read in part only gains songs, and loses none`() = runBlocking<Unit> {
+    fun `a playlist read in part only gains songs, and loses none`() = runTest(dispatcher) {
         val provider = serverProvider()
         provider.songPaths = listOf(A, B, C)
         provider.playlists = mapOf(PLAYLIST_ID to listOf(A, B))
@@ -210,7 +213,7 @@ class PlaylistImportTest {
     }
 
     @Test
-    fun `a playlist the server reports unchanged is kept as it is, though the listing doesn't read it`() = runBlocking<Unit> {
+    fun `a playlist the server reports unchanged is kept as it is, though the listing doesn't read it`() = runTest(dispatcher) {
         val provider = serverProvider()
         provider.songPaths = listOf(A, B)
         provider.playlists = mapOf(PLAYLIST_ID to listOf(A, B))
@@ -224,7 +227,7 @@ class PlaylistImportTest {
     }
 
     @Test
-    fun `a playlist deleted on the server is deleted`() = runBlocking<Unit> {
+    fun `a playlist deleted on the server is deleted`() = runTest(dispatcher) {
         val provider = serverProvider()
         provider.songPaths = listOf(A, B, C)
         provider.playlists = mapOf(PLAYLIST_ID to listOf(A, B), OTHER_PLAYLIST_ID to listOf(C))
@@ -237,7 +240,7 @@ class PlaylistImportTest {
     }
 
     @Test
-    fun `a playlist that matches no songs is never created`() = runBlocking<Unit> {
+    fun `a playlist that matches no songs is never created`() = runTest(dispatcher) {
         val provider = serverProvider()
         provider.songPaths = listOf(A, B, C)
         provider.playlists = mapOf(PLAYLIST_ID to listOf(A, B), OTHER_PLAYLIST_ID to listOf(D))
@@ -248,7 +251,7 @@ class PlaylistImportTest {
     }
 
     @Test
-    fun `a listed playlist that matches no songs but still holds some is kept`() = runBlocking<Unit> {
+    fun `a listed playlist that matches no songs but still holds some is kept`() = runTest(dispatcher) {
         val provider = serverProvider()
         provider.songPaths = listOf(A, B, C)
         provider.playlists = mapOf(PLAYLIST_ID to listOf(A, B))
@@ -262,7 +265,7 @@ class PlaylistImportTest {
     }
 
     @Test
-    fun `a playlist none of whose songs are left in the library is deleted`() = runBlocking<Unit> {
+    fun `a playlist none of whose songs are left in the library is deleted`() = runTest(dispatcher) {
         val provider = serverProvider()
         provider.songPaths = listOf(A, B, C)
         provider.playlists = mapOf(PLAYLIST_ID to listOf(A, B), OTHER_PLAYLIST_ID to listOf(C))
@@ -277,7 +280,7 @@ class PlaylistImportTest {
     }
 
     @Test
-    fun `a full import whose song import fails deletes no playlists`() = runBlocking<Unit> {
+    fun `a full import whose song import fails deletes no playlists`() = runTest(dispatcher) {
         val provider = serverProvider()
         provider.songPaths = listOf(A, B, C)
         provider.playlists = mapOf(PLAYLIST_ID to listOf(A, B), OTHER_PLAYLIST_ID to listOf(C))
@@ -292,7 +295,7 @@ class PlaylistImportTest {
     }
 
     @Test
-    fun `a full import of a server none of whose songs are in the library deletes no playlists`() = runBlocking<Unit> {
+    fun `a full import of a server none of whose songs are in the library deletes no playlists`() = runTest(dispatcher) {
         val provider = serverProvider()
         // Imported before, say, signing in again (#879), whose songs aren't in the library yet
         playlistRepository.createPlaylist(PLAYLIST_NAME, MediaProviderType.Jellyfin, songs = null, externalId = PLAYLIST_ID)
@@ -306,7 +309,7 @@ class PlaylistImportTest {
     }
 
     @Test
-    fun `a listing that fails deletes nothing`() = runBlocking<Unit> {
+    fun `a listing that fails deletes nothing`() = runTest(dispatcher) {
         val provider = serverProvider()
         provider.songPaths = listOf(A, B, C)
         provider.playlists = mapOf(PLAYLIST_ID to listOf(A, B), OTHER_PLAYLIST_ID to listOf(C))
@@ -320,7 +323,7 @@ class PlaylistImportTest {
     }
 
     @Test
-    fun `a listing short of the server's total deletes none of the playlists it left out`() = runBlocking<Unit> {
+    fun `a listing short of the server's total deletes none of the playlists it left out`() = runTest(dispatcher) {
         val provider = serverProvider()
         provider.songPaths = listOf(A, B, C)
         provider.playlists = mapOf(PLAYLIST_ID to listOf(A, B), OTHER_PLAYLIST_ID to listOf(C))
@@ -334,7 +337,7 @@ class PlaylistImportTest {
     }
 
     @Test
-    fun `a playlist whose songs couldn't be read is left as it is`() = runBlocking<Unit> {
+    fun `a playlist whose songs couldn't be read is left as it is`() = runTest(dispatcher) {
         val provider = serverProvider()
         provider.songPaths = listOf(A, B, C)
         provider.playlists = mapOf(PLAYLIST_ID to listOf(A, B), OTHER_PLAYLIST_ID to listOf(C))
@@ -348,7 +351,7 @@ class PlaylistImportTest {
     }
 
     @Test
-    fun `the playlists made in S2 and those of other sources are left as they are`() = runBlocking<Unit> {
+    fun `the playlists made in S2 and those of other sources are left as they are`() = runTest(dispatcher) {
         val provider = serverProvider()
         provider.songPaths = listOf(A, B, C)
         provider.playlists = mapOf(PLAYLIST_ID to listOf(A, B))
@@ -365,7 +368,7 @@ class PlaylistImportTest {
     }
 
     @Test
-    fun `a song added in S2 reaches the server - the next import keeps it once - and a removal on the server then removes it`() = runBlocking<Unit> {
+    fun `a song added in S2 reaches the server - the next import keeps it once - and a removal on the server then removes it`() = runTest(dispatcher) {
         server.songPaths = listOf(A, B, C)
         server.playlists = mapOf(PLAYLIST_ID to listOf(A, B))
         syncedImporter.import()
@@ -385,7 +388,7 @@ class PlaylistImportTest {
     }
 
     @Test
-    fun `an edit made offline stays in S2 through an import and reaches the server once it answers`() = runBlocking<Unit> {
+    fun `an edit made offline stays in S2 through an import and reaches the server once it answers`() = runTest(dispatcher) {
         server.songPaths = listOf(A, B, C)
         server.playlists = mapOf(PLAYLIST_ID to listOf(A, B, C))
         syncedImporter.import()
@@ -408,7 +411,7 @@ class PlaylistImportTest {
     }
 
     @Test
-    fun `an edit made as an import writes the playlists waits for the write - then stays in S2 and reaches the server`() = runBlocking<Unit> {
+    fun `an edit made as an import writes the playlists waits for the write - then stays in S2 and reaches the server`() = runTest(dispatcher) {
         server.songPaths = listOf(A, B, C)
         server.playlists = mapOf(PLAYLIST_ID to listOf(A, B, C))
         syncedImporter.import()
@@ -426,7 +429,7 @@ class PlaylistImportTest {
             }
         val racingSync = ServerPlaylistSync(setOf(serverWriter), preferences, scope, reportingLock)
         val racingRepository =
-            LocalPlaylistRepository(scope, UnconfinedTestDispatcher(), database.playlistDataDao(), database.playlistSongJoinDataDao(), SafPlaylistFileSync(context, database.songDataDao(), Dispatchers.Unconfined), database.libraryAlbumIndex(), racingSync)
+            LocalPlaylistRepository(scope, dispatcher, database.playlistDataDao(), database.playlistSongJoinDataDao(), SafPlaylistFileSync(context, database.songDataDao(), Dispatchers.Unconfined), database.libraryAlbumIndex(), racingSync)
         // The edit starts once the import has fetched the server's playlist, just before it writes it, and the write waits until the edit is blocked on the import's lock
         val racingStore =
             object : ImportedPlaylistStore by racingRepository {
@@ -461,7 +464,7 @@ class PlaylistImportTest {
     }
 
     @Test
-    fun `a reorder in S2 reaches the server`() = runBlocking<Unit> {
+    fun `a reorder in S2 reaches the server`() = runTest(dispatcher) {
         server.songPaths = listOf(A, B, C)
         server.playlists = mapOf(PLAYLIST_ID to listOf(A, B, C))
         syncedImporter.import()
@@ -477,7 +480,7 @@ class PlaylistImportTest {
     }
 
     @Test
-    fun `a playlist deleted in S2 while offline isn't brought back by an import - and is deleted on the server once it answers`() = runBlocking<Unit> {
+    fun `a playlist deleted in S2 while offline isn't brought back by an import - and is deleted on the server once it answers`() = runTest(dispatcher) {
         server.songPaths = listOf(A, B)
         server.playlists = mapOf(PLAYLIST_ID to listOf(A, B))
         syncedImporter.import()
@@ -498,7 +501,7 @@ class PlaylistImportTest {
     }
 
     @Test
-    fun `a rename in S2 reaches the server - and the next import keeps it`() = runBlocking<Unit> {
+    fun `a rename in S2 reaches the server - and the next import keeps it`() = runTest(dispatcher) {
         server.songPaths = listOf(A, B)
         server.playlists = mapOf(PLAYLIST_ID to listOf(A, B))
         syncedImporter.import()

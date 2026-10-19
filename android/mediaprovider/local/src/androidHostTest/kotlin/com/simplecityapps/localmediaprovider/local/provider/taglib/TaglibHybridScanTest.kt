@@ -27,11 +27,12 @@ import io.kotest.matchers.shouldBe
 import java.io.File
 import java.util.Collections
 import kotlin.time.Instant
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.TestCoroutineScheduler
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -59,8 +60,11 @@ class TaglibHybridScanTest {
     // Read from the scan's concurrent workers
     private val read: MutableList<String> = Collections.synchronizedList(mutableListOf())
 
+    private val testScheduler = TestCoroutineScheduler()
+    private val dispatcher = UnconfinedTestDispatcher(testScheduler)
+
     private val scanner =
-        object : FileScanner(Dispatchers.Unconfined) {
+        object : FileScanner(dispatcher) {
             override suspend fun getAudioFile(
                 context: Context,
                 kTagLib: KTagLib,
@@ -87,7 +91,7 @@ class TaglibHybridScanTest {
     }
 
     @Test
-    fun `a routine import trusts MediaStore and doesn't walk the folder`() {
+    fun `a routine import trusts MediaStore and doesn't walk the folder`() = runTest(dispatcher) {
         val songs = provider().findSongs(listOf(stored("a.mp3"))).songs()
 
         songs.map { it.path } shouldBe listOf("$primary/Music/a.mp3")
@@ -95,7 +99,7 @@ class TaglibHybridScanTest {
     }
 
     @Test
-    fun `a folder MediaStore lists nothing in is walked on a routine import`() {
+    fun `a folder MediaStore lists nothing in is walked on a routine import`() = runTest(dispatcher) {
         TaglibMediaProviderTest.FakeMediaProvider.rows = emptyList()
 
         val songs = provider().findSongs(emptyList()).songs()
@@ -104,7 +108,7 @@ class TaglibHybridScanTest {
     }
 
     @Test
-    fun `a song only a walk found is stored under its document URI, which is how it's played and read`() {
+    fun `a song only a walk found is stored under its document URI, which is how it's played and read`() = runTest(dispatcher) {
         val songs = provider().findSongsThoroughly(listOf(stored("a.mp3"))).songs()
 
         val walked = songs.single { it.name == "Read b.mp3" }
@@ -114,7 +118,7 @@ class TaglibHybridScanTest {
     }
 
     @Test
-    fun `a thorough import walks the folder and finds a file MediaStore and the walk both list once`() {
+    fun `a thorough import walks the folder and finds a file MediaStore and the walk both list once`() = runTest(dispatcher) {
         val songs = provider().findSongsThoroughly(listOf(stored("a.mp3"))).songs()
 
         songs.map { it.path } shouldContainExactlyInAnyOrder listOf("$primary/Music/a.mp3", document("Hidden/b.mp3"))
@@ -124,7 +128,7 @@ class TaglibHybridScanTest {
     }
 
     @Test
-    fun `an unchanged song only a walk found is reused, compared at the whole seconds MediaStore keeps`() {
+    fun `an unchanged song only a walk found is reused, compared at the whole seconds MediaStore keeps`() = runTest(dispatcher) {
         val songs = provider().findSongsThoroughly(listOf(stored("a.mp3"), storedDocument("Hidden/b.mp3"))).songs()
 
         songs.map { it.name } shouldContainExactlyInAnyOrder listOf("Stored a.mp3", "Stored Hidden/b.mp3")
@@ -133,7 +137,7 @@ class TaglibHybridScanTest {
     }
 
     @Test
-    fun `an unchanged song only a walk found is reused when a routine import looks it up`() {
+    fun `an unchanged song only a walk found is reused when a routine import looks it up`() = runTest(dispatcher) {
         val songs = provider().findSongs(listOf(stored("a.mp3"), storedDocument("Hidden/b.mp3"))).songs()
 
         songs.map { it.name } shouldContainExactlyInAnyOrder listOf("Stored a.mp3", "Stored Hidden/b.mp3")
@@ -141,7 +145,7 @@ class TaglibHybridScanTest {
     }
 
     @Test
-    fun `a song only a walk found stays through routine imports until its file is gone`() {
+    fun `a song only a walk found stays through routine imports until its file is gone`() = runTest(dispatcher) {
         val existing = listOf(stored("a.mp3"), storedDocument("Hidden/b.mp3"))
 
         provider().findSongs(existing).songs().map { it.path } shouldContainExactlyInAnyOrder existing.map { it.path }
@@ -155,7 +159,7 @@ class TaglibHybridScanTest {
     }
 
     @Test
-    fun `a song only a walk found is kept when its document can't be looked up this time`() {
+    fun `a song only a walk found is kept when its document can't be looked up this time`() = runTest(dispatcher) {
         Documents.lookupError = IllegalStateException("Provider failed")
         val existing = listOf(stored("a.mp3"), storedDocument("Hidden/b.mp3"))
 
@@ -163,7 +167,7 @@ class TaglibHybridScanTest {
     }
 
     @Test
-    fun `a tree this app lost access to is unreadable, so the delete guard holds its songs rather than keeping them for good`() {
+    fun `a tree this app lost access to is unreadable, so the delete guard holds its songs rather than keeping them for good`() = runTest(dispatcher) {
         Documents.lookupError = SecurityException("Access revoked")
         val existing = listOf(stored("a.mp3"), storedDocument("Hidden/b.mp3"))
         val provider = provider()
@@ -173,25 +177,25 @@ class TaglibHybridScanTest {
     }
 
     @Test
-    fun `a song MediaStore stops listing is moved to its document URI, keeping its row`() {
+    fun `a song MediaStore stops listing is moved to its document URI, keeping its row`() = runTest(dispatcher) {
         // MediaStore still lists another file, so it isn't reindexing
         TaglibMediaProviderTest.FakeMediaProvider.rows = listOf(arrayOf(3L, "$primary/Music/c.mp3", "c.mp3", 10L, MODIFIED / 1000, "audio/mpeg", 1000L))
         val existing = listOf(stored("a.mp3", id = 1), stored("Hidden/b.mp3", id = 2))
         Documents.files -= "primary:Music/a.mp3"
 
-        val remaps = runBlocking { provider().remapLegacySongs(existing) }
+        val remaps = provider().remapLegacySongs(existing)
 
         // a.mp3 is gone, so it keeps its path for the import to remove
         remaps shouldBe listOf(SongPathRemap(songId = 2, path = document("Hidden/b.mp3")))
     }
 
     @Test
-    fun `while MediaStore lists nothing at all, songs keep their file paths rather than moving and moving back`() {
+    fun `while MediaStore lists nothing at all, songs keep their file paths rather than moving and moving back`() = runTest(dispatcher) {
         TaglibMediaProviderTest.FakeMediaProvider.rows = emptyList()
         val existing = listOf(stored("a.mp3", id = 1), stored("Hidden/b.mp3", id = 2))
         val provider = provider()
 
-        runBlocking { provider.remapLegacySongs(existing) } shouldBe emptyList()
+        provider.remapLegacySongs(existing) shouldBe emptyList()
 
         val songs = provider.findSongs(existing).songs()
         songs.map { it.path } shouldContainExactlyInAnyOrder existing.map { it.path }
@@ -200,11 +204,11 @@ class TaglibHybridScanTest {
     }
 
     @Test
-    fun `findSongs uses the listing the remap read, so a file MediaStore lists in between isn't found under its other path`() {
+    fun `findSongs uses the listing the remap read, so a file MediaStore lists in between isn't found under its other path`() = runTest(dispatcher) {
         val provider = provider()
         val existing = listOf(stored("a.mp3", id = 1), stored("Hidden/b.mp3", id = 2))
 
-        val remaps = runBlocking { provider.remapLegacySongs(existing) }
+        val remaps = provider.remapLegacySongs(existing)
         remaps shouldBe listOf(SongPathRemap(songId = 2, path = document("Hidden/b.mp3")))
         // MediaStore indexes b.mp3 between the remap and findSongs
         TaglibMediaProviderTest.FakeMediaProvider.rows += listOf(arrayOf(2L, "$primary/Music/Hidden/b.mp3", "b.mp3", 10L, MODIFIED / 1000, "audio/mpeg", 1000L))
@@ -218,10 +222,10 @@ class TaglibHybridScanTest {
     }
 
     @Test
-    fun `the next import lists MediaStore again`() {
+    fun `the next import lists MediaStore again`() = runTest(dispatcher) {
         val provider = provider()
         val existing = listOf(stored("a.mp3", id = 1), stored("Hidden/b.mp3", id = 2))
-        runBlocking { provider.remapLegacySongs(existing) }
+        provider.remapLegacySongs(existing)
         provider.findSongs(existing).songs()
 
         provider.findSongs(existing).songs()
@@ -230,12 +234,12 @@ class TaglibHybridScanTest {
     }
 
     @Test
-    fun `a song only a walk found is moved to its file path once MediaStore lists it, and found once`() {
+    fun `a song only a walk found is moved to its file path once MediaStore lists it, and found once`() = runTest(dispatcher) {
         TaglibMediaProviderTest.FakeMediaProvider.rows += listOf(arrayOf(2L, "$primary/Music/Hidden/b.mp3", "b.mp3", 10L, MODIFIED / 1000, "audio/mpeg", 1000L))
         val provider = provider()
         val walked = storedDocument("Hidden/b.mp3", id = 2)
 
-        val remaps = runBlocking { provider.remapLegacySongs(listOf(stored("a.mp3", id = 1), walked)) }
+        val remaps = provider.remapLegacySongs(listOf(stored("a.mp3", id = 1), walked))
         remaps shouldBe listOf(SongPathRemap(songId = 2, path = "$primary/Music/Hidden/b.mp3"))
 
         val existing = listOf(stored("a.mp3", id = 1), walked.copy(path = "$primary/Music/Hidden/b.mp3"))
@@ -245,7 +249,7 @@ class TaglibHybridScanTest {
     }
 
     @Test
-    fun `a song only a walk found that MediaStore lists isn't found twice, even before it's moved`() {
+    fun `a song only a walk found that MediaStore lists isn't found twice, even before it's moved`() = runTest(dispatcher) {
         TaglibMediaProviderTest.FakeMediaProvider.rows += listOf(arrayOf(2L, "$primary/Music/Hidden/b.mp3", "b.mp3", 10L, MODIFIED / 1000, "audio/mpeg", 1000L))
 
         val songs = provider().findSongs(listOf(stored("a.mp3"), storedDocument("Hidden/b.mp3"))).songs()
@@ -256,29 +260,25 @@ class TaglibHybridScanTest {
     }
 
     @Test
-    fun `a playlist in a folder MediaStore skips is found by a thorough import's walk`() {
+    fun `a playlist in a folder MediaStore skips is found by a thorough import's walk`() = runTest(dispatcher) {
         val provider = provider()
         val songs = provider.findSongsThoroughly(listOf(stored("a.mp3"))).songs()
 
         val playlists =
-            runBlocking {
-                provider.findPlaylists(songs)
-                    .filterIsInstance<FlowEvent.Success<PlaylistListing>>()
-                    .first()
-                    .result
-                    .playlists
-            }
+            provider.findPlaylists(songs)
+                .filterIsInstance<FlowEvent.Success<PlaylistListing>>()
+                .first()
+                .result
+                .playlists
 
         playlists.map { it.externalId } shouldBe listOf(Uri.fromFile(File("$primary/Music/Hidden/x.m3u")).toString())
     }
 
-    private fun provider() = TaglibMediaProvider(context, kTagLibWithoutNativeLibrary(), scanner, tagReadGuard, Dispatchers.Unconfined, grantedTrees = { listOf(tree) }, mountedRoots = { setOf("$primary/") }) {
+    private fun provider() = TaglibMediaProvider(context, kTagLibWithoutNativeLibrary(), scanner, tagReadGuard, dispatcher, grantedTrees = { listOf(tree) }, mountedRoots = { setOf("$primary/") }) {
         ScannerFolders(filter = FolderFilter(includes = listOf("$primary/Music")), includeTrees = listOf(tree))
     }
 
-    private fun Flow<FlowEvent<List<Song>, *>>.songs(): List<Song> = runBlocking {
-        filterIsInstance<FlowEvent.Success<List<Song>>>().first().result
-    }
+    private suspend fun Flow<FlowEvent<List<Song>, *>>.songs(): List<Song> = filterIsInstance<FlowEvent.Success<List<Song>>>().first().result
 
     // KTagLib's constructor loads the native library, which a JVM test can't; the fake scanner never reads through it
     private fun kTagLibWithoutNativeLibrary(): KTagLib {
