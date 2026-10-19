@@ -7,6 +7,7 @@ import com.simplecityapps.imageloading.ArtworkImageLoader
 import com.simplecityapps.playback.WidgetArtwork
 import com.simplecityapps.playback.getArtworkCacheKey
 import com.simplecityapps.shuttle.di.ApplicationContext
+import com.simplecityapps.shuttle.di.IoDispatcher
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.ui.widgets.maxWidgetArtSize
 import dev.zacsweers.metro.AppScope
@@ -19,7 +20,7 @@ import java.security.MessageDigest
 import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.coroutines.resume
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import timber.log.Timber
@@ -36,7 +37,8 @@ class WidgetArtworkStore
 @Inject
 constructor(
     @ApplicationContext private val context: Context,
-    private val imageLoader: ArtworkImageLoader
+    private val imageLoader: ArtworkImageLoader,
+    @IoDispatcher private val ioDispatcher: CoroutineDispatcher
 ) : WidgetArtwork {
     private val directory: File get() = File(context.filesDir, "widget_artwork")
 
@@ -54,19 +56,19 @@ constructor(
     override suspend fun artworkPath(song: Song): String? {
         val file = file(song)
         if (file.name in missing) return null
-        if (withContext(Dispatchers.IO) { file.exists() }) return file.path
+        if (withContext(ioDispatcher) { file.exists() }) return file.path
         val bitmap = loadBitmap(song)
         if (bitmap == null) {
             missing += file.name
             return null
         }
-        return withContext(Dispatchers.IO) { save(bitmap, file) }?.path
+        return withContext(ioDispatcher) { save(bitmap, file) }?.path
     }
 
     override suspend fun prune(keep: Collection<Song>) {
         val keepNames = keep.map { file(it).name }.toSet()
         missing.retainAll(keepNames)
-        withContext(Dispatchers.IO) {
+        withContext(ioDispatcher) {
             directory.listFiles()?.filter { it.name !in keepNames }?.forEach { it.delete() }
         }
     }

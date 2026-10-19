@@ -16,6 +16,7 @@ import com.simplecityapps.mediaprovider.TagReadFile
 import com.simplecityapps.mediaprovider.TagReadGuard
 import com.simplecityapps.mediaprovider.model.AudioFile
 import com.simplecityapps.shuttle.di.ApplicationContext
+import com.simplecityapps.shuttle.di.IoDispatcher
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.storage.documentIdForPath
 import dev.zacsweers.metro.AppScope
@@ -26,7 +27,7 @@ import dev.zacsweers.metro.Inject
 import java.io.File
 import java.io.FileNotFoundException
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 
@@ -39,6 +40,7 @@ class DeviceTagFileAccess @Inject constructor(
     private val kTagLib: KTagLib,
     private val fileScanner: FileScanner,
     private val tagReadGuard: TagReadGuard,
+    @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
 ) : TagFileAccess {
     // A file TagLib crashed on is left unread, so the editor shows it as unreadable instead of crashing again
     override suspend fun read(song: Song): AudioFile? = tagReadGuard.read(tagReadFile(song), song.mediaProvider) {
@@ -73,7 +75,7 @@ class DeviceTagFileAccess @Inject constructor(
     ): Boolean {
         // KTagLib picks the tag format by the name's extension; a MediaStore URI's last segment is only its id
         val fileName = if (target is TagTarget.Media) File(song.path).name else target.uri.lastPathSegment
-        return withContext(Dispatchers.IO) {
+        return withContext(ioDispatcher) {
             try {
                 context.contentResolver.openFileDescriptor(target.uri, "rw")?.use { pfd ->
                     kTagLib.writeMetadata(pfd.fd, metadata, fileName)
@@ -99,7 +101,7 @@ class DeviceTagFileAccess @Inject constructor(
         data class Media(override val uri: Uri) : TagTarget
     }
 
-    private suspend fun target(song: Song): TagTarget? = withContext(Dispatchers.IO) {
+    private suspend fun target(song: Song): TagTarget? = withContext(ioDispatcher) {
         if (song.path.startsWith("content://")) {
             return@withContext Uri.parse(song.path).takeIf { DocumentsContract.isDocumentUri(context, it) }?.let { TagTarget.Document(it) }
         }
@@ -136,7 +138,7 @@ class DeviceTagFileAccess @Inject constructor(
     private suspend fun readMedia(
         song: Song,
         uri: Uri,
-    ): AudioFile? = withContext(Dispatchers.IO) {
+    ): AudioFile? = withContext(ioDispatcher) {
         try {
             context.contentResolver.openFileDescriptor(uri, "r")?.use { pfd ->
                 kTagLib.getAudioFile(pfd.fd, song.path, File(song.path).name, song.lastModified?.toEpochMilliseconds() ?: 0L, song.size, song.mimeType)

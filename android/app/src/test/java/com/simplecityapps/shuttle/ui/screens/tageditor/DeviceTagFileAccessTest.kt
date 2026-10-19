@@ -14,6 +14,7 @@ import io.mockk.mockk
 import java.nio.file.Files
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -25,7 +26,7 @@ class DeviceTagFileAccessTest {
     private val guard = TagReadGuard(Files.createTempDirectory("tag-reads").toFile(), preferences, { null })
 
     // The native library isn't loaded on the JVM: a quarantined file must never reach it
-    private val access = DeviceTagFileAccess(ApplicationProvider.getApplicationContext(), mockk<KTagLib>(), FileScanner(Dispatchers.Unconfined), guard)
+    private val access = DeviceTagFileAccess(ApplicationProvider.getApplicationContext(), mockk<KTagLib>(), FileScanner(Dispatchers.Unconfined), guard, UnconfinedTestDispatcher())
 
     private val song = createSong()
 

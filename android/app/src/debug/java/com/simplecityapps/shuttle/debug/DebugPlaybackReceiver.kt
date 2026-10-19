@@ -17,6 +17,7 @@ import com.simplecityapps.playback.queue.RepeatMode
 import com.simplecityapps.playback.queue.ShuffleMode
 import com.simplecityapps.playback.sleeptimer.SleepTimer
 import com.simplecityapps.shuttle.debug.crossfadetap.WavTapAudioProcessor
+import com.simplecityapps.shuttle.di.MainImmediateDispatcher
 import com.simplecityapps.shuttle.di.appGraph
 import com.simplecityapps.shuttle.query.SongQuery
 import com.simplecityapps.shuttle.ui.actions.PlaySongs
@@ -27,6 +28,7 @@ import java.io.File
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -80,6 +82,10 @@ class DebugPlaybackReceiver : BroadcastReceiver() {
 
     @Inject
     lateinit var wavTap: WavTapAudioProcessor
+
+    @Inject
+    @MainImmediateDispatcher
+    lateinit var mainImmediateDispatcher: CoroutineDispatcher
 
     override fun onReceive(
         context: Context,
@@ -265,7 +271,7 @@ class DebugPlaybackReceiver : BroadcastReceiver() {
      */
     private fun countPlayingEntries() {
         if (!collecting.compareAndSet(false, true)) return
-        scope.launch(Dispatchers.Main.immediate) {
+        scope.launch(mainImmediateDispatcher) {
             var previous: PlaybackState? = null
             playbackStateSource.playbackStateFlow.collect { state ->
                 if (state is PlaybackState.Playing && previous !is PlaybackState.Playing) playingEntries.incrementAndGet()
@@ -284,6 +290,7 @@ class DebugPlaybackReceiver : BroadcastReceiver() {
         const val TAP_DIR = "crossfade-tap"
         const val ACTION_PREFIX = "com.simplecityapps.shuttle.debug."
 
+        // A process-wide scope shared by every receiver instance, so there is no injected instance to take a dispatcher from.
         private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
         private val collecting = AtomicBoolean(false)
         private val playingEntries = AtomicInteger(0)

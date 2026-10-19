@@ -14,11 +14,12 @@ import com.simplecityapps.playback.queue.QueueSongRefresher
 import com.simplecityapps.shuttle.coroutines.launchCollectingChanges
 import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.shuttle.di.ApplicationContext
+import com.simplecityapps.shuttle.di.MainImmediateDispatcher
 import com.simplecityapps.shuttle.playback.RecordPlays
 import com.simplecityapps.shuttle.playback.RecordResumePoints
 import dev.zacsweers.metro.Inject
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import timber.log.Timber
 
 /**
@@ -41,7 +42,8 @@ constructor(
     private val playRequests: Lazy<PlayRequests>,
     private val bitPerfectOutput: Lazy<BitPerfectOutput>,
     private val queueSongRefresher: Lazy<QueueSongRefresher>,
-    @AppCoroutineScope private val appCoroutineScope: CoroutineScope
+    @AppCoroutineScope private val appCoroutineScope: CoroutineScope,
+    @MainImmediateDispatcher private val mainImmediateDispatcher: CoroutineDispatcher
 ) : AppInitializer {
     override fun init(application: Application) {
         Timber.v("PlaybackInitializer.init()")
@@ -66,7 +68,7 @@ constructor(
     /** Compared against a snapshot taken here, so the initial state isn't handled as a change, and none made in between is missed. */
     private fun collectPlaybackState() {
         val playbackState = playbackStateSource.playbackStateFlow.value
-        appCoroutineScope.launchCollectingChanges(playbackStateSource.playbackStateFlow, playbackState, Dispatchers.Main.immediate) { _, current ->
+        appCoroutineScope.launchCollectingChanges(playbackStateSource.playbackStateFlow, playbackState, mainImmediateDispatcher) { _, current ->
             if (current is PlaybackState.Playing) {
                 PlaybackService.start(context)
             }

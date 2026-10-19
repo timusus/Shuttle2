@@ -5,12 +5,13 @@ import android.content.Context
 import android.content.Intent
 import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.SyncTrigger
+import com.simplecityapps.shuttle.di.MainDispatcher
 import com.simplecityapps.shuttle.di.appGraph
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.ContributesTo
 import dev.zacsweers.metro.Inject
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 /**
@@ -31,13 +32,17 @@ class DebugMediaImportReceiver : BroadcastReceiver() {
     @Inject
     lateinit var mediaImporter: MediaImporter
 
+    @Inject
+    @MainDispatcher
+    lateinit var mainDispatcher: CoroutineDispatcher
+
     override fun onReceive(
         context: Context,
         intent: Intent
     ) {
         context.appGraph<Injector>().inject(this)
         val pendingResult = goAsync()
-        CoroutineScope(Dispatchers.Main).launch {
+        CoroutineScope(mainDispatcher).launch {
             try {
                 if (intent.getBooleanExtra(EXTRA_SYNC, false)) mediaImporter.sync(SyncTrigger.Periodic) else mediaImporter.import()
             } finally {

@@ -16,6 +16,7 @@ import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.debug.DebugLoggingTree
 import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.shuttle.di.ApplicationContext
+import com.simplecityapps.shuttle.di.IoDispatcher
 import com.simplecityapps.shuttle.settings.AppearanceSettings
 import com.simplecityapps.shuttle.settings.Setting
 import com.simplecityapps.shuttle.ui.ThemeManager
@@ -26,8 +27,8 @@ import dev.zacsweers.metro.Binds
 import dev.zacsweers.metro.ContributesTo
 import dev.zacsweers.metro.Inject
 import java.io.File
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -39,7 +40,8 @@ class AndroidSettingsEffects @Inject constructor(
     private val widgetManager: WidgetManager,
     private val themeManager: ThemeManager,
     private val mediaImporter: MediaImporter,
-    private val imageLoader: ArtworkImageLoader
+    private val imageLoader: ArtworkImageLoader,
+    @IoDispatcher private val ioDispatcher: CoroutineDispatcher
 ) : SettingsEffects {
     override fun <T> onSettingChanged(
         setting: Setting<T>,
@@ -67,7 +69,7 @@ class AndroidSettingsEffects @Inject constructor(
     }
 
     override suspend fun shareDebugLogs(): ShareDebugLogsResult {
-        val shared = withContext(Dispatchers.IO) {
+        val shared = withContext(ioDispatcher) {
             val log = context.getFileStreamPath(DebugLoggingTree.FILE_NAME).takeIf { it.exists() && it.length() > 0 } ?: return@withContext null
             File(context.cacheDir, SHARED_LOGS_DIR).apply { mkdirs() }
                 .resolve(SHARED_LOG_NAME)

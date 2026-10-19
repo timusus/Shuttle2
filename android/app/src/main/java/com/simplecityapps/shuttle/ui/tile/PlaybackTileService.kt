@@ -11,12 +11,13 @@ import com.simplecityapps.playback.PlaybackServiceStarter
 import com.simplecityapps.playback.PlaybackStateSource
 import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.shuttle.R
+import com.simplecityapps.shuttle.di.MainImmediateDispatcher
 import com.simplecityapps.shuttle.di.appGraph
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.ContributesTo
 import dev.zacsweers.metro.Inject
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
@@ -25,8 +26,12 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 
 class PlaybackTileService : TileService() {
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+    private lateinit var scope: CoroutineScope
     private var listenJob: Job? = null
+
+    @Inject
+    @MainImmediateDispatcher
+    lateinit var mainImmediateDispatcher: CoroutineDispatcher
 
     @Inject
     lateinit var playbackStateSource: PlaybackStateSource
@@ -45,6 +50,7 @@ class PlaybackTileService : TileService() {
     override fun onCreate() {
         super.onCreate()
         applicationContext.appGraph<Injector>().inject(this)
+        scope = CoroutineScope(SupervisorJob() + mainImmediateDispatcher)
     }
 
     override fun onStartListening() {

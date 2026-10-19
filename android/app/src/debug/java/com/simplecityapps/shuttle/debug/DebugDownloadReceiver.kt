@@ -130,6 +130,8 @@ class DebugDownloadReceiver : BroadcastReceiver() {
 
     companion object {
         private const val TAG = "S2Debug"
+
+        // A process-wide scope shared by every receiver instance, so there is no injected instance to take a dispatcher from.
         private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     }
 }

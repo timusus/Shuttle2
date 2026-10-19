@@ -15,6 +15,7 @@ import com.simplecityapps.playback.queue.ShuffleMode
 import com.simplecityapps.shuttle.coroutines.launchCollectingChanges
 import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.shuttle.di.ApplicationContext
+import com.simplecityapps.shuttle.di.MainImmediateDispatcher
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.settings.AppearanceSettings
 import dev.zacsweers.metro.AppScope
@@ -22,8 +23,8 @@ import dev.zacsweers.metro.ContributesTo
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.SingleIn
 import kotlin.coroutines.CoroutineContext
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
@@ -49,7 +50,8 @@ constructor(
     private val queueOperations: QueueOperations,
     private val artworkStore: WidgetArtwork,
     private val appearanceSettings: AppearanceSettings,
-    @AppCoroutineScope private val appCoroutineScope: CoroutineScope
+    @AppCoroutineScope private val appCoroutineScope: CoroutineScope,
+    @MainImmediateDispatcher private val mainImmediateDispatcher: CoroutineDispatcher
 ) {
     private val updateRequests = Channel<Unit>(Channel.CONFLATED)
 
@@ -91,7 +93,7 @@ constructor(
                     queueStateFlow = queueOperations.queueStateFlow,
                     shuffleModeFlow = queueOperations.shuffleModeFlow,
                     repeatModeFlow = queueOperations.repeatModeFlow,
-                    context = Dispatchers.Main.immediate,
+                    context = mainImmediateDispatcher,
                     onChange = ::requestUpdate
                 )
         }

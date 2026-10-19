@@ -77,7 +77,8 @@ class PlaybackInitializerTest {
             startedComponents += "queue song refresher"
             mockk(relaxed = true)
         },
-        appCoroutineScope = appCoroutineScope
+        appCoroutineScope = appCoroutineScope,
+        mainImmediateDispatcher = mainDispatcherRule.testDispatcher
     )
 
     @After

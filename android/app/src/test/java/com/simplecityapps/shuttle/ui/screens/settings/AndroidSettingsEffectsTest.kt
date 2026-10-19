@@ -17,6 +17,7 @@ import io.kotest.matchers.shouldBe
 import io.mockk.mockk
 import io.mockk.verify
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
@@ -40,7 +41,8 @@ class AndroidSettingsEffectsTest {
         widgetManager = widgetManager,
         themeManager = themeManager,
         mediaImporter = mockk(relaxed = true),
-        imageLoader = mockk(relaxed = true)
+        imageLoader = mockk(relaxed = true),
+        ioDispatcher = UnconfinedTestDispatcher()
     )
 
     @Before
