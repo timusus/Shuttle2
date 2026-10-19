@@ -25,6 +25,8 @@ import com.simplecityapps.shuttle.designsystem.component.S2IconButton
 import com.simplecityapps.shuttle.designsystem.component.S2Menu
 import com.simplecityapps.shuttle.designsystem.component.SongRow
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.ui.common.ConfirmEvent
+import com.simplecityapps.shuttle.ui.common.onConfirmEvent
 import com.simplecityapps.shuttle.ui.screens.settings.SettingsScaffold
 
 /** The excluded songs; each row's menu puts its song back in the library, and the top bar puts them all back. */
@@ -38,6 +40,11 @@ fun ExcludedSongsScreen(
 ) {
     val viewState = excludedSongsViewState(uiState)
     var confirmIncludeAll by rememberSaveable { mutableStateOf(false) }
+    val confirm = { event: ConfirmEvent ->
+        val step = onConfirmEvent(confirmIncludeAll, event)
+        confirmIncludeAll = step.showing
+        if (step.confirmed) onIncludeAll()
+    }
     var menuSongId by rememberSaveable { mutableStateOf<Long?>(null) }
 
     SettingsScaffold(
@@ -51,7 +58,7 @@ fun ExcludedSongsScreen(
                 S2IconButton(
                     icon = Icons.Rounded.ClearAll,
                     contentDescription = stringResource(R.string.excluded_songs_include_all),
-                    onClick = { confirmIncludeAll = true }
+                    onClick = { confirm(ConfirmEvent.Open) }
                 )
             }
         }
@@ -97,12 +104,9 @@ fun ExcludedSongsScreen(
     if (confirmIncludeAll) {
         S2Dialog(
             title = stringResource(R.string.excluded_songs_include_all_title),
-            onDismissRequest = { confirmIncludeAll = false },
+            onDismissRequest = { confirm(ConfirmEvent.Dismiss) },
             confirmLabel = stringResource(R.string.excluded_songs_include_all),
-            onConfirm = {
-                confirmIncludeAll = false
-                onIncludeAll()
-            },
+            onConfirm = { confirm(ConfirmEvent.Confirm) },
             dismissLabel = stringResource(android.R.string.cancel)
         ) {
             Text(stringResource(R.string.excluded_songs_include_all_message))
