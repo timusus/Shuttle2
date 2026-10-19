@@ -2,7 +2,6 @@
 # Baseline of existing violations (#443). Only remove lines; see Baseline.kt.
 com.simplecityapps.shuttle.ui.screens.paywall.PaywallRoutes -> com.simplecityapps.trial.Billing (:android:trial)
 com.simplecityapps.shuttle.ui.screens.paywall.PaywallScreen -> com.simplecityapps.mediaprovider.iconResId (:android:mediaprovider:core)
-com.simplecityapps.shuttle.ui.screens.paywall.PaywallScreen -> com.simplecityapps.trial.PaywallOffers (:android:trial)
 com.simplecityapps.shuttle.ui.screens.paywall.PaywallViewModel -> com.simplecityapps.trial.Billing (:android:trial)
 com.simplecityapps.shuttle.ui.screens.paywall.PaywallViewModel -> com.simplecityapps.trial.PaywallOffer (:android:trial)
 com.simplecityapps.shuttle.ui.screens.paywall.PaywallViewModel -> com.simplecityapps.trial.PaywallOffers (:android:trial)

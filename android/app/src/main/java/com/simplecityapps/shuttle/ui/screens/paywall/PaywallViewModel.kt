@@ -63,6 +63,10 @@ data class PaywallUiState(
     /** The lifetime offer, or null while loading or when Play can't sell it. */
     val offer: PaywallOffer? get() = (offers as? PaywallOffers.Available)?.offer
 
+    val offersLoading: Boolean get() = offers == PaywallOffers.Loading
+
+    val offersUnavailable: Boolean get() = offers == PaywallOffers.Unavailable
+
     /** Whether the purchase button can buy: there is an offer, and no purchase is already waiting on payment. */
     val canPurchase: Boolean get() = offer != null && status !is PaywallStatus.PurchasePending
 
