@@ -123,8 +123,9 @@ class PlaybackModule {
         audioTrackMonitor: AudioTrackMonitor,
         equalizerAudioProcessor: EqualizerAudioProcessor,
         replayGainAudioProcessor: ReplayGainAudioProcessor,
-        @AppCoroutineScope appCoroutineScope: CoroutineScope
-    ): BitPerfectOutput = BitPerfectOutput(audioManager, playbackSettings, audioTrackMonitor, equalizerAudioProcessor, replayGainAudioProcessor, appCoroutineScope)
+        @AppCoroutineScope appCoroutineScope: CoroutineScope,
+        @MainImmediateDispatcher mainImmediateDispatcher: CoroutineDispatcher
+    ): BitPerfectOutput = BitPerfectOutput(audioManager, playbackSettings, audioTrackMonitor, equalizerAudioProcessor, replayGainAudioProcessor, appCoroutineScope, mainImmediateDispatcher)
 
     @SingleIn(AppScope::class)
     @Provides

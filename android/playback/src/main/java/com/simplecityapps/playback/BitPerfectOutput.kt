@@ -13,8 +13,8 @@ import com.simplecityapps.playback.dsp.replaygain.ReplayGainAudioProcessor
 import com.simplecityapps.playback.exoplayer.AudioTrackMonitor
 import com.simplecityapps.playback.exoplayer.EqualizerAudioProcessor
 import com.simplecityapps.playback.settings.PlaybackSettings
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -48,14 +48,15 @@ class BitPerfectOutput(
     private val audioTrackMonitor: AudioTrackMonitor,
     private val equalizerAudioProcessor: EqualizerAudioProcessor,
     private val replayGainAudioProcessor: ReplayGainAudioProcessor,
-    appCoroutineScope: CoroutineScope
+    appCoroutineScope: CoroutineScope,
+    mainImmediateDispatcher: CoroutineDispatcher
 ) {
     /** The device and mixer attributes last set, so they can be cleared. Only touched on the main thread. */
     private var applied: Pair<AudioDeviceInfo, AudioMixerAttributes>? = null
 
     init {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE && audioManager != null) {
-            appCoroutineScope.launch(Dispatchers.Main.immediate) {
+            appCoroutineScope.launch(mainImmediateDispatcher) {
                 targets(audioManager).collect { target -> apply(audioManager, target) }
             }
         }

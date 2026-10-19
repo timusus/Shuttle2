@@ -18,11 +18,13 @@ import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.playback.settings.PlaybackSettings
 import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.shuttle.di.ApplicationContext
+import com.simplecityapps.shuttle.di.MainImmediateDispatcher
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer
 import dev.zacsweers.metro.ContributesTo
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.SingleIn
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 
 @ContributesTo(AppScope::class)
@@ -45,6 +47,7 @@ class PlaybackOperationsModule {
         queueStore: QueueStore,
         playbackSettings: PlaybackSettings,
         @AppCoroutineScope coroutineScope: CoroutineScope,
+        @MainImmediateDispatcher mainImmediateDispatcher: CoroutineDispatcher,
         castQueue: CastQueue,
         songUriResolver: SongUriResolver,
         foregroundHold: ForegroundHold
@@ -56,6 +59,7 @@ class PlaybackOperationsModule {
         playbackSettings.playbackSpeed,
         CallMonitor(context.getSystemService()),
         coroutineScope,
+        mainImmediateDispatcher,
         castQueue,
         castDeviceName = { CastSessionManager.deviceName(context) },
         isReplaceableTranscode = songUriResolver::isReplaceableTranscode,

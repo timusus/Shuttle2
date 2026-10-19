@@ -18,8 +18,8 @@ import com.simplecityapps.playback.queue.queueEntryOrNull
 import com.simplecityapps.shuttle.model.PlayContext
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.settings.Preference
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -58,6 +58,7 @@ class PlaybackFacade(
     /** Says when a call is on, and when it ends, so a play during one waits for it. */
     callMonitor: CallMonitor,
     appCoroutineScope: CoroutineScope,
+    private val mainImmediateDispatcher: CoroutineDispatcher,
     /** Keeps a Cast receiver's queue in line, and says when it has played the queue out; null when there's no Cast. */
     castQueue: CastQueue?,
     /** The name of the device the current Cast session plays on (see [CastHandover]). */
@@ -362,7 +363,7 @@ class PlaybackFacade(
      * Waiting calls share the setting, so one cancelled while another waits leaves it set. A Cast receiver can't pause
      * at the end of an item, so while casting playback pauses as the receiver moves on instead.
      */
-    override suspend fun pauseAtEndOfItem() = withContext(Dispatchers.Main.immediate) {
+    override suspend fun pauseAtEndOfItem() = withContext(mainImmediateDispatcher) {
         if (pauseAtEndRequests++ == 0) {
             pauseAtEndBefore = localPlayer.pauseAtEndOfMediaItems
             localPlayer.pauseAtEndOfMediaItems = true
@@ -440,7 +441,7 @@ class PlaybackFacade(
         songs: List<Song>,
         context: PlayContext,
         completion: (Result<Any?>) -> Unit
-    ) = withContext(Dispatchers.Main.immediate) {
+    ) = withContext(mainImmediateDispatcher) {
         queueOperations.setShuffleMode(ShuffleMode.On, reshuffle = false)
         queueOperations.setQueue(songs, songs.shuffled(), 0, context)
         load(0, completion = completion)

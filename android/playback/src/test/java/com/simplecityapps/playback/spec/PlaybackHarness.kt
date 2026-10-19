@@ -267,6 +267,7 @@ class PlaybackHarness(
                 playbackSpeed = playbackSettings.playbackSpeed,
                 callMonitor = CallMonitor(audioManager),
                 appCoroutineScope = scope,
+                mainImmediateDispatcher = Dispatchers.Main.immediate,
                 castQueue = cast,
                 foregroundHold = foregroundHold
             )
