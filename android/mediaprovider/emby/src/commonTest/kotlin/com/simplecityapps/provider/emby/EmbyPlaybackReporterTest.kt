@@ -20,7 +20,7 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldNotContain
 import kotlin.test.Test
 import kotlin.time.Instant
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 
 class EmbyPlaybackReporterTest {
     private val server = FixtureServer("emby")
@@ -64,8 +64,8 @@ class EmbyPlaybackReporterTest {
     }
 
     @Test
-    fun `start posts the play under the emby path with the token and client headers`() {
-        runBlocking { reporter.start(session, positionMs = 1_500) } shouldBe true
+    fun `start posts the play under the emby path with the token and client headers`() = runTest {
+        reporter.start(session, positionMs = 1_500) shouldBe true
 
         val request = server.requestsTo("/emby/Sessions/Playing").single()
         request.headers["X-Emby-Token"] shouldBe "token123"
@@ -76,26 +76,26 @@ class EmbyPlaybackReporterTest {
     }
 
     @Test
-    fun `progress and stop post to their endpoints`() {
-        runBlocking { reporter.progress(session, positionMs = 60_000, paused = true) } shouldBe true
+    fun `progress and stop post to their endpoints`() = runTest {
+        reporter.progress(session, positionMs = 60_000, paused = true) shouldBe true
         S2Json.decodeFromString<PlaybackReport>(server.requestsTo("/emby/Sessions/Playing/Progress").single().bodyText) shouldBe
             PlaybackReport(itemId = "item789", playSessionId = "session-1", positionTicks = 600_000_000, isPaused = true)
 
-        runBlocking { reporter.stop(session, positionMs = 180_000) } shouldBe true
+        reporter.stop(session, positionMs = 180_000) shouldBe true
         S2Json.decodeFromString<PlaybackReport>(server.requestsTo("/emby/Sessions/Playing/Stopped").single().bodyText) shouldBe
             PlaybackReport(itemId = "item789", playSessionId = "session-1", positionTicks = 1_800_000_000, isPaused = false)
     }
 
     @Test
-    fun `stop without a start reports the play's session`() {
-        runBlocking { reporter.stop(session, positionMs = 20_000) } shouldBe true
+    fun `stop without a start reports the play's session`() = runTest {
+        reporter.stop(session, positionMs = 20_000) shouldBe true
 
         S2Json.decodeFromString<PlaybackReport>(server.requestsTo("/emby/Sessions/Playing/Stopped").single().bodyText).playSessionId shouldBe "session-1"
     }
 
     @Test
-    fun `a download opened during a play does not change that play's session`() {
-        runBlocking { reporter.start(session, positionMs = 0) }
+    fun `a download opened during a play does not change that play's session`() = runTest {
+        reporter.start(session, positionMs = 0)
 
         val download = authenticationManager.buildTranscodedDownloadPath(
             "item789",
@@ -104,29 +104,29 @@ class EmbyPlaybackReporterTest {
             format = TranscodeFormat.Auto
         )!!
         download.url shouldNotContain "PlaySessionId=session-1"
-        runBlocking { reporter.progress(session, positionMs = 10_000, paused = false) }
+        reporter.progress(session, positionMs = 10_000, paused = false)
 
         S2Json.decodeFromString<PlaybackReport>(server.requestsTo("/emby/Sessions/Playing/Progress").single().bodyText).playSessionId shouldBe "session-1"
     }
 
     @Test
-    fun `markPlayed posts to the user's played items with the play date`() {
-        runBlocking { reporter.markPlayed(song, Instant.parse("2026-09-04T08:05:03Z")) } shouldBe true
+    fun `markPlayed posts to the user's played items with the play date`() = runTest {
+        reporter.markPlayed(song, Instant.parse("2026-09-04T08:05:03Z")) shouldBe true
 
         server.requestsTo("/emby/Users/user456/PlayedItems/item789").single().url.parameters["DatePlayed"] shouldBe "20260904080503"
     }
 
     @Test
-    fun `a rejected call reports failure and signs out`() {
+    fun `a rejected call reports failure and signs out`() = runTest {
         server.respond("/emby/Sessions/Playing", code = 401, method = "POST")
 
-        runBlocking { reporter.start(session, positionMs = 0) } shouldBe false
+        reporter.start(session, positionMs = 0) shouldBe false
         credentialStore.authenticatedCredentials shouldBe null
     }
 
     @Test
-    fun `the play date is formatted in UTC`() {
-        runBlocking { reporter.markPlayed(song, Instant.parse("2026-12-31T23:59:59.999Z")) } shouldBe true
+    fun `the play date is formatted in UTC`() = runTest {
+        reporter.markPlayed(song, Instant.parse("2026-12-31T23:59:59.999Z")) shouldBe true
 
         server.requestsTo("/emby/Users/user456/PlayedItems/item789").single().url.parameters["DatePlayed"] shouldBe "20261231235959"
     }

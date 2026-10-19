@@ -14,7 +14,7 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldNotContain
 import kotlin.test.Test
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 
 class EmbyAuthenticationTest {
     private val credentials = AuthenticatedCredentials(accessToken = "token123", userId = "user456")
@@ -66,43 +66,43 @@ class EmbyAuthenticationTest {
     }
 
     @Test
-    fun `refreshDownloadPermission picks up a permission the server granted after login`() {
+    fun `refreshDownloadPermission picks up a permission the server granted after login`() = runTest {
         credentialStore.authenticatedCredentials = credentials
         server.respond("/emby/Users/Me", "me.json")
 
-        val refreshed = runBlocking { authenticationManager.refreshDownloadPermission(server.address, credentials) }
+        val refreshed = authenticationManager.refreshDownloadPermission(server.address, credentials)
 
         refreshed!!.canDownload shouldBe true
         authenticationManager.getAuthenticatedCredentials()!!.canDownload shouldBe true
     }
 
     @Test
-    fun `refreshDownloadPermission sends the session's token`() {
+    fun `refreshDownloadPermission sends the session's token`() = runTest {
         credentialStore.authenticatedCredentials = credentials
         server.respond("/emby/Users/Me", "me.json")
 
-        runBlocking { authenticationManager.refreshDownloadPermission(server.address, credentials) }
+        authenticationManager.refreshDownloadPermission(server.address, credentials)
 
         server.requestsTo("/emby/Users/Me").single().headers["X-Emby-Token"] shouldBe "token123"
     }
 
     @Test
-    fun `refreshDownloadPermission keeps the cached permission when the request fails`() {
+    fun `refreshDownloadPermission keeps the cached permission when the request fails`() = runTest {
         credentialStore.authenticatedCredentials = downloadableCredentials
         server.respond("/emby/Users/Me", code = 500)
 
-        val refreshed = runBlocking { authenticationManager.refreshDownloadPermission(server.address, downloadableCredentials) }
+        val refreshed = authenticationManager.refreshDownloadPermission(server.address, downloadableCredentials)
 
         refreshed!!.canDownload shouldBe true
         authenticationManager.getAuthenticatedCredentials()!!.canDownload shouldBe true
     }
 
     @Test
-    fun `refreshDownloadPermission signs out when the server rejects the session`() {
+    fun `refreshDownloadPermission signs out when the server rejects the session`() = runTest {
         credentialStore.authenticatedCredentials = downloadableCredentials
         server.respond("/emby/Users/Me", code = 401)
 
-        val refreshed = runBlocking { authenticationManager.refreshDownloadPermission(server.address, downloadableCredentials) }
+        val refreshed = authenticationManager.refreshDownloadPermission(server.address, downloadableCredentials)
 
         refreshed.shouldBeNull()
         authenticationManager.getAuthenticatedCredentials().shouldBeNull()
@@ -118,34 +118,34 @@ class EmbyAuthenticationTest {
     }
 
     @Test
-    fun `a failed sign-in keeps the working session`() {
+    fun `a failed sign-in keeps the working session`() = runTest {
         credentialStore.authenticatedCredentials = credentials
         server.respond("/Users/AuthenticateByName", code = 401, method = "POST")
 
-        val result = runBlocking { authenticationManager.authenticate(server.address, LoginCredentials("listener", "mistyped")) }
+        val result = authenticationManager.authenticate(server.address, LoginCredentials("listener", "mistyped"))
 
         result.isFailure shouldBe true
         authenticationManager.getAuthenticatedCredentials() shouldBe credentials
     }
 
     @Test
-    fun `refreshDownloadPermission never brings back a session cleared while it ran`() {
+    fun `refreshDownloadPermission never brings back a session cleared while it ran`() = runTest {
         credentialStore.authenticatedCredentials = null
         server.respond("/emby/Users/Me", "me.json")
 
-        val refreshed = runBlocking { authenticationManager.refreshDownloadPermission(server.address, credentials) }
+        val refreshed = authenticationManager.refreshDownloadPermission(server.address, credentials)
 
         refreshed!!.canDownload shouldBe true
         authenticationManager.getAuthenticatedCredentials().shouldBeNull()
     }
 
     @Test
-    fun `refreshDownloadPermission never overwrites a newer sign-in`() {
+    fun `refreshDownloadPermission never overwrites a newer sign-in`() = runTest {
         val newer = AuthenticatedCredentials(accessToken = "token-2", userId = "user456")
         credentialStore.authenticatedCredentials = newer
         server.respond("/emby/Users/Me", "me.json")
 
-        runBlocking { authenticationManager.refreshDownloadPermission(server.address, credentials) }
+        authenticationManager.refreshDownloadPermission(server.address, credentials)
 
         authenticationManager.getAuthenticatedCredentials() shouldBe newer
     }
