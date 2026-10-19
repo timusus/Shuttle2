@@ -85,6 +85,7 @@ support/reviews/
 __pycache__/
 .claude/longjobs/
 .claude/land-logs/
+.claude/worker-finish-logs/
 .claude/ios-install.pid
 .claude/ios-installed-sha
 

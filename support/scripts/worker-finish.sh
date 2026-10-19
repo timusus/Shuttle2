@@ -20,7 +20,8 @@
 # --dry-run runs every check but stages and commits nothing. --record-screenshots re-records those
 # modules' baselines instead of verifying them and commits the PNGs with the change.
 # Exits non-zero WITHOUT committing on failure, naming the failing task/tests and keeping the log
-# (build/worker-finish/last.log). Run it in the foreground: the tests can take minutes.
+# (build/worker-finish/last.log; a copy and an index line go to the primary checkout's
+# .claude/worker-finish-logs). Run it in the foreground: the tests can take minutes.
 set -uo pipefail
 
 cd "$(git rev-parse --show-toplevel)" || exit 1
@@ -45,6 +46,21 @@ fi
 
 mkdir -p build/worker-finish
 log="$PWD/build/worker-finish/last.log"
+
+# Worktrees are reaped after landing, so each run is indexed, and a failing step's log kept,
+# in the primary checkout's .claude/worker-finish-logs for later failure-rate analysis.
+history_dir="$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")/.claude/worker-finish-logs"
+run_start=$SECONDS
+record_run() {
+  local rc=$? stamp branch
+  stamp="$(date -u +%Y%m%dT%H%M%SZ)"
+  branch="$(git rev-parse --abbrev-ref HEAD 2>/dev/null | tr '/' '-')"
+  mkdir -p "$history_dir" || return
+  printf '%s\t%s\t%s\t%s\tdry=%s\n' "$stamp" "$branch" "$rc" "$((SECONDS - run_start))" "$dry_run" >>"$history_dir/index.tsv"
+  [ "$rc" != 0 ] && cp "$log" "$history_dir/$stamp-$branch.log" 2>/dev/null
+  return 0
+}
+trap record_run EXIT
 
 # Prints the failing Gradle task(s), the failing tests and the first error, then the log path.
 fail_summary() {
