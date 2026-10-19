@@ -28,4 +28,12 @@ class SearchScreenTest {
 
         robot.playedSongs shouldBe listOf(1)
     }
+
+    // The search field is a design-system composable; there is no view-state field to map, only its absence to guard.
+    @Test
+    fun `the field has no Settings button`() {
+        robot.setContent(SearchScenarios.start)
+
+        robot.assertNoSettingsButton()
+    }
 }

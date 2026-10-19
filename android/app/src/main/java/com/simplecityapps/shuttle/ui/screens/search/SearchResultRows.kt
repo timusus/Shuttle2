@@ -225,23 +225,15 @@ internal fun PlaylistTopResult(hit: SearchHit<Playlist>, callbacks: SearchCallba
 
 private val MatchStyle = SpanStyle(fontWeight = FontWeight.Bold)
 
-/**
- * Each of a row's [lines] with the query's matches in bold, a line's parts joined with " · ". The lines are highlighted
- * together, so a query token is bolded only where it matches best in the row.
- */
+/** Each of a row's [lines] with the query's matches in bold; where they fall is [highlightedLines]'. */
 @Composable
 private fun highlighted(hit: SearchHit<*>, vararg lines: List<String>): List<AnnotatedString> {
     val key = lines.toList()
     return remember(hit, key) {
-        val ranges = hit.highlights(key.flatten()).iterator()
-        key.map { parts ->
+        highlightedLines(hit, key).map { line ->
             buildAnnotatedString {
-                parts.forEachIndexed { i, part ->
-                    if (i > 0) append(" · ")
-                    val start = length
-                    append(part)
-                    ranges.next().forEach { addStyle(MatchStyle, start + it.first, start + it.last + 1) }
-                }
+                append(line.text)
+                line.matches.forEach { addStyle(MatchStyle, it.first, it.last + 1) }
             }
         }
     }
