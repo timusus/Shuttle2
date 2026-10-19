@@ -25,7 +25,7 @@ import kotlin.test.Test
 import kotlin.time.Instant
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.toList
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 
 /** The Plex sync engine against a fixture server serving JSON fixtures in the server's response shape (#575). */
 class PlexMediaProviderTest {
@@ -526,7 +526,7 @@ class PlexMediaProviderTest {
         server.respond(ITEMS, "songs.json")
         server.respond("/library/sections/4/all", "songs_second_library.json")
 
-        runBlocking { provider.countSongs() } shouldBe 4
+        onVirtualTime { provider.countSongs() } shouldBe 4
 
         server.requestsTo(ITEMS).single().url.parameters["X-Plex-Container-Size"] shouldBe "1"
     }
@@ -537,7 +537,7 @@ class PlexMediaProviderTest {
         server.respond(SECTIONS, "sections.json")
         server.respond(ITEMS, code = 500)
 
-        runBlocking { provider.countSongs() } shouldBe null
+        onVirtualTime { provider.countSongs() } shouldBe null
     }
 
     @Test
@@ -560,7 +560,15 @@ class PlexMediaProviderTest {
     private fun syncListing(library: List<Song>): FlowEvent.Success<PlaylistListing> = provider.findPlaylists(library).events().last()
         .shouldBeInstanceOf<FlowEvent.Success<PlaylistListing>>()
 
-    private fun <T> Flow<T>.events(): List<T> = runBlocking { toList() }
+    private fun <T> Flow<T>.events(): List<T> = onVirtualTime { toList() }
+
+    // Paging retries 5xx and 429 with a real-time backoff; virtual time skips it.
+    private fun <T> onVirtualTime(block: suspend () -> T): T {
+        var result: Any? = null
+        runTest { result = block() }
+        @Suppress("UNCHECKED_CAST")
+        return result as T
+    }
 
     private companion object {
         const val SECTIONS = "/library/sections"
