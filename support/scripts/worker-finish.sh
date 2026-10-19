@@ -3,9 +3,10 @@
 #
 #   support/scripts/worker-finish.sh [--no-test] [--dry-run] [--record-screenshots] "<commit message>"
 #
-# Steps: lint -F, native test names, `unit-test --changed-tests`, then Roborazzi for the modules whose
-# UI changed (verify, or re-record with --record-screenshots), then commit. Anything wider (architecture
-# tests, dependents' test compile, the other modules' screenshots) is the landing verify's job
+# Steps: lint -F, native test names, the architecture tests (when a .kt under android/ or shared/
+# changed), `unit-test --changed-tests`, then Roborazzi for the modules whose UI changed (verify, or
+# re-record with --record-screenshots), then commit. Anything wider (dependents' test compile, the
+# other modules' screenshots) is the landing verify's job
 # (support/scripts/land-verify). The iOS test target is compiled when the diff touches what Swift sees.
 # Roborazzi runs for a module that applies the plugin when its main source (src/main, src/androidMain,
 # src/commonMain) or tests/snapshots (src/test) changed, for :android:designsystem when
@@ -160,6 +161,14 @@ EOF3
 }
 
 if [ "$run_tests" = 1 ]; then
+  if printf '%s\n' "$changed" | grep -Eq '^(android|shared)/.*\.kt$'; then
+    start=$SECONDS
+    if ! support/scripts/remote-build.sh --local -q :android:architecture-tests:testDebugUnitTest >"$log" 2>&1; then
+      fail "architecture tests"
+    fi
+    echo "architecture tests: ok ($((SECONDS - start))s)"
+  fi
+
   start=$SECONDS
   if ! support/scripts/unit-test --changed-tests >"$log" 2>&1; then
     fail tests
