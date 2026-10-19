@@ -11,8 +11,6 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListScope
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.input.TextFieldState
@@ -38,7 +36,6 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
-import com.simplecityapps.mediaprovider.search.SearchHit
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.designsystem.component.EmptyState
 import com.simplecityapps.shuttle.designsystem.component.LoadingState
@@ -107,6 +104,7 @@ fun SearchScreen(
     // A result set too short to scroll can't bring a hidden header back, so new content always starts with it shown.
     val viewState = searchViewState(uiState)
     LaunchedEffect(viewState.content) { scrollBehavior.state.heightOffset = 0f }
+    val onEvent: (SearchEvent) -> Unit = { event -> callbacks.onEvent(event) { queryState.edit { replace(0, length, it) } } }
     Column(
         modifier
             .fillMaxSize()
@@ -118,7 +116,7 @@ fun SearchScreen(
             S2SearchField(
                 textFieldState = queryState,
                 onSearch = {
-                    callbacks.onSearch()
+                    onEvent(SearchEvent.Search)
                     focusManager.clearFocus()
                 },
                 placeholder = stringResource(R.string.search_placeholder),
@@ -136,21 +134,20 @@ fun SearchScreen(
                     .padding(horizontal = S2Spacing.medium),
             ) {
                 viewState.chips.forEach { chip ->
-                    val category = chip.category
                     S2FilterChip(
-                        label = category?.label() ?: stringResource(R.string.search_category_all),
+                        label = chip.category?.label() ?: stringResource(R.string.search_category_all),
                         selected = chip.selected,
-                        onClick = if (category == null) callbacks.onSelectAll else ({ callbacks.onToggleCategory(category) }),
+                        onClick = { onEvent(chip.tapEvent()) },
                     )
                 }
             }
         }
         when (val content = viewState.content) {
             SearchViewState.Content.Start -> StartSearching()
-            is SearchViewState.Content.Recent -> RecentSearches(content.searches, onSelect = { queryState.edit { replace(0, length, it) } }, onRemove = callbacks.onRemoveRecentSearch)
+            is SearchViewState.Content.Recent -> RecentSearches(content.searches, onEvent)
             SearchViewState.Content.Searching -> LoadingState(Modifier.fillMaxSize())
             is SearchViewState.Content.NoResults -> SearchNoResults(content.query, Modifier.fillMaxSize())
-            is SearchViewState.Content.Results -> SearchResultList(content.query, content.results, callbacks)
+            is SearchViewState.Content.Results -> SearchResultList(content.query, content.results, onEvent)
         }
     }
 }
@@ -177,15 +174,14 @@ private fun StartSearching() {
 @Composable
 private fun RecentSearches(
     searches: List<String>,
-    onSelect: (String) -> Unit,
-    onRemove: (String) -> Unit,
+    onEvent: (SearchEvent) -> Unit,
 ) {
     val listState = rememberLazyListState()
     ScrollToTopOnReselect(ShellTab.Search, listState)
     LazyColumn(Modifier.fillMaxSize(), state = listState) {
         item(key = "header") { SectionHeader(stringResource(R.string.search_recent), style = SectionHeaderStyle.Title) }
         searches.forEach { query ->
-            item(key = "recent:$query") { SearchRecentRow(query, onClick = { onSelect(query) }, onRemove = { onRemove(query) }) }
+            item(key = "recent:$query") { SearchRecentRow(query, onClick = { onEvent(SearchEvent.SelectRecent(query)) }, onRemove = { onEvent(SearchEvent.RemoveRecent(query)) }) }
         }
     }
 }
@@ -194,59 +190,56 @@ private fun RecentSearches(
 private fun SearchResultList(
     query: String,
     results: SearchResults,
-    callbacks: SearchCallbacks,
+    onEvent: (SearchEvent) -> Unit,
 ) {
     var expanded by rememberSaveable(query) { mutableStateOf<SearchCategory?>(null) }
-    val sections = results.sections(expanded)
     val listState = rememberLazyListState()
     ScrollToTopOnReselect(ShellTab.Search, listState)
     LazyColumn(Modifier.fillMaxSize(), state = listState, contentPadding = PaddingValues(bottom = S2Spacing.medium)) {
-        // The best match of all leads, lifted out of its own section.
-        results.top?.let { top ->
-            item(key = "header:top", contentType = "header") { SectionHeader(stringResource(R.string.search_top_result), style = SectionHeaderStyle.Title) }
-            item(key = "top", contentType = top) {
-                when (top) {
-                    SearchCategory.Artists -> ArtistTopResult(results.artists.first(), callbacks)
-                    SearchCategory.Albums -> AlbumTopResult(results.albums.first(), callbacks)
-                    SearchCategory.Songs -> SongTopResult(results.songs.first(), 0, callbacks)
-                    SearchCategory.Genres -> GenreTopResult(results.genres.first(), callbacks)
-                    SearchCategory.Playlists -> PlaylistTopResult(results.playlists.first(), callbacks)
+        results.resultItems(expanded).forEach { entry ->
+            when (entry) {
+                is SearchResultItem.TopResult -> {
+                    item(key = "header:top", contentType = "header") { SectionHeader(stringResource(R.string.search_top_result), style = SectionHeaderStyle.Title) }
+                    item(key = "top", contentType = entry.category) {
+                        when (entry.category) {
+                            SearchCategory.Artists -> ArtistTopResult(results, onEvent)
+                            SearchCategory.Albums -> AlbumTopResult(results, onEvent)
+                            SearchCategory.Songs -> SongTopResult(results, onEvent)
+                            SearchCategory.Genres -> GenreTopResult(results, onEvent)
+                            SearchCategory.Playlists -> PlaylistTopResult(results, onEvent)
+                        }
+                    }
                 }
-            }
-        }
-        sections.forEach { section ->
-            val type = section.category.name
-            item(key = "header:$type", contentType = "header") {
-                SectionHeader(
-                    title = section.category.label(),
-                    style = SectionHeaderStyle.Title,
-                    action = if (section.hasMore) stringResource(R.string.search_see_all) else null,
-                    onAction = { expanded = section.category },
-                )
-            }
-            // Rows get the hit's index in the whole group, which a song plays from.
-            when (section.category) {
-                SearchCategory.Artists -> rows(section, results.artists, { it.groupKey }) { _, hit -> ArtistResult(hit, callbacks) }
-                SearchCategory.Albums -> rows(section, results.albums, { it.groupKey ?: it.name }) { _, hit -> AlbumResult(hit, callbacks) }
-                SearchCategory.Songs -> rows(section, results.songs, { it.id }) { index, hit -> SongResult(hit, index, callbacks) }
-                SearchCategory.Genres -> rows(section, results.genres, { it.name }) { _, hit -> GenreResult(hit, callbacks) }
-                SearchCategory.Playlists -> rows(section, results.playlists, { it.id }) { _, hit -> PlaylistResult(hit, callbacks) }
+
+                is SearchResultItem.Header -> item(key = "header:${entry.category.name}", contentType = "header") {
+                    SectionHeader(
+                        title = entry.category.label(),
+                        style = SectionHeaderStyle.Title,
+                        action = if (entry.seeAll) stringResource(R.string.search_see_all) else null,
+                        onAction = { expanded = entry.category },
+                    )
+                }
+
+                is SearchResultItem.Hit -> item(key = "${entry.category.name}:${results.key(entry)}", contentType = entry.category.name) {
+                    when (entry.category) {
+                        SearchCategory.Artists -> ArtistResult(results, entry.index, onEvent)
+                        SearchCategory.Albums -> AlbumResult(results, entry.index, onEvent)
+                        SearchCategory.Songs -> SongResult(results, entry.index, onEvent)
+                        SearchCategory.Genres -> GenreResult(results, entry.index, onEvent)
+                        SearchCategory.Playlists -> PlaylistResult(results, entry.index, onEvent)
+                    }
+                }
             }
         }
     }
 }
 
-/** A [section]'s rows from its group's [hits]; each row gets the hit's index in the whole group. */
-private fun <T> LazyListScope.rows(
-    section: SearchSection,
-    hits: List<SearchHit<T>>,
-    key: (T) -> Any?,
-    row: @Composable (index: Int, hit: SearchHit<T>) -> Unit,
-) {
-    val type = section.category.name
-    items(count = section.until - section.from, key = { "$type:${key(hits[section.from + it].item)}" }, contentType = { type }) { i ->
-        row(section.from + i, hits[section.from + i])
-    }
+private fun SearchResults.key(hit: SearchResultItem.Hit): Any? = when (hit.category) {
+    SearchCategory.Artists -> artists[hit.index].item.groupKey
+    SearchCategory.Albums -> albums[hit.index].item.let { it.groupKey ?: it.name }
+    SearchCategory.Songs -> songs[hit.index].item.id
+    SearchCategory.Genres -> genres[hit.index].item.name
+    SearchCategory.Playlists -> playlists[hit.index].item.id
 }
 
 @Composable
