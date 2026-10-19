@@ -5,8 +5,8 @@
 #
 # Steps: lint -F, native test names, `unit-test --changed-tests`, then Roborazzi for the modules whose
 # UI changed (verify, or re-record with --record-screenshots), then commit. Anything wider (architecture
-# tests, iOS test compile, dependents' test compile, the other modules' screenshots) is the landing
-# verify's job (support/scripts/land-verify).
+# tests, dependents' test compile, the other modules' screenshots) is the landing verify's job
+# (support/scripts/land-verify). The iOS test target is compiled when the diff touches what Swift sees.
 # Roborazzi runs for a module that applies the plugin when its main source (src/main, src/androidMain,
 # src/commonMain) or tests/snapshots (src/test) changed, for :android:designsystem when
 # docs/design/catalog changed, for :android:app when other docs/design changed, and for :android:app
@@ -54,7 +54,7 @@ fail_summary() {
     echo "failed tests:"
     printf '%s\n' "$failed"
   else
-    line="$(grep -m1 -E '(\.kts?:[0-9]+|^e: |FAILED|error:)' "$log" | sed "s|$PWD/||; s|file://||" | cut -c1-240)"
+    line="$(grep -m1 -E '(\.kts?:[0-9]+|\.swift:[0-9]+|^e:|FAILED|error:)' "$log" | sed "s|$PWD/||; s|file://||" | cut -c1-240)"
     if [ -n "$line" ]; then printf '%s\n' "$line"; else tail -n 5 "$log" | cut -c1-240; fi
   fi
   echo "log: $log"
@@ -231,6 +231,16 @@ elif [ "${#shot_tasks[@]}" -gt 0 ]; then
   exit 2
 else
   echo "tests: skipped (--no-test)"
+fi
+
+# iOS test-target compile, only when a file the Swift side sees changed. Cheap next to a failed land verify.
+ios_touch="$(printf '%s\n' "$changed" | grep -E '^(ios/(S2|S2Tests|S2Widgets|SystemSurfaces|Config|project\.yml)|shared/.*\.kt$|android/(domain|presentation|core)/.*\.kt$)' || true)"
+if [ "$run_tests" = 1 ] && [ -n "$ios_touch" ] && command -v xcodebuild >/dev/null 2>&1 && command -v xcodegen >/dev/null 2>&1; then
+  start=$SECONDS
+  if ! { (cd ios && xcodegen -q) && ios/scripts/build-framework.sh && ios/scripts/build-app.sh; } >"$log" 2>&1; then
+    fail "ios test compile"
+  fi
+  echo "ios test compile: ok ($((SECONDS - start))s)"
 fi
 
 if [ "$dry_run" = 1 ]; then
