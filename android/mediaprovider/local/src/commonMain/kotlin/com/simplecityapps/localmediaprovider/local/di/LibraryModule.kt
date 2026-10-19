@@ -34,6 +34,7 @@ import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.mediaprovider.repository.suggestions.SuggestionsRepository
 import com.simplecityapps.mediaprovider.settings.LibrarySettings
 import com.simplecityapps.shuttle.di.AppCoroutineScope
+import com.simplecityapps.shuttle.di.IoDispatcher
 import com.simplecityapps.shuttle.model.AlbumIndexProvider
 import com.simplecityapps.shuttle.persistence.SourceStateStore
 import dev.zacsweers.metro.AppScope
@@ -42,9 +43,8 @@ import dev.zacsweers.metro.Binds
 import dev.zacsweers.metro.ContributesTo
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.SingleIn
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.plus
 
@@ -70,8 +70,9 @@ abstract class LibraryModule {
         @SingleIn(AppScope::class)
         fun provideLibraryAlbumIndex(
             database: MediaDatabase,
-            @AppCoroutineScope appCoroutineScope: CoroutineScope
-        ): LibraryAlbumIndex = database.libraryAlbumIndex().also { index -> appCoroutineScope.launch(Dispatchers.IO) { index.albumIndex() } }
+            @AppCoroutineScope appCoroutineScope: CoroutineScope,
+            @IoDispatcher ioDispatcher: CoroutineDispatcher
+        ): LibraryAlbumIndex = database.libraryAlbumIndex().also { index -> appCoroutineScope.launch(ioDispatcher) { index.albumIndex() } }
 
         @Provides
         @SingleIn(AppScope::class)
@@ -102,8 +103,9 @@ abstract class LibraryModule {
         fun provideServerPlaylistSync(
             writers: Set<ServerPlaylistWriter>,
             sourceState: SourceStateStore,
-            @AppCoroutineScope appCoroutineScope: CoroutineScope
-        ): ServerPlaylistSync = ServerPlaylistSync(writers, sourceState, appCoroutineScope + Dispatchers.IO)
+            @AppCoroutineScope appCoroutineScope: CoroutineScope,
+            @IoDispatcher ioDispatcher: CoroutineDispatcher
+        ): ServerPlaylistSync = ServerPlaylistSync(writers, sourceState, appCoroutineScope + ioDispatcher)
 
         /** Each provider module contributes its writer to the set. */
         @Provides
@@ -121,11 +123,12 @@ abstract class LibraryModule {
         fun provideFavouriteSender(
             database: MediaDatabase,
             writer: AggregateFavouriteWriter,
-            @AppCoroutineScope appCoroutineScope: CoroutineScope
+            @AppCoroutineScope appCoroutineScope: CoroutineScope,
+            @IoDispatcher ioDispatcher: CoroutineDispatcher
         ): FavouriteSender = FavouriteSender(
             dao = database.songDataDao(),
             writer = writer,
-            scope = appCoroutineScope + Dispatchers.IO
+            scope = appCoroutineScope + ioDispatcher
         )
 
         @Provides

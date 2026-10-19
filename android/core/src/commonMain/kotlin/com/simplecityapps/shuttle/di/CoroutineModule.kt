@@ -42,6 +42,10 @@ class CoroutineModule {
     fun provideIoDispatcher(): CoroutineDispatcher = Dispatchers.IO
 
     @Provides
+    @DefaultDispatcher
+    fun provideDefaultDispatcher(): CoroutineDispatcher = Dispatchers.Default
+
+    @Provides
     @MainDispatcher
     fun provideMainDispatcher(): CoroutineDispatcher = Dispatchers.Main
 }
@@ -59,6 +63,10 @@ annotation class AppSupervisorJob
 @Retention(AnnotationRetention.BINARY)
 @Qualifier
 annotation class IoDispatcher
+
+@Retention(AnnotationRetention.BINARY)
+@Qualifier
+annotation class DefaultDispatcher
 
 @Retention(AnnotationRetention.BINARY)
 @Qualifier
