@@ -5,6 +5,7 @@ import android.provider.MediaStore
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistQuery
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
+import com.simplecityapps.shuttle.di.IoDispatcher
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.query.SongQuery
@@ -12,7 +13,7 @@ import dev.zacsweers.metro.Inject
 import java.text.Normalizer
 import kotlin.math.max
 import kotlin.math.min
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.withContext
 
@@ -91,11 +92,12 @@ class VoiceSearchResolver
 @Inject
 constructor(
     private val songRepository: SongRepository,
-    private val playlistRepository: PlaylistRepository
+    private val playlistRepository: PlaylistRepository,
+    @IoDispatcher private val ioDispatcher: CoroutineDispatcher
 ) {
     suspend fun resolve(search: VoiceSearch): VoiceSearchResult {
         if (search.isBlank) return VoiceSearchResult.Anything
-        val (songs, playlists) = withContext(Dispatchers.IO) {
+        val (songs, playlists) = withContext(ioDispatcher) {
             songRepository.getSongs(SongQuery.All()).firstOrNull().orEmpty() to
                 playlistRepository.getPlaylists(PlaylistQuery.All(mediaProviderType = null)).firstOrNull().orEmpty()
         }
@@ -172,7 +174,7 @@ constructor(
             val key = query?.searchKey().orEmpty()
             val stored = playlists.map { playlist ->
                 Candidate(matchScore(key, playlist.name.searchKey()) + bonus) {
-                    val songs = withContext(Dispatchers.IO) { playlistRepository.getSongsForPlaylist(playlist).firstOrNull().orEmpty().map { it.song } }
+                    val songs = withContext(ioDispatcher) { playlistRepository.getSongsForPlaylist(playlist).firstOrNull().orEmpty().map { it.song } }
                     VoiceSearchResult.Songs(songs, 0)
                 }
             }

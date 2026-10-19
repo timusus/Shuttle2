@@ -80,7 +80,7 @@ class SessionHarness(
         val albumRepository = FakeAlbumRepository(albums)
         val artistRepository = FakeAlbumArtistRepository()
         val playlistRepository = FakePlaylistRepository(playlists)
-        val mediaIdHelper = MediaIdHelper(context, playlistRepository, artistRepository, albumRepository, songRepository) { AlbumIndex(emptyList()) }
+        val mediaIdHelper = MediaIdHelper(context, playlistRepository, artistRepository, albumRepository, songRepository, { AlbumIndex(emptyList()) }, Dispatchers.IO)
         playRequests =
             PlayRequests(
                 context = context,
@@ -89,9 +89,11 @@ class SessionHarness(
                 playbackStateSource = playback.playbackOperations,
                 queueOperations = playback.queueOperations,
                 mediaIdHelper = mediaIdHelper,
-                uriSongResolver = UriSongResolver(context, songRepository),
-                voiceSearchResolver = VoiceSearchResolver(songRepository, playlistRepository),
+                uriSongResolver = UriSongResolver(context, songRepository, Dispatchers.IO),
+                voiceSearchResolver = VoiceSearchResolver(songRepository, playlistRepository, Dispatchers.IO),
                 songRepository = songRepository,
+                ioDispatcher = Dispatchers.IO,
+                mainImmediateDispatcher = Dispatchers.Main.immediate,
                 shuffleAllLoadWaitMs = shuffleAllLoadWaitMs
             )
         val gate = ServerAccessGate(entitlement, startTrial = {
@@ -103,7 +105,7 @@ class SessionHarness(
             eligible
         })
         val carAccess = if (car) CarAccess(gate, carPackages = setOf(context.packageName)) else CarAccess(gate)
-        callback = SessionCallback(context, playRequests, mediaIdHelper, playback.queueOperations, playback.playbackPreferenceManager::nowPlaying, scope, carAccess, ToggleFavourite(songRepository), ObserveFavouriteSongIds(songRepository)(), { trusted })
+        callback = SessionCallback(context, playRequests, mediaIdHelper, playback.queueOperations, playback.playbackPreferenceManager::nowPlaying, scope, Dispatchers.Main.immediate, carAccess, ToggleFavourite(songRepository), ObserveFavouriteSongIds(songRepository)(), { trusted })
         val player = SessionPlayer(playback.appPlayer, playback.playbackOperations, playback.queueOperations, scope, classicalDisplay)
         session = MediaLibrarySession.Builder(context, player, callback).setId("session-${sessions++}").build()
         callback.launchMediaButtonUpdates(session)

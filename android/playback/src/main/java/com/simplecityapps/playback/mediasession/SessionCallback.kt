@@ -31,8 +31,8 @@ import com.simplecityapps.playback.queue.toMediaItem
 import com.simplecityapps.playback.queue.toQueueEntry
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.ui.actions.ToggleFavourite
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -67,6 +67,7 @@ class SessionCallback(
     /** The song the saved queue was left on, to offer for resumption before the queue is restored. */
     private val nowPlaying: () -> NowPlayingSnapshot?,
     private val scope: CoroutineScope,
+    private val mainImmediateDispatcher: CoroutineDispatcher,
     private val carAccess: CarAccess,
     private val toggleFavourite: ToggleFavourite,
     private val favouriteSongIds: Flow<Set<Long>>,
@@ -182,7 +183,7 @@ class SessionCallback(
         params: LibraryParams?
     ): ListenableFuture<LibraryResult<MediaItem>> {
         if (!isTrustedCaller(browser)) return Futures.immediateFuture(LibraryResult.ofItem(emptyRoot, params))
-        return scope.listenableFuture {
+        return scope.listenableFuture(mainImmediateDispatcher) {
             LibraryResult.ofItem(if (carAccess.mayUseLibrary(browser)) MediaIdHelper.root else upgradeRoot(), params)
         }
     }
@@ -201,7 +202,7 @@ class SessionCallback(
     ): ListenableFuture<LibraryResult<ImmutableList<MediaItem>>> {
         if (!isTrustedCaller(browser) || parentId == EMPTY_ROOT_ID) return Futures.immediateFuture(LibraryResult.ofItemList(ImmutableList.of(), params))
         val isRoot = parentId == UPGRADE_ROOT_ID || parentId == MediaIdHelper.root.mediaId
-        return scope.listenableFuture {
+        return scope.listenableFuture(mainImmediateDispatcher) {
             val children = when {
                 carAccess.mayUseLibrary(browser) -> mediaIdHelper.getChildren(if (isRoot) MediaIdHelper.root.mediaId else parentId)
                 isRoot -> listOf(upgradeItem())
@@ -241,7 +242,7 @@ class SessionCallback(
         if (!isTrustedCaller(browser)) return Futures.immediateFuture(LibraryResult.ofError(SessionError.ERROR_PERMISSION_DENIED))
         if (mediaId == UPGRADE_ROOT_ID) return Futures.immediateFuture(LibraryResult.ofItem(upgradeRoot(), null))
         if (mediaId == UPGRADE_ITEM_ID) return Futures.immediateFuture(LibraryResult.ofItem(upgradeItem(), null))
-        return scope.listenableFuture {
+        return scope.listenableFuture(mainImmediateDispatcher) {
             if (!carAccess.mayUseLibrary(browser)) return@listenableFuture LibraryResult.ofError(SessionError.ERROR_NOT_SUPPORTED)
             mediaIdHelper.getItem(mediaId)?.let { item -> LibraryResult.ofItem(item, null) } ?: LibraryResult.ofError(SessionError.ERROR_BAD_VALUE)
         }
@@ -255,7 +256,7 @@ class SessionCallback(
         params: LibraryParams?
     ): ListenableFuture<LibraryResult<Void>> {
         if (!isTrustedCaller(browser)) return Futures.immediateFuture(LibraryResult.ofError(SessionError.ERROR_PERMISSION_DENIED))
-        return scope.listenableFuture {
+        return scope.listenableFuture(mainImmediateDispatcher) {
             if (!carAccess.mayUseLibrary(browser)) return@listenableFuture LibraryResult.ofError(SessionError.ERROR_NOT_SUPPORTED)
             val results = mediaIdHelper.search(query)
             session.notifySearchResultChanged(browser, query, results.size, params)
@@ -272,7 +273,7 @@ class SessionCallback(
         params: LibraryParams?
     ): ListenableFuture<LibraryResult<ImmutableList<MediaItem>>> {
         if (!isTrustedCaller(browser)) return Futures.immediateFuture(LibraryResult.ofError(SessionError.ERROR_PERMISSION_DENIED))
-        return scope.listenableFuture {
+        return scope.listenableFuture(mainImmediateDispatcher) {
             val results = if (carAccess.mayUseLibrary(browser)) mediaIdHelper.search(query) else emptyList()
             LibraryResult.ofItemList(results.page(page, pageSize), params)
         }
@@ -292,7 +293,7 @@ class SessionCallback(
         mediaItems: List<MediaItem>,
         startIndex: Int,
         startPositionMs: Long
-    ): ListenableFuture<MediaItemsWithStartPosition> = scope.listenableFuture {
+    ): ListenableFuture<MediaItemsWithStartPosition> = scope.listenableFuture(mainImmediateDispatcher) {
         requireLibrary(mediaSession, controller)
         val search = mediaItems.singleOrNull()?.takeIf { item -> item.isSearch }?.requestMetadata
         val playQueue = if (search != null) {
@@ -312,7 +313,7 @@ class SessionCallback(
         mediaSession: MediaSession,
         controller: ControllerInfo,
         mediaItems: List<MediaItem>
-    ): ListenableFuture<List<MediaItem>> = scope.listenableFuture {
+    ): ListenableFuture<List<MediaItem>> = scope.listenableFuture(mainImmediateDispatcher) {
         requireLibrary(mediaSession, controller)
         mediaItems.flatMap { item -> songsFor(item) }.map { song -> song.toQueueEntry().toMediaItem() }
     }
@@ -327,7 +328,7 @@ class SessionCallback(
         mediaSession: MediaSession,
         controller: ControllerInfo,
         isForPlayback: Boolean
-    ): ListenableFuture<MediaItemsWithStartPosition> = scope.listenableFuture {
+    ): ListenableFuture<MediaItemsWithStartPosition> = scope.listenableFuture(mainImmediateDispatcher) {
         requireLibrary(mediaSession, controller)
         val queue = queueOperations.queueStateFlow.value
         if (!isForPlayback && !queue.isRestored && queue.items.isEmpty()) {
@@ -420,9 +421,12 @@ internal fun <T> List<T>.page(page: Int, pageSize: Int): ImmutableList<T> {
 }
 
 /** Runs [block] on the main thread, where the session and player live, completing the returned future with its result. */
-internal fun <T> CoroutineScope.listenableFuture(block: suspend () -> T): ListenableFuture<T> {
+internal fun <T> CoroutineScope.listenableFuture(
+    dispatcher: CoroutineDispatcher,
+    block: suspend () -> T
+): ListenableFuture<T> {
     val future = SettableFuture.create<T>()
-    val job = launch(Dispatchers.Main.immediate) {
+    val job = launch(dispatcher) {
         try {
             future.set(block())
         } catch (e: Exception) {

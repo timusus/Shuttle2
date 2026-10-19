@@ -94,14 +94,16 @@ class PlaybackModule {
         artistRepository: AlbumArtistRepository,
         albumRepository: AlbumRepository,
         songRepository: SongRepository,
-        albumIndex: AlbumIndexProvider
-    ): MediaIdHelper = MediaIdHelper(context, playlistRepository, artistRepository, albumRepository, songRepository, albumIndex)
+        albumIndex: AlbumIndexProvider,
+        @IoDispatcher ioDispatcher: CoroutineDispatcher
+    ): MediaIdHelper = MediaIdHelper(context, playlistRepository, artistRepository, albumRepository, songRepository, albumIndex, ioDispatcher)
 
     @Provides
     fun provideUriSongResolver(
         @ApplicationContext context: Context,
-        songRepository: SongRepository
-    ): UriSongResolver = UriSongResolver(context, songRepository)
+        songRepository: SongRepository,
+        @IoDispatcher ioDispatcher: CoroutineDispatcher
+    ): UriSongResolver = UriSongResolver(context, songRepository, ioDispatcher)
 
     @Provides
     fun provideAudioManager(

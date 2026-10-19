@@ -32,6 +32,7 @@ import com.simplecityapps.playback.mediasession.awaitRestored
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.playback.queue.queueEntryOrNull
+import com.simplecityapps.shuttle.di.MainImmediateDispatcher
 import com.simplecityapps.shuttle.di.appGraph
 import com.simplecityapps.shuttle.entitlement.ServerAccessGate
 import com.simplecityapps.shuttle.pendingintent.PendingIntentCompat
@@ -42,8 +43,8 @@ import com.simplecityapps.shuttle.ui.actions.ToggleFavourite
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.ContributesTo
 import dev.zacsweers.metro.Inject
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
@@ -113,7 +114,11 @@ class PlaybackService : MediaLibraryService() {
     @Inject
     lateinit var observeFavouriteSongIds: ObserveFavouriteSongIds
 
-    private val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+    @Inject
+    @MainImmediateDispatcher
+    lateinit var mainImmediateDispatcher: CoroutineDispatcher
+
+    private val coroutineScope by lazy { CoroutineScope(SupervisorJob() + mainImmediateDispatcher) }
 
     private lateinit var session: MediaLibrarySession
 
@@ -142,7 +147,7 @@ class PlaybackService : MediaLibraryService() {
         )
         setShowNotificationForIdlePlayer(SHOW_NOTIFICATION_FOR_IDLE_PLAYER_AFTER_STOP_OR_ERROR)
 
-        callback = SessionCallback(this, playRequests, mediaIdHelper, queueOperations, playbackPreferenceManager::nowPlaying, coroutineScope, CarAccess(serverAccessGate), toggleFavourite, observeFavouriteSongIds(), TrustedCallers::isTrusted)
+        callback = SessionCallback(this, playRequests, mediaIdHelper, queueOperations, playbackPreferenceManager::nowPlaying, coroutineScope, mainImmediateDispatcher, CarAccess(serverAccessGate), toggleFavourite, observeFavouriteSongIds(), TrustedCallers::isTrusted)
         val sessionPlayer = SessionPlayer(player, playbackOperations, queueOperations, coroutineScope, appearanceSettings.classicalDisplay.stateIn(coroutineScope, SharingStarted.Eagerly))
         session = MediaLibrarySession.Builder(this, sessionPlayer, callback)
             .setBitmapLoader(ArtworkBitmapLoader(this, artworkImageLoader, artworkCache, artworkSettings) { player.currentMediaItem?.queueEntryOrNull?.song })

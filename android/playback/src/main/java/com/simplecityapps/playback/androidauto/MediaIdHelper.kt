@@ -13,6 +13,7 @@ import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.playback.R
 import com.simplecityapps.playback.queue.toMediaMetadata
+import com.simplecityapps.shuttle.di.IoDispatcher
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumArtist
 import com.simplecityapps.shuttle.model.AlbumArtistGroupKey
@@ -22,7 +23,7 @@ import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.query.SongQuery
 import dev.zacsweers.metro.Inject
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.withContext
 import timber.log.Timber
@@ -35,7 +36,8 @@ constructor(
     private val artistRepository: AlbumArtistRepository,
     private val albumRepository: AlbumRepository,
     private val songRepository: SongRepository,
-    private val albumIndex: AlbumIndexProvider
+    private val albumIndex: AlbumIndexProvider,
+    @IoDispatcher private val ioDispatcher: CoroutineDispatcher
 ) {
     private val rootChildren: List<MediaItem> = listOf(
         browsableItem("media:/artist_root/", context.getString(R.string.auto_folder_artists), MediaMetadata.MEDIA_TYPE_FOLDER_ARTISTS),
@@ -57,7 +59,7 @@ constructor(
     private val favourites: MediaItem = browsableItem(FAVOURITES_ID, context.getString(R.string.auto_folder_favorites), MediaMetadata.MEDIA_TYPE_PLAYLIST)
 
     /** The children of the browsable item [mediaId]: empty for an id that isn't one. */
-    suspend fun getChildren(mediaId: String): List<MediaItem> = withContext(Dispatchers.IO) {
+    suspend fun getChildren(mediaId: String): List<MediaItem> = withContext(ioDispatcher) {
         when (val mediaIdWrapper: MediaIdWrapper? = parseMediaId(mediaId)) {
             is MediaIdWrapper.Directory.Root -> rootChildren
 
@@ -99,7 +101,7 @@ constructor(
      * The item [mediaId] names: the root, one of its folders or Shuffle All, or a song. An artist, album or playlist
      * folder isn't looked up, so it's returned bare, with no title; null for an id that names nothing.
      */
-    suspend fun getItem(mediaId: String): MediaItem? = withContext(Dispatchers.IO) {
+    suspend fun getItem(mediaId: String): MediaItem? = withContext(ioDispatcher) {
         when (val mediaIdWrapper = parseMediaId(mediaId)) {
             is MediaIdWrapper.Directory.Root -> root
 
@@ -120,7 +122,7 @@ constructor(
     }
 
     /** The songs matching [query], as playable items whose media ids are the songs' own ids. */
-    suspend fun search(query: String): List<MediaItem> = withContext(Dispatchers.IO) {
+    suspend fun search(query: String): List<MediaItem> = withContext(ioDispatcher) {
         songRepository.getSongs(SongQuery.Search(query = query)).firstOrNull().orEmpty().map { it.toMediaItem(parentMediaId = "") }
     }
 
@@ -256,7 +258,7 @@ constructor(
     }
 
     /** The songs to play for the playable item [mediaId], and where in them to start; null for an id that isn't one. */
-    suspend fun getPlayQueue(mediaId: String): PlayQueue? = withContext(Dispatchers.IO) {
+    suspend fun getPlayQueue(mediaId: String): PlayQueue? = withContext(ioDispatcher) {
         when (val mediaIdWrapper = parseMediaId(mediaId)) {
             is MediaIdWrapper.Song -> {
                 when (val directory = mediaIdWrapper.directory) {

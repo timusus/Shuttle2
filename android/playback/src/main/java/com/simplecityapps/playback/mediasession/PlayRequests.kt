@@ -13,6 +13,8 @@ import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.playback.queue.QueueState
 import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.shuttle.di.ApplicationContext
+import com.simplecityapps.shuttle.di.IoDispatcher
+import com.simplecityapps.shuttle.di.MainImmediateDispatcher
 import com.simplecityapps.shuttle.model.PlayContext
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.query.SongQuery
@@ -22,8 +24,8 @@ import dev.zacsweers.metro.SingleIn
 import kotlin.coroutines.resume
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
@@ -52,6 +54,8 @@ constructor(
     private val uriSongResolver: UriSongResolver,
     private val voiceSearchResolver: VoiceSearchResolver,
     private val songRepository: SongRepository,
+    @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
+    @MainImmediateDispatcher private val mainImmediateDispatcher: CoroutineDispatcher,
     /** How long [shuffleAll] waits for the first song to load; tests that run the player's clock far ahead raise it. */
     private val shuffleAllLoadWaitMs: Long = SHUFFLE_ALL_LOAD_WAIT_MS
 ) {
@@ -90,7 +94,7 @@ constructor(
         VoiceSearchResult.Anything -> librarySongs()
     }
 
-    private suspend fun librarySongs(): List<Song> = withContext(Dispatchers.IO) { songRepository.getSongs(SongQuery.All()).firstOrNull().orEmpty() }
+    private suspend fun librarySongs(): List<Song> = withContext(ioDispatcher) { songRepository.getSongs(SongQuery.All()).firstOrNull().orEmpty() }
 
     /**
      * Replaces the queue with [songs], starting at [position], and loads it, returning once it has loaded (or failed
@@ -176,7 +180,7 @@ constructor(
      * app plays under the caller's URI grant, which lapses once the task that got it is gone, so a later reload can
      * fail where the first load didn't.
      */
-    fun launchPlaybackFailureMessages(): Job = appCoroutineScope.launch(Dispatchers.Main.immediate) {
+    fun launchPlaybackFailureMessages(): Job = appCoroutineScope.launch(mainImmediateDispatcher) {
         playbackStateSource.playbackFailureFlow.collect { song ->
             if (!song.isInLibrary) {
                 Toast.makeText(context, com.simplecityapps.core.R.string.open_file_failed, Toast.LENGTH_LONG).show()

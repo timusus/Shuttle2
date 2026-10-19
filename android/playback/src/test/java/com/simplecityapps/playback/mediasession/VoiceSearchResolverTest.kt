@@ -12,6 +12,7 @@ import io.kotest.matchers.doubles.shouldBeGreaterThan
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import kotlin.time.Instant
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 
@@ -37,7 +38,7 @@ class VoiceSearchResolverTest {
     private fun resolver(
         songs: List<Song> = library,
         playlists: Map<Playlist, List<Song>> = mapOf(roadTrip to listOf(karmaPolice, comeTogether))
-    ) = VoiceSearchResolver(FakeSongRepository(songs), FakePlaylistRepository(playlists))
+    ) = VoiceSearchResolver(FakeSongRepository(songs), FakePlaylistRepository(playlists), Dispatchers.IO)
 
     private suspend fun resolve(search: VoiceSearch, resolver: VoiceSearchResolver = resolver()) = resolver.resolve(search)
 

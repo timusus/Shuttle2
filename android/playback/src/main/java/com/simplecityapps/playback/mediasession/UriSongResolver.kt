@@ -13,7 +13,7 @@ import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.query.SongQuery
 import java.io.File
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.withContext
@@ -31,13 +31,14 @@ import timber.log.Timber
  */
 class UriSongResolver(
     private val context: Context,
-    private val songRepository: SongRepository
+    private val songRepository: SongRepository,
+    private val ioDispatcher: CoroutineDispatcher
 ) {
     /** The song for [uri], or null when it can't be read (no grant, or the file is gone). */
     suspend fun resolve(
         uri: Uri,
         mimeType: String? = null
-    ): Song? = withContext(Dispatchers.IO) {
+    ): Song? = withContext(ioDispatcher) {
         if (!canRead(uri)) return@withContext null
         val opened = inspect(uri, mimeType) ?: return@withContext null
         val librarySongs = songRepository.getSongs(SongQuery.All(includeExcluded = true)).filterNotNull().firstOrNull().orEmpty()
