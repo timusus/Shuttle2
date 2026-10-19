@@ -105,7 +105,8 @@ fun SearchScreen(
 
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
     // A result set too short to scroll can't bring a hidden header back, so new content always starts with it shown.
-    LaunchedEffect(uiState.content) { scrollBehavior.state.heightOffset = 0f }
+    val viewState = searchViewState(uiState)
+    LaunchedEffect(viewState.content) { scrollBehavior.state.heightOffset = 0f }
     Column(
         modifier
             .fillMaxSize()
@@ -134,25 +135,22 @@ fun SearchScreen(
                     .horizontalScroll(rememberScrollState())
                     .padding(horizontal = S2Spacing.medium),
             ) {
-                S2FilterChip(
-                    label = stringResource(R.string.search_category_all),
-                    selected = uiState.categories.isEmpty(),
-                    onClick = callbacks.onSelectAll,
-                )
-                SearchCategory.entries.forEach { category ->
+                viewState.chips.forEach { chip ->
+                    val category = chip.category
                     S2FilterChip(
-                        label = category.label(),
-                        selected = category in uiState.categories,
-                        onClick = { callbacks.onToggleCategory(category) },
+                        label = category?.label() ?: stringResource(R.string.search_category_all),
+                        selected = chip.selected,
+                        onClick = if (category == null) callbacks.onSelectAll else ({ callbacks.onToggleCategory(category) }),
                     )
                 }
             }
         }
-        when (val content = uiState.content) {
-            is SearchContent.Recent -> RecentSearches(content.searches, onSelect = { queryState.edit { replace(0, length, it) } }, onRemove = callbacks.onRemoveRecentSearch)
-            SearchContent.Searching -> LoadingState(Modifier.fillMaxSize())
-            is SearchContent.NoResults -> SearchNoResults(content.query, Modifier.fillMaxSize())
-            is SearchContent.Results -> SearchResultList(content.query, content.results, callbacks)
+        when (val content = viewState.content) {
+            SearchViewState.Content.Start -> StartSearching()
+            is SearchViewState.Content.Recent -> RecentSearches(content.searches, onSelect = { queryState.edit { replace(0, length, it) } }, onRemove = callbacks.onRemoveRecentSearch)
+            SearchViewState.Content.Searching -> LoadingState(Modifier.fillMaxSize())
+            is SearchViewState.Content.NoResults -> SearchNoResults(content.query, Modifier.fillMaxSize())
+            is SearchViewState.Content.Results -> SearchResultList(content.query, content.results, callbacks)
         }
     }
 }
@@ -167,20 +165,21 @@ private fun Modifier.hidesWithScroll(state: TopAppBarState): Modifier = layout {
 }.clipToBounds()
 
 @Composable
+private fun StartSearching() {
+    EmptyState(
+        title = stringResource(R.string.search_start_title),
+        message = stringResource(R.string.search_start_message),
+        icon = Icons.Rounded.Search,
+        modifier = Modifier.fillMaxSize(),
+    )
+}
+
+@Composable
 private fun RecentSearches(
     searches: List<String>,
     onSelect: (String) -> Unit,
     onRemove: (String) -> Unit,
 ) {
-    if (searches.isEmpty()) {
-        EmptyState(
-            title = stringResource(R.string.search_start_title),
-            message = stringResource(R.string.search_start_message),
-            icon = Icons.Rounded.Search,
-            modifier = Modifier.fillMaxSize(),
-        )
-        return
-    }
     val listState = rememberLazyListState()
     ScrollToTopOnReselect(ShellTab.Search, listState)
     LazyColumn(Modifier.fillMaxSize(), state = listState) {
