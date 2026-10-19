@@ -41,9 +41,9 @@ struct NowPlayingAudioSheet: View {
                         .accessibilityIdentifier("audio.speed.value")
                     slider(shown: shown)
                     presetChips(current: shown)
-                    NavigationLink {
-                        PlaybackSettingsView()
-                    } label: {
+                    // A value link, not a view-destination one: SwiftUI stacks view-destination pages above the value
+                    // path, so the Equalizer row's value push would land beneath this page, out of sight.
+                    NavigationLink(value: PlaybackSettingsDestination()) {
                         Label("Equalizer & Playback Settings", systemImage: "slider.vertical.3")
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, Spacing.small)
@@ -54,6 +54,7 @@ struct NowPlayingAudioSheet: View {
                 .padding(.horizontal, Spacing.large)
                 .padding(.bottom, Spacing.large)
             }
+            .navigationDestination(for: PlaybackSettingsDestination.self) { _ in PlaybackSettingsView() }
             .navigationTitle("Playback Speed")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -144,6 +145,8 @@ struct NowPlayingAudioSheet: View {
         return rounded.formatted(.number.precision(.fractionLength(0...1))) + "×"
     }
 }
+
+private struct PlaybackSettingsDestination: Hashable {}
 
 // MARK: - Sleep timer
 

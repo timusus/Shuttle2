@@ -1,0 +1,83 @@
+# The Equalizer and Scrobbling rows push visibly inside the player's Audio sheet. Copy a 30 s+ file
+# named "Long Tone" into the app's Documents first (see local-library.yaml), then run with ios/scripts/maestro-sim.sh.
+appId: com.simplecityapps.shuttle.dev
+---
+- launchApp:
+    stopApp: true
+- waitForAnimationToEnd:
+    timeout: 5000
+- runFlow:
+    when:
+      visible:
+        id: "onboarding.getStarted"
+    commands:
+        - tapOn:
+            id: "onboarding.getStarted"
+        - extendedWaitUntil:
+            visible:
+              id: "onboarding.useThisDevice"
+            timeout: 10000
+        - tapOn:
+            id: "onboarding.useThisDevice"
+        - extendedWaitUntil:
+            visible: "Your Library Is Ready"
+            timeout: 60000
+        - tapOn:
+            id: "onboarding.continue"
+- tapOn: "Library"
+- extendedWaitUntil:
+    visible: "Albums"
+    timeout: 30000
+- swipe:
+    start: 85%, 20%
+    end: 15%, 20%
+- tapOn: "Songs"
+- extendedWaitUntil:
+    visible:
+      id: "songRow.title"
+    timeout: 30000
+- tapOn:
+    id: "songRow.title"
+    index: 0
+- extendedWaitUntil:
+    visible:
+      id: "miniPlayer.playPause"
+      text: "Pause"
+    timeout: 15000
+- tapOn:
+    id: "miniPlayer.open"
+- extendedWaitUntil:
+    visible:
+      id: "nowPlaying.bottomBar"
+    timeout: 10000
+- tapOn:
+    id: "nowPlaying.audio"
+- waitForAnimationToEnd:
+    timeout: 5000
+# Maestro cannot see into a sheet over the full-screen cover (now-playing.yaml), so tap by position.
+- tapOn:
+    point: "50%, 87%"
+- waitForAnimationToEnd:
+    timeout: 3000
+- takeScreenshot: 1-playback-settings
+- tapOn:
+    point: "50%, 77%"
+- waitForAnimationToEnd:
+    timeout: 5000
+- takeScreenshot: 2-equalizer-pushed
+# Back must land on Playback Settings, not under it; then the large detent shows Scrobbling.
+- tapOn:
+    point: "5%, 50%"
+- waitForAnimationToEnd:
+    timeout: 3000
+- swipe:
+    start: 50%, 90%
+    end: 50%, 55%
+- waitForAnimationToEnd:
+    timeout: 3000
+- takeScreenshot: 3-playback-settings-after-back
+- tapOn:
+    point: "50%, 77%"
+- waitForAnimationToEnd:
+    timeout: 5000
+- takeScreenshot: 4-scrobbling-pushed
