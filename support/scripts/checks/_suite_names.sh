@@ -1,3 +1,4 @@
+# shellcheck shell=bash
 # Shared check-name enumeration for run-all.sh and emu-verify.sh --suite (#454), so "every check"
 # and "the device smoke set" are each listed in exactly one place instead of two copies that can
 # drift apart. Defines two functions and sets no shell options itself. Sourced, not run.

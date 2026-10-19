@@ -64,6 +64,7 @@ recover_cmd() {
 }
 
 # --- the pool lock (worktree-pool-lock.sh): a pid symlink, broken by one waiter when its holder is dead ----------
+# shellcheck disable=SC2034  # read by the sourced lock lib
 LOCK="$POOL_DIR/lock-pid"
 # shellcheck source=worktree-pool-lock.sh
 . "$(dirname "${BASH_SOURCE[0]}")/worktree-pool-lock.sh"

@@ -359,7 +359,7 @@ if { wanted ios-framework || wanted ios-tests || wanted ios-package; } &&
     done < <(support/scripts/ios-tests-for "${changed[@]}")
     if [ "$confirm" = 1 ] && [ "$ios_ok" = 1 ] && [ "${#ios_plan[@]}" -gt 0 ]; then
         ios_all=0
-        ios_classes=($(printf '%s\n' "${ios_plan[@]}" | sort -u))
+        mapfile -t ios_classes < <(printf '%s\n' "${ios_plan[@]}" | sort -u)
     fi
     sim=""
     if [ "${#kmp_tasks[@]}" -gt 0 ] || [ "$ios_all" = 1 ] || [ "${#ios_classes[@]}" -gt 0 ]; then

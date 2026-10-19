@@ -20,6 +20,7 @@
 # Uses "S2 Transcode Test"'s AIFF and WMA tracks (30 s each) and leaves no session running.
 
 set -euo pipefail
+# shellcheck source=/dev/null
 . ~/.config/s2-test/plex.env
 H="X-Plex-Token: $API_KEY"
 JSON=(-H "Accept: application/json" -H "$H")

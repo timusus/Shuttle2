@@ -1,3 +1,4 @@
+# shellcheck shell=bash
 # Shared helpers for support/scripts/checks/*.sh. Sourced, not run.
 #
 # Every check assumes the debug app is installed and the `playback` fixture is imported
@@ -263,8 +264,8 @@ setup_taglib_provider() {
     # correctly every time. A plain reimport always succeeds once the songs are already in place, so
     # retry it (bounded, polling DUMP_STATE -- not a fixed sleep) rather than block every m3u/playlist
     # check on that race.
-    local attempt imports_sent=0
-    for attempt in 1 2 3; do
+    local imports_sent=0
+    for _ in 1 2 3; do
         [ "$(state libraryPlaylistCount)" -ge 2 ] && return 0
         s2 IMPORT >/dev/null
         imports_sent=$((imports_sent + 1))

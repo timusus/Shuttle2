@@ -14,7 +14,7 @@
 set -uo pipefail
 
 ROOT="$(git rev-parse --show-toplevel)"
-cd "$ROOT"
+cd "$ROOT" || exit 1
 
 # Box runs only: two test forks per module is ~35% faster on the 16-core box.
 export REMOTE_GRADLE_BOX_ARGS="${REMOTE_GRADLE_BOX_ARGS:--Ps2.testForks=2}"

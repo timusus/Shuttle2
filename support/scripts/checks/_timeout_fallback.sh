@@ -1,3 +1,4 @@
+# shellcheck shell=bash
 # Generic watchdog fallback for running a command under a timeout when neither GNU `timeout` nor
 # macOS's `gtimeout` (coreutils) is on PATH (#416, #454). Defines one function and sets no shell
 # options itself, so it's safe to source from callers under either `set -e` or plain `set -u`.

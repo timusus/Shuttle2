@@ -168,7 +168,7 @@ generate_tone() {
 #    no album artist).
 # The amplitude stays well under full scale so clipping in the tap is the mixer's doing.
 build_crossfade() {
-    local dir="$1" album bits freq i n=0 ext source
+    local dir="$1" album bits freq i ext source
     local -a codec
     mkdir -p "$dir"
     for album in "Crossfade-16:16:330 550 770" "Crossfade-24:24:440 660 880"; do

@@ -354,8 +354,10 @@ dump_texts() {
 # colour, take connected components, and count the near-square ones about as full as the icon whose left side (an
 # eighth of a width out) is the tile colour, which rules out text, toolbar icons and real covers. The entries are
 # "icon tile min-fill max-fill", sampled from captures.
+# shellcheck disable=SC2034  # read by name in placeholders()
 PLACEHOLDER_NEW="srgb(93,95,104) srgb(225,226,237) 0.55 0.70"
 # old: the album vinyl (fill ~0.64) and the artist header's person icon, whose round head fills ~0.78
+# shellcheck disable=SC2034  # read by name in placeholders()
 PLACEHOLDER_OLD="srgb(142,142,142) srgb(244,244,244) 0.55 0.80"
 PH_GRACE=15
 placeholders() {
@@ -761,7 +763,8 @@ flow_path() {
 # playback or opens the shade where the screen needs it, then takes <frames> screenshots back to back into FRAMES_DIR
 # (judge_frames picks from them afterwards, so the session never waits on the script).
 run_session() {
-    local ver="$1" k="$2" id session="${WORK}/session-${ver}.yaml" rc=0 split; shift 2
+    local ver="$1" k="$2" id rc=0 split; shift 2
+    local session="${WORK}/session-${ver}.yaml"
     local args=(-e "APP_ID=${PKG}" -e "ARTIST=${ARTIST}" -e "ALBUM=${ALBUM}" -e "ALBUM_TRACK=${ALBUM_TRACK}" -e "PLAYING_ARTIST=${PLAYING_ARTIST}" -e "PLAYING_ALBUM=${PLAYING_ALBUM}" -e "PLAYING_TRACK=${PLAYING_TRACK}" -e "QUERY=${QUERY}"
         -e "GENRE=${GENRE}" -e "PLAYLIST=${PLAYLIST}")
     # a playing screen is never still (progress bars, visualisers), and Maestro has no pause-only key (Play Pause
@@ -901,6 +904,7 @@ old_cache_save() {
 # ---- Main ----
 
 # not exported: only run_flow hands these to Maestro (export -n in case the file says `export`)
+# shellcheck source=/dev/null
 . "$ENV_FILE"
 export -n URL USER_NAME PASSWORD 2>/dev/null
 for v in URL USER_NAME PASSWORD; do [ -n "${!v:-}" ] || { echo "release-compare: $v missing from $ENV_FILE" >&2; exit 1; }; done
@@ -923,9 +927,10 @@ if [ "$RESOLVE_ONLY" = 1 ]; then
     exit 0
 fi
 prune_stale
-OLD_FROM_CACHE=0
+# unquoted on purpose below: the emptied element must disappear, not stay as ""
+# shellcheck disable=SC2206
 case " ${VERSIONS[*]} " in
-    *" old "*) if old_cache_restore; then OLD_FROM_CACHE=1; VERSIONS=(${VERSIONS[@]/old/}); fi ;;
+    *" old "*) if old_cache_restore; then VERSIONS=(${VERSIONS[@]/old/}); fi ;;
 esac
 # the cached old capture needs no device
 if [ ${#VERSIONS[@]} -eq 0 ]; then
@@ -943,6 +948,7 @@ case $? in
     3) DEVICE=local; echo "release-compare: the box can't run a lane (see $LOG), using the local AVD ${LOCAL_AVD}" ;;
     *) echo "release-compare: remote-emu.sh status failed (see $LOG)" >&2; exit 1 ;;
 esac
+# shellcheck disable=SC2034  # read by run_flow
 if [ "$DEVICE" = lane ]; then
     step "remote-emu: start" support/scripts/remote-emu.sh start || exit 1
     eval "$(support/scripts/remote-emu.sh env)"

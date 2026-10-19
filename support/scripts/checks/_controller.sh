@@ -1,3 +1,4 @@
+# shellcheck shell=bash
 # Driving the test MediaController app (android/testing/media-controller) from a check. Sourced after
 # _lib.sh, not run. install_controller always runs the assemble (a no-op when up to date) so a stale APK is never tested.
 

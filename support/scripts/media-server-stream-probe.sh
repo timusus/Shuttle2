@@ -138,7 +138,8 @@ for i in json.load(sys.stdin)['Items']:
       # StreamProfile.Ios. Each request takes a fresh PlaySessionId, as the app's do: Emby serves a session's
       # running transcode again and ignores StartTimeTicks.
       ios_url() { # [StartTimeTicks] [MaxStreamingBitrate, default 128000, "none" for no cap]
-        local cap=${2:-128000} u="$URL/Audio/$id/universal?UserId=$user_id&DeviceId=s2-probe&PlaySessionId=$(uuidgen)"
+        local cap=${2:-128000} u
+        u="$URL/Audio/$id/universal?UserId=$user_id&DeviceId=s2-probe&PlaySessionId=$(uuidgen)"
         u+="&Container=mp3|mp3,aac|aac,m4a|aac,m4a|alac,m4b|aac,m4b|alac,mp4|aac,mp4|alac,flac,ogg,oga,opus,mka,matroska,webm,webma,wav,aiff,aif"
         u+="&TranscodingContainer=mp3&TranscodingProtocol=http${extra}&EnableRedirection=true&EnableRemoteMedia=true"
         u+="&AudioCodec=mp3"
