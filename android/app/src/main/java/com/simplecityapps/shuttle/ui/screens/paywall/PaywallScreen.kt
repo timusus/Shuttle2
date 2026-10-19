@@ -78,12 +78,15 @@ fun PaywallScreen(
 ) {
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     val viewState = paywallViewState(uiState)
+    val onEvent = PaywallCallbacks(onClose, onPurchase, onRestore, onRedeemCode, onRetry, onManageSubscription, onStartTrial, onOpenPrivacyPolicy)::onEvent
     Scaffold(
         modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         contentWindowInsets = WindowInsets(0),
-        topBar = { S2LargeTopBar(title = stringResource(R.string.paywall_title), onBack = onClose, scrollBehavior = scrollBehavior) },
+        topBar = {
+            S2LargeTopBar(title = stringResource(R.string.paywall_title), onBack = { onEvent(PaywallEvent.Close) }, scrollBehavior = scrollBehavior)
+        },
         bottomBar = {
-            viewState.purchaseBar?.let { PurchaseBar(it, onPurchase, onStartTrial) }
+            viewState.purchaseBar?.let { PurchaseBar(it, onEvent) }
         },
         snackbarHost = { S2SnackbarHost(snackbarHostState) }
     ) { padding ->
@@ -99,7 +102,7 @@ fun PaywallScreen(
                 item(key = "manage") {
                     S2Button(
                         text = stringResource(R.string.paywall_manage_subscription),
-                        onClick = onManageSubscription,
+                        onClick = { onEvent(PaywallEvent.ManageSubscription) },
                         style = S2ButtonStyle.Tonal,
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -111,7 +114,7 @@ fun PaywallScreen(
                     ErrorState(
                         title = stringResource(R.string.paywall_prices_unavailable),
                         message = stringResource(R.string.paywall_prices_unavailable_message),
-                        action = StateAction(stringResource(R.string.paywall_retry), onRetry)
+                        action = StateAction(stringResource(R.string.paywall_retry)) { onEvent(PaywallEvent.Retry) }
                     )
                 }
             }
@@ -121,7 +124,7 @@ fun PaywallScreen(
                         if (viewState.showRestore) {
                             S2Button(
                                 text = stringResource(R.string.paywall_restore),
-                                onClick = onRestore,
+                                onClick = { onEvent(PaywallEvent.Restore) },
                                 style = S2ButtonStyle.Text,
                                 enabled = viewState.restoreEnabled,
                                 modifier = Modifier.fillMaxWidth()
@@ -130,7 +133,7 @@ fun PaywallScreen(
                         if (viewState.showRedeemCode) {
                             S2Button(
                                 text = stringResource(R.string.paywall_redeem_code),
-                                onClick = onRedeemCode,
+                                onClick = { onEvent(PaywallEvent.RedeemCode) },
                                 style = S2ButtonStyle.Text,
                                 modifier = Modifier.fillMaxWidth()
                             )
@@ -141,7 +144,7 @@ fun PaywallScreen(
             item(key = "footer") {
                 S2Button(
                     text = stringResource(R.string.paywall_privacy_policy),
-                    onClick = onOpenPrivacyPolicy,
+                    onClick = { onEvent(PaywallEvent.OpenPrivacyPolicy) },
                     style = S2ButtonStyle.Text,
                     size = S2ButtonSize.ExtraSmall,
                     modifier = Modifier.fillMaxWidth()
@@ -168,17 +171,13 @@ private fun Pitch() {
 @Composable
 private fun PurchaseBar(
     bar: PaywallViewState.PurchaseBar,
-    onPurchase: () -> Unit,
-    onStartTrial: () -> Unit
+    onEvent: (PaywallEvent) -> Unit
 ) {
     S2BottomActionBar {
         bar.buttons.forEach { button ->
             S2Button(
                 text = stringResource(button.label),
-                onClick = when (button.tap) {
-                    PaywallViewState.Tap.StartTrial -> onStartTrial
-                    PaywallViewState.Tap.Purchase -> onPurchase
-                },
+                onClick = { onEvent(button.tap.event()) },
                 style = when (button.emphasis) {
                     PaywallViewState.Emphasis.Filled -> S2ButtonStyle.Filled
                     PaywallViewState.Emphasis.Outlined -> S2ButtonStyle.Outlined
