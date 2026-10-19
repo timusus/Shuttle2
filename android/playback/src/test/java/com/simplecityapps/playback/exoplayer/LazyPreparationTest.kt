@@ -9,6 +9,7 @@ import com.simplecityapps.playback.fakes.testSong
 import com.simplecityapps.playback.queue.toMediaItem
 import com.simplecityapps.playback.queue.toQueueEntry
 import io.kotest.matchers.shouldBe
+import kotlinx.coroutines.Dispatchers
 import okhttp3.OkHttpClient
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -34,7 +35,7 @@ class LazyPreparationTest {
                 EqualizerAudioProcessor(false),
                 ReplayGainAudioProcessor(ReplayGainMode.Off),
                 AudioTrackMonitor(),
-                SongUriResolver(MediaResolver { song, _ -> ResolvedMedia(uri = song.path, mimeType = song.mimeType, isRemote = true) }),
+                SongUriResolver(MediaResolver { song, _ -> ResolvedMedia(uri = song.path, mimeType = song.mimeType, isRemote = true) }, Dispatchers.IO),
                 emptyDownloadCache(context)
             ) { renderersFactory, factory ->
                 mediaSourceFactory = factory

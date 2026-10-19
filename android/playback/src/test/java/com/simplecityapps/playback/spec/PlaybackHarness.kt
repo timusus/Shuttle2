@@ -174,7 +174,8 @@ class PlaybackHarness(
             MediaResolver { song, _ ->
                 if (song.path.startsWith(UNRESOLVABLE_SCHEME)) throw IOException("Can't resolve ${song.path}")
                 ResolvedMedia(uri = song.path, mimeType = song.mimeType, isRemote = false)
-            }
+            },
+            Dispatchers.IO
         )
 
     private val player: ExoPlayer

@@ -73,7 +73,8 @@ class SongUriResolverTest {
                 } else {
                     ResolvedMedia(uri = "https://server/stream/${song.id}", mimeType = song.mimeType, isRemote = true, timeSeek = timeSeek)
                 }
-            }
+            },
+            Dispatchers.IO
         )
 
     private val player = TestExoPlayerBuilder(RuntimeEnvironment.getApplication()).build()

@@ -11,7 +11,6 @@ import kotlin.coroutines.CoroutineContext
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancelChildren
@@ -34,8 +33,8 @@ import timber.log.Timber
 class HttpServer(
     private val castService: CastService,
     private val streams: CastStreams,
-    port: Int = CastMediaItemConverter.PORT,
-    ioContext: CoroutineContext = Dispatchers.IO
+    ioContext: CoroutineContext,
+    port: Int = CastMediaItemConverter.PORT
 ) : NanoHTTPD(port) {
     private val scope = CoroutineScope(SupervisorJob() + ioContext)
 

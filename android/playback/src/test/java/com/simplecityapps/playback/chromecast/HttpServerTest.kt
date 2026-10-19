@@ -8,6 +8,7 @@ import java.io.File
 import java.net.HttpURLConnection
 import java.net.URL
 import kotlin.coroutines.EmptyCoroutineContext
+import kotlinx.coroutines.Dispatchers
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
@@ -39,9 +40,10 @@ class HttpServerTest {
             RuntimeEnvironment.getApplication(),
             FakeSongRepository(listOf(local, remote)),
             FakeArtworkImageLoader(ARTWORK),
-            streams
+            streams,
+            Dispatchers.IO
         )
-        server = HttpServer(castService, streams, port = 0).apply { start(NanoHTTPD.SOCKET_READ_TIMEOUT, false) }
+        server = HttpServer(castService, streams, Dispatchers.IO, port = 0).apply { start(NanoHTTPD.SOCKET_READ_TIMEOUT, false) }
     }
 
     @After

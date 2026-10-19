@@ -4,6 +4,7 @@ import com.google.android.gms.cast.framework.CastSession
 import io.kotest.matchers.shouldBe
 import io.mockk.mockk
 import kotlin.coroutines.EmptyCoroutineContext
+import kotlinx.coroutines.Dispatchers
 import org.junit.After
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -21,8 +22,9 @@ class CastSessionManagerTest {
     private val streams = CastStreams(FakeMediaInfoProvider(), EmptyCoroutineContext)
 
     private val server = HttpServer(
-        CastService(RuntimeEnvironment.getApplication(), FakeSongRepository(emptyList()), FakeArtworkImageLoader(ByteArray(0)), streams),
+        CastService(RuntimeEnvironment.getApplication(), FakeSongRepository(emptyList()), FakeArtworkImageLoader(ByteArray(0)), streams, Dispatchers.IO),
         streams,
+        Dispatchers.IO,
         port = 0
     )
 

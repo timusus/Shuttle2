@@ -11,7 +11,7 @@ import com.simplecityapps.shuttle.query.SongQuery
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.InputStream
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.withContext
 import timber.log.Timber
@@ -24,7 +24,8 @@ class CastService(
     private val context: Context,
     private val songRepository: SongRepository,
     private val artworkImageLoader: ArtworkImageLoader,
-    private val streams: CastStreams
+    private val streams: CastStreams,
+    private val ioDispatcher: CoroutineDispatcher
 ) {
     class AudioStream(val stream: InputStream, val length: Long, val mimeType: String)
 
@@ -43,7 +44,7 @@ class CastService(
         artworkImageLoader.loadBitmap(song)
     }
 
-    suspend fun getAudio(songId: Long): AudioStream? = withContext(Dispatchers.IO) {
+    suspend fun getAudio(songId: Long): AudioStream? = withContext(ioDispatcher) {
         songRepository.getSongs(SongQuery.SongIds(listOf(songId))).firstOrNull()?.firstOrNull()?.let { song ->
             val uri = Uri.parse(song.path)
             if (song.path.startsWith("content://")) {

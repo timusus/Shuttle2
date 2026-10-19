@@ -18,11 +18,13 @@ import com.simplecityapps.playback.chromecast.CastStreams
 import com.simplecityapps.playback.chromecast.HttpServer
 import com.simplecityapps.playback.exoplayer.ExoPlayerFactory
 import com.simplecityapps.shuttle.di.ApplicationContext
+import com.simplecityapps.shuttle.di.IoDispatcher
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer
 import dev.zacsweers.metro.ContributesTo
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.SingleIn
+import kotlinx.coroutines.CoroutineDispatcher
 
 @ContributesTo(AppScope::class)
 @BindingContainer
@@ -33,19 +35,24 @@ class CastModule {
         @ApplicationContext context: Context,
         songRepository: SongRepository,
         artworkImageLoader: ArtworkImageLoader,
-        streams: CastStreams
-    ): CastService = CastService(context, songRepository, artworkImageLoader, streams)
+        streams: CastStreams,
+        @IoDispatcher ioDispatcher: CoroutineDispatcher
+    ): CastService = CastService(context, songRepository, artworkImageLoader, streams, ioDispatcher)
 
     @SingleIn(AppScope::class)
     @Provides
-    fun provideCastStreams(mediaInfoProvider: AggregateMediaInfoProvider): CastStreams = CastStreams(mediaInfoProvider)
+    fun provideCastStreams(
+        mediaInfoProvider: AggregateMediaInfoProvider,
+        @IoDispatcher ioDispatcher: CoroutineDispatcher
+    ): CastStreams = CastStreams(mediaInfoProvider, ioDispatcher)
 
     @SingleIn(AppScope::class)
     @Provides
     fun provideHttpServer(
         castService: CastService,
-        streams: CastStreams
-    ): HttpServer = HttpServer(castService, streams)
+        streams: CastStreams,
+        @IoDispatcher ioDispatcher: CoroutineDispatcher
+    ): HttpServer = HttpServer(castService, streams, ioDispatcher)
 
     @SingleIn(AppScope::class)
     @Provides

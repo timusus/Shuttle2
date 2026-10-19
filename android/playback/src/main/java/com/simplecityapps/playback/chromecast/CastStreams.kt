@@ -7,7 +7,6 @@ import java.security.SecureRandom
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -30,7 +29,7 @@ import timber.log.Timber
  */
 class CastStreams(
     private val mediaInfoProvider: MediaInfoProvider,
-    private val ioContext: CoroutineContext = Dispatchers.IO
+    private val ioContext: CoroutineContext
 ) {
     /** An entry's stream: its content type, and for a remote-provider song, where its server streams it from. */
     private class Stream(val contentType: String, val url: String?)
