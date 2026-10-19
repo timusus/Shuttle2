@@ -52,10 +52,6 @@ class CoroutineModule {
     @Provides
     @MainImmediateDispatcher
     fun provideMainImmediateDispatcher(): CoroutineDispatcher = Dispatchers.Main.immediate
-
-    @Provides
-    @DefaultDispatcher
-    fun provideDefaultDispatcher(): CoroutineDispatcher = Dispatchers.Default
 }
 
 private val logger = Logger.tagged("CoroutineModule")
@@ -83,7 +79,3 @@ annotation class MainDispatcher
 @Retention(AnnotationRetention.BINARY)
 @Qualifier
 annotation class MainImmediateDispatcher
-
-@Retention(AnnotationRetention.BINARY)
-@Qualifier
-annotation class DefaultDispatcher
