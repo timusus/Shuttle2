@@ -28,9 +28,6 @@ import com.simplecityapps.shuttle.designsystem.component.SectionHeader
 import com.simplecityapps.shuttle.ui.screens.library.LibraryArtwork
 import com.simplecityapps.shuttle.ui.screens.settings.SettingsScaffold
 
-/** Nothing is downloaded, in progress or kept: when something is, the screen shows the storage and Remove all even before an album is listed. */
-private val DownloadsUiState.isEmpty: Boolean get() = albums.isEmpty() && storageBytes == 0L
-
 /** The albums downloaded for offline playback and the storage they use; the top bar removes every download. */
 @Composable
 fun DownloadsScreen(
@@ -40,6 +37,7 @@ fun DownloadsScreen(
     onOpenAlbum: (DownloadedAlbum) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val viewState = downloadsViewState(uiState)
     var confirmRemoveAll by rememberSaveable { mutableStateOf(false) }
     val context = LocalContext.current
 
@@ -50,7 +48,7 @@ fun DownloadsScreen(
         contentPadding = PaddingValues(),
         verticalArrangement = Arrangement.Top,
         actions = {
-            if (!uiState.isEmpty) {
+            if (viewState.showRemoveAll) {
                 S2IconButton(
                     icon = Icons.Rounded.ClearAll,
                     contentDescription = stringResource(R.string.downloads_remove_all),
@@ -59,21 +57,22 @@ fun DownloadsScreen(
             }
         }
     ) {
-        when {
-            uiState.loading -> item(key = "loading") { LoadingState() }
+        when (val content = viewState.content) {
+            DownloadsViewState.Content.Loading -> item(key = "loading") { LoadingState() }
 
-            uiState.isEmpty -> item(key = "empty") {
+            DownloadsViewState.Content.Empty -> item(key = "empty") {
                 EmptyState(title = stringResource(R.string.downloads_empty), icon = Icons.Rounded.FileDownloadOff)
             }
 
-            else -> {
+            is DownloadsViewState.Content.Albums -> {
                 item(key = "storage", contentType = "header") {
-                    SectionHeader(title = stringResource(R.string.downloads_storage_used, Formatter.formatShortFileSize(context, uiState.storageBytes)))
+                    SectionHeader(title = stringResource(R.string.downloads_storage_used, Formatter.formatShortFileSize(context, content.storageBytes)))
                 }
-                items(uiState.albums, key = { it.key }, contentType = { "album" }) { album ->
+                items(content.rows, key = { it.album.key }, contentType = { "album" }) { row ->
+                    val album = row.album
                     AlbumRow(
-                        title = album.name ?: stringResource(com.simplecityapps.core.R.string.unknown),
-                        artist = album.artist.orEmpty(),
+                        title = row.title ?: stringResource(com.simplecityapps.core.R.string.unknown),
+                        artist = row.artist,
                         onClick = { onOpenAlbum(album) },
                         artwork = { LibraryArtwork(album.cover, ArtworkPlaceholder.Album) },
                         meta = pluralStringResource(R.plurals.downloads_album_meta, album.songCount, album.songCount, Formatter.formatShortFileSize(context, album.bytes))
