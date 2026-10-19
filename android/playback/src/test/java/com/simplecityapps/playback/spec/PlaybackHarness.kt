@@ -282,7 +282,10 @@ class PlaybackHarness(
         runUntil { queueOperations.hasRestoredQueue }
     }
 
-    /** Runs a suspending operation to completion, then lets the main looper catch up with what it started. */
+    /**
+     * Runs a suspending operation to completion, then lets the main looper catch up with what it started. Blocks for real:
+     * the player runs on its own clock and looper, not a test scheduler, and spec tests call this from plain functions.
+     */
     fun <T> run(block: suspend () -> T): T = runBlocking { block() }.also { idle() }
 
     /** Starts a suspending operation on the main thread, as a UI caller does, running it until it first suspends. */

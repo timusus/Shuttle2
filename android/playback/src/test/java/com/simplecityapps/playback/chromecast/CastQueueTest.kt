@@ -196,7 +196,7 @@ class CastQueueTest {
     @Test
     fun `a window goes out as far as its streams are resolved, and the rest follows`() {
         castQueue.attach(remote)
-        (1L..30L).filter { it != 9L }.forEach { runBlocking { streams.resolve(listOf(QueueEntry(uid = it, song = remoteSong(it)))) } }
+        (1L..30L).filter { it != 9L }.forEach { runBlocking { streams.resolve(listOf(QueueEntry(uid = it, song = remoteSong(it)))) } } // real block: the test is a plain Robolectric function driving the main looper
         provider.gate = CompletableDeferred()
         local.setMediaItems(remoteQueue(30), 5, 0)
 

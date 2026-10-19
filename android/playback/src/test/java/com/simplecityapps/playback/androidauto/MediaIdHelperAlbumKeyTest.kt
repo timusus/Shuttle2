@@ -15,8 +15,8 @@ import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.identityTags
 import com.simplecityapps.shuttle.model.withAlbumIdentities
 import io.kotest.matchers.shouldBe
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.runTest
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -46,10 +46,12 @@ class MediaIdHelperAlbumKeyTest {
         mediaProviders = listOf(MediaProviderType.Shuttle)
     )
 
-    private val helper = MediaIdHelper(ApplicationProvider.getApplicationContext(), FakePlaylistRepository(), FakeAlbumArtistRepository(), FakeAlbumRepository(listOf(album)), FakeSongRepository(songs), AlbumIndexProvider { AlbumIndex(songs.map { it.identityTags }) }, Dispatchers.IO)
+    private val dispatcher = UnconfinedTestDispatcher()
+
+    private val helper = MediaIdHelper(ApplicationProvider.getApplicationContext(), FakePlaylistRepository(), FakeAlbumArtistRepository(), FakeAlbumRepository(listOf(album)), FakeSongRepository(songs), AlbumIndexProvider { AlbumIndex(songs.map { it.identityTags }) }, dispatcher)
 
     @Test
-    fun `an album's id holds its identity, and names its songs`(): Unit = runBlocking {
+    fun `an album's id holds its identity, and names its songs`() = runTest(dispatcher) {
         val item = helper.getChildren("media:/album_root/").single()
 
         item.mediaId shouldBe "media:/album_root/artist/various artists/album/drive ost/album_id/dir%3A%2Fmusic%2FDrive/songs/"
@@ -57,7 +59,7 @@ class MediaIdHelperAlbumKeyTest {
     }
 
     @Test
-    fun `a song id kept from before the rule plays the album its song belongs to now`(): Unit = runBlocking {
+    fun `a song id kept from before the rule plays the album its song belongs to now`() = runTest(dispatcher) {
         val queue = helper.getPlayQueue("media:/album_root/artist/college/album/drive ost/songs/2")!!
 
         queue.songs.map { it.id } shouldBe listOf(1L, 2L)
@@ -65,7 +67,7 @@ class MediaIdHelperAlbumKeyTest {
     }
 
     @Test
-    fun `an album artist id kept from before the rule lists the albums of the artist it moved to`(): Unit = runBlocking {
+    fun `an album artist id kept from before the rule lists the albums of the artist it moved to`() = runTest(dispatcher) {
         helper.getChildren("media:/artist_root/artist/kavinsky/albums/").map { it.mediaMetadata.title.toString() } shouldBe listOf("Drive OST")
     }
 }
