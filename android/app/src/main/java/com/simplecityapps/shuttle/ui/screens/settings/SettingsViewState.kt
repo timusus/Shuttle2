@@ -13,8 +13,11 @@ import kotlin.math.roundToInt
 import kotlin.time.Instant
 
 /** What the Settings root shows: one row per destination, each with the summary of the value it holds. */
-data class SettingsRootViewState(val rows: List<Row>) {
+data class SettingsRootViewState(val pro: ProSummary, val rows: List<Row>) {
     data class Row(val destination: SettingsDestination, val summary: Summary)
+
+    /** The copy under the Shuttle Music Pro row: none while Play hasn't answered, thanks once owned, else the pitch. */
+    enum class ProSummary { None, Owned, Upsell }
 
     sealed interface Summary {
         data object None : Summary
@@ -34,8 +37,13 @@ data class SettingsRootViewState(val rows: List<Row>) {
     }
 }
 
-fun settingsRootViewState(uiState: SettingsUiState): SettingsRootViewState = SettingsRootViewState(
-    SettingsDestination.entries.map { destination ->
+fun settingsRootViewState(uiState: SettingsUiState, pro: SettingsProState): SettingsRootViewState = SettingsRootViewState(
+    pro = when (pro) {
+        SettingsProState.Neutral -> SettingsRootViewState.ProSummary.None
+        SettingsProState.Owned -> SettingsRootViewState.ProSummary.Owned
+        SettingsProState.Upsell -> SettingsRootViewState.ProSummary.Upsell
+    },
+    rows = SettingsDestination.entries.map { destination ->
         SettingsRootViewState.Row(
             destination,
             when (destination) {

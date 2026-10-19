@@ -57,9 +57,8 @@ import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsScreen
 import com.simplecityapps.shuttle.ui.text.SettingsString
 import com.simplecityapps.shuttle.ui.text.UiText
 import com.simplecityapps.shuttle.ui.text.stringResource
-import java.text.DateFormat
-import java.util.Date
 import java.util.Locale
+import java.util.TimeZone
 
 /** The Settings root takes the collapsing large top bar; sub-pages take the standard bar so they read as a level down. */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -114,16 +113,17 @@ fun SettingsRootScreen(
     modifier: Modifier = Modifier,
     selected: SettingsDestination? = null
 ) {
+    val viewState = settingsRootViewState(uiState, pro)
     SettingsScaffold(title = stringResource(R.string.settings_menu_settings), onNavigateUp = onNavigateUp, modifier = modifier, root = true) {
         item {
             SettingsGroup(
                 rows = listOf { shapes: ListItemShapes ->
                     LinkSetting(
                         title = stringResource(R.string.paywall_title),
-                        summary = when (pro) {
-                            SettingsProState.Neutral -> null
-                            SettingsProState.Owned -> stringResource(R.string.paywall_settings_summary_pro)
-                            SettingsProState.Upsell -> stringResource(R.string.paywall_settings_summary)
+                        summary = when (viewState.pro) {
+                            SettingsRootViewState.ProSummary.None -> null
+                            SettingsRootViewState.ProSummary.Owned -> stringResource(R.string.paywall_settings_summary_pro)
+                            SettingsRootViewState.ProSummary.Upsell -> stringResource(R.string.paywall_settings_summary)
                         },
                         onClick = onOpenPro,
                         icon = Icons.Rounded.WorkspacePremium,
@@ -134,7 +134,7 @@ fun SettingsRootScreen(
         }
         item {
             SettingsGroup(
-                rows = settingsRootViewState(uiState).rows.map { row ->
+                rows = viewState.rows.map { row ->
                     { shapes: ListItemShapes ->
                         LinkSetting(
                             title = stringResource(row.destination.title),
@@ -218,9 +218,11 @@ fun SettingsDestinationScreen(
                                 shapes = shapes,
                                 onSwitchChange = onSwitchChange,
                                 onSliderChange = onSliderChange,
-                                onOpenChoice = { openChoiceKey = it.key },
-                                onAction = { action ->
-                                    if (action.confirmation != null) pendingAction = action.action else onAction(action.action)
+                                onOpenChoice = { openChoiceKey = onChoiceDialogEvent(openChoiceKey, ChoiceDialogEvent.Open(it.key)).openKey },
+                                onAction = { item ->
+                                    val step = onActionEvent(pendingAction, ActionEvent.Tap(item))
+                                    pendingAction = step.pending
+                                    step.run?.let(onAction)
                                 },
                                 onOpenLink = onOpenLink
                             )
@@ -237,36 +239,38 @@ fun SettingsDestinationScreen(
     }
 
     screen.items.filterIsInstance<SettingItem.Choice<*>>().firstOrNull { it.key == openChoiceKey }?.let { choice ->
+        val dialog = choiceDialogViewState(choice, uiState)
         S2Dialog(
-            title = stringResource(choice.title),
-            onDismissRequest = { openChoiceKey = null },
+            title = stringResource(dialog.title),
+            onDismissRequest = { openChoiceKey = onChoiceDialogEvent(openChoiceKey, ChoiceDialogEvent.Dismiss).openKey },
             dismissLabel = stringResource(android.R.string.cancel)
         ) {
             S2ChoiceList(
-                options = choice.options.map { stringResource(it.label) },
-                selectedIndex = choice.options.indexOfFirst { it.value == uiState.value(choice.setting) },
+                options = dialog.options.map { stringResource(it) },
+                selectedIndex = dialog.selectedIndex,
                 onSelect = { index ->
-                    openChoiceKey = null
-                    onChoiceSelect(choice, index)
+                    val step = onChoiceDialogEvent(openChoiceKey, ChoiceDialogEvent.Select(index))
+                    openChoiceKey = step.openKey
+                    step.picked?.let { onChoiceSelect(choice, it.index) }
                 }
             )
         }
     }
 
-    screen.items.filterIsInstance<SettingItem.Action>().firstOrNull { it.action == pendingAction }?.confirmation?.let { confirmation ->
-        val action = pendingAction!!
+    screen.items.filterIsInstance<SettingItem.Action>().firstOrNull { it.action == pendingAction }?.let(::confirmActionViewState)?.let { dialog ->
         S2Dialog(
-            title = stringResource(confirmation.title),
-            onDismissRequest = { pendingAction = null },
-            confirmLabel = stringResource(confirmation.confirm),
+            title = stringResource(dialog.title),
+            onDismissRequest = { pendingAction = onActionEvent(pendingAction, ActionEvent.Dismiss).pending },
+            confirmLabel = stringResource(dialog.confirm),
             onConfirm = {
-                pendingAction = null
-                onAction(action)
+                val step = onActionEvent(pendingAction, ActionEvent.Confirm)
+                pendingAction = step.pending
+                step.run?.let(onAction)
             },
             dismissLabel = stringResource(android.R.string.cancel),
-            destructive = action == SettingsAction.ClearArtworkCache
+            destructive = dialog.destructive
         ) {
-            Text(stringResource(confirmation.message))
+            Text(stringResource(dialog.message))
         }
     }
 }
@@ -336,15 +340,15 @@ private fun choiceValueLabel(row: SettingsDestinationViewState.Row.Choice): Stri
     val label = row.label?.let { stringResource(it) }.orEmpty()
     val lastScan = row.lastScan ?: return label
     val resources = LocalContext.current.resources
-    val date = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).format(Date(lastScan.toEpochMilliseconds()))
+    val date = formatLastScan(lastScan, Locale.getDefault(), TimeZone.getDefault())
     return "$label ${resources.getString(R.string.pref_last_scan_date, date)}"
 }
 
 @Composable
 private fun sliderValueLabel(text: SettingsDestinationViewState.SliderText): String? = when (text) {
     SettingsDestinationViewState.SliderText.None -> null
-    is SettingsDestinationViewState.SliderText.Decibels -> String.format(Locale.getDefault(), "%+.1f dB", text.value)
+    is SettingsDestinationViewState.SliderText.Decibels -> formatDecibels(text.value, Locale.getDefault())
     SettingsDestinationViewState.SliderText.Off -> stringResource(SettingsString.DSP_REPLAY_GAIN_OFF)
     is SettingsDestinationViewState.SliderText.Seconds -> stringResource(UiText.Resource(SettingsString.SETTINGS_CROSSFADE_SECONDS, listOf(text.seconds)))
-    is SettingsDestinationViewState.SliderText.Percent -> "${text.percent}%"
+    is SettingsDestinationViewState.SliderText.Percent -> formatPercent(text.percent)
 }

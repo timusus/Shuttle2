@@ -6,6 +6,7 @@ import com.simplecityapps.shuttle.settings.DebugSettings
 import com.simplecityapps.shuttle.ui.screens.settings.SettingsDestinationViewState.Row
 import com.simplecityapps.shuttle.ui.screens.settings.SettingsDestinationViewState.SliderText
 import com.simplecityapps.shuttle.ui.screens.settings.model.AndroidSettingsCatalog
+import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsAction
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsDestination
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsLink
 import com.simplecityapps.shuttle.ui.text.SettingsString
@@ -28,11 +29,49 @@ class SettingsViewStateTest {
     private fun summaryOf(
         destination: SettingsDestination,
         uiState: SettingsUiState = SettingsUiState()
-    ) = settingsRootViewState(uiState).rows.first { it.destination == destination }.summary
+    ) = settingsRootViewState(uiState, SettingsProState.Upsell).rows.first { it.destination == destination }.summary
+
+    private fun navigateTargets(destination: SettingsDestination) = destination(destination).rows()
+        .filterIsInstance<Row.Navigate>().associate { it.item.title to it.item.target }
+
+    private fun action(destination: SettingsDestination, title: SettingsString) = destination(destination).rows()
+        .filterIsInstance<Row.Action>().first { it.item.title == title }.item
 
     @Test
     fun `the root has a row per destination`() {
-        settingsRootViewState(SettingsUiState()).rows.map { it.destination } shouldBe SettingsDestination.entries
+        settingsRootViewState(SettingsUiState(), SettingsProState.Upsell).rows.map { it.destination } shouldBe SettingsDestination.entries
+    }
+
+    @Test
+    fun `the Pro row pitches Pro until it is owned and says nothing before Play answers`() {
+        settingsRootViewState(SettingsUiState(), SettingsProState.Upsell).pro shouldBe SettingsRootViewState.ProSummary.Upsell
+        settingsRootViewState(SettingsUiState(), SettingsProState.Owned).pro shouldBe SettingsRootViewState.ProSummary.Owned
+        settingsRootViewState(SettingsUiState(), SettingsProState.Neutral).pro shouldBe SettingsRootViewState.ProSummary.None
+    }
+
+    @Test
+    fun `About links to the changelog and the licences`() {
+        navigateTargets(SettingsDestination.About)[SettingsString.PREF_VIEW_CHANGELOG_TITLE] shouldBe SettingsLink.WhatsNew
+        navigateTargets(SettingsDestination.About)[SettingsString.PREF_VIEW_LICENSES_TITLE] shouldBe SettingsLink.Licences
+    }
+
+    @Test
+    fun `Playback links to the equalizer`() {
+        navigateTargets(SettingsDestination.PlaybackAndSound)[SettingsString.DSP_EQUALIZER_TITLE] shouldBe SettingsLink.Equalizer
+    }
+
+    @Test
+    fun `backing up the library needs no confirmation`() {
+        val backup = action(SettingsDestination.Library, SettingsString.PREF_BACKUP_EXPORT_TITLE)
+
+        backup.action shouldBe SettingsAction.ExportBackup
+        confirmActionViewState(backup) shouldBe null
+    }
+
+    @Test
+    fun `USB DAC direct output is a switch on its setting`() {
+        (destination(SettingsDestination.PlaybackAndSound, sdkInt = 34).row(PlaybackSettings.UsbDacDirectOutput.key) as Row.Switch).item.setting shouldBe
+            PlaybackSettings.UsbDacDirectOutput
     }
 
     @Test
