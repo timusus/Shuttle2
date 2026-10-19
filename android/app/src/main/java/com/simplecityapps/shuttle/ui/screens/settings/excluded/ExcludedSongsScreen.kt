@@ -39,17 +39,24 @@ fun ExcludedSongsScreen(
     modifier: Modifier = Modifier
 ) {
     val viewState = excludedSongsViewState(uiState)
+    val onEvent = ExcludedSongsCallbacks(onNavigateUp, onInclude, onIncludeAll)::onEvent
     var confirmIncludeAll by rememberSaveable { mutableStateOf(false) }
     val confirm = { event: ConfirmEvent ->
         val step = onConfirmEvent(confirmIncludeAll, event)
         confirmIncludeAll = step.showing
-        if (step.confirmed) onIncludeAll()
+        if (step.confirmed) onEvent(ExcludedSongsEvent.IncludeAll)
     }
     var menuSongId by rememberSaveable { mutableStateOf<Long?>(null) }
+    val menu = { event: SongMenuEvent ->
+        val step = onSongMenuEvent(event)
+        menuSongId = step.openSongId
+        step.event?.let(onEvent)
+        Unit
+    }
 
     SettingsScaffold(
         title = stringResource(R.string.pref_exclude_title),
-        onNavigateUp = onNavigateUp,
+        onNavigateUp = { onEvent(ExcludedSongsEvent.NavigateUp) },
         modifier = modifier,
         contentPadding = PaddingValues(),
         verticalArrangement = Arrangement.Top,
@@ -72,7 +79,7 @@ fun ExcludedSongsScreen(
 
             is ExcludedSongsViewState.Content.Songs -> items(content.rows, key = { it.song.id }) { row ->
                 val song = row.song
-                val openMenu = { menuSongId = song.id }
+                val openMenu = { menu(SongMenuEvent.Open(song)) }
                 Box {
                     SongRow(
                         title = row.title,
@@ -82,16 +89,13 @@ fun ExcludedSongsScreen(
                     )
                     S2Menu(
                         expanded = menuSongId == song.id,
-                        onDismissRequest = { menuSongId = null },
+                        onDismissRequest = { menu(SongMenuEvent.Dismiss) },
                         groups = listOf(
                             listOf(
                                 S2Action(
                                     label = stringResource(R.string.excluded_songs_include),
                                     icon = Icons.Rounded.Restore,
-                                    onClick = {
-                                        menuSongId = null
-                                        onInclude(song)
-                                    }
+                                    onClick = { menu(SongMenuEvent.Include(song)) }
                                 )
                             )
                         )
