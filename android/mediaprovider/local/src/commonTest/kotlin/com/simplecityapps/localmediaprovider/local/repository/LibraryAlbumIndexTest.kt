@@ -20,6 +20,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 
 /** The library's one album index is built once, and again only when the library's album identities change (#688). */
@@ -37,7 +38,7 @@ class LibraryAlbumIndexTest : InMemoryDatabaseTest() {
         database.close()
     }
 
-    private fun TestScope.songs() = LocalSongRepository(backgroundScope, dao, index)
+    private fun TestScope.songs() = LocalSongRepository(backgroundScope, UnconfinedTestDispatcher(testScheduler), dao, index)
 
     private suspend fun TestScope.library(): List<Song> = songs().loadSongs(SongQuery.All())
 

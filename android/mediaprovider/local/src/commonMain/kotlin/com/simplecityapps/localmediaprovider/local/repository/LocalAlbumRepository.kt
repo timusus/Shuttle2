@@ -7,9 +7,8 @@ import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.MinTrackLength
 import com.simplecityapps.shuttle.model.Song
 import kotlin.random.Random
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -23,6 +22,7 @@ import kotlinx.coroutines.flow.stateIn
 
 class LocalAlbumRepository(
     private val scope: CoroutineScope,
+    private val ioDispatcher: CoroutineDispatcher,
     private val songs: Flow<List<Song>>,
     private val minTrackLength: Flow<MinTrackLength> = flowOf(MinTrackLength.Off)
 ) : AlbumRepository {
@@ -33,7 +33,7 @@ class LocalAlbumRepository(
                     .groupBy { it.albumGroupKey }
                     .map { (key, songs) -> songs.toAlbum(key) }
             }
-            .flowOn(Dispatchers.IO)
+            .flowOn(ioDispatcher)
             .stateIn(scope, SharingStarted.Lazily, null)
     }
 

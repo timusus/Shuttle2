@@ -37,6 +37,7 @@ class LocalPlaylistRepositoryM3uSyncTest {
         .build()
     private val repository = LocalPlaylistRepository(
         scope = CoroutineScope(Dispatchers.Unconfined),
+        ioDispatcher = Dispatchers.Unconfined,
         playlistDataDao = database.playlistDataDao(),
         playlistSongJoinDao = database.playlistSongJoinDataDao(),
         fileSync = SafPlaylistFileSync(context, database.songDataDao()),

@@ -59,8 +59,8 @@ class PlaylistImportTest {
     private val context: Context = ApplicationProvider.getApplicationContext()
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val database = Room.inMemoryDatabaseBuilder(context, MediaDatabase::class.java).trackingIdentityChanges().allowMainThreadQueries().build()
-    private val songRepository = LaggingSongRepository(LocalSongRepository(scope, database.songDataDao(), database.libraryAlbumIndex()))
-    private val playlistRepository = LocalPlaylistRepository(scope, database.playlistDataDao(), database.playlistSongJoinDataDao(), SafPlaylistFileSync(context, database.songDataDao()), database.libraryAlbumIndex())
+    private val songRepository = LaggingSongRepository(LocalSongRepository(scope, UnconfinedTestDispatcher(), database.songDataDao(), database.libraryAlbumIndex()))
+    private val playlistRepository = LocalPlaylistRepository(scope, UnconfinedTestDispatcher(), database.playlistDataDao(), database.playlistSongJoinDataDao(), SafPlaylistFileSync(context, database.songDataDao()), database.libraryAlbumIndex())
     private val provider = FakeProvider()
     private val importer =
         MediaImporter(
@@ -77,7 +77,7 @@ class PlaylistImportTest {
     private val preferences = SourceStateStore(InMemoryKeyValueStore())
     private val playlistSync = ServerPlaylistSync(setOf(serverWriter), preferences, scope)
     private val syncedPlaylistRepository =
-        LocalPlaylistRepository(scope, database.playlistDataDao(), database.playlistSongJoinDataDao(), SafPlaylistFileSync(context, database.songDataDao()), database.libraryAlbumIndex(), playlistSync)
+        LocalPlaylistRepository(scope, UnconfinedTestDispatcher(), database.playlistDataDao(), database.playlistSongJoinDataDao(), SafPlaylistFileSync(context, database.songDataDao()), database.libraryAlbumIndex(), playlistSync)
     private val syncedImporter =
         MediaImporter(
             strings = ResourceMediaImportStrings(context),
@@ -426,7 +426,7 @@ class PlaylistImportTest {
             }
         val racingSync = ServerPlaylistSync(setOf(serverWriter), preferences, scope, reportingLock)
         val racingRepository =
-            LocalPlaylistRepository(scope, database.playlistDataDao(), database.playlistSongJoinDataDao(), SafPlaylistFileSync(context, database.songDataDao()), database.libraryAlbumIndex(), racingSync)
+            LocalPlaylistRepository(scope, UnconfinedTestDispatcher(), database.playlistDataDao(), database.playlistSongJoinDataDao(), SafPlaylistFileSync(context, database.songDataDao()), database.libraryAlbumIndex(), racingSync)
         // The edit starts once the import has fetched the server's playlist, just before it writes it, and the write waits until the edit is blocked on the import's lock
         val racingStore =
             object : ImportedPlaylistStore by racingRepository {

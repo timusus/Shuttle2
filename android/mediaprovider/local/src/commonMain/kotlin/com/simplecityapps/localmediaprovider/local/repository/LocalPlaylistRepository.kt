@@ -19,9 +19,8 @@ import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.PlaylistSong
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.sorting.PlaylistSongSortOrder
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -47,6 +46,7 @@ private fun isM3uSynced(
 
 class LocalPlaylistRepository(
     private val scope: CoroutineScope,
+    private val ioDispatcher: CoroutineDispatcher,
     private val playlistDataDao: PlaylistDataDao,
     private val playlistSongJoinDao: PlaylistSongJoinDao,
     private val fileSync: PlaylistFileSync,
@@ -58,7 +58,7 @@ class LocalPlaylistRepository(
     private val playlistsRelay: StateFlow<List<Playlist>?> by lazy {
         playlistDataDao
             .getAll()
-            .flowOn(Dispatchers.IO)
+            .flowOn(ioDispatcher)
             .stateIn(scope, SharingStarted.Lazily, null)
     }
 
@@ -99,7 +99,7 @@ class LocalPlaylistRepository(
      * which never hears of them: it keeps the songs added in S2 and gains the file's or server's new ones. Its file is then
      * written, as it may be writable now (its folder granted since).
      */
-    override suspend fun storePlaylist(playlist: PlaylistUpdateData) = withContext(Dispatchers.IO) {
+    override suspend fun storePlaylist(playlist: PlaylistUpdateData) = withContext(ioDispatcher) {
         val m3u = isM3uSynced(playlist.mediaProviderType, playlist.externalId)
         if (m3u) {
             adoptFormerId(playlist.externalId)
@@ -137,7 +137,7 @@ class LocalPlaylistRepository(
         listing: PlaylistListing,
         listingComplete: Boolean,
         lastServerSongs: Map<String, Set<Long>>
-    ) = withContext(Dispatchers.IO) {
+    ) = withContext(ioDispatcher) {
         playlistDataDao.reconcileImported(
             mediaProviderType = type,
             playlists = listing.playlists.map { playlist -> playlist.toPlaylistData() to playlist.songs.inLibrary().map { song -> song.id } },
@@ -148,7 +148,7 @@ class LocalPlaylistRepository(
         )
     }
 
-    override suspend fun storedPlaylistIds(type: MediaProviderType): Set<String> = withContext(Dispatchers.IO) {
+    override suspend fun storedPlaylistIds(type: MediaProviderType): Set<String> = withContext(ioDispatcher) {
         playlistDataDao.importedPlaylistIdsWithSongs(type).toSet()
     }
 

@@ -17,6 +17,7 @@ import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
 import kotlin.time.Instant
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Test
@@ -35,7 +36,7 @@ class LocalPlaylistRepositoryTest {
 
     @Test
     fun `songs not in the library are left out of playlist writes`() = runTest {
-        val repository = LocalPlaylistRepository(backgroundScope, database.playlistDataDao(), database.playlistSongJoinDataDao(), SafPlaylistFileSync(context, database.songDataDao()), database.libraryAlbumIndex())
+        val repository = LocalPlaylistRepository(backgroundScope, UnconfinedTestDispatcher(), database.playlistDataDao(), database.playlistSongJoinDataDao(), SafPlaylistFileSync(context, database.songDataDao()), database.libraryAlbumIndex())
         val (first, second) = insertSongs("First", "Second")
         val openedFile = first.copy(id = -5, path = "content://downloads/1")
 
@@ -50,7 +51,7 @@ class LocalPlaylistRepositoryTest {
 
     @Test
     fun `a playlist whose songs can't be added isn't created`() = runTest {
-        val repository = LocalPlaylistRepository(backgroundScope, database.playlistDataDao(), database.playlistSongJoinDataDao(), SafPlaylistFileSync(context, database.songDataDao()), database.libraryAlbumIndex())
+        val repository = LocalPlaylistRepository(backgroundScope, UnconfinedTestDispatcher(), database.playlistDataDao(), database.playlistSongJoinDataDao(), SafPlaylistFileSync(context, database.songDataDao()), database.libraryAlbumIndex())
         val (song) = insertSongs("Song")
 
         shouldThrow<SQLiteConstraintException> {
@@ -62,7 +63,7 @@ class LocalPlaylistRepositoryTest {
 
     @Test
     fun `playlist cover songs are one per distinct album, in playlist order`() = runTest {
-        val repository = LocalPlaylistRepository(backgroundScope, database.playlistDataDao(), database.playlistSongJoinDataDao(), SafPlaylistFileSync(context, database.songDataDao()), database.libraryAlbumIndex())
+        val repository = LocalPlaylistRepository(backgroundScope, UnconfinedTestDispatcher(), database.playlistDataDao(), database.playlistSongJoinDataDao(), SafPlaylistFileSync(context, database.songDataDao()), database.libraryAlbumIndex())
         val songs = insertSongsWithAlbums("First" to "Album A", "Second" to "Album A", "Third" to "Album B", "Fourth" to "Album C", "Fifth" to "Album D")
         val playlist = repository.createPlaylist("Mixed", MediaProviderType.Shuttle, songs, null)
 
@@ -71,7 +72,7 @@ class LocalPlaylistRepositoryTest {
 
     @Test
     fun `playlist cover songs match on album regardless of case`() = runTest {
-        val repository = LocalPlaylistRepository(backgroundScope, database.playlistDataDao(), database.playlistSongJoinDataDao(), SafPlaylistFileSync(context, database.songDataDao()), database.libraryAlbumIndex())
+        val repository = LocalPlaylistRepository(backgroundScope, UnconfinedTestDispatcher(), database.playlistDataDao(), database.playlistSongJoinDataDao(), SafPlaylistFileSync(context, database.songDataDao()), database.libraryAlbumIndex())
         val songs = insertSongsWithAlbums("First" to "album", "Second" to "ALBUM")
         val playlist = repository.createPlaylist("Same album", MediaProviderType.Shuttle, songs, null)
 
@@ -80,7 +81,7 @@ class LocalPlaylistRepositoryTest {
 
     @Test
     fun `playlist cover songs follow the playlist's own sort order, not raw insertion order`() = runTest {
-        val repository = LocalPlaylistRepository(backgroundScope, database.playlistDataDao(), database.playlistSongJoinDataDao(), SafPlaylistFileSync(context, database.songDataDao()), database.libraryAlbumIndex())
+        val repository = LocalPlaylistRepository(backgroundScope, UnconfinedTestDispatcher(), database.playlistDataDao(), database.playlistSongJoinDataDao(), SafPlaylistFileSync(context, database.songDataDao()), database.libraryAlbumIndex())
         val songs = insertSongsWithAlbums("Zebra" to "Album A", "Mango" to "Album B", "Apple" to "Album C")
         val playlist = repository.createPlaylist("By name", MediaProviderType.Shuttle, songs, null)
             .copy(sortOrder = PlaylistSongSortOrder.SongName)
@@ -90,7 +91,7 @@ class LocalPlaylistRepositoryTest {
 
     @Test
     fun `playlist cover songs reverse when the playlist is sorted descending`() = runTest {
-        val repository = LocalPlaylistRepository(backgroundScope, database.playlistDataDao(), database.playlistSongJoinDataDao(), SafPlaylistFileSync(context, database.songDataDao()), database.libraryAlbumIndex())
+        val repository = LocalPlaylistRepository(backgroundScope, UnconfinedTestDispatcher(), database.playlistDataDao(), database.playlistSongJoinDataDao(), SafPlaylistFileSync(context, database.songDataDao()), database.libraryAlbumIndex())
         val songs = insertSongsWithAlbums("First" to "Album A", "Second" to "Album A", "Third" to "Album B", "Fourth" to "Album C", "Fifth" to "Album D")
         val playlist = repository.createPlaylist("Mixed descending", MediaProviderType.Shuttle, songs, null)
             .copy(sortDescending = true)
@@ -100,7 +101,7 @@ class LocalPlaylistRepositoryTest {
 
     @Test
     fun `playlist cover songs return fewer than the limit when the playlist has fewer distinct albums`() = runTest {
-        val repository = LocalPlaylistRepository(backgroundScope, database.playlistDataDao(), database.playlistSongJoinDataDao(), SafPlaylistFileSync(context, database.songDataDao()), database.libraryAlbumIndex())
+        val repository = LocalPlaylistRepository(backgroundScope, UnconfinedTestDispatcher(), database.playlistDataDao(), database.playlistSongJoinDataDao(), SafPlaylistFileSync(context, database.songDataDao()), database.libraryAlbumIndex())
         val (song) = insertSongs("Only")
         val playlist = repository.createPlaylist("Small", MediaProviderType.Shuttle, listOf(song), null)
 
@@ -147,7 +148,7 @@ class LocalPlaylistRepositoryTest {
         repository.getMemberSongIds(playlist) shouldBe setOf(kept.id, excluded.id)
     }
 
-    private fun repository(scope: kotlinx.coroutines.CoroutineScope) = LocalPlaylistRepository(scope, database.playlistDataDao(), database.playlistSongJoinDataDao(), SafPlaylistFileSync(context, database.songDataDao()), database.libraryAlbumIndex())
+    private fun repository(scope: kotlinx.coroutines.CoroutineScope) = LocalPlaylistRepository(scope, UnconfinedTestDispatcher(), database.playlistDataDao(), database.playlistSongJoinDataDao(), SafPlaylistFileSync(context, database.songDataDao()), database.libraryAlbumIndex())
 
     private suspend fun insertSongs(vararg names: String): List<Song> {
         database.songDataDao().insert(names.map { name -> songData(name) })

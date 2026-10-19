@@ -79,9 +79,10 @@ abstract class LibraryModule {
         fun provideSongRepository(
             database: MediaDatabase,
             @AppCoroutineScope appCoroutineScope: CoroutineScope,
+            @IoDispatcher ioDispatcher: CoroutineDispatcher,
             albumIndex: LibraryAlbumIndex,
             librarySettings: LibrarySettings
-        ): SongRepository = LocalSongRepository(appCoroutineScope, database.songDataDao(), albumIndex, librarySettings.minTrackLength.flow)
+        ): SongRepository = LocalSongRepository(appCoroutineScope, ioDispatcher, database.songDataDao(), albumIndex, librarySettings.minTrackLength.flow)
 
         @Provides
         @SingleIn(AppScope::class)
@@ -136,16 +137,18 @@ abstract class LibraryModule {
         fun provideAlbumRepository(
             database: MediaDatabase,
             @AppCoroutineScope appCoroutineScope: CoroutineScope,
+            @IoDispatcher ioDispatcher: CoroutineDispatcher,
             librarySettings: LibrarySettings
-        ): AlbumRepository = LocalAlbumRepository(appCoroutineScope, database.songDataDao().getAll(), librarySettings.minTrackLength.flow)
+        ): AlbumRepository = LocalAlbumRepository(appCoroutineScope, ioDispatcher, database.songDataDao().getAll(), librarySettings.minTrackLength.flow)
 
         @Provides
         @SingleIn(AppScope::class)
         fun provideAlbumArtistRepository(
             database: MediaDatabase,
             @AppCoroutineScope appCoroutineScope: CoroutineScope,
+            @IoDispatcher ioDispatcher: CoroutineDispatcher,
             librarySettings: LibrarySettings
-        ): AlbumArtistRepository = LocalAlbumArtistRepository(appCoroutineScope, database.songDataDao().getAll(), librarySettings.minTrackLength.flow)
+        ): AlbumArtistRepository = LocalAlbumArtistRepository(appCoroutineScope, ioDispatcher, database.songDataDao().getAll(), librarySettings.minTrackLength.flow)
 
         @Provides
         @SingleIn(AppScope::class)
@@ -153,9 +156,10 @@ abstract class LibraryModule {
             database: MediaDatabase,
             fileSync: PlaylistFileSync,
             @AppCoroutineScope appCoroutineScope: CoroutineScope,
+            @IoDispatcher ioDispatcher: CoroutineDispatcher,
             albumIndex: LibraryAlbumIndex,
             playlistSync: ServerPlaylistSync
-        ): LocalPlaylistRepository = LocalPlaylistRepository(appCoroutineScope, database.playlistDataDao(), database.playlistSongJoinDataDao(), fileSync, albumIndex, playlistSync)
+        ): LocalPlaylistRepository = LocalPlaylistRepository(appCoroutineScope, ioDispatcher, database.playlistDataDao(), database.playlistSongJoinDataDao(), fileSync, albumIndex, playlistSync)
 
         @Provides
         fun providePlaylistRepository(playlistRepository: LocalPlaylistRepository): PlaylistRepository = playlistRepository
@@ -187,8 +191,9 @@ abstract class LibraryModule {
         @SingleIn(AppScope::class)
         fun provideGenreRepository(
             @AppCoroutineScope appCoroutineScope: CoroutineScope,
+            @IoDispatcher ioDispatcher: CoroutineDispatcher,
             songRepository: SongRepository,
             albumIndex: LibraryAlbumIndex
-        ): GenreRepository = LocalGenreRepository(appCoroutineScope, songRepository, albumIndex)
+        ): GenreRepository = LocalGenreRepository(appCoroutineScope, ioDispatcher, songRepository, albumIndex)
     }
 }

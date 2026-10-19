@@ -10,9 +10,8 @@ import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.model.albumArtworkSong
 import com.simplecityapps.shuttle.model.withAlbumIdentities
 import com.simplecityapps.shuttle.query.SongQuery
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -24,6 +23,7 @@ import kotlinx.coroutines.flow.stateIn
 
 class LocalGenreRepository(
     private val scope: CoroutineScope,
+    private val ioDispatcher: CoroutineDispatcher,
     val songRepository: SongRepository,
     private val albumIndex: LibraryAlbumIndex
 ) : GenreRepository {
@@ -54,7 +54,7 @@ class LocalGenreRepository(
                     ?.associateWith { genre -> songs.filter { song -> song.genres.contains(genre) } }
                     ?.let { GenreSongs(it) }
             }
-            .flowOn(Dispatchers.IO)
+            .flowOn(ioDispatcher)
             .stateIn(scope, SharingStarted.Lazily, null)
     }
 
@@ -102,5 +102,5 @@ class LocalGenreRepository(
             .sortedBy { song -> song.artworkVersion == null }
             .take(limit)
             .withAlbumIdentities(index.identities)
-    }.flowOn(Dispatchers.IO)
+    }.flowOn(ioDispatcher)
 }

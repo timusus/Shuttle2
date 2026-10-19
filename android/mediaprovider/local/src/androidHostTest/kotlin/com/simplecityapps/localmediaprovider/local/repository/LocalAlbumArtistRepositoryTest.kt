@@ -9,6 +9,7 @@ import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 
@@ -18,7 +19,7 @@ class LocalAlbumArtistRepositoryTest {
     @Test
     fun `an album artist's play count is the sum of their songs' play counts`() = runTest {
         val songsFlow = MutableSharedFlow<List<SongData>>(replay = 1)
-        val repository = LocalAlbumArtistRepository(scope = backgroundScope, songs = songsFlow.asSongs())
+        val repository = LocalAlbumArtistRepository(scope = backgroundScope, ioDispatcher = UnconfinedTestDispatcher(testScheduler), songs = songsFlow.asSongs())
 
         songsFlow.emit(
             listOf(
@@ -36,8 +37,8 @@ class LocalAlbumArtistRepositoryTest {
     @Test
     fun `a sample library groups into albums and album artists by the identity rule`() = runTest {
         val songsFlow = MutableSharedFlow<List<SongData>>(replay = 1)
-        val albums = LocalAlbumRepository(scope = backgroundScope, songs = songsFlow.asSongs())
-        val artists = LocalAlbumArtistRepository(scope = backgroundScope, songs = songsFlow.asSongs())
+        val albums = LocalAlbumRepository(scope = backgroundScope, ioDispatcher = UnconfinedTestDispatcher(testScheduler), songs = songsFlow.asSongs())
+        val artists = LocalAlbumArtistRepository(scope = backgroundScope, ioDispatcher = UnconfinedTestDispatcher(testScheduler), songs = songsFlow.asSongs())
 
         songsFlow.emit(
             listOf(
@@ -70,7 +71,7 @@ class LocalAlbumArtistRepositoryTest {
     @Test
     fun `the Artists list is the album artists - each of an album's - and featured and compilation artists are found as credited ones`() = runTest {
         val songsFlow = MutableSharedFlow<List<SongData>>(replay = 1)
-        val artists = LocalAlbumArtistRepository(scope = backgroundScope, songs = songsFlow.asSongs())
+        val artists = LocalAlbumArtistRepository(scope = backgroundScope, ioDispatcher = UnconfinedTestDispatcher(testScheduler), songs = songsFlow.asSongs())
 
         songsFlow.emit(
             listOf(

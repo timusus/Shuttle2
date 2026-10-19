@@ -6,9 +6,8 @@ import com.simplecityapps.mediaprovider.repository.artists.comparator
 import com.simplecityapps.shuttle.model.AlbumArtist
 import com.simplecityapps.shuttle.model.MinTrackLength
 import com.simplecityapps.shuttle.model.Song
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -21,13 +20,14 @@ import kotlinx.coroutines.flow.stateIn
 
 class LocalAlbumArtistRepository(
     val scope: CoroutineScope,
+    private val ioDispatcher: CoroutineDispatcher,
     private val songs: Flow<List<Song>>,
     private val minTrackLength: Flow<MinTrackLength> = flowOf(MinTrackLength.Off)
 ) : AlbumArtistRepository {
     private val albumArtistsRelay: StateFlow<List<AlbumArtist>?> by lazy {
         combine(songs, minTrackLength) { songs, min -> songs.filter(min::keeps) }
             .map { songs -> songs.toArtists() }
-            .flowOn(Dispatchers.IO)
+            .flowOn(ioDispatcher)
             .stateIn(scope, SharingStarted.Lazily, null)
     }
 
@@ -39,5 +39,5 @@ class LocalAlbumArtistRepository(
                 .toMutableList()
                 .sortedWith(query.sortOrder.comparator)
         }
-        .flowOn(Dispatchers.IO)
+        .flowOn(ioDispatcher)
 }

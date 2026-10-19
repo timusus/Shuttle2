@@ -21,6 +21,7 @@ import kotlin.time.Instant
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 
 class LocalSuggestionsRepositoryTest : InMemoryDatabaseTest() {
@@ -31,8 +32,8 @@ class LocalSuggestionsRepositoryTest : InMemoryDatabaseTest() {
     /** As the app builds it: Home's songs, genres, albums and artists are the library repositories'. */
     private fun TestScope.repositories(): Pair<LocalSuggestionsRepository, LocalGenreRepository> {
         val albumIndex = freshAlbumIndex(database)
-        val songs = LocalSongRepository(backgroundScope, songDao, database.libraryAlbumIndex(), minimum)
-        val genres = LocalGenreRepository(backgroundScope, songs, database.libraryAlbumIndex())
+        val songs = LocalSongRepository(backgroundScope, UnconfinedTestDispatcher(testScheduler), songDao, database.libraryAlbumIndex(), minimum)
+        val genres = LocalGenreRepository(backgroundScope, UnconfinedTestDispatcher(testScheduler), songs, database.libraryAlbumIndex())
         return LocalSuggestionsRepository(database.suggestionsDao(), albumIndex, songs, genres) to genres
     }
 
@@ -62,7 +63,7 @@ class LocalSuggestionsRepositoryTest : InMemoryDatabaseTest() {
             createSongData(album = "Kid A", albumArtist = "Radiohead", track = 1),
             createSongData(album = "Blue", albumArtist = "Joni Mitchell", track = 1)
         )
-        val repositoryAlbums = LocalAlbumRepository(backgroundScope, songDao.getAll()).getAlbums(AlbumQuery.All()).first().associateBy { it.groupKey }
+        val repositoryAlbums = LocalAlbumRepository(backgroundScope, UnconfinedTestDispatcher(testScheduler), songDao.getAll()).getAlbums(AlbumQuery.All()).first().associateBy { it.groupKey }
         val bends = key("bends", "radiohead")
         val kidA = key("kid a", "radiohead")
 
@@ -77,7 +78,7 @@ class LocalSuggestionsRepositoryTest : InMemoryDatabaseTest() {
             createSongData(album = "Hejira", albumArtist = "Joni Mitchell", track = 1),
             createSongData(album = "Mezzanine", albumArtist = "x", track = 1).copy(albumArtist = null, artists = listOf("The Massive Attack"))
         )
-        val repositoryArtists = LocalAlbumArtistRepository(backgroundScope, songDao.getAll()).getAlbumArtists(AlbumArtistQuery.All()).first().associateBy { it.groupKey }
+        val repositoryArtists = LocalAlbumArtistRepository(backgroundScope, UnconfinedTestDispatcher(testScheduler), songDao.getAll()).getAlbumArtists(AlbumArtistQuery.All()).first().associateBy { it.groupKey }
         val joni = AlbumArtistGroupKey("joni mitchell")
         val massive = AlbumArtistGroupKey("massive attack")
 

@@ -14,10 +14,9 @@ import com.simplecityapps.shuttle.model.MinTrackLength
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.model.withAlbumIdentities
 import com.simplecityapps.shuttle.query.SongQuery
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -37,6 +36,7 @@ import kotlinx.coroutines.withContext
 @OptIn(ExperimentalCoroutinesApi::class)
 class LocalSongRepository(
     val scope: CoroutineScope,
+    private val ioDispatcher: CoroutineDispatcher,
     private val songDataDao: SongDataDao,
     private val albumIndex: LibraryAlbumIndex,
     /** Songs shorter than this are left out of every query but a lookup by id; a change re-emits [getSongs]. */
@@ -45,7 +45,7 @@ class LocalSongRepository(
     private val songsRelay: StateFlow<List<Song>?> by lazy {
         songDataDao
             .getAll()
-            .flowOn(Dispatchers.IO)
+            .flowOn(ioDispatcher)
             .stateIn(scope, SharingStarted.Lazily, null)
     }
 
@@ -65,7 +65,7 @@ class LocalSongRepository(
             if (query is SongQuery.SongIds && query.songIds.isEmpty()) {
                 flowOf(emptyList())
             } else if (query is SongQuery.SongIds) {
-                combine(songDataDao.getByIds(query.songIds), albumIndex.updates) { found, index -> found.withAlbumIdentities(index.identities) }.flowOn(Dispatchers.IO)
+                combine(songDataDao.getByIds(query.songIds), albumIndex.updates) { found, index -> found.withAlbumIdentities(index.identities) }.flowOn(ioDispatcher)
             } else {
                 combine(songsRelay, minTrackLength) { songs, min -> songs?.filter(min::keeps)?.filter(query.predicate)?.sortedWith(query.sortOrder.comparator) }
             }
@@ -75,20 +75,20 @@ class LocalSongRepository(
     override fun countSongs(): Flow<Int> = minTrackLength
         .flatMapLatest { min -> songDataDao.countVisible(min.seconds * 1000) }
         .distinctUntilChanged()
-        .flowOn(Dispatchers.IO)
+        .flowOn(ioDispatcher)
 
     override fun countSongsByProvider(): Flow<Map<MediaProviderType, Int>> = minTrackLength
         .flatMapLatest { min -> songDataDao.countVisibleByProvider(min.seconds * 1000) }
         .map { rows -> rows.associate { it.mediaProvider to it.count } }
         .distinctUntilChanged()
-        .flowOn(Dispatchers.IO)
+        .flowOn(ioDispatcher)
 
     /**
      * Reads the database directly rather than the shared song list, whose requery after a write can take a while for a
      * large library. An album's or album artist's songs (an album's page, playing it) are found in the library's
      * [LibraryAlbumIndex] and read by id, so the cost is the album's, not the library's; other queries read every song.
      */
-    override suspend fun loadSongs(query: SongQuery): List<Song> = withContext(Dispatchers.IO) {
+    override suspend fun loadSongs(query: SongQuery): List<Song> = withContext(ioDispatcher) {
         val index = albumIndex.albumIndex()
         val songs = index.songIdsFor(query)?.let { ids -> songDataDao.loadByIds(ids) } ?: songDataDao.get().map { songData -> songData.toSong() }
         val min = if (query is SongQuery.SongIds) MinTrackLength.Off else minTrackLength.first()
@@ -100,9 +100,9 @@ class LocalSongRepository(
             .matching(query)
     }
 
-    override suspend fun loadLyrics(songId: Long): String? = withContext(Dispatchers.IO) { songDataDao.lyrics(songId) }
+    override suspend fun loadLyrics(songId: Long): String? = withContext(ioDispatcher) { songDataDao.lyrics(songId) }
 
-    override suspend fun loadProviderSongs(mediaProviderType: MediaProviderType): List<Song> = withContext(Dispatchers.IO) {
+    override suspend fun loadProviderSongs(mediaProviderType: MediaProviderType): List<Song> = withContext(ioDispatcher) {
         songDataDao.getByProvider(mediaProviderType).map { songData -> songData.toSong() }.withAlbumIdentities(albumIndex.albumIndex().identities)
     }
 
@@ -197,7 +197,7 @@ class LocalSongRepository(
     override fun getFavouriteSongIds(): Flow<Set<Long>> = songDataDao.getFavouriteIds()
         .map { ids -> ids.toSet() }
         .distinctUntilChanged()
-        .flowOn(Dispatchers.IO)
+        .flowOn(ioDispatcher)
 
     override suspend fun clearExcludeList() {
         logger.debug { "Clearing excluded" }

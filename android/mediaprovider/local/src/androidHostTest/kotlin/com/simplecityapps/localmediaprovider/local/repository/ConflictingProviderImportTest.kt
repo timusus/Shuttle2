@@ -65,8 +65,8 @@ class ConflictingProviderImportTest {
         val importer =
             MediaImporter(
                 strings = ResourceMediaImportStrings(context),
-                songRepository = LocalSongRepository(scope, database.songDataDao(), database.libraryAlbumIndex()),
-                playlistStore = LocalPlaylistRepository(scope, database.playlistDataDao(), database.playlistSongJoinDataDao(), SafPlaylistFileSync(context, database.songDataDao()), database.libraryAlbumIndex()),
+                songRepository = LocalSongRepository(scope, UnconfinedTestDispatcher(), database.songDataDao(), database.libraryAlbumIndex()),
+                playlistStore = LocalPlaylistRepository(scope, UnconfinedTestDispatcher(), database.playlistDataDao(), database.playlistSongJoinDataDao(), SafPlaylistFileSync(context, database.songDataDao()), database.libraryAlbumIndex()),
                 sourceState = SourceStateStore(InMemoryKeyValueStore()),
                 afterImport = {}
             )

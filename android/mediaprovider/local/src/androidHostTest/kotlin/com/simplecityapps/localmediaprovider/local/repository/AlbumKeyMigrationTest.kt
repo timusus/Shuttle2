@@ -21,6 +21,7 @@ import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
 import kotlin.time.Instant
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Test
@@ -100,9 +101,9 @@ class AlbumKeyMigrationTest {
         )
         // Each moved key names an album the album and artist repositories have
         val songDao = database.songDataDao()
-        val albums = LocalAlbumRepository(backgroundScope, songDao.getAll()).getAlbums(AlbumQuery.All()).first().map { it.groupKey }
+        val albums = LocalAlbumRepository(backgroundScope, UnconfinedTestDispatcher(testScheduler), songDao.getAll()).getAlbums(AlbumQuery.All()).first().map { it.groupKey }
         albums shouldContainExactlyInAnyOrder listOf(drive, blue, low)
-        LocalAlbumArtistRepository(backgroundScope, songDao.getAll()).getAlbumArtists(AlbumArtistQuery.All()).first().map { it.groupKey } shouldContainExactlyInAnyOrder
+        LocalAlbumArtistRepository(backgroundScope, UnconfinedTestDispatcher(testScheduler), songDao.getAll()).getAlbumArtists(AlbumArtistQuery.All()).first().map { it.groupKey } shouldContainExactlyInAnyOrder
             listOf(AlbumArtistGroupKey("various artists"), AlbumArtistGroupKey("joni mitchell"), AlbumArtistGroupKey("david bowie"))
     }
 
@@ -235,7 +236,7 @@ class AlbumKeyMigrationTest {
             listOf("Artist")
         )
         // Each moved key names an album the album repository has
-        LocalAlbumRepository(backgroundScope, database.songDataDao().getAll()).getAlbums(AlbumQuery.All()).first().map { it.groupKey } shouldContainExactlyInAnyOrder
+        LocalAlbumRepository(backgroundScope, UnconfinedTestDispatcher(testScheduler), database.songDataDao().getAll()).getAlbums(AlbumQuery.All()).first().map { it.groupKey } shouldContainExactlyInAnyOrder
             listOf(duets, mixed, live, low)
     }
 

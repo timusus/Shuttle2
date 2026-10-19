@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.yield
 import org.junit.Test
@@ -19,7 +20,7 @@ class LocalAlbumRepositoryTest {
     @Test
     fun `identical re-emission of songs does not produce a new album emission`() = runTest {
         val songsFlow = MutableSharedFlow<List<SongData>>(replay = 1)
-        val repository = LocalAlbumRepository(scope = backgroundScope, songs = songsFlow.map { it.map(SongData::toSong).withAlbumIdentities() })
+        val repository = LocalAlbumRepository(scope = backgroundScope, ioDispatcher = UnconfinedTestDispatcher(testScheduler), songs = songsFlow.map { it.map(SongData::toSong).withAlbumIdentities() })
 
         val emissions = mutableListOf<List<Album>>()
         backgroundScope.launch {
@@ -43,7 +44,7 @@ class LocalAlbumRepositoryTest {
     @Test
     fun `an album's play count is the sum of its songs' play counts`() = runTest {
         val songsFlow = MutableSharedFlow<List<SongData>>(replay = 1)
-        val repository = LocalAlbumRepository(scope = backgroundScope, songs = songsFlow.map { it.map(SongData::toSong).withAlbumIdentities() })
+        val repository = LocalAlbumRepository(scope = backgroundScope, ioDispatcher = UnconfinedTestDispatcher(testScheduler), songs = songsFlow.map { it.map(SongData::toSong).withAlbumIdentities() })
 
         songsFlow.emit(
             listOf(

@@ -26,6 +26,7 @@ import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Instant
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.TimeZone
 
@@ -211,8 +212,8 @@ class LocalPlayHistoryRepositoryTest : InMemoryDatabaseTest() {
 
         val days = repository.albumDays(since = now - 28.days)
 
-        val repositoryAlbums = LocalAlbumRepository(backgroundScope, songDao.getAll()).getAlbums(AlbumQuery.All()).first()
-        val repositoryArtists = LocalAlbumArtistRepository(backgroundScope, songDao.getAll()).getAlbumArtists(AlbumArtistQuery.All()).first()
+        val repositoryAlbums = LocalAlbumRepository(backgroundScope, UnconfinedTestDispatcher(testScheduler), songDao.getAll()).getAlbums(AlbumQuery.All()).first()
+        val repositoryArtists = LocalAlbumArtistRepository(backgroundScope, UnconfinedTestDispatcher(testScheduler), songDao.getAll()).getAlbumArtists(AlbumArtistQuery.All()).first()
         days.map { Triple(it.groupKey, it.songs, it.trackCount) } shouldBe listOf(Triple(repositoryAlbums.single().groupKey, 3, 3))
         days.single().albumArtistKeys shouldBe listOf(repositoryArtists.single().groupKey)
     }
