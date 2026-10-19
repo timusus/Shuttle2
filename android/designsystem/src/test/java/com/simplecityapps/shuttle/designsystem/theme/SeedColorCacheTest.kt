@@ -8,8 +8,9 @@ import com.simplecityapps.shuttle.ui.theme.ArtworkSeed
 import io.kotest.matchers.doubles.plusOrMinus
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.runTest
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -18,7 +19,7 @@ import org.robolectric.RobolectricTestRunner
 class SeedColorCacheTest {
     private val red = Color(0xFFD9542B)
 
-    private fun cache(maxSize: Int = 100) = SeedColorCache(UnconfinedTestDispatcher(), maxSize)
+    private fun cache(dispatcher: CoroutineDispatcher, maxSize: Int = 100) = SeedColorCache(dispatcher, maxSize)
 
     private fun solidBitmap(color: Color, size: Int = 64): Bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888).apply {
         eraseColor(android.graphics.Color.argb(255, (color.red * 255).toInt(), (color.green * 255).toInt(), (color.blue * 255).toInt()))
@@ -120,8 +121,8 @@ class SeedColorCacheTest {
     }
 
     @Test
-    fun `extracts once per key`() = runBlocking<Unit> {
-        val cache = cache()
+    fun `extracts once per key`() = runTest {
+        val cache = cache(UnconfinedTestDispatcher(testScheduler))
         var loads = 0
         val loader: suspend () -> Bitmap? = {
             loads++
@@ -133,8 +134,8 @@ class SeedColorCacheTest {
     }
 
     @Test
-    fun `remembers a miss`() = runBlocking<Unit> {
-        val cache = cache()
+    fun `remembers a miss`() = runTest {
+        val cache = cache(UnconfinedTestDispatcher(testScheduler))
         var loads = 0
         val loader: suspend () -> Bitmap? = {
             loads++
@@ -146,15 +147,15 @@ class SeedColorCacheTest {
     }
 
     @Test
-    fun `a failed load is not cached`() = runBlocking<Unit> {
-        val cache = cache()
+    fun `a failed load is not cached`() = runTest {
+        val cache = cache(UnconfinedTestDispatcher(testScheduler))
         cache.getOrExtract("broken") { null } shouldBe ArtworkSeed.None
         cache["broken"] shouldBe null
     }
 
     @Test
-    fun `evicts the least recently used entry`() {
-        val cache = cache(maxSize = 2)
+    fun `evicts the least recently used entry`() = runTest {
+        val cache = cache(UnconfinedTestDispatcher(testScheduler), maxSize = 2)
         cache.put("a", red)
         cache.put("b", red)
         cache["a"] // touch a, so b is now the eldest
