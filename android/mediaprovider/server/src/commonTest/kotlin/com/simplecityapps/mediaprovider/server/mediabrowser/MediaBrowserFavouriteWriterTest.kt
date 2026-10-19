@@ -14,7 +14,7 @@ import io.kotest.matchers.shouldBe
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
 import kotlin.test.Test
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 
 class MediaBrowserFavouriteWriterTest {
     private class Rig(val mediaBrowserServer: MediaBrowserServer) {
@@ -46,7 +46,7 @@ class MediaBrowserFavouriteWriterTest {
         )
     }
 
-    private fun eachServer(block: Rig.() -> Unit) = MediaBrowserServer.entries.forEach { Rig(it).block() }
+    private fun eachServer(block: suspend Rig.() -> Unit) = runTest { MediaBrowserServer.entries.forEach { Rig(it).block() } }
 
     @Test
     fun `handles only its own server's songs`() = eachServer {
@@ -58,7 +58,7 @@ class MediaBrowserFavouriteWriterTest {
     fun `favouriting POSTs to the user's FavoriteItems path`() = eachServer {
         server.respond(path, code = 200, method = "POST")
 
-        runBlocking { writer.setFavourite(song, favourite = true) } shouldBe true
+        writer.setFavourite(song, favourite = true) shouldBe true
 
         val request = server.requestsTo(path).single()
         request.method shouldBe HttpMethod.Post
@@ -76,7 +76,7 @@ class MediaBrowserFavouriteWriterTest {
     fun `unfavouriting DELETEs the same path`() = eachServer {
         server.respond(path, code = 200, method = "DELETE")
 
-        runBlocking { writer.setFavourite(song, favourite = false) } shouldBe true
+        writer.setFavourite(song, favourite = false) shouldBe true
 
         server.requestsTo(path).single().method shouldBe HttpMethod.Delete
     }
@@ -85,15 +85,15 @@ class MediaBrowserFavouriteWriterTest {
     fun `a rejected call reports failure`() = eachServer {
         server.respond(path, code = 500, method = "POST")
 
-        runBlocking { writer.setFavourite(song, favourite = true) } shouldBe false
+        writer.setFavourite(song, favourite = true) shouldBe false
     }
 
     @Test
     fun `nothing is sent when signed out or the song has no item id`() = eachServer {
-        runBlocking { writer.setFavourite(song.copy(externalId = null), favourite = true) } shouldBe false
+        writer.setFavourite(song.copy(externalId = null), favourite = true) shouldBe false
         credentialStore.authenticatedCredentials = null
 
-        runBlocking { writer.setFavourite(song, favourite = true) } shouldBe false
+        writer.setFavourite(song, favourite = true) shouldBe false
         server.requests shouldBe emptyList()
     }
 }

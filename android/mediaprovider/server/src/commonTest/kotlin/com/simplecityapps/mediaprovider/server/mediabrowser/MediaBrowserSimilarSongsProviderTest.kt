@@ -12,7 +12,7 @@ import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import com.simplecityapps.shuttle.persistence.SecurePreferenceManager
 import io.kotest.matchers.shouldBe
 import kotlin.test.Test
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 
 class MediaBrowserSimilarSongsProviderTest {
     private class Rig(val mediaBrowserServer: MediaBrowserServer) {
@@ -44,7 +44,7 @@ class MediaBrowserSimilarSongsProviderTest {
         )
     }
 
-    private fun eachServer(block: Rig.() -> Unit) = MediaBrowserServer.entries.forEach { Rig(it).block() }
+    private fun eachServer(block: suspend Rig.() -> Unit) = runTest { MediaBrowserServer.entries.forEach { Rig(it).block() } }
 
     @Test
     fun `handles only its own server's songs`() = eachServer {
@@ -56,7 +56,7 @@ class MediaBrowserSimilarSongsProviderTest {
     fun `asks for the seed's instant mix for the user with a limit`() = eachServer {
         server.respond(path, "mix")
 
-        runBlocking { provider.similarSongIds(seed, limit = 51) }
+        provider.similarSongIds(seed, limit = 51)
 
         val request = server.requestsTo(path).single()
         request.url.parameters[mediaBrowserServer.itemsParameter("UserId")] shouldBe "user456"
@@ -67,22 +67,22 @@ class MediaBrowserSimilarSongsProviderTest {
     fun `returns the mix's item ids in order each once`() = eachServer {
         server.respond(path, "mix")
 
-        runBlocking { provider.similarSongIds(seed, limit = 50) } shouldBe listOf("a", "b", "c")
+        provider.similarSongIds(seed, limit = 50) shouldBe listOf("a", "b", "c")
     }
 
     @Test
     fun `a failing server has no similar songs`() = eachServer {
         server.respond(path, code = 500)
 
-        runBlocking { provider.similarSongIds(seed, limit = 50) } shouldBe emptyList()
+        provider.similarSongIds(seed, limit = 50) shouldBe emptyList()
     }
 
     @Test
     fun `nothing is sent when signed out or the song has no item id`() = eachServer {
-        runBlocking { provider.similarSongIds(seed.copy(externalId = null), limit = 50) } shouldBe emptyList()
+        provider.similarSongIds(seed.copy(externalId = null), limit = 50) shouldBe emptyList()
         credentialStore.authenticatedCredentials = null
 
-        runBlocking { provider.similarSongIds(seed, limit = 50) } shouldBe emptyList()
+        provider.similarSongIds(seed, limit = 50) shouldBe emptyList()
         server.requests shouldBe emptyList()
     }
 }
