@@ -26,6 +26,7 @@ import io.kotest.matchers.types.shouldBeInstanceOf
 import io.ktor.client.request.HttpRequestData
 import kotlin.test.AfterTest
 import kotlin.test.Test
+import kotlin.time.Clock
 import kotlin.time.Instant
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.toList
@@ -51,7 +52,14 @@ class JellyfinMediaProviderTest {
         )
 
     private val provider =
-        JellyfinMediaProvider(TestServerStrings, authenticationManager, ItemsService(client, MediaBrowserServer.Jellyfin, clientIdentity))
+        JellyfinMediaProvider(
+            TestServerStrings,
+            authenticationManager,
+            ItemsService(client, MediaBrowserServer.Jellyfin, clientIdentity),
+            object : Clock {
+                override fun now() = Instant.parse("2026-10-04T09:00:00Z")
+            }
+        )
 
     @AfterTest
     fun tearDown() {

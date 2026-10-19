@@ -29,14 +29,15 @@ constructor(
     private val lastFmScrobbler: LastFmScrobbler,
     private val listenBrainzScrobbler: ListenBrainzScrobbler,
     private val scrobbleQueue: ScrobbleQueue,
-    @AppCoroutineScope private val appCoroutineScope: CoroutineScope
+    @AppCoroutineScope private val appCoroutineScope: CoroutineScope,
+    private val clock: Clock
 ) {
     fun start() {
         val origin = TimeSource.Monotonic.markNow()
         val planner = ScrobblePlanner(
             isServerSong = { song -> playbackReporter.handles(song) && librarySettings.reportPlaybackToServer.value },
             elapsedRealtimeMs = { origin.elapsedNow().inWholeMilliseconds },
-            currentTimeMs = { Clock.System.now().toEpochMilliseconds() }
+            currentTimeMs = { clock.now().toEpochMilliseconds() }
         )
 
         val queueState = queueOperations.queueStateFlow.value

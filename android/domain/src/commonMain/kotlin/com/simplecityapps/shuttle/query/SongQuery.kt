@@ -125,9 +125,9 @@ sealed class SongQuery(
 
     /** The songs added in the last [days] days, most recent first. A tag edit doesn't count: it moves lastModified, not dateAdded. */
     @OptIn(ExperimentalTime::class)
-    data class RecentlyAdded(val days: Int = 14) :
+    data class RecentlyAdded(val days: Int = 14, val clock: Clock = Clock.System) :
         SongQuery(
-            predicate = { song -> song.dateAdded?.let { it > Clock.System.now().minus(days.days) } ?: false },
+            predicate = { song -> song.dateAdded?.let { it > clock.now().minus(days.days) } ?: false },
             sortOrder = SongSortOrder.DateAdded
         )
 }

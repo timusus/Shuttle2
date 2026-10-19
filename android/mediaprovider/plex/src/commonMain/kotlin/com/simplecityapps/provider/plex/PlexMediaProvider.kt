@@ -40,7 +40,8 @@ class PlexMediaProvider(
     private val strings: ServerStrings,
     private val plexStrings: PlexStrings,
     private val authenticationManager: PlexAuthenticationManager,
-    private val itemsService: ItemsService
+    private val itemsService: ItemsService,
+    private val clock: Clock
 ) : IncrementalMediaProvider {
     override val type: MediaProviderType
         get() = MediaProviderType.Plex
@@ -63,7 +64,7 @@ class PlexMediaProvider(
         existingSongs: List<Song>,
         since: Instant?
     ): Flow<FlowEvent<List<Song>, MessageProgress>> = withServerSession(strings, authenticationManager.credentialStore, authenticationManager.getAddress(), ::authenticate) { address, session ->
-        val syncedAt = Clock.System.now().atStoredPrecision()
+        val syncedAt = clock.now().atStoredPrecision()
         when (val sections = musicSections(address, session)) {
             is NetworkResult.Success<List<String>> -> {
                 if (sections.body.isEmpty()) {

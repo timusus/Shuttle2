@@ -19,6 +19,8 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.headersOf
 import kotlin.test.Test
+import kotlin.time.Clock
+import kotlin.time.Instant
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -32,9 +34,12 @@ class InProcessScrobbleFlushSchedulerTest {
     private val server = FakeLastFmServer()
     private val sessionStore = FakeLastFmSessionStore(LastFmSession(key = "sk", username = "user"))
     private var online = true
+    private val clock = object : Clock {
+        override fun now() = Instant.parse("2026-10-04T09:00:00Z")
+    }
 
     private fun TestScope.scheduler(client: LastFmClient = server.client(dispatcher = StandardTestDispatcher(testScheduler))) = InProcessScrobbleFlushScheduler(
-        flusher = ScrobbleFlusher(dao, client, sessionStore, ListenBrainzFlusher(dao, FakeListenBrainzServer().client(), FakeListenBrainzSessionStore())),
+        flusher = ScrobbleFlusher(dao, client, sessionStore, ListenBrainzFlusher(dao, FakeListenBrainzServer().client(), FakeListenBrainzSessionStore()), clock),
         connectivity = { online },
         scope = backgroundScope
     )

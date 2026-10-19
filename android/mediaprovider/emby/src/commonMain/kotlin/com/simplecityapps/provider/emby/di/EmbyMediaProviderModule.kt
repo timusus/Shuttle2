@@ -32,6 +32,7 @@ import dev.zacsweers.metro.Named
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.SingleIn
 import io.ktor.client.HttpClient
+import kotlin.time.Clock
 
 /**
  * The Emby services, sign-in, sync, playback reporting and artwork. Each platform supplies the
@@ -67,8 +68,9 @@ class EmbyMediaProviderModule {
     fun provideEmbyMediaProvider(
         strings: ServerStrings,
         authenticationManager: EmbyAuthenticationManager,
-        @Named("EmbyItemsService") itemsService: ItemsService
-    ): EmbyMediaProvider = EmbyMediaProvider(strings, authenticationManager, itemsService)
+        @Named("EmbyItemsService") itemsService: ItemsService,
+        clock: Clock
+    ): EmbyMediaProvider = EmbyMediaProvider(strings, authenticationManager, itemsService, clock)
 
     @Provides
     @IntoSet

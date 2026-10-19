@@ -7,10 +7,15 @@ import io.kotest.matchers.collections.shouldContainExactly
 import kotlin.test.Test
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days
+import kotlin.time.Instant
+
+private class FixedClock(private val instant: Instant) : Clock {
+    override fun now() = instant
+}
 
 class RecentlyAddedQueryTest {
-    private val now = Clock.System.now()
-    private val query = SongQuery.RecentlyAdded(days = 14)
+    private val now = Instant.parse("2026-06-01T12:00:00Z")
+    private val query = SongQuery.RecentlyAdded(days = 14, clock = FixedClock(now))
 
     private fun List<Song>.recentlyAdded() = filter(query.predicate).sortedWith(query.sortOrder.comparator)
 

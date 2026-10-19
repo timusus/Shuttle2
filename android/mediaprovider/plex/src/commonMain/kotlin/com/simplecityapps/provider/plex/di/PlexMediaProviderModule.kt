@@ -36,6 +36,7 @@ import dev.zacsweers.metro.Named
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.SingleIn
 import io.ktor.client.HttpClient
+import kotlin.time.Clock
 
 /**
  * The Plex services, sign-in, sync, playback reporting, transcode sessions and artwork. Each platform supplies the `PlexHttpClient`
@@ -79,8 +80,9 @@ class PlexMediaProviderModule {
         strings: ServerStrings,
         plexStrings: PlexStrings,
         authenticationManager: PlexAuthenticationManager,
-        itemsService: ItemsService
-    ): PlexMediaProvider = PlexMediaProvider(strings, plexStrings, authenticationManager, itemsService)
+        itemsService: ItemsService,
+        clock: Clock
+    ): PlexMediaProvider = PlexMediaProvider(strings, plexStrings, authenticationManager, itemsService, clock)
 
     @Provides
     @SingleIn(AppScope::class)

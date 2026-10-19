@@ -31,6 +31,7 @@ import io.ktor.http.headersOf
 import kotlin.test.Test
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days
+import kotlin.time.Instant
 import kotlinx.coroutines.test.runTest
 
 class ScrobbleFlusherTest {
@@ -43,9 +44,13 @@ class ScrobbleFlusherTest {
     private val listenBrainzServer = FakeListenBrainzServer()
     private val listenBrainzStore = FakeListenBrainzSessionStore()
 
-    private val flusher = ScrobbleFlusher(dao, client, sessionStore, ListenBrainzFlusher(dao, listenBrainzServer.client(), listenBrainzStore))
+    private val now = Instant.parse("2026-10-04T09:00:00Z")
+    private val clock = object : Clock {
+        override fun now() = now
+    }
+    private val flusher = ScrobbleFlusher(dao, client, sessionStore, ListenBrainzFlusher(dao, listenBrainzServer.client(), listenBrainzStore), clock)
 
-    private fun nowEpochSec(): Long = Clock.System.now().epochSeconds
+    private fun nowEpochSec(): Long = now.epochSeconds
 
     private fun entity(
         index: Int,
@@ -310,7 +315,7 @@ class ScrobbleFlusherTest {
 
     @Test
     fun `entries older than the max age are dropped before anything is sent`() = runTest {
-        val staleEpochSec = (Clock.System.now() - ScrobbleQueue.MAX_AGE - 1.days).epochSeconds
+        val staleEpochSec = (now - ScrobbleQueue.MAX_AGE - 1.days).epochSeconds
         dao.enqueue(entity(1, startedAtEpochSec = staleEpochSec))
 
         val result = flusher.flush()

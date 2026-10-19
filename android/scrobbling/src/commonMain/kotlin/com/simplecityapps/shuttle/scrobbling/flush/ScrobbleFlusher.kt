@@ -32,11 +32,12 @@ constructor(
     private val scrobbleDao: ScrobbleDao,
     private val lastFmClient: LastFmClient,
     private val lastFmSessionStore: LastFmSessionStore,
-    private val listenBrainzFlusher: ListenBrainzFlusher
+    private val listenBrainzFlusher: ListenBrainzFlusher,
+    private val clock: Clock
 ) {
     /** Drains every signed-in service, each regardless of the other's outcome; the result is the one that most needs the platform scheduler to act. */
     suspend fun flush(): FlushResult {
-        val cutoffEpochSec = (Clock.System.now() - ScrobbleQueue.MAX_AGE).epochSeconds
+        val cutoffEpochSec = (clock.now() - ScrobbleQueue.MAX_AGE).epochSeconds
         scrobbleDao.deleteOlderThan(cutoffEpochSec)
 
         val results = listOf(flushLastFm(), listenBrainzFlusher.flush())

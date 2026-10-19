@@ -22,6 +22,7 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import kotlin.test.AfterTest
 import kotlin.test.Test
+import kotlin.time.Clock
 import kotlin.time.Instant
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.toList
@@ -42,7 +43,16 @@ class PlexMediaProviderTest {
             clientIdentity = ClientIdentity(id = "device-1", clientName = "Shuttle2.0", version = "2026.09.26", deviceName = "Pixel")
         )
 
-    private val provider = PlexMediaProvider(TestServerStrings, TestPlexStrings, authenticationManager, ItemsService(client))
+    private val syncTime = Instant.parse("2026-10-04T09:00:00Z")
+    private val provider = PlexMediaProvider(
+        TestServerStrings,
+        TestPlexStrings,
+        authenticationManager,
+        ItemsService(client),
+        object : Clock {
+            override fun now() = syncTime
+        }
+    )
 
     @AfterTest
     fun tearDown() {
@@ -378,6 +388,20 @@ class PlexMediaProviderTest {
         // B-Side, rated 6, is in the reply as a server ignoring the filter would send it, and stays unfavourited
         songs.associate { song -> song.name to song.favouritedAt } shouldBe mapOf("Opening" to null, "Duet" to Instant.fromEpochSeconds(1_759_305_600))
         server.requestsTo(ITEMS).single { it.url.parameters["userRating"] == "10" }.url.parameters["sort"] shouldBe "addedAt,titleSort"
+    }
+
+    @Test
+    fun `a favourite the server gives no rating time is favourited from the start of the sync`() {
+        signedIn()
+        server.respond(SECTIONS, "sections.json")
+        server.respond(ITEMS, "songs.json")
+        val stored = sync()
+        server.respond(ITEMS, "empty.json")
+        server.respond(ITEMS, "favourites_unstamped.json", query = mapOf("userRating" to "10"))
+
+        val songs = provider.findSongsChangedSince(stored, Instant.parse("2026-10-01T08:00:00Z")).events().last().shouldBeInstanceOf<FlowEvent.Success<List<Song>>>().result
+
+        songs.single { it.name == "Duet" }.favouritedAt shouldBe syncTime
     }
 
     @Test

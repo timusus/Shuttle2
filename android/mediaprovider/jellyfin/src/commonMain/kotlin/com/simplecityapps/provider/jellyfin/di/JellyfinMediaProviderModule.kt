@@ -32,6 +32,7 @@ import dev.zacsweers.metro.Named
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.SingleIn
 import io.ktor.client.HttpClient
+import kotlin.time.Clock
 
 /**
  * The Jellyfin services, sign-in, sync, playback reporting and artwork. Each platform supplies the
@@ -67,8 +68,9 @@ class JellyfinMediaProviderModule {
     fun provideJellyfinMediaProvider(
         strings: ServerStrings,
         authenticationManager: JellyfinAuthenticationManager,
-        @Named("JellyfinItemsService") itemsService: ItemsService
-    ): JellyfinMediaProvider = JellyfinMediaProvider(strings, authenticationManager, itemsService)
+        @Named("JellyfinItemsService") itemsService: ItemsService,
+        clock: Clock
+    ): JellyfinMediaProvider = JellyfinMediaProvider(strings, authenticationManager, itemsService, clock)
 
     @Provides
     @IntoSet

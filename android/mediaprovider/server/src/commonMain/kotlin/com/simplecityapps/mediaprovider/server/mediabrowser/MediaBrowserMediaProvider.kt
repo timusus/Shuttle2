@@ -41,7 +41,8 @@ import kotlinx.datetime.LocalDate
 open class MediaBrowserMediaProvider(
     private val strings: ServerStrings,
     private val authenticationManager: MediaBrowserAuthenticationManager,
-    private val itemsService: ItemsService
+    private val itemsService: ItemsService,
+    private val clock: Clock
 ) : IncrementalMediaProvider {
     private val server = authenticationManager.server
 
@@ -62,7 +63,7 @@ open class MediaBrowserMediaProvider(
         since: Instant?
     ): Flow<FlowEvent<List<Song>, MessageProgress>> = withServerSession(strings, authenticationManager.credentialStore, authenticationManager.getAddress(), ::authenticate) { address, session ->
         // The server keeps no time for a favourite, so one is a favourite as of the sync that found it
-        val syncedAt = Clock.System.now().atStoredPrecision()
+        val syncedAt = clock.now().atStoredPrecision()
         withMusicLibraries(address, session) { libraries, _ ->
             // The plays come from every library, so those of songs stored are kept: a new song is in the listing already
             val storedPaths = existingSongs.mapTo(HashSet()) { song -> song.path }
