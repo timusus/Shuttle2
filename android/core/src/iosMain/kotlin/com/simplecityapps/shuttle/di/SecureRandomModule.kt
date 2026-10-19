@@ -23,6 +23,7 @@ class SecureRandomModule {
 @OptIn(ExperimentalForeignApi::class)
 private object SecRandom : Random() {
     override fun nextBits(bitCount: Int): Int {
+        if (bitCount == 0) return 0
         val bytes = ByteArray(Int.SIZE_BYTES)
         val status = bytes.usePinned { SecRandomCopyBytes(kSecRandomDefault, bytes.size.toULong(), it.addressOf(0)) }
         check(status == 0) { "SecRandomCopyBytes failed: $status" }
