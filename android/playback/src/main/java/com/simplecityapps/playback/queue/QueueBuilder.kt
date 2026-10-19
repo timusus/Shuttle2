@@ -2,7 +2,7 @@ package com.simplecityapps.playback.queue
 
 import com.simplecityapps.shuttle.model.Song
 import kotlin.coroutines.CoroutineContext
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
@@ -11,7 +11,10 @@ import kotlinx.coroutines.withContext
  * Builds new queue items in [buildContext], off the main thread, as a long queue takes a while to build, and applies
  * the changes that add them on the main thread, where the player lives.
  */
-internal class QueueBuilder(private val buildContext: CoroutineContext) {
+internal class QueueBuilder(
+    private val buildContext: CoroutineContext,
+    private val mainImmediateDispatcher: CoroutineDispatcher
+) {
     /** Held by each change that adds new items (see [buildThenApply]). Fair, so they take turns in order. */
     private val turns = Mutex()
 
@@ -32,6 +35,6 @@ internal class QueueBuilder(private val buildContext: CoroutineContext) {
         apply: (B) -> T
     ): T = turns.withLock {
         val built = withContext(buildContext) { build() }
-        withContext(Dispatchers.Main.immediate) { apply(built) }
+        withContext(mainImmediateDispatcher) { apply(built) }
     }
 }

@@ -17,6 +17,7 @@ import io.kotest.matchers.shouldNotBe
 import java.util.concurrent.Executors
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Test
@@ -40,7 +41,8 @@ class NewQueueTest {
             player,
             PlaybackSettings(SettingsStore(InMemoryKeyValueStore())),
             SongUriResolver(MediaResolver { song, _ -> ResolvedMedia(uri = song.path, mimeType = song.mimeType, isRemote = false) }),
-            buildContext = builds
+            buildContext = builds,
+            mainImmediateDispatcher = Dispatchers.Main.immediate
         )
 
     @After

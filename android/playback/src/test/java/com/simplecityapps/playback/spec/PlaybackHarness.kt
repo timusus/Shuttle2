@@ -253,9 +253,9 @@ class PlaybackHarness(
         audioEffectSessionManager.attach(active, player)
         factory.crossfade.followCast(active)
         audioFocus = AudioFocusCounts(Shadow.extract(audioManager))
-        val queueFacade = QueueFacade(player, playbackSettings, songUriResolver, buildContext, active)
+        val queueFacade = QueueFacade(player, playbackSettings, songUriResolver, buildContext, Dispatchers.Main.immediate, active)
         queueOperations = queueFacade
-        queueStore = QueueStore(active, player, queueFacade, playbackPreferenceManager, songRepository, scope)
+        queueStore = QueueStore(active, player, queueFacade, playbackPreferenceManager, songRepository, scope, Dispatchers.IO, Dispatchers.Main.immediate, Dispatchers.Main)
         QueueSongRefresher(songRepository, queueFacade, scope)
         playbackOperations =
             PlaybackFacade(

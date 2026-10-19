@@ -28,6 +28,10 @@ import com.simplecityapps.playback.settings.PlaybackSettings
 import com.simplecityapps.playback.sleeptimer.SleepTimer
 import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.shuttle.di.ApplicationContext
+import com.simplecityapps.shuttle.di.DefaultDispatcher
+import com.simplecityapps.shuttle.di.IoDispatcher
+import com.simplecityapps.shuttle.di.MainDispatcher
+import com.simplecityapps.shuttle.di.MainImmediateDispatcher
 import com.simplecityapps.shuttle.model.AlbumIndexProvider
 import com.simplecityapps.shuttle.persistence.KeyValueStore
 import dev.zacsweers.metro.AppScope
@@ -35,6 +39,7 @@ import dev.zacsweers.metro.BindingContainer
 import dev.zacsweers.metro.ContributesTo
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.SingleIn
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 
 @ContributesTo(AppScope::class)
@@ -46,8 +51,10 @@ class PlaybackModule {
         player: ExoPlayer,
         activePlayer: Player,
         playbackSettings: PlaybackSettings,
-        songUriResolver: SongUriResolver
-    ): QueueFacade = QueueFacade(player, playbackSettings, songUriResolver, activePlayer = activePlayer)
+        songUriResolver: SongUriResolver,
+        @DefaultDispatcher defaultDispatcher: CoroutineDispatcher,
+        @MainImmediateDispatcher mainImmediateDispatcher: CoroutineDispatcher
+    ): QueueFacade = QueueFacade(player, playbackSettings, songUriResolver, defaultDispatcher, mainImmediateDispatcher, activePlayer)
 
     @Provides
     fun provideQueueOperations(queueFacade: QueueFacade): QueueOperations = queueFacade
@@ -60,8 +67,11 @@ class PlaybackModule {
         queueFacade: QueueFacade,
         playbackPreferenceManager: PlaybackPreferenceManager,
         songRepository: SongRepository,
-        @AppCoroutineScope appCoroutineScope: CoroutineScope
-    ): QueueStore = QueueStore(activePlayer, localPlayer, queueFacade, playbackPreferenceManager, songRepository, appCoroutineScope)
+        @AppCoroutineScope appCoroutineScope: CoroutineScope,
+        @IoDispatcher ioDispatcher: CoroutineDispatcher,
+        @MainImmediateDispatcher mainImmediateDispatcher: CoroutineDispatcher,
+        @MainDispatcher mainDispatcher: CoroutineDispatcher
+    ): QueueStore = QueueStore(activePlayer, localPlayer, queueFacade, playbackPreferenceManager, songRepository, appCoroutineScope, ioDispatcher, mainImmediateDispatcher, mainDispatcher)
 
     @SingleIn(AppScope::class)
     @Provides

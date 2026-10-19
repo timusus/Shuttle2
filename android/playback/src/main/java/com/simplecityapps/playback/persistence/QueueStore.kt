@@ -19,8 +19,8 @@ import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.query.SongQuery
 import kotlin.coroutines.CoroutineContext
 import kotlin.time.TimeSource
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.filterNotNull
@@ -61,7 +61,9 @@ class QueueStore(
     /** Runs on the main thread: the saves made while playing, and the restore. */
     private val scope: CoroutineScope,
     /** Where the saved queue is read from the library, off the main thread. */
-    private val readContext: CoroutineContext = Dispatchers.IO
+    private val readContext: CoroutineContext,
+    private val mainImmediateDispatcher: CoroutineDispatcher,
+    private val mainDispatcher: CoroutineDispatcher
 ) : Player.Listener {
     /**
      * Whether playback is moving between devices: what the player reports then is the handover, not playback. Set by
@@ -218,7 +220,7 @@ class QueueStore(
         val initialContentVersion = queue.queueStateFlow.value.contentVersion
 
         // The restore doesn't rely on these: it sets the shuffle mode its saved position is in with the queue it sets.
-        scope.launch(Dispatchers.Main.immediate) {
+        scope.launch(mainImmediateDispatcher) {
             queue.setShuffleMode(shuffleMode, reshuffle = false)
             queue.setRepeatMode(repeatMode)
         }
@@ -252,7 +254,7 @@ class QueueStore(
         val restoredSeekPosition = if (savedQueue?.fromStart == true) 0 else seekPosition
 
         val mainWait = TimeSource.Monotonic.markNow()
-        withContext(Dispatchers.Main) {
+        withContext(mainDispatcher) {
             timings.add("main wait", mainWait)
             try {
                 applyRestoredQueue(savedQueue, shuffleMode, context, initialContentVersion, seekPosition, restoredSeekPosition, load, timings)

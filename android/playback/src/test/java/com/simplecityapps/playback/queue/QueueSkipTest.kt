@@ -33,7 +33,8 @@ class QueueSkipTest {
             player,
             PlaybackSettings(SettingsStore(InMemoryKeyValueStore())),
             SongUriResolver(MediaResolver { song, _ -> ResolvedMedia(uri = song.path, mimeType = song.mimeType, isRemote = false) }),
-            buildContext = Dispatchers.Unconfined
+            buildContext = Dispatchers.Unconfined,
+            mainImmediateDispatcher = Dispatchers.Main.immediate
         )
 
     private val songs = (1L..4L).map { song(it) }

@@ -11,7 +11,7 @@ import com.simplecityapps.playback.settings.PlaybackSettings
 import com.simplecityapps.shuttle.model.PlayContext
 import com.simplecityapps.shuttle.model.Song
 import kotlin.coroutines.CoroutineContext
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.withContext
 import timber.log.Timber
@@ -35,7 +35,8 @@ class QueueFacade(
     playbackSettings: PlaybackSettings,
     songUriResolver: SongUriResolver,
     /** Where new queue entries are built: off the main thread, as a long queue takes a while. */
-    buildContext: CoroutineContext = Dispatchers.Default,
+    buildContext: CoroutineContext,
+    private val mainImmediateDispatcher: CoroutineDispatcher,
     /** The player the app plays through: [player] itself, or a Cast player around it. */
     activePlayer: Player = player
 ) : QueueOperations {
@@ -45,7 +46,7 @@ class QueueFacade(
 
     private val editor = PlaylistEditor(player, activePlayer, playbackSettings, songUriResolver, publisher)
 
-    private val builder = QueueBuilder(buildContext)
+    private val builder = QueueBuilder(buildContext, mainImmediateDispatcher)
 
     override val shuffleModeFlow: StateFlow<ShuffleMode> = publisher.shuffleModeFlow
 
@@ -218,7 +219,7 @@ class QueueFacade(
     override suspend fun setShuffleMode(
         shuffleMode: ShuffleMode,
         reshuffle: Boolean
-    ) = withContext(Dispatchers.Main.immediate) { editor.setShuffleMode(shuffleMode, reshuffle) }
+    ) = withContext(mainImmediateDispatcher) { editor.setShuffleMode(shuffleMode, reshuffle) }
 
     override suspend fun toggleShuffleMode() = when (getShuffleMode()) {
         ShuffleMode.Off -> setShuffleMode(ShuffleMode.On, reshuffle = true)

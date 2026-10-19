@@ -30,6 +30,7 @@ import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -77,7 +78,7 @@ class SongUriResolverTest {
 
     private val player = TestExoPlayerBuilder(RuntimeEnvironment.getApplication()).build()
 
-    private val queue = QueueFacade(player, PlaybackSettings(SettingsStore(InMemoryKeyValueStore())), resolver, buildContext = EmptyCoroutineContext)
+    private val queue = QueueFacade(player, PlaybackSettings(SettingsStore(InMemoryKeyValueStore())), resolver, buildContext = EmptyCoroutineContext, mainImmediateDispatcher = Dispatchers.Main.immediate)
 
     private val upstream = RecordingDataSource()
 
