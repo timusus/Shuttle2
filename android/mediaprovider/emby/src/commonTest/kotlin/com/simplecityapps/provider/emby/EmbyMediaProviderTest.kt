@@ -28,7 +28,7 @@ import kotlin.test.Test
 import kotlin.time.Instant
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.toList
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.LocalDate
 
 /** The Emby sync engine against a fixture server serving JSON fixtures in the server's response shape (#347). */
@@ -571,7 +571,7 @@ class EmbyMediaProviderTest {
 
         provider.findSongs(emptyList()).events().last().shouldBeInstanceOf<FlowEvent.Failure>().message shouldBe TestServerStrings.musicLibraryMissing
         provider.findSongPaths().events().last().shouldBeInstanceOf<FlowEvent.Failure>()
-        runBlocking { provider.countSongs() } shouldBe null
+        onVirtualTime { provider.countSongs() } shouldBe null
 
         server.requestsTo(ITEMS).shouldBeEmpty()
     }
@@ -613,7 +613,7 @@ class EmbyMediaProviderTest {
         signedIn()
         server.respond(ITEMS, "songs.json", query = mapOf("IncludeItemTypes" to "Audio"))
 
-        runBlocking { provider.countSongs() } shouldBe 3
+        onVirtualTime { provider.countSongs() } shouldBe 3
 
         server.requestsTo(ITEMS).single().url.parameters["Limit"] shouldBe "1"
     }
@@ -624,7 +624,7 @@ class EmbyMediaProviderTest {
         server.respond(VIEWS, "views_overlapping_music.json")
         server.respond(ITEMS, "songs.json", query = mapOf("includeItemTypes" to "Audio"))
 
-        runBlocking { provider.countSongs() } shouldBe 3
+        onVirtualTime { provider.countSongs() } shouldBe 3
 
         val request = server.requestsTo(ITEMS).single()
         request.url.parameters["parentId"] shouldBe null
@@ -637,7 +637,7 @@ class EmbyMediaProviderTest {
         server.respond(VIEWS, "views_mixed.json")
         server.respond(ITEMS, "songs.json", query = mapOf("includeItemTypes" to "Audio"))
 
-        runBlocking { provider.countSongs() }
+        onVirtualTime { provider.countSongs() }
 
         server.requestsTo(ITEMS).map { it.url.parameters["parentId"] } shouldContainExactly listOf("lib-music", "lib-untyped", "lib-mixed", "lib-unknown")
     }
@@ -647,7 +647,7 @@ class EmbyMediaProviderTest {
         signedIn()
         server.respond(ITEMS, code = 500)
 
-        runBlocking { provider.countSongs() } shouldBe null
+        onVirtualTime { provider.countSongs() } shouldBe null
     }
 
     private fun sync(): List<Song> = syncEvent().result
@@ -662,7 +662,15 @@ class EmbyMediaProviderTest {
     ): FlowEvent.Success<PlaylistListing> = provider.findPlaylists(library, knownVersions).events().last()
         .shouldBeInstanceOf<FlowEvent.Success<PlaylistListing>>()
 
-    private fun <T> Flow<T>.events(): List<T> = runBlocking { toList() }
+    private fun <T> Flow<T>.events(): List<T> = onVirtualTime { toList() }
+
+    // Paging retries 5xx and 429 with a real-time backoff; virtual time skips it.
+    private fun <T> onVirtualTime(block: suspend () -> T): T {
+        var result: Any? = null
+        runTest { result = block() }
+        @Suppress("UNCHECKED_CAST")
+        return result as T
+    }
 
     private val HttpRequestData.token: String?
         get() = headers["X-Emby-Token"]
