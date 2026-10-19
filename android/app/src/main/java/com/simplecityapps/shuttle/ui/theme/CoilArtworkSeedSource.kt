@@ -11,6 +11,7 @@ import coil3.toBitmap
 import com.simplecityapps.imageloading.coil.artworkCacheKey
 import com.simplecityapps.shuttle.designsystem.theme.SeedColorCache
 import com.simplecityapps.shuttle.di.ApplicationContext
+import com.simplecityapps.shuttle.di.DefaultDispatcher
 import com.simplecityapps.shuttle.model.ArtistHeroArtwork
 import com.simplecityapps.shuttle.model.ArtistImageArtwork
 import com.simplecityapps.shuttle.model.Song
@@ -19,6 +20,7 @@ import dev.zacsweers.metro.BindingContainer
 import dev.zacsweers.metro.ContributesTo
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.SingleIn
+import kotlinx.coroutines.CoroutineDispatcher
 import timber.log.Timber
 
 /**
@@ -28,7 +30,7 @@ import timber.log.Timber
 class CoilArtworkSeedSource(
     private val context: Context,
     private val imageLoader: ImageLoader,
-    private val cache: SeedColorCache = SeedColorCache(),
+    private val cache: SeedColorCache,
 ) : ArtworkSeedSource {
     override suspend fun seedFor(song: Song): ArtworkSeed = cache.getOrExtract(song.artworkCacheKey()) { loadBitmap(song, song.name) }
 
@@ -66,5 +68,6 @@ object ArtworkSeedModule {
     fun provideArtworkSeedSource(
         @ApplicationContext context: Context,
         imageLoader: ImageLoader,
-    ): ArtworkSeedSource = CoilArtworkSeedSource(context, imageLoader)
+        @DefaultDispatcher defaultDispatcher: CoroutineDispatcher,
+    ): ArtworkSeedSource = CoilArtworkSeedSource(context, imageLoader, SeedColorCache(defaultDispatcher))
 }

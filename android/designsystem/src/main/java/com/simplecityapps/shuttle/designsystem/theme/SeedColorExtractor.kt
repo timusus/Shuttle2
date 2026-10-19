@@ -8,7 +8,7 @@ import com.materialkolor.quantize.QuantizerCelebi
 import com.materialkolor.score.Score
 import com.simplecityapps.shuttle.ui.theme.ArtworkSeed
 import kotlin.math.abs
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 
 /** Side of the square the artwork is scaled to before quantising: plenty for one seed, cheap to scan. */
@@ -80,7 +80,10 @@ fun extractSeedColor(bitmap: Bitmap): Color? {
  * An in-memory LRU of seed colours by artwork key, so a seed is extracted once per artwork per
  * process. Remembers misses too, so artwork without a usable seed isn't re-scanned.
  */
-class SeedColorCache(private val maxSize: Int = 100) {
+class SeedColorCache(
+    private val extractionDispatcher: CoroutineDispatcher,
+    private val maxSize: Int = 100
+) {
     private val entries = object : LinkedHashMap<String, ArtworkSeed>(16, 0.75f, true) {
         override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, ArtworkSeed>): Boolean = size > maxSize
     }
@@ -96,12 +99,12 @@ class SeedColorCache(private val maxSize: Int = 100) {
 
     /**
      * The seed for [key], loading the artwork with [loadBitmap] and extracting on
-     * [Dispatchers.Default] on a miss. A null bitmap (artwork failed to load) isn't cached.
+     * the extraction dispatcher on a miss. A null bitmap (artwork failed to load) isn't cached.
      */
     suspend fun getOrExtract(key: String, loadBitmap: suspend () -> Bitmap?): ArtworkSeed {
         get(key)?.let { return it }
         val bitmap = loadBitmap() ?: return ArtworkSeed.None
-        val seed = withContext(Dispatchers.Default) { extractSeedColor(bitmap) }
+        val seed = withContext(extractionDispatcher) { extractSeedColor(bitmap) }
         put(key, seed)
         return seed.toArtworkSeed()
     }

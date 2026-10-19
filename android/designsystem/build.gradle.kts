@@ -68,6 +68,7 @@ dependencies {
     testImplementation(composeBom)
     testImplementation(libs.junit)
     testImplementation(libs.kotest)
+    testImplementation(libs.kotlinx.coroutinesTest)
     testImplementation(libs.robolectric)
     testImplementation(libs.roborazzi)
     testImplementation(libs.roborazzi.compose)

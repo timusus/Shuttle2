@@ -9,6 +9,7 @@ import coil3.fetch.FetchResult
 import coil3.fetch.Fetcher
 import coil3.fetch.SourceFetchResult
 import com.simplecityapps.createSong
+import com.simplecityapps.shuttle.designsystem.theme.SeedColorCache
 import com.simplecityapps.shuttle.model.Song
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
@@ -16,6 +17,7 @@ import io.kotest.matchers.types.shouldBeInstanceOf
 import java.io.IOException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import okio.Buffer
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -46,7 +48,7 @@ class CoilArtworkSeedSourceTest {
             }
             .build()
 
-    private val seedSource = CoilArtworkSeedSource(context, imageLoader)
+    private val seedSource = CoilArtworkSeedSource(context, imageLoader, SeedColorCache(UnconfinedTestDispatcher()))
 
     @Test
     fun `artwork of a solid colour seeds the scheme`() = runBlocking<Unit> {
