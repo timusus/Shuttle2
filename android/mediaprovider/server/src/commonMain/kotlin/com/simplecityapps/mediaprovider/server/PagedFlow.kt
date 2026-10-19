@@ -47,7 +47,7 @@ private fun Throwable.isTransient(): Boolean = when (this) {
 }
 
 /** [fetchPage] up to [MAX_ATTEMPTS] times, waiting between attempts (exponential backoff with jitter, or the server's `Retry-After`) after a transient failure. */
-private suspend fun <T> retrying(fetchPage: suspend () -> NetworkResult<Page<T>>): NetworkResult<Page<T>> {
+private suspend fun <T> retrying(random: Random, fetchPage: suspend () -> NetworkResult<Page<T>>): NetworkResult<Page<T>> {
     var attempt = 1
     while (true) {
         val result = fetchPage()
@@ -57,7 +57,7 @@ private suspend fun <T> retrying(fetchPage: suspend () -> NetworkResult<Page<T>>
             retryAfter.coerceIn(0, MAX_RETRY_AFTER_SECONDS).seconds.inWholeMilliseconds
         } else {
             val backoff = BACKOFF_BASE_MS shl (attempt - 1)
-            backoff + Random.nextLong(backoff / 2 + 1)
+            backoff + random.nextLong(backoff / 2 + 1)
         }
         logger.warn { "Page request failed (attempt $attempt of $MAX_ATTEMPTS), retrying in ${wait}ms: ${result.error.message}" }
         delay(wait)
@@ -92,6 +92,7 @@ private const val CONCURRENT_PAGES = 3
 fun <T, R> pagedFlow(
     pageSize: Int = DEFAULT_PAGE_SIZE,
     key: ((T) -> Any)? = null,
+    random: Random = Random.Default,
     convert: (T) -> R,
     fetchPage: suspend (offset: Int, limit: Int) -> NetworkResult<Page<T>>
 ): Flow<FlowEvent<List<R>, MessageProgress>> = flow {
@@ -102,7 +103,7 @@ fun <T, R> pagedFlow(
         page.forEach { item -> if (key == null || seen.add(key(item))) items += convert(item) }
     }
 
-    val first = when (val result = retrying { fetchPage(0, pageSize) }) {
+    val first = when (val result = retrying(random) { fetchPage(0, pageSize) }) {
         is NetworkResult.Success -> result.body
         is NetworkResult.Failure -> return@flow fail(result.error)
     }
@@ -121,7 +122,7 @@ fun <T, R> pagedFlow(
             add(page)
             previous = page
             offset += page.size
-            page = when (val result = retrying { fetchPage(offset, pageSize) }) {
+            page = when (val result = retrying(random) { fetchPage(offset, pageSize) }) {
                 is NetworkResult.Success -> result.body.items
                 is NetworkResult.Failure -> return@flow fail(result.error)
             }
@@ -140,7 +141,7 @@ fun <T, R> pagedFlow(
         fun requestNext() {
             if (!offsets.hasNext()) return
             val offset = offsets.next()
-            inFlight.addLast(offset to async { retrying { fetchPage(offset, min(pageSize, total - offset)) } })
+            inFlight.addLast(offset to async { retrying(random) { fetchPage(offset, min(pageSize, total - offset)) } })
         }
         repeat(CONCURRENT_PAGES) { requestNext() }
         while (inFlight.isNotEmpty()) {
@@ -208,8 +209,9 @@ fun <T> concatenated(
 fun <T> pagedFlow(
     pageSize: Int = DEFAULT_PAGE_SIZE,
     key: ((T) -> Any)? = null,
+    random: Random = Random.Default,
     fetchPage: suspend (offset: Int, limit: Int) -> NetworkResult<Page<T>>
-): Flow<FlowEvent<List<T>, MessageProgress>> = pagedFlow(pageSize, key, convert = { it }, fetchPage)
+): Flow<FlowEvent<List<T>, MessageProgress>> = pagedFlow(pageSize, key, random, convert = { it }, fetchPage)
 
 private fun fetchingProgress(
     current: Int,

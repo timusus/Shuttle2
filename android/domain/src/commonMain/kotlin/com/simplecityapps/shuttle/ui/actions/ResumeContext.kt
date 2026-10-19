@@ -8,6 +8,7 @@ import com.simplecityapps.shuttle.model.PlayContext
 import com.simplecityapps.shuttle.model.Song
 import dev.zacsweers.metro.Inject
 import kotlin.coroutines.resume
+import kotlin.random.Random
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.suspendCancellableCoroutine
 
@@ -19,6 +20,7 @@ class ResumeContext(
     private val playHistoryRepository: PlayHistoryRepository,
     private val resolveSongs: ResolveSongs,
     private val filterPlayableSongs: FilterPlayableSongs,
+    private val random: Random,
 ) {
     sealed interface Result {
         data object Resumed : Result
@@ -45,7 +47,7 @@ class ResumeContext(
         val queued = if (point.shuffled) {
             // The saved song goes back where it was in the shuffled order, so the track count reads as it did.
             val position = point.track.coerceIn(0, songs.lastIndex)
-            val shuffled = (songs - song).shuffled().toMutableList().apply { add(position, song) }
+            val shuffled = (songs - song).shuffled(random).toMutableList().apply { add(position, song) }
             queueOperations.setShuffleMode(ShuffleMode.On, reshuffle = false)
             queueOperations.setQueue(songs, shuffled, position, context)
         } else {

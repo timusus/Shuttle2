@@ -21,10 +21,10 @@ import kotlinx.coroutines.withTimeoutOrNull
 class ConfirmationHandoff<T>(
     private val pickupTimeout: Duration = 5.seconds,
     private val answerTimeout: Duration = 5.minutes,
+    private val random: Random = Random.Default,
 ) {
-    class Request<T> internal constructor(val payload: T) {
-        /** Names this request to [deliver] and [abandon]; random, so a token saved before process death matches nothing. */
-        val token: Long = Random.nextLong()
+    /** [token] names this request to [deliver] and [abandon]; random, so a token saved before process death matches nothing. */
+    class Request<T> internal constructor(val payload: T, val token: Long) {
         internal val pickedUp = CompletableDeferred<Unit>()
         internal val answer = CompletableDeferred<Boolean>()
     }
@@ -43,7 +43,7 @@ class ConfirmationHandoff<T>(
      * launches a dialog nobody waits for.
      */
     suspend fun confirm(payload: T): Boolean = mutex.withLock {
-        val request = Request(payload)
+        val request = Request(payload, random.nextLong())
         current.value = request
         try {
             withTimeoutOrNull(pickupTimeout) { request.pickedUp.await() } ?: return@withLock false

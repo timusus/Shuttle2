@@ -43,6 +43,7 @@ import com.simplecityapps.shuttle.ui.actions.ShuffleWorks
 import com.simplecityapps.shuttle.ui.actions.SongFileDeleter
 import com.simplecityapps.shuttle.ui.actions.StartRadio
 import com.simplecityapps.shuttle.ui.screens.library.folders.ResolveFolderSongs
+import kotlin.random.Random
 import kotlinx.coroutines.flow.MutableStateFlow
 
 /** The shared media action and library use cases, wired to a test's fakes. */
@@ -73,7 +74,7 @@ class TestMediaActions(
     /** The providers radio asks for similar songs; none by default, so a radio is built from the library. */
     val similarSongsProviders = mutableSetOf<SimilarSongsProvider>()
     val startRadio = StartRadio(songRepository, resolveSongs, AggregateSimilarSongsProvider(similarSongsProviders), playSongs)
-    val resumeContext = ResumeContext(queueOperations, playbackOperations, playHistoryRepository, resolveSongs, filterPlayableSongs)
+    val resumeContext = ResumeContext(queueOperations, playbackOperations, playHistoryRepository, resolveSongs, filterPlayableSongs, Random(0))
     val enqueueSongs = EnqueueSongs(playbackOperations, resolveSongs, filterPlayableSongs)
     val playAfterWork = PlayAfterWork(queueOperations, playbackOperations, resolveSongs, filterPlayableSongs)
     val addToPlaylist = AddToPlaylist(playlistRepository, resolveSongs)

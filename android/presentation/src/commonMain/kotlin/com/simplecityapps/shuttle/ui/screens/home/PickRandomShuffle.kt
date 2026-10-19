@@ -23,14 +23,8 @@ data class RandomShuffle(val label: String, val action: MediaAction)
  */
 class PickRandomShuffle @Inject constructor(
     private val songRepository: SongRepository,
+    private val random: Random,
 ) {
-    private var random: Random = Random.Default
-
-    /** A seeded [random] for tests, so the graph doesn't rely on Metro's handling of a defaulted parameter. */
-    internal constructor(songRepository: SongRepository, random: Random) : this(songRepository) {
-        this.random = random
-    }
-
     suspend operator fun invoke(by: ShuffleBy): RandomShuffle? {
         val songs = songRepository.loadSongs(SongQuery.All())
         return when (by) {

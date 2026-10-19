@@ -37,6 +37,7 @@ import com.simplecityapps.shuttle.ui.theme.ArtworkSeedSource
 import com.simplecityapps.shuttle.ui.theme.ObserveArtistArtworkSeed
 import io.kotest.matchers.collections.shouldBeIn
 import io.kotest.matchers.shouldBe
+import kotlin.random.Random
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -592,7 +593,7 @@ class AlbumArtistDetailViewModelTest {
             observeSongs = testMediaActions.observeSongs,
             observeCurrentSong = ObserveCurrentSong(fakeQueueOperations),
             observeArtistArtworkSeed = ObserveArtistArtworkSeed(seedSource, ObserveSetting(settingsStore)),
-            shuffleAlbums = ShuffleAlbums(shuffleQueueOperations, shufflePlaybackOperations),
+            shuffleAlbums = ShuffleAlbums(shuffleQueueOperations, shufflePlaybackOperations, Random(0)),
             readSetting = ReadLibraryViewSetting(libraryViewPreferences),
             saveSetting = SaveLibraryViewSetting(libraryViewPreferences),
         )

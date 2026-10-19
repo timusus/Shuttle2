@@ -5,6 +5,7 @@ import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.shuttle.model.Song
 import dev.zacsweers.metro.Inject
 import kotlin.coroutines.resume
+import kotlin.random.Random
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.suspendCancellableCoroutine
 
@@ -12,6 +13,7 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 class ShuffleAlbums(
     private val queueOperations: QueueOperations,
     private val playbackOperations: PlaybackOperations,
+    private val random: Random,
 ) {
     sealed interface Result {
         data object Success : Result
@@ -22,7 +24,7 @@ class ShuffleAlbums(
         val shuffled = songs
             .groupBy { it.albumGroupKey }
             .entries
-            .shuffled()
+            .shuffled(random)
             .flatMap { it.value }
 
         if (!queueOperations.setQueue(shuffled)) {

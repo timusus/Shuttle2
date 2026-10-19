@@ -212,7 +212,7 @@ class AlbumListViewModelTest {
         return AlbumListViewModel(
             observeAlbums = testMediaActions.observeAlbums,
             observeSongs = testMediaActions.observeSongs,
-            shuffleAlbums = ShuffleAlbums(fakeQueueOperations, fakePlaybackOperations),
+            shuffleAlbums = ShuffleAlbums(fakeQueueOperations, fakePlaybackOperations, Random(0)),
             readSetting = ReadLibraryViewSetting(preferences),
             saveSetting = SaveLibraryViewSetting(preferences),
             mediaImportObserver = fakeImportState,

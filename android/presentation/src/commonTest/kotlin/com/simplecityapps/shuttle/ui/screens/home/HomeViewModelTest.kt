@@ -37,6 +37,7 @@ import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
+import kotlin.random.Random
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -122,7 +123,7 @@ class HomeViewModelTest {
             SaveSetting(settingsStore),
             LoadHomeCovers(FakePlaylistRepository(), genres),
             PlayHomeSection(ResolveSongs(songRepository, genres, FakePlaylistRepository(), FakeQueueOperations(), ResolveFolderSongs(songRepository), FakeOfflineSongs().statusSource)),
-            PickRandomShuffle(songRepository),
+            PickRandomShuffle(songRepository, Random(0)),
         ).also { viewModel ->
             backgroundScope.launch { viewModel.uiState.collect {} }
             viewModel.onVisibilityChanged(visible)
