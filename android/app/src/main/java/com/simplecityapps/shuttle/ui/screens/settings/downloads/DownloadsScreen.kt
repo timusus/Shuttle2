@@ -25,6 +25,8 @@ import com.simplecityapps.shuttle.designsystem.component.S2Dialog
 import com.simplecityapps.shuttle.designsystem.component.S2IconButton
 import com.simplecityapps.shuttle.designsystem.component.S2Text
 import com.simplecityapps.shuttle.designsystem.component.SectionHeader
+import com.simplecityapps.shuttle.ui.common.ConfirmEvent
+import com.simplecityapps.shuttle.ui.common.onConfirmEvent
 import com.simplecityapps.shuttle.ui.screens.library.LibraryArtwork
 import com.simplecityapps.shuttle.ui.screens.settings.SettingsScaffold
 
@@ -39,6 +41,11 @@ fun DownloadsScreen(
 ) {
     val viewState = downloadsViewState(uiState)
     var confirmRemoveAll by rememberSaveable { mutableStateOf(false) }
+    val confirm = { event: ConfirmEvent ->
+        val step = onConfirmEvent(confirmRemoveAll, event)
+        confirmRemoveAll = step.showing
+        if (step.confirmed) onRemoveAll()
+    }
     val context = LocalContext.current
 
     SettingsScaffold(
@@ -52,7 +59,7 @@ fun DownloadsScreen(
                 S2IconButton(
                     icon = Icons.Rounded.ClearAll,
                     contentDescription = stringResource(R.string.downloads_remove_all),
-                    onClick = { confirmRemoveAll = true }
+                    onClick = { confirm(ConfirmEvent.Open) }
                 )
             }
         }
@@ -85,12 +92,9 @@ fun DownloadsScreen(
     if (confirmRemoveAll) {
         S2Dialog(
             title = stringResource(R.string.downloads_remove_all_title),
-            onDismissRequest = { confirmRemoveAll = false },
+            onDismissRequest = { confirm(ConfirmEvent.Dismiss) },
             confirmLabel = stringResource(R.string.downloads_remove_all),
-            onConfirm = {
-                confirmRemoveAll = false
-                onRemoveAll()
-            },
+            onConfirm = { confirm(ConfirmEvent.Confirm) },
             dismissLabel = stringResource(android.R.string.cancel)
         ) {
             S2Text(stringResource(R.string.downloads_remove_all_message))
