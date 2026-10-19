@@ -12,7 +12,7 @@ import com.simplecityapps.shuttle.persistence.SecurePreferenceManager
 import io.kotest.matchers.shouldBe
 import kotlin.test.AfterTest
 import kotlin.test.Test
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 
 /** Jellyfin Quick Connect sign-in (#505) against a fixture server serving JSON fixtures in the server's response shape. */
 class JellyfinQuickConnectTest {
@@ -35,64 +35,64 @@ class JellyfinQuickConnectTest {
     }
 
     @Test
-    fun `Enabled reports what the server says`() {
+    fun `Enabled reports what the server says`() = runTest {
         server.respond("/QuickConnect/Enabled", "quickconnect_enabled_true.json")
 
-        runBlocking { authenticationManager.isQuickConnectEnabled(server.address) } shouldBe true
+        authenticationManager.isQuickConnectEnabled(server.address) shouldBe true
     }
 
     @Test
-    fun `a server without Quick Connect at all reports it as unavailable`() {
+    fun `a server without Quick Connect at all reports it as unavailable`() = runTest {
         // No route registered: the fixture server answers with a 404, the way a server that predates Quick Connect would.
-        runBlocking { authenticationManager.isQuickConnectEnabled(server.address) } shouldBe false
+        authenticationManager.isQuickConnectEnabled(server.address) shouldBe false
     }
 
     @Test
-    fun `initiate posts and returns the code and secret`() {
+    fun `initiate posts and returns the code and secret`() = runTest {
         server.respond("/QuickConnect/Initiate", "quickconnect_initiate.json", method = "POST")
 
-        val result = runBlocking { authenticationManager.initiateQuickConnect(server.address) }
+        val result = authenticationManager.initiateQuickConnect(server.address)
 
         result.getOrThrow() shouldBe QuickConnectCode(code = "123456", secret = "secret-1")
     }
 
     @Test
-    fun `initiate falls back to GET when an older server rejects the POST`() {
+    fun `initiate falls back to GET when an older server rejects the POST`() = runTest {
         server.respond("/QuickConnect/Initiate", code = 404, method = "POST")
         server.respond("/QuickConnect/Initiate", "quickconnect_initiate.json", method = "GET")
 
-        val result = runBlocking { authenticationManager.initiateQuickConnect(server.address) }
+        val result = authenticationManager.initiateQuickConnect(server.address)
 
         result.getOrThrow() shouldBe QuickConnectCode(code = "123456", secret = "secret-1")
         server.requestsTo("/QuickConnect/Initiate").map { it.method.value } shouldBe listOf("POST", "GET")
     }
 
     @Test
-    fun `poll reports Pending until the server says the code was Authenticated`() {
+    fun `poll reports Pending until the server says the code was Authenticated`() = runTest {
         server.respond("/QuickConnect/Connect", "quickconnect_pending.json", query = mapOf("secret" to "secret-1"))
 
-        runBlocking { authenticationManager.pollQuickConnect(server.address, "secret-1") }.getOrThrow() shouldBe QuickConnectPollState.Pending
+        authenticationManager.pollQuickConnect(server.address, "secret-1").getOrThrow() shouldBe QuickConnectPollState.Pending
     }
 
     @Test
-    fun `poll reports Authenticated once approved`() {
+    fun `poll reports Authenticated once approved`() = runTest {
         server.respond("/QuickConnect/Connect", "quickconnect_authenticated.json", query = mapOf("secret" to "secret-1"))
 
-        runBlocking { authenticationManager.pollQuickConnect(server.address, "secret-1") }.getOrThrow() shouldBe QuickConnectPollState.Authenticated
+        authenticationManager.pollQuickConnect(server.address, "secret-1").getOrThrow() shouldBe QuickConnectPollState.Authenticated
     }
 
     @Test
-    fun `poll reports Denied on a 401 - Jellyfin's only signal for an expired or rejected code`() {
+    fun `poll reports Denied on a 401 - Jellyfin's only signal for an expired or rejected code`() = runTest {
         server.respond("/QuickConnect/Connect", code = 401, query = mapOf("secret" to "secret-1"))
 
-        runBlocking { authenticationManager.pollQuickConnect(server.address, "secret-1") }.getOrThrow() shouldBe QuickConnectPollState.Denied
+        authenticationManager.pollQuickConnect(server.address, "secret-1").getOrThrow() shouldBe QuickConnectPollState.Denied
     }
 
     @Test
-    fun `authenticate redeems the secret for a token - stored the same way a password sign-in's is`() {
+    fun `authenticate redeems the secret for a token - stored the same way a password sign-in's is`() = runTest {
         server.respond("/Users/AuthenticateWithQuickConnect", "quickconnect_authenticate.json", method = "POST")
 
-        val result = runBlocking { authenticationManager.authenticateWithQuickConnect(server.address, "secret-1") }
+        val result = authenticationManager.authenticateWithQuickConnect(server.address, "secret-1")
 
         result.getOrThrow().accessToken shouldBe "token-quickconnect"
         credentialStore.authenticatedCredentials?.accessToken shouldBe "token-quickconnect"

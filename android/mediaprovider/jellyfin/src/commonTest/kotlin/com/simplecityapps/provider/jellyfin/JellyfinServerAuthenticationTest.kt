@@ -13,7 +13,7 @@ import com.simplecityapps.shuttle.persistence.SecurePreferenceManager
 import io.kotest.matchers.shouldBe
 import kotlin.test.AfterTest
 import kotlin.test.Test
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 
 /** The shared sign-in form's Jellyfin password sign-in: the saved login, and a failure's message fit for the user. */
 class JellyfinServerAuthenticationTest {
@@ -36,10 +36,10 @@ class JellyfinServerAuthenticationTest {
     }
 
     @Test
-    fun `a rejected sign-in saves the address and fails with a message for the user`() {
+    fun `a rejected sign-in saves the address and fails with a message for the user`() = runTest {
         server.respond("/Users/AuthenticateByName", code = 401, method = "POST")
 
-        val result = runBlocking { authentication.authenticate(ServerLogin(server.address, "listener", "mistyped")) }
+        val result = authentication.authenticate(ServerLogin(server.address, "listener", "mistyped"))
 
         result.exceptionOrNull()?.message shouldBe "An error occurred. (401)"
         authentication.savedLogin() shouldBe SavedServerLogin(address = server.address)

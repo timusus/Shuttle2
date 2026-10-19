@@ -21,7 +21,7 @@ import io.kotest.matchers.string.shouldNotContain
 import io.ktor.http.HttpHeaders
 import kotlin.test.Test
 import kotlin.time.Instant
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 
 class JellyfinPlaybackReporterTest {
     private val server = FixtureServer("jellyfin")
@@ -65,8 +65,8 @@ class JellyfinPlaybackReporterTest {
     }
 
     @Test
-    fun `start posts the play to Sessions Playing`() {
-        runBlocking { reporter.start(session, positionMs = 1_500) } shouldBe true
+    fun `start posts the play to Sessions Playing`() = runTest {
+        reporter.start(session, positionMs = 1_500) shouldBe true
 
         val request = server.requestsTo("/Sessions/Playing").single()
         request.headers[HttpHeaders.Authorization]!!.contains("Token=\"token123\"") shouldBe true
@@ -75,30 +75,30 @@ class JellyfinPlaybackReporterTest {
     }
 
     @Test
-    fun `progress posts the position and pause state`() {
-        runBlocking { reporter.progress(session, positionMs = 60_000, paused = true) } shouldBe true
+    fun `progress posts the position and pause state`() = runTest {
+        reporter.progress(session, positionMs = 60_000, paused = true) shouldBe true
 
         S2Json.decodeFromString<PlaybackReport>(server.requestsTo("/Sessions/Playing/Progress").single().bodyText) shouldBe
             PlaybackReport(itemId = "item789", playSessionId = "session-1", positionTicks = 600_000_000, isPaused = true)
     }
 
     @Test
-    fun `stop always carries the position`() {
-        runBlocking { reporter.stop(session, positionMs = 0) } shouldBe true
+    fun `stop always carries the position`() = runTest {
+        reporter.stop(session, positionMs = 0) shouldBe true
 
         server.requestsTo("/Sessions/Playing/Stopped").single().bodyText.contains("\"PositionTicks\":0") shouldBe true
     }
 
     @Test
-    fun `stop without a start reports the play's session`() {
-        runBlocking { reporter.stop(session, positionMs = 20_000) } shouldBe true
+    fun `stop without a start reports the play's session`() = runTest {
+        reporter.stop(session, positionMs = 20_000) shouldBe true
 
         S2Json.decodeFromString<PlaybackReport>(server.requestsTo("/Sessions/Playing/Stopped").single().bodyText).playSessionId shouldBe "session-1"
     }
 
     @Test
-    fun `a download opened during a play does not change that play's session`() {
-        runBlocking { reporter.start(session, positionMs = 0) }
+    fun `a download opened during a play does not change that play's session`() = runTest {
+        reporter.start(session, positionMs = 0)
 
         val download = authenticationManager.buildTranscodedDownloadPath(
             "item789",
@@ -107,14 +107,14 @@ class JellyfinPlaybackReporterTest {
             format = TranscodeFormat.Auto
         )!!
         download.url shouldNotContain "PlaySessionId=session-1"
-        runBlocking { reporter.progress(session, positionMs = 10_000, paused = false) }
+        reporter.progress(session, positionMs = 10_000, paused = false)
 
         S2Json.decodeFromString<PlaybackReport>(server.requestsTo("/Sessions/Playing/Progress").single().bodyText).playSessionId shouldBe "session-1"
     }
 
     @Test
-    fun `markPlayed backdates the play`() {
-        runBlocking { reporter.markPlayed(song, Instant.parse("2026-09-24T10:15:30Z")) } shouldBe true
+    fun `markPlayed backdates the play`() = runTest {
+        reporter.markPlayed(song, Instant.parse("2026-09-24T10:15:30Z")) shouldBe true
 
         val request = server.requestsTo("/UserPlayedItems/item789").single()
         request.url.parameters["userId"] shouldBe "user456"
@@ -122,17 +122,17 @@ class JellyfinPlaybackReporterTest {
     }
 
     @Test
-    fun `a rejected call reports failure`() {
+    fun `a rejected call reports failure`() = runTest {
         server.respond("/Sessions/Playing", code = 401, method = "POST")
 
-        runBlocking { reporter.start(session, positionMs = 0) } shouldBe false
+        reporter.start(session, positionMs = 0) shouldBe false
     }
 
     @Test
-    fun `nothing is sent when signed out`() {
+    fun `nothing is sent when signed out`() = runTest {
         credentialStore.authenticatedCredentials = null
 
-        runBlocking { reporter.start(session, positionMs = 0) } shouldBe false
+        reporter.start(session, positionMs = 0) shouldBe false
         server.requests shouldBe emptyList()
     }
 }
