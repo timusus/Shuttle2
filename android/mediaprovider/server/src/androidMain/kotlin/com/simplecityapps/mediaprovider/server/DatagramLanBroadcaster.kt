@@ -1,5 +1,6 @@
 package com.simplecityapps.mediaprovider.server
 
+import com.simplecityapps.shuttle.di.IoDispatcher
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.ContributesBinding
 import dev.zacsweers.metro.Inject
@@ -7,7 +8,7 @@ import java.net.DatagramPacket
 import java.net.DatagramSocket
 import java.net.InetAddress
 import java.net.SocketTimeoutException
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 
@@ -18,12 +19,14 @@ import kotlinx.coroutines.withContext
  */
 @ContributesBinding(AppScope::class)
 @Inject
-class DatagramLanBroadcaster : LanBroadcaster {
+class DatagramLanBroadcaster(
+    @IoDispatcher private val ioDispatcher: CoroutineDispatcher
+) : LanBroadcaster {
     override suspend fun broadcast(
         message: String,
         port: Int,
         listenMillis: Long,
-    ): List<String> = withContext(Dispatchers.IO) {
+    ): List<String> = withContext(ioDispatcher) {
         DatagramSocket().use { socket ->
             socket.broadcast = true
             val bytes = message.encodeToByteArray()
