@@ -49,9 +49,6 @@ class SettingsCallbacks(
 
 fun SettingsRootViewState.Row.tapEvent(): SettingsEvent = SettingsEvent.OpenDestination(destination)
 
-/** Tapping a switch row asks for the opposite of what it shows. */
-fun SettingsDestinationViewState.Row.Switch.tapEvent(): SettingsEvent = SettingsEvent.ChangeSwitch(item, !checked)
-
 fun SettingsDestinationViewState.Row.Navigate.tapEvent(): SettingsEvent = SettingsEvent.OpenLink(item.target)
 
 /** The event an action step runs, if any; an action needing confirmation runs on the Confirm step instead. */

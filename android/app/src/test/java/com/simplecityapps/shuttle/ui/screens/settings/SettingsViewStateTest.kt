@@ -217,6 +217,28 @@ class SettingsViewStateTest {
     }
 
     @Test
+    fun `Keep shuffle mode is offered below Android 14`() {
+        destination(SettingsDestination.PlaybackAndSound, sdkInt = 33).rows()
+            .any { it.item.title == SettingsString.PREF_DISABLE_SHUFFLE_ON_QUEUE_TITLE } shouldBe true
+    }
+
+    @Test
+    fun `Report playback to server is offered with the media provider link hidden`() {
+        val sources = destination(SettingsDestination.Sources).rows()
+
+        sources.filterIsInstance<Row.Navigate>().map { it.item.target } shouldBe listOf(SettingsLink.Downloads)
+        sources.any { it.item.title == SettingsString.PREF_REPORT_PLAYBACK_TITLE } shouldBe true
+    }
+
+    @Test
+    fun `Pure black shows on and Show Home on launch shows off`() {
+        val appearance = destination(SettingsDestination.Appearance, SettingsScenarios.darkPureBlack)
+
+        (appearance.row(AppearanceSettings.PureBlack.key) as Row.Switch).checked shouldBe true
+        (appearance.row(AppearanceSettings.ShowHomeOnLaunch.key) as Row.Switch).checked shouldBe false
+    }
+
+    @Test
     fun `sources reads the streaming qualities off the stored values`() {
         val labels = destination(SettingsDestination.Sources, SettingsScenarios.streamingCappedOnMobileData).rows()
             .filterIsInstance<Row.Choice>().map { it.label }

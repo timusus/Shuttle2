@@ -54,8 +54,6 @@ import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsAction
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsDestination
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsLink
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsScreen
-import com.simplecityapps.shuttle.ui.text.SettingsString
-import com.simplecityapps.shuttle.ui.text.UiText
 import com.simplecityapps.shuttle.ui.text.stringResource
 import java.util.Locale
 import java.util.TimeZone
@@ -122,11 +120,7 @@ fun SettingsRootScreen(
                 rows = listOf { shapes: ListItemShapes ->
                     LinkSetting(
                         title = stringResource(R.string.paywall_title),
-                        summary = when (viewState.pro) {
-                            SettingsRootViewState.ProSummary.None -> null
-                            SettingsRootViewState.ProSummary.Owned -> stringResource(R.string.paywall_settings_summary_pro)
-                            SettingsRootViewState.ProSummary.Upsell -> stringResource(R.string.paywall_settings_summary)
-                        },
+                        summary = proSummaryText(viewState.pro, LocalContext.current.resources),
                         onClick = { onEvent(SettingsEvent.OpenPro) },
                         icon = Icons.Rounded.WorkspacePremium,
                         shapes = shapes
@@ -140,7 +134,7 @@ fun SettingsRootScreen(
                     { shapes: ListItemShapes ->
                         LinkSetting(
                             title = stringResource(row.destination.title),
-                            summary = rootSummary(row.summary),
+                            summary = rootSummaryText(row.summary, LocalContext.current.resources),
                             onClick = { onEvent(row.tapEvent()) },
                             icon = row.destination.icon,
                             selected = selected?.let { row.destination == it },
@@ -151,17 +145,6 @@ fun SettingsRootScreen(
             )
         }
     }
-}
-
-@Composable
-private fun rootSummary(summary: SettingsRootViewState.Summary): String? = when (summary) {
-    SettingsRootViewState.Summary.None -> null
-    is SettingsRootViewState.Summary.Option -> stringResource(summary.label)
-    is SettingsRootViewState.Summary.Streaming -> stringResource(R.string.settings_sources_summary_streaming, stringResource(summary.quality))
-    is SettingsRootViewState.Summary.Rescan -> stringResource(R.string.settings_library_summary_rescan, stringResource(summary.frequency))
-    is SettingsRootViewState.Summary.EqualizerPreset -> stringResource(R.string.settings_playback_summary_equalizer_preset, stringResource(summary.preset))
-    SettingsRootViewState.Summary.EqualizerOff -> stringResource(R.string.settings_playback_summary_equalizer_off)
-    SettingsRootViewState.Summary.Privacy -> stringResource(R.string.settings_privacy_summary)
 }
 
 private val SettingsDestination.icon: ImageVector
@@ -297,7 +280,7 @@ private fun SettingRow(
         is SettingsDestinationViewState.Row.Switch -> SwitchSetting(
             title = stringResource(row.item.title),
             checked = row.checked,
-            onCheckedChange = { onEvent(row.tapEvent()) },
+            onCheckedChange = { onEvent(SettingsEvent.ChangeSwitch(row.item, it)) },
             summary = summary,
             enabled = row.enabled,
             shapes = shapes
@@ -343,19 +326,7 @@ private fun SettingRow(
 }
 
 @Composable
-private fun choiceValueLabel(row: SettingsDestinationViewState.Row.Choice): String {
-    val label = row.label?.let { stringResource(it) }.orEmpty()
-    val lastScan = row.lastScan ?: return label
-    val resources = LocalContext.current.resources
-    val date = formatLastScan(lastScan, Locale.getDefault(), TimeZone.getDefault())
-    return "$label ${resources.getString(R.string.pref_last_scan_date, date)}"
-}
+private fun choiceValueLabel(row: SettingsDestinationViewState.Row.Choice): String = choiceValueText(row, LocalContext.current.resources, Locale.getDefault(), TimeZone.getDefault())
 
 @Composable
-private fun sliderValueLabel(text: SettingsDestinationViewState.SliderText): String? = when (text) {
-    SettingsDestinationViewState.SliderText.None -> null
-    is SettingsDestinationViewState.SliderText.Decibels -> formatDecibels(text.value, Locale.getDefault())
-    SettingsDestinationViewState.SliderText.Off -> stringResource(SettingsString.DSP_REPLAY_GAIN_OFF)
-    is SettingsDestinationViewState.SliderText.Seconds -> stringResource(UiText.Resource(SettingsString.SETTINGS_CROSSFADE_SECONDS, listOf(text.seconds)))
-    is SettingsDestinationViewState.SliderText.Percent -> formatPercent(text.percent)
-}
+private fun sliderValueLabel(text: SettingsDestinationViewState.SliderText): String? = sliderValueText(text, LocalContext.current.resources, Locale.getDefault())

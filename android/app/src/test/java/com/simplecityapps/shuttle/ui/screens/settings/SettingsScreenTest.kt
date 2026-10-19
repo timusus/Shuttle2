@@ -63,6 +63,41 @@ class SettingsScreenTest {
         robot.switchChanges shouldBe listOf(AppearanceSettings.PureBlack.key to false)
     }
 
+    // codehealth-ignore tests-slow-kind-fast-subject: P2 — the dialog opens from the row's click and lists its options only in the rendered tree.
+    @Test
+    fun `tapping the theme row opens its choice dialog`() {
+        robot.setDestinationContent(SettingsDestination.Appearance, SettingsScenarios.darkPureBlack)
+
+        robot.tapText("Theme")
+
+        robot.assertDialogDisplayed("Light")
+    }
+
+    // codehealth-ignore tests-slow-kind-fast-subject: P2 — a pick in the rendered dialog must reach onChoiceSelect and dismiss the dialog.
+    @Test
+    fun `picking a theme selects it and closes the dialog`() {
+        robot.setDestinationContent(SettingsDestination.Appearance, SettingsScenarios.darkPureBlack)
+        robot.tapText("Theme")
+
+        robot.tapDialogText("Light")
+
+        robot.choiceSelections shouldBe listOf(AppearanceSettings.Theme.key to 1)
+        robot.assertNotShown("Light")
+    }
+
+    // codehealth-ignore tests-slow-kind-fast-subject: P2 — the confirm dialog's message and button exist only in the rendered tree, and Clear must run the action.
+    @Test
+    fun `clearing artwork asks first then runs`() {
+        robot.setDestinationContent(SettingsDestination.Library)
+
+        robot.tapText("Clear artwork")
+        robot.actions shouldBe emptyList()
+        robot.assertDialogDisplayed("This will permanently remove all cached artwork")
+        robot.tapDialogText("Clear")
+
+        robot.actions shouldBe listOf(SettingsAction.ClearArtworkCache)
+    }
+
     // codehealth-ignore tests-slow-kind-fast-subject: P2 wiring; the enabled state is rendered semantics and the click must reach onEvent.
     @Test
     fun `sharing logs is enabled with debug logging on`() {

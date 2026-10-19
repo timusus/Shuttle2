@@ -61,10 +61,10 @@ class SettingsEventsTest {
     }
 
     @Test
-    fun `tapping a switch asks for the opposite value`() {
+    fun `a switch change carries the value the switch passed`() {
         val pureBlack = rows(SettingsDestination.Appearance, SettingsScenarios.darkPureBlack).filterIsInstance<Row.Switch>().first { it.item.key == AppearanceSettings.PureBlack.key }
 
-        callbacks.onEvent(pureBlack.tapEvent())
+        callbacks.onEvent(SettingsEvent.ChangeSwitch(pureBlack.item, false))
 
         switchChanges shouldBe listOf(AppearanceSettings.PureBlack.key to false)
     }
@@ -73,7 +73,7 @@ class SettingsEventsTest {
     fun `USB DAC direct output toggles on`() {
         val usbDac = rows(SettingsDestination.PlaybackAndSound, sdkInt = 34).filterIsInstance<Row.Switch>().first { it.item.key == PlaybackSettings.UsbDacDirectOutput.key }
 
-        callbacks.onEvent(usbDac.tapEvent())
+        callbacks.onEvent(SettingsEvent.ChangeSwitch(usbDac.item, true))
 
         switchChanges shouldBe listOf(PlaybackSettings.UsbDacDirectOutput.key to true)
     }
