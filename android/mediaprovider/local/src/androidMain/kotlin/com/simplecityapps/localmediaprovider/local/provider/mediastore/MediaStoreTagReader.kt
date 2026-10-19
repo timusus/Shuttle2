@@ -18,7 +18,7 @@ import com.simplecityapps.shuttle.coroutines.concurrentMap
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import kotlin.coroutines.cancellation.CancellationException
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.withContext
@@ -38,13 +38,14 @@ fun interface MediaStoreTagReader {
 class KTagLibMediaStoreTagReader(
     private val context: Context,
     private val kTagLib: KTagLib,
-    private val tagReadGuard: TagReadGuard
+    private val tagReadGuard: TagReadGuard,
+    private val ioDispatcher: CoroutineDispatcher
 ) : MediaStoreTagReader {
     override suspend fun read(
         uri: Uri,
         file: TagReadFile
     ): FileTags? = tagReadGuard.read(file, MediaProviderType.MediaStore) {
-        withContext(Dispatchers.IO) {
+        withContext(ioDispatcher) {
             context.contentResolver.openFileDescriptor(uri, "r")?.use { pfd ->
                 val fileName = file.path.substringAfterLast('/')
                 kTagLib.getMetadata(pfd.fd, fileName)?.let { metadata ->

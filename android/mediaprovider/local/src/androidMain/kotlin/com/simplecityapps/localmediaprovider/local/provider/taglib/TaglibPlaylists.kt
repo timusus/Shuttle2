@@ -21,7 +21,7 @@ import com.simplecityapps.shuttle.model.Song
 import java.io.FileNotFoundException
 import java.io.IOException
 import kotlin.coroutines.cancellation.CancellationException
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.flow
@@ -36,6 +36,7 @@ internal class TaglibPlaylists(
     private val type: MediaProviderType,
     private val grantedTrees: () -> List<Uri>,
     private val folders: () -> ScannerFolders,
+    private val ioDispatcher: CoroutineDispatcher,
     // The playlist files the last song walk found in each tree it walked, by [treeKey]
     private val walkedPlaylistFiles: () -> Map<String, List<PlaylistFile>>
 ) {
@@ -45,7 +46,7 @@ internal class TaglibPlaylists(
      * walked reuse that walk, which finds those MediaStore skips too; any other tree (an extra tree, which MediaStore skips,
      * a volume it doesn't index such as a USB drive, a cloud provider) is walked here.
      */
-    private suspend fun findPlaylistFiles(): List<PlaylistFile> = withContext(Dispatchers.IO) {
+    private suspend fun findPlaylistFiles(): List<PlaylistFile> = withContext(ioDispatcher) {
         val trees = grantedTrees()
         val primaryStoragePath = primaryStoragePath()
         val folders = folders()

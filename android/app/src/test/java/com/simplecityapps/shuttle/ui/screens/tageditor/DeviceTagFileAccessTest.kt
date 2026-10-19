@@ -12,6 +12,7 @@ import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.mockk.mockk
 import java.nio.file.Files
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -24,7 +25,7 @@ class DeviceTagFileAccessTest {
     private val guard = TagReadGuard(Files.createTempDirectory("tag-reads").toFile(), preferences, { null })
 
     // The native library isn't loaded on the JVM: a quarantined file must never reach it
-    private val access = DeviceTagFileAccess(ApplicationProvider.getApplicationContext(), mockk<KTagLib>(), FileScanner(), guard)
+    private val access = DeviceTagFileAccess(ApplicationProvider.getApplicationContext(), mockk<KTagLib>(), FileScanner(Dispatchers.Unconfined), guard)
 
     private val song = createSong()
 

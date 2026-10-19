@@ -7,11 +7,13 @@ import com.simplecityapps.localmediaprovider.local.data.room.databaseBuilder
 import com.simplecityapps.localmediaprovider.local.repository.PlaylistFileSync
 import com.simplecityapps.localmediaprovider.local.repository.SafPlaylistFileSync
 import com.simplecityapps.shuttle.di.ApplicationContext
+import com.simplecityapps.shuttle.di.IoDispatcher
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer
 import dev.zacsweers.metro.ContributesTo
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.SingleIn
+import kotlinx.coroutines.CoroutineDispatcher
 
 @ContributesTo(AppScope::class)
 @BindingContainer
@@ -26,6 +28,7 @@ class DatabaseModule {
     @Provides
     fun providePlaylistFileSync(
         @ApplicationContext context: Context,
-        database: MediaDatabase
-    ): PlaylistFileSync = SafPlaylistFileSync(context, database.songDataDao())
+        database: MediaDatabase,
+        @IoDispatcher ioDispatcher: CoroutineDispatcher
+    ): PlaylistFileSync = SafPlaylistFileSync(context, database.songDataDao(), ioDispatcher)
 }

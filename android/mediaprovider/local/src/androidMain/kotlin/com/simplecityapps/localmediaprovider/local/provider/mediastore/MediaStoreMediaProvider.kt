@@ -32,7 +32,7 @@ import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.SourceStateStore
 import kotlin.time.Instant
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
@@ -50,6 +50,7 @@ class MediaStoreMediaProvider(
     private val sourceState: SourceStateStore,
     // Takes the reads a crash interrupted before tags are read again, so a file that crashes TagLib is left unread
     private val tagReadGuard: TagReadGuard,
+    private val ioDispatcher: CoroutineDispatcher,
     // MediaStore's audio files, read only in part where the last stored import's listing allows
     private val mediaStoreFiles: MediaStoreAudioLister = MediaStoreAudioLister.whole(context)
 ) : IndexedMediaProvider {
@@ -91,7 +92,7 @@ class MediaStoreMediaProvider(
         thorough: Boolean
     ): List<SongPathRemap> {
         remapListing = null
-        val files = withContext(Dispatchers.IO) { mediaStoreFiles.list(whole = readWhole(thorough)) }
+        val files = withContext(ioDispatcher) { mediaStoreFiles.list(whole = readWhole(thorough)) }
         remapListing = RemapListing(files)
         return movedSongRemaps(existingSongs, mediaStoreFiles.moved())
     }
@@ -108,7 +109,7 @@ class MediaStoreMediaProvider(
         // The importer records the new version once this import's result is stored, so one cancelled part way through
         // reads every file again next time. Only this source's version: another failing doesn't make it read them again
         val backfillFileTags = sourceState.songTagsOutdated(type)
-        val listing = remapListing.also { remapListing = null } ?: RemapListing(withContext(Dispatchers.IO) { mediaStoreFiles.list(whole = readWhole(thorough)) })
+        val listing = remapListing.also { remapListing = null } ?: RemapListing(withContext(ioDispatcher) { mediaStoreFiles.list(whole = readWhole(thorough)) })
         val files = listing.files
         // Without a listing, failing keeps the library as it was: an empty one would remove every song
         if (files == null) {
@@ -328,7 +329,7 @@ class MediaStoreMediaProvider(
 
     // Playlists
 
-    private val playlists = MediaStorePlaylists(context, type)
+    private val playlists = MediaStorePlaylists(context, type, ioDispatcher)
 
     override fun findPlaylists(existingSongs: List<Song>, knownVersions: Map<String, String>): Flow<FlowEvent<PlaylistListing, MessageProgress>> = playlists.findPlaylists(existingSongs)
 }

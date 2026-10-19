@@ -14,7 +14,7 @@ import com.simplecityapps.mediaprovider.splitArtistTag
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import kotlin.math.abs
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.toList
@@ -39,7 +39,8 @@ internal data class MediaStorePlaylist(val id: Long, val name: String)
 /** The playlists MediaStore holds, matched to the stored songs. */
 internal class MediaStorePlaylists(
     private val context: Context,
-    private val type: MediaProviderType
+    private val type: MediaProviderType,
+    private val ioDispatcher: CoroutineDispatcher
 ) {
     fun findPlaylists(existingSongs: List<Song>): Flow<FlowEvent<PlaylistListing, MessageProgress>> = flow {
         val mediaStorePlaylists = findMediaStorePlaylists().toList()
@@ -68,7 +69,7 @@ internal class MediaStorePlaylists(
     }
 
     private suspend fun findSongsForMediaStorePlaylist(mediaStorePlaylistId: Long): List<MediaStoreSong> {
-        return withContext(Dispatchers.IO) {
+        return withContext(ioDispatcher) {
             val songs = mutableListOf<MediaStoreSong>()
 
             val cursor =

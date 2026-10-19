@@ -17,7 +17,7 @@ import com.simplecityapps.shuttle.model.PlaylistSong
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.storage.documentIdForPath
 import java.io.IOException
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 
@@ -28,7 +28,8 @@ import timber.log.Timber
  */
 class SafPlaylistFileSync(
     private val context: Context,
-    private val songDataDao: SongDataDao
+    private val songDataDao: SongDataDao,
+    private val ioDispatcher: CoroutineDispatcher
 ) : PlaylistFileSync {
     private val m3uWriter = M3uWriter()
     private val m3uParser = M3uParser()
@@ -41,7 +42,7 @@ class SafPlaylistFileSync(
         songs: List<Song>
     ) {
         val externalId = playlist.externalId ?: return
-        withContext(Dispatchers.IO) {
+        withContext(ioDispatcher) {
             val uri = target(externalId)
             val written =
                 try {

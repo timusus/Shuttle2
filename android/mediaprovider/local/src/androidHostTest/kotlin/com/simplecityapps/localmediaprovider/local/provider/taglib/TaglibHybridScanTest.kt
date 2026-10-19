@@ -27,6 +27,7 @@ import io.kotest.matchers.shouldBe
 import java.io.File
 import java.util.Collections
 import kotlin.time.Instant
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
@@ -59,7 +60,7 @@ class TaglibHybridScanTest {
     private val read: MutableList<String> = Collections.synchronizedList(mutableListOf())
 
     private val scanner =
-        object : FileScanner() {
+        object : FileScanner(Dispatchers.Unconfined) {
             override suspend fun getAudioFile(
                 context: Context,
                 kTagLib: KTagLib,
@@ -271,7 +272,7 @@ class TaglibHybridScanTest {
         playlists.map { it.externalId } shouldBe listOf(Uri.fromFile(File("$primary/Music/Hidden/x.m3u")).toString())
     }
 
-    private fun provider() = TaglibMediaProvider(context, kTagLibWithoutNativeLibrary(), scanner, tagReadGuard, grantedTrees = { listOf(tree) }, mountedRoots = { setOf("$primary/") }) {
+    private fun provider() = TaglibMediaProvider(context, kTagLibWithoutNativeLibrary(), scanner, tagReadGuard, Dispatchers.Unconfined, grantedTrees = { listOf(tree) }, mountedRoots = { setOf("$primary/") }) {
         ScannerFolders(filter = FolderFilter(includes = listOf("$primary/Music")), includeTrees = listOf(tree))
     }
 

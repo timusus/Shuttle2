@@ -8,11 +8,11 @@ import com.simplecityapps.localmediaprovider.local.provider.getAudioFile
 import com.simplecityapps.mediaprovider.model.AudioFile
 import com.simplecityapps.saf.DocumentNode
 import kotlin.coroutines.cancellation.CancellationException
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 
-open class FileScanner {
+open class FileScanner(private val ioDispatcher: CoroutineDispatcher) {
     /**
      * Reads a file the SAF tree walk found, using the name, mime type, size and modified date the walk already returned, as
      * the song at [path]: its file path where it has one, else its document URI.
@@ -29,7 +29,7 @@ open class FileScanner {
         context: Context,
         kTagLib: KTagLib,
         uri: Uri
-    ): AudioFile? = withContext(Dispatchers.IO) {
+    ): AudioFile? = withContext(ioDispatcher) {
         val documentFile = DocumentFile.fromSingleUri(context, uri)
         if (documentFile?.exists() == true) {
             read(context, kTagLib, uri, uri.toString(), documentFile.name ?: "Unknown", documentFile.lastModified(), documentFile.length(), documentFile.type)
@@ -48,7 +48,7 @@ open class FileScanner {
         lastModified: Long,
         size: Long,
         mimeType: String?
-    ): AudioFile? = withContext(Dispatchers.IO) {
+    ): AudioFile? = withContext(ioDispatcher) {
         try {
             context.contentResolver.openFileDescriptor(uri, "r")?.use { pfd ->
                 kTagLib.getAudioFile(pfd.fd, path, name, lastModified, size, mimeType)

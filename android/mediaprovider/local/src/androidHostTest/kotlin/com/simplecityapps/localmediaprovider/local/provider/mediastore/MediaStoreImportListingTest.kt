@@ -18,6 +18,7 @@ import com.simplecityapps.shuttle.persistence.SourceStateStore
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import kotlin.time.Instant
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.last
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
@@ -31,7 +32,7 @@ class MediaStoreImportListingTest {
     private val preferences = SourceStateStore(InMemoryKeyValueStore()).apply { setSongTagsVersion(MediaProviderType.MediaStore.name, SONG_TAGS_VERSION) }
 
     // Without a store the lister reads MediaStore whole on every list, so each list is one whole read
-    private val provider = MediaStoreMediaProvider(context, { _, _ -> null }, preferences, testTagReadGuard(), MediaStoreAudioLister(source, store = null, incremental = false))
+    private val provider = MediaStoreMediaProvider(context, { _, _ -> null }, preferences, testTagReadGuard(), Dispatchers.Unconfined, MediaStoreAudioLister(source, store = null, incremental = false))
 
     @Test
     fun `a routine import lists MediaStore once`() {

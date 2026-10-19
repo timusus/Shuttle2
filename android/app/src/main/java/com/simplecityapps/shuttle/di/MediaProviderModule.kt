@@ -12,6 +12,7 @@ import com.simplecityapps.localmediaprovider.local.provider.taglib.TaglibMediaPr
 import com.simplecityapps.mediaprovider.TagReadGuard
 import com.simplecityapps.mediaprovider.songTagsOutdated
 import com.simplecityapps.shuttle.di.ApplicationContext
+import com.simplecityapps.shuttle.di.IoDispatcher
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.persistence.SourceStateStore
 import com.simplecityapps.shuttle.sources.SafScannerFolderStore
@@ -20,13 +21,16 @@ import dev.zacsweers.metro.BindingContainer
 import dev.zacsweers.metro.ContributesTo
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.SingleIn
+import kotlinx.coroutines.CoroutineDispatcher
 
 @ContributesTo(AppScope::class)
 @BindingContainer
 class MediaProviderModule {
     @Provides
     @SingleIn(AppScope::class)
-    fun provideFileScanner(): FileScanner = FileScanner()
+    fun provideFileScanner(
+        @IoDispatcher ioDispatcher: CoroutineDispatcher
+    ): FileScanner = FileScanner(ioDispatcher)
 
     @Provides
     @SingleIn(AppScope::class)
@@ -48,12 +52,14 @@ class MediaProviderModule {
         tagReadGuard: TagReadGuard,
         folderStore: SafScannerFolderStore,
         sourceState: SourceStateStore,
-        database: MediaDatabase
+        database: MediaDatabase,
+        @IoDispatcher ioDispatcher: CoroutineDispatcher
     ): TaglibMediaProvider = TaglibMediaProvider(
         context,
         kTagLib,
         fileScanner,
         tagReadGuard,
+        ioDispatcher,
         backfillFileTags = { sourceState.songTagsOutdated(MediaProviderType.Shuttle) },
         mediaStoreFiles = MediaStoreAudioLister.incremental(context, database.mediaStoreFileDao(), MediaProviderType.Shuttle),
         folders = folderStore::scannerFolders
@@ -64,8 +70,9 @@ class MediaProviderModule {
     fun provideMediaStoreTagReader(
         @ApplicationContext context: Context,
         kTagLib: KTagLib,
-        tagReadGuard: TagReadGuard
-    ): MediaStoreTagReader = KTagLibMediaStoreTagReader(context, kTagLib, tagReadGuard)
+        tagReadGuard: TagReadGuard,
+        @IoDispatcher ioDispatcher: CoroutineDispatcher
+    ): MediaStoreTagReader = KTagLibMediaStoreTagReader(context, kTagLib, tagReadGuard, ioDispatcher)
 
     @Provides
     @SingleIn(AppScope::class)
@@ -74,12 +81,14 @@ class MediaProviderModule {
         tagReader: MediaStoreTagReader,
         sourceState: SourceStateStore,
         tagReadGuard: TagReadGuard,
-        database: MediaDatabase
+        database: MediaDatabase,
+        @IoDispatcher ioDispatcher: CoroutineDispatcher
     ): MediaStoreMediaProvider = MediaStoreMediaProvider(
         context,
         tagReader,
         sourceState,
         tagReadGuard,
+        ioDispatcher,
         MediaStoreAudioLister.incremental(context, database.mediaStoreFileDao(), MediaProviderType.MediaStore)
     )
 }

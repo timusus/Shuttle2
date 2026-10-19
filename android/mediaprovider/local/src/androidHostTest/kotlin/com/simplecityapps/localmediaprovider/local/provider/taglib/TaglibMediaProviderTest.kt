@@ -31,6 +31,7 @@ import java.io.File
 import java.io.FileNotFoundException
 import java.util.Collections
 import kotlin.time.Instant
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.toList
@@ -68,7 +69,7 @@ class TaglibMediaProviderTest {
     private val unreadable: MutableSet<String> = Collections.synchronizedSet(mutableSetOf())
 
     private val scanner =
-        object : FileScanner() {
+        object : FileScanner(Dispatchers.Unconfined) {
             override suspend fun getAudioFile(
                 context: Context,
                 kTagLib: KTagLib,
@@ -322,7 +323,7 @@ class TaglibMediaProviderTest {
     fun `a findSongs that fails doesn't leave the last import's playlist walk in use`() {
         var calls = 0
         val provider =
-            TaglibMediaProvider(context, kTagLibWithoutNativeLibrary(), scanner, tagReadGuard, grantedTrees = { listOf(tree) }) {
+            TaglibMediaProvider(context, kTagLibWithoutNativeLibrary(), scanner, tagReadGuard, Dispatchers.Unconfined, grantedTrees = { listOf(tree) }) {
                 // The second call is the failing findSongs' own, before it walks anything
                 if (++calls == 2) throw IllegalStateException("no folders")
                 ScannerFolders(extraTrees = listOf(tree))
@@ -341,7 +342,7 @@ class TaglibMediaProviderTest {
     @Test
     fun `a walked tree that is no longer an extra tree is looked up in MediaStore`() {
         var extra = listOf(tree)
-        val provider = TaglibMediaProvider(context, kTagLibWithoutNativeLibrary(), scanner, tagReadGuard, grantedTrees = { listOf(tree) }) { ScannerFolders(extraTrees = extra) }
+        val provider = TaglibMediaProvider(context, kTagLibWithoutNativeLibrary(), scanner, tagReadGuard, Dispatchers.Unconfined, grantedTrees = { listOf(tree) }) { ScannerFolders(extraTrees = extra) }
         runBlocking { provider.findSongs(emptyList()).filterIsInstance<FlowEvent.Success<List<Song>>>().first() }
         extra = emptyList()
         FakeMediaProvider.playlistRows = listOf("$primary/Music/Lists/a.m3u" to "a.m3u")
@@ -541,7 +542,7 @@ class TaglibMediaProviderTest {
         trees: List<Uri>,
         backfill: Boolean = false,
         grantedTrees: List<Uri> = emptyList()
-    ) = TaglibMediaProvider(context, kTagLibWithoutNativeLibrary(), scanner, tagReadGuard, backfillFileTags = { backfill }, grantedTrees = { grantedTrees }) {
+    ) = TaglibMediaProvider(context, kTagLibWithoutNativeLibrary(), scanner, tagReadGuard, Dispatchers.Unconfined, backfillFileTags = { backfill }, grantedTrees = { grantedTrees }) {
         ScannerFolders(filter = FolderFilter(excludes = excludes), extraTrees = trees)
     }
 

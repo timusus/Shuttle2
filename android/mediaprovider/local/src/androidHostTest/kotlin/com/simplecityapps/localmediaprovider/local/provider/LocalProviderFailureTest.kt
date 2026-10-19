@@ -19,6 +19,7 @@ import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import com.simplecityapps.shuttle.persistence.SourceStateStore
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.last
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
@@ -34,7 +35,7 @@ import org.robolectric.Robolectric
 class LocalProviderFailureTest {
     private val context: Context = ApplicationProvider.getApplicationContext()
 
-    private val mediaStoreProvider = MediaStoreMediaProvider(context, { _, _ -> null }, SourceStateStore(InMemoryKeyValueStore()), testTagReadGuard())
+    private val mediaStoreProvider = MediaStoreMediaProvider(context, { _, _ -> null }, SourceStateStore(InMemoryKeyValueStore()), testTagReadGuard(), Dispatchers.Unconfined)
 
     @Test
     fun `MediaStore returning no cursor fails the MediaStore import`() {

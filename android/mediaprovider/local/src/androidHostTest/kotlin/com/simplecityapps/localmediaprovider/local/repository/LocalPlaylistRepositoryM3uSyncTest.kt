@@ -40,7 +40,7 @@ class LocalPlaylistRepositoryM3uSyncTest {
         ioDispatcher = Dispatchers.Unconfined,
         playlistDataDao = database.playlistDataDao(),
         playlistSongJoinDao = database.playlistSongJoinDataDao(),
-        fileSync = SafPlaylistFileSync(context, database.songDataDao()),
+        fileSync = SafPlaylistFileSync(context, database.songDataDao(), Dispatchers.Unconfined),
         albumIndex = database.libraryAlbumIndex()
     )
 

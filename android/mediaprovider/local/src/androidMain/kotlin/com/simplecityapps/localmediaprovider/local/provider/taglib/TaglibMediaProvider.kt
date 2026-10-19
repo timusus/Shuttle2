@@ -36,7 +36,7 @@ import com.simplecityapps.shuttle.storage.documentIdForPath
 import java.io.File
 import java.util.Collections
 import kotlin.coroutines.cancellation.CancellationException
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.collectIndexed
@@ -55,6 +55,7 @@ class TaglibMediaProvider(
     private val fileScanner: FileScanner,
     // Caps the native reads of every flow findSongs merges, and leaves out the files that crashed one
     private val tagReadGuard: TagReadGuard,
+    private val ioDispatcher: CoroutineDispatcher,
     // Whether this source's songs lack tags this build reads, which reading every file again fills in
     private val backfillFileTags: () -> Boolean = { false },
     // The folder trees the user has granted access to, which is where playlist files are looked for
@@ -79,7 +80,7 @@ class TaglibMediaProvider(
     @Volatile
     private var walkedPlaylistFiles: Map<String, List<PlaylistFile>> = emptyMap()
 
-    private val playlists = TaglibPlaylists(context, type, grantedTrees, folders) { walkedPlaylistFiles }
+    private val playlists = TaglibPlaylists(context, type, grantedTrees, folders, ioDispatcher) { walkedPlaylistFiles }
 
     /** Reuses the listing [remapLegacySongs] read, so both see the same files and no song is moved to a path it then misses. */
     @Volatile
@@ -157,7 +158,7 @@ class TaglibMediaProvider(
         val lostTrees: MutableSet<Uri> = Collections.synchronizedSet(mutableSetOf())
         val total = files.size + walkedFiles.size + extraDocuments.size + unlisted.size
         val folderImageReader = FolderImageReader(sharedStorageListsImages = Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU)
-        val filesWithImages = withContext(Dispatchers.IO) { files.map { file -> file to folderImageReader.imagesNear(file.path) } }
+        val filesWithImages = withContext(ioDispatcher) { files.map { file -> file to folderImageReader.imagesNear(file.path) } }
         val songs = mutableListOf<Song>()
         val merger = LocalFileTagMerger(existingSongs, readUnchanged = backfillFileTags())
         merge(
@@ -265,7 +266,7 @@ class TaglibMediaProvider(
     private suspend fun findAudioFiles(
         folderFilter: FolderFilter,
         whole: Boolean = false
-    ): List<MediaStoreAudioFile>? = withContext(Dispatchers.IO) {
+    ): List<MediaStoreAudioFile>? = withContext(ioDispatcher) {
         mediaStoreFiles.list(whole)?.filter { file -> folderFilter.accepts(file.path) }
     }
 
@@ -297,7 +298,7 @@ class TaglibMediaProvider(
         includeTrees: List<Uri>,
         folders: ScannerFolders,
         primaryStoragePath: String
-    ): TreeWalk = withContext(Dispatchers.IO) {
+    ): TreeWalk = withContext(ioDispatcher) {
         val trees = includeTrees + folders.extraTrees
         if (trees.isEmpty()) return@withContext TreeWalk()
         val excludes = FolderFilter(excludes = folders.filter.excludes)
@@ -432,7 +433,7 @@ class TaglibMediaProvider(
             }
         }.mapNotNull { it }
 
-    private suspend fun fileExists(path: String): Boolean = withContext(Dispatchers.IO) { File(path).exists() }
+    private suspend fun fileExists(path: String): Boolean = withContext(ioDispatcher) { File(path).exists() }
 
     /** The images next to a song at [path] if it has a file path; the reader caches by folder, which the concurrent readers share. */
     private fun folderImagesNear(
@@ -469,7 +470,7 @@ class TaglibMediaProvider(
     ): Song = copy(id = 0, artworkVersion = localArtworkVersion(lastModified, folderImages))
 
     private suspend fun readAudioFile(file: MediaStoreAudioFile): AudioFile? = tagReadGuard.read(TagReadFile(file.path, file.size, file.lastModified), type) {
-        withContext(Dispatchers.IO) {
+        withContext(ioDispatcher) {
             try {
                 context.contentResolver.openFileDescriptor(file.contentUri, "r")?.use { pfd ->
                     kTagLib.getAudioFile(pfd.fd, file.path, file.displayName, file.lastModified, file.size, file.mimeType)
