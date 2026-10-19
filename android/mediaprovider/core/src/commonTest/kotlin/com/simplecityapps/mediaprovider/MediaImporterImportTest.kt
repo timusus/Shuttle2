@@ -8,10 +8,12 @@ import io.kotest.matchers.types.shouldBeInstanceOf
 import kotlin.test.Test
 import kotlin.time.Duration.Companion.days
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.yield
 
@@ -23,7 +25,7 @@ class MediaImporterImportTest : MediaImporterTestBase() {
         provider.started.receive()
 
         // Every import started while the first pass runs returns without waiting for it, requesting a follow-up pass
-        repeat(IMPORTS) { launch { importer.import().also { returned.send(Unit) } } }
+        repeat(IMPORTS) { launch(Dispatchers.Default) { importer.import().also { returned.send(Unit) } } }
         repeat(IMPORTS) { returned.receive() }
         importer.isImporting shouldBe true
 
@@ -43,11 +45,12 @@ class MediaImporterImportTest : MediaImporterTestBase() {
         val waited = CompletableDeferred<Unit>()
         launch { importer.importAndWait().also { waited.complete(Unit) } }
 
-        withTimeoutOrNull(200) { waited.await() } shouldBe null
+        // The import work runs on real IO threads, so the wait must be real time too
+        withContext(Dispatchers.Default) { withTimeoutOrNull(200) { waited.await() } } shouldBe null
 
         provider.gate.trySend(Unit) // the first pass finishes, the waiter's request asks for another
-        provider.started.receive()
-        withTimeoutOrNull(200) { waited.await() } shouldBe null
+        provider.started.receive() // the follow-up pass is now held open on the gate
+        waited.isCompleted shouldBe false
 
         provider.gate.trySend(Unit)
         waited.await()
@@ -406,7 +409,7 @@ class MediaImporterImportTest : MediaImporterTestBase() {
         provider.started.receive()
 
         // Sources changing from another thread while the import reads them, and while each pass's end reads them again
-        val churn = launch {
+        val churn = launch(Dispatchers.Default) {
             repeat(CHURN) { i ->
                 val other = ServerProvider(if (i % 2 == 0) MediaProviderType.Emby else MediaProviderType.Plex)
                 importer.mediaProviders += other

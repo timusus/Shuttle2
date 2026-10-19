@@ -14,6 +14,7 @@ import com.simplecityapps.shuttle.persistence.SourceStateStore
 import com.simplecityapps.shuttle.query.SongQuery
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.cancelAndJoin
@@ -24,6 +25,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -212,7 +214,8 @@ class MediaImportWorkerTest {
         provider.started.receive()
         val requested = async { worker(fullImport = true).doWork() }
 
-        withTimeoutOrNull(200) { requested.await() } shouldBe null
+        // The import work runs on real IO threads, so the wait must be real time too
+        withContext(Dispatchers.Default) { withTimeoutOrNull(200) { requested.await() } } shouldBe null
 
         provider.hold!!.complete(Unit)
         requested.await() shouldBe Result.success()
