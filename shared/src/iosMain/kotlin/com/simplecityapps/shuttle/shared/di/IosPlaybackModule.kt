@@ -17,6 +17,8 @@ import com.simplecityapps.provider.jellyfin.JellyfinStreamUrlProvider
 import com.simplecityapps.provider.plex.PlexStreamUrlProvider
 import com.simplecityapps.provider.subsonic.SubsonicStreamUrlProvider
 import com.simplecityapps.shuttle.di.AppSupervisorJob
+import com.simplecityapps.shuttle.di.DefaultDispatcher
+import com.simplecityapps.shuttle.di.MainImmediateDispatcher
 import com.simplecityapps.shuttle.persistence.KeyValueStore
 import com.simplecityapps.shuttle.settings.EqualizerSettings
 import com.simplecityapps.shuttle.shared.downloads.OfflineDownloads
@@ -34,9 +36,9 @@ import dev.zacsweers.metro.ContributesTo
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.SingleIn
 import kotlin.random.Random
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
@@ -114,12 +116,14 @@ class IosPlaybackModule {
         playbackPreferenceManager: PlaybackPreferenceManager,
         songRepository: SongRepository,
         random: Random,
-        plex: PlexStreamUrlProvider
+        plex: PlexStreamUrlProvider,
+        @MainImmediateDispatcher mainImmediateDispatcher: CoroutineDispatcher,
+        @DefaultDispatcher defaultDispatcher: CoroutineDispatcher
     ): IosPlayerController {
         // The saved ReplayGain reaches the engine before anything plays; IosSettingsEffects sends each change
         player.setReplayGain(playbackSettings.replayGainMode.value, playbackSettings.preAmpGain.value)
         val retainShuffle = playbackSettings.retainShuffleOnNewQueue
-        val scope = CoroutineScope(job + Dispatchers.Main.immediate + exceptionHandler)
+        val scope = CoroutineScope(job + mainImmediateDispatcher + exceptionHandler)
         val controller = IosPlayerController(
             player = player,
             resolver = resolver,
@@ -128,7 +132,7 @@ class IosPlaybackModule {
             random = random,
             resumePosition = playbackPreferenceManager::resumePosition
         )
-        IosPlaybackStore(controller, playbackPreferenceManager, playbackSettings.playbackSpeed, songRepository, scope).start()
+        IosPlaybackStore(controller, playbackPreferenceManager, playbackSettings.playbackSpeed, songRepository, scope, defaultDispatcher).start()
         // Plex transcodes a killed run left open: stopped in the background, never holding up launch
         scope.launch { plex.stopLeftoverSessions() }
         return controller

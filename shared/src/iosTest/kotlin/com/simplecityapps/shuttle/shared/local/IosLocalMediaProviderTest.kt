@@ -15,6 +15,7 @@ import kotlin.test.Test
 import kotlin.time.Instant
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.LocalDate
 
@@ -76,7 +77,7 @@ class IosLocalMediaProviderTest {
 
     private val localFiles = FakeLocalFiles()
     private val preferences = SourceStateStore(InMemoryKeyValueStore()).apply { setSongTagsVersion(MediaProviderType.Shuttle.name, SONG_TAGS_VERSION) }
-    private val provider = IosLocalMediaProvider(localFiles, preferences).apply { emptyFolderRecheckDelayMs = 0 }
+    private val provider = IosLocalMediaProvider(localFiles, preferences, UnconfinedTestDispatcher()).apply { emptyFolderRecheckDelayMs = 0 }
 
     private suspend fun findSongs(existing: List<Song> = emptyList()): List<Song> = provider.findSongs(existing).filterIsInstance<FlowEvent.Success<List<Song>>>().first().result
 

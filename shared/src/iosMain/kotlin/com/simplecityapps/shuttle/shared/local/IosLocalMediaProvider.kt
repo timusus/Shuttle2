@@ -12,6 +12,7 @@ import com.simplecityapps.mediaprovider.MessageProgress
 import com.simplecityapps.mediaprovider.PlaylistListing
 import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.mediaprovider.songTagsOutdated
+import com.simplecityapps.shuttle.di.IoDispatcher
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.SourceStateStore
@@ -19,8 +20,7 @@ import dev.zacsweers.metro.Inject
 import kotlin.concurrent.atomics.AtomicReference
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlin.time.Instant
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -31,7 +31,8 @@ import kotlinx.coroutines.flow.flowOn
 @Inject
 class IosLocalMediaProvider(
     private val localFiles: IosLocalFiles,
-    private val sourceState: SourceStateStore
+    private val sourceState: SourceStateStore,
+    @IoDispatcher private val ioDispatcher: CoroutineDispatcher
 ) : MediaProvider {
     override val type = MediaProviderType.Shuttle
 
@@ -63,7 +64,7 @@ class IosLocalMediaProvider(
         }
         pending.store(listing)
         emit(FlowEvent.Success(songs))
-    }.flowOn(Dispatchers.IO)
+    }.flowOn(ioDispatcher)
 
     /** How long to wait before listing again a folder that listed nothing where it had songs; tests set it to zero. */
     internal var emptyFolderRecheckDelayMs = 1_500L

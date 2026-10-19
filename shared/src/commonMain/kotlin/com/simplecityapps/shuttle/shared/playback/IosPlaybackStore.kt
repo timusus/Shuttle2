@@ -15,7 +15,6 @@ import kotlin.coroutines.CoroutineContext
 import kotlin.math.abs
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -39,7 +38,7 @@ class IosPlaybackStore(
     private val songRepository: SongRepository,
     private val scope: CoroutineScope,
     /** Where the saved queue is read from the library, off the main thread. */
-    private val readContext: CoroutineContext = Dispatchers.Default
+    private val readContext: CoroutineContext
 ) {
     private val queueOperations = controller.queueOperations
 
