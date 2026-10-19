@@ -14,8 +14,8 @@ import dev.zacsweers.metro.ContributesTo
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.SingleIn
 import kotlin.time.Clock
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.plus
@@ -35,13 +35,14 @@ class PlaybackReportingModule {
         store: KeyValueStore,
         songRepository: SongRepository,
         librarySettings: LibrarySettings,
-        @AppCoroutineScope appCoroutineScope: CoroutineScope
+        @AppCoroutineScope appCoroutineScope: CoroutineScope,
+        @DefaultDispatcher defaultDispatcher: CoroutineDispatcher
     ): PlaybackReportSender = PlaybackReportSender(
         reporter = playbackReporter,
         pendingPlays = PendingPlays(store),
         findSongs = { songIds -> songRepository.getSongs(SongQuery.SongIds(songIds)).filterNotNull().firstOrNull().orEmpty() },
         isEnabled = { librarySettings.reportPlaybackToServer.value },
         now = { Clock.System.now() },
-        scope = appCoroutineScope + Dispatchers.Default
+        scope = appCoroutineScope + defaultDispatcher
     )
 }

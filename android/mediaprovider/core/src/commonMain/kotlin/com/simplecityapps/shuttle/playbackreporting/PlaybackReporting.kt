@@ -8,10 +8,11 @@ import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.playback.queue.QueueState
 import com.simplecityapps.shuttle.coroutines.launchCollectingChanges
 import com.simplecityapps.shuttle.di.AppCoroutineScope
+import com.simplecityapps.shuttle.di.MainImmediateDispatcher
 import dev.zacsweers.metro.Inject
 import kotlin.time.TimeSource
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 /** Feeds playback changes to [PlaybackReportPlanner]; collected on Main so the planner sees them in order. */
@@ -23,7 +24,8 @@ constructor(
     private val playbackReporter: AggregatePlaybackReporter,
     private val sender: PlaybackReportSender,
     private val librarySettings: LibrarySettings,
-    @AppCoroutineScope private val appCoroutineScope: CoroutineScope
+    @AppCoroutineScope private val appCoroutineScope: CoroutineScope,
+    @MainImmediateDispatcher private val mainImmediateDispatcher: CoroutineDispatcher
 ) {
     private val clock = TimeSource.Monotonic.markNow()
     private var started = false
@@ -48,22 +50,22 @@ constructor(
         // Enabled last: a song already playing starts only once the planner knows its position.
         sender.send(planner.onEnabledChanged(enabled, now()))
 
-        appCoroutineScope.launchCollectingChanges(enabledFlow, enabled, Dispatchers.Main.immediate) { _, current ->
+        appCoroutineScope.launchCollectingChanges(enabledFlow, enabled, mainImmediateDispatcher) { _, current ->
             sender.send(planner.onEnabledChanged(current, now()))
         }
-        appCoroutineScope.launchCollectingChanges(queueOperations.queueStateFlow, queueState, Dispatchers.Main.immediate) { _, current ->
+        appCoroutineScope.launchCollectingChanges(queueOperations.queueStateFlow, queueState, mainImmediateDispatcher) { _, current ->
             sender.send(planner.onCurrentItemChanged(current))
         }
-        appCoroutineScope.launchCollectingChanges(playbackStateSource.playFlow, play, Dispatchers.Main.immediate) { _, current ->
+        appCoroutineScope.launchCollectingChanges(playbackStateSource.playFlow, play, mainImmediateDispatcher) { _, current ->
             sender.send(planner.onPlayChanged(current, now()))
         }
-        appCoroutineScope.launchCollectingChanges(playbackStateSource.playbackStateFlow, playbackState, Dispatchers.Main.immediate) { _, current ->
+        appCoroutineScope.launchCollectingChanges(playbackStateSource.playbackStateFlow, playbackState, mainImmediateDispatcher) { _, current ->
             sender.send(planner.onStateChanged(current.toPlannerState(), now()))
         }
-        appCoroutineScope.launchCollectingChanges(playbackStateSource.progressFlow, progress, Dispatchers.Main.immediate) { _, current ->
+        appCoroutineScope.launchCollectingChanges(playbackStateSource.progressFlow, progress, mainImmediateDispatcher) { _, current ->
             current?.let { sender.send(planner.onProgress(it.position, now())) }
         }
-        appCoroutineScope.launch(Dispatchers.Main.immediate) {
+        appCoroutineScope.launch(mainImmediateDispatcher) {
             playbackStateSource.trackEndedFlow.collect { end -> sender.send(planner.onTrackEnded(end.song)) }
         }
 

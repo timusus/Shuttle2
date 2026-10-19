@@ -67,7 +67,8 @@ class PlaybackReportingTest {
                 scope = appCoroutineScope
             ),
             librarySettings = librarySettings,
-            appCoroutineScope = appCoroutineScope
+            appCoroutineScope = appCoroutineScope,
+            mainImmediateDispatcher = UnconfinedTestDispatcher()
         )
     }
 
