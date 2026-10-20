@@ -1,3 +1,4 @@
+import os
 import S2Core
 import Shared
 import SwiftUI
@@ -205,6 +206,26 @@ struct PlayerActions {
     static let none = PlayerActions()
 }
 
+/// The binding's long-running observer tasks, which `deinit` (nonisolated) must be able to cancel.
+private final class ObserverTasks: Sendable {
+    enum Slot { case state, playlists, songActions }
+
+    private let tasks = OSAllocatedUnfairLock<[Slot: Task<Void, Never>]>(initialState: [:])
+
+    /// Stores `task` in `slot` without cancelling the one it replaces.
+    func set(_ slot: Slot, _ task: Task<Void, Never>) {
+        tasks.withLock { $0[slot] = task }
+    }
+
+    func cancel(_ slot: Slot) {
+        tasks.withLock { $0.removeValue(forKey: slot) }?.cancel()
+    }
+
+    func cancelAll() {
+        tasks.withLock { $0 }.values.forEach { $0.cancel() }
+    }
+}
+
 // MARK: - The binding
 
 /// Whether it plays is the listener's intent (`PlayIntent`), not the player's state, so play/pause goes through the intent.
@@ -217,11 +238,8 @@ struct PlayerActions {
 final class PlayerBinding {
     private let viewModel: PlayerViewModel
     private let intent: PlayIntent
-    /// `nonisolated(unsafe)`: only `deinit` touches them off the main actor, and by then no other access
-    /// can be concurrent (deinit runs once the last reference is gone).
-    @ObservationIgnored private nonisolated(unsafe) var observer: Task<Void, Never>?
-    @ObservationIgnored private nonisolated(unsafe) var playlistObserver: Task<Void, Never>?
-    @ObservationIgnored private nonisolated(unsafe) var songActionsObserver: Task<Void, Never>?
+    /// Behind a lock so the nonisolated `deinit` can cancel them.
+    @ObservationIgnored private let tasks = ObserverTasks()
 
     private(set) var miniPlayer = MiniPlayerState()
     /// Whether there is a current song, playing or paused: the mini player shows only then. Its own property, so the
@@ -236,7 +254,7 @@ final class PlayerBinding {
     @ObservationIgnored private var lastPlayer: PlayerUiState?
     @ObservationIgnored private var reportedPositionMs = 0
     @ObservationIgnored private var seekHold = SeekHold()
-    /// The song whose actions `songActionsObserver` follows, by id.
+    /// The song whose actions the `.songActions` task follows, by id.
     @ObservationIgnored private var songActionsFor: Int64?
     @ObservationIgnored private var playlistsById: [Int64: Playlist] = [:]
 
@@ -249,24 +267,22 @@ final class PlayerBinding {
     }
 
     deinit {
-        observer?.cancel()
-        playlistObserver?.cancel()
-        songActionsObserver?.cancel()
+        tasks.cancelAll()
     }
 
     private func observe() {
         let uiState = viewModel.uiState
-        observer = Task { [weak self] in
+        tasks.set(.state, Task { [weak self] in
             for await state in uiState {
                 self?.update(state)
             }
-        }
+        })
         let playlists = viewModel.playlists()
-        playlistObserver = Task { [weak self] in
+        tasks.set(.playlists, Task { [weak self] in
             for await list in playlists {
                 self?.updatePlaylists(list)
             }
-        }
+        })
     }
 
     private func update(_ state: PlayerScreenState) {
@@ -340,16 +356,16 @@ final class PlayerBinding {
     private func observeSongActions(for song: Song?) {
         guard song?.id != songActionsFor else { return }
         songActionsFor = song?.id
-        songActionsObserver?.cancel()
+        tasks.cancel(.songActions)
         guard let song else { return }
         let actions = viewModel.songActions(song: song)
-        songActionsObserver = Task { [weak self] in
+        tasks.set(.songActions, Task { [weak self] in
             for await types in actions {
                 guard let self, !Task.isCancelled else { return }
                 let mapped = types.compactMap(NowPlayingSongAction.init)
                 if mapped != nowPlaying.songActions { nowPlaying.songActions = mapped }
             }
-        }
+        })
     }
 
     private func updatePlaylists(_ list: [Playlist]) {
