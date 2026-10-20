@@ -1,0 +1,13 @@
+id: proj-ios-no-observableobject
+language: swift
+severity: warning
+message: This type conforms to ObservableObject, which the iOS architecture rejected.
+rule:
+  kind: type_identifier
+  regex: '^ObservableObject$'
+  inside:
+    kind: inheritance_specifier
+    stopBy: end
+metadata:
+  dimension: architecture
+  cites: ".claude/rules/ios.md:28"

@@ -1,0 +1,10 @@
+id: proj-ios-no-tca
+language: swift
+severity: warning
+message: This imports TCA (ComposableArchitecture), which the iOS architecture rejected.
+rule:
+  kind: import_declaration
+  regex: 'ComposableArchitecture'
+metadata:
+  dimension: architecture
+  cites: ".claude/rules/ios.md:29"

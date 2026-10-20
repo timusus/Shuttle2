@@ -1,0 +1,15 @@
+id: proj-kotlin-native-test-name-chars
+language: kotlin
+severity: warning
+message: "This backticked test name contains a character Kotlin/Native does not allow in names (one of , ; : . / \\ < > [ ]), so iosSimulatorArm64Test refuses to compile it."
+files:
+  - "**/commonTest/**/*.kt"
+  - "**/iosTest/**/*.kt"
+rule:
+  kind: simple_identifier
+  regex: '^`.*[,;:./\\<>\[\]].*`$'
+  inside:
+    kind: function_declaration
+metadata:
+  dimension: architecture
+  cites: ".claude/rules/testing.md:30"
