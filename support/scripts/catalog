@@ -7,6 +7,14 @@
 set -euo pipefail
 cd "$(dirname "$0")/../.."
 find docs/design/catalog -name '*.png' -delete 2>/dev/null || true
-./gradlew :android:designsystem:recordRoborazziDebug \
+# Record is Mac-only (goldens are Mac-recorded); remote-build.sh --local runs it under a build lease.
+if command -v remote-gradle >/dev/null 2>&1; then
+  gradle=(support/scripts/remote-build.sh --local)
+elif command -v lease >/dev/null 2>&1; then
+  gradle=(lease --class build -- ./gradlew)
+else
+  gradle=(./gradlew)
+fi
+"${gradle[@]}" :android:designsystem:recordRoborazziDebug \
   --tests '*CatalogScreenshotTest*' --tests '*CatalogPagesTest*' "$@"
 echo "Recorded $(find docs/design/catalog -name '*.png' | wc -l | tr -d ' ') boards ($(du -sh docs/design/catalog | cut -f1)) into docs/design/catalog"
