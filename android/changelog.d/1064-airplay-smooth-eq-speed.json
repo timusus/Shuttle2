@@ -1,0 +1,1 @@
+{ "type": "fixes", "text": "iOS: AirPlay playback no longer stutters, and changing the equaliser or playback speed no longer briefly cuts out the sound", "commits": [] }

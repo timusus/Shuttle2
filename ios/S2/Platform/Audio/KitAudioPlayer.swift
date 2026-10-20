@@ -49,8 +49,9 @@ final class KitAudioPlayer: NSObject, IosAudioPlayer {
         self.player = player
         self.replayGain = replayGain
         super.init()
-        // Always active, so EQ changes never need another `setProcessors`. ReplayGain levels each item before the EQ's
-        // preamp and filters, as on Android; the limiter catches the overshoot of both.
+        // Always active; the kit queues up to 30 s ahead, so a live parameter change calls `processorsChanged()` to be
+        // heard now. ReplayGain levels each item before the EQ's preamp and filters, as on Android; the limiter catches
+        // the overshoot of both.
         player.setProcessors([replayGain, equalizer, LimiterProcessor()])
         observeState()
         observeSampleRate()
@@ -356,6 +357,7 @@ final class KitAudioPlayer: NSObject, IosAudioPlayer {
             return EqualizerDesign(preampDb: filters.preampDb,
                                    coefficients: (0..<coefficients.size).map { coefficients.get(index: $0) })
         }
+        MainActor.assumeIsolated { player.processorsChanged() }
     }
 
     func setOutputSampleRateListener(listener: ((KotlinInt?) -> Void)?) {
@@ -372,6 +374,7 @@ final class KitAudioPlayer: NSObject, IosAudioPlayer {
         default: .off
         }
         replayGain.setMode(kitMode, preampDb: preampDb)
+        MainActor.assumeIsolated { player.processorsChanged() }
     }
 
     private static func key(_ entry: IosQueueEntry) -> QueueKey {

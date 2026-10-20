@@ -20,7 +20,7 @@ let package = Package(
     dependencies: [
         // Pre-1.0: pinned exactly and bumped deliberately. Its FFmpeg is one dynamic xcframework,
         // committed in the package (LGPL notes in README.md).
-        .package(url: "https://github.com/timusus/AudioPlaybackKit.git", exact: "0.15.0"),
+        .package(url: "https://github.com/timusus/AudioPlaybackKit.git", exact: "0.17.0"),
     ],
     targets: [
         .target(
