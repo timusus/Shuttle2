@@ -80,11 +80,15 @@ fi
 # --no-daemon: the secrets must not outlive this run in a daemon's environment.
 gradle_args=(--no-daemon -PversionCode="$version_code" -PversionName="$version_name")
 
+# A build lease, not remote-gradle: the keystore, API keys and Play credentials must stay on this Mac.
+lease=()
+if command -v lease >/dev/null 2>&1; then lease=(lease --class build --); fi
+
 if ((dry_run)); then
-  ./gradlew :android:app:bundleRelease "${gradle_args[@]}"
+  ${lease[@]+"${lease[@]}"} ./gradlew :android:app:bundleRelease "${gradle_args[@]}"
   echo "release-android: dry run built the bundle; nothing uploaded"
 else
   secret get shuttle2 GOOGLE_SERVICE_ACCOUNT --file "$tmp/play-credentials.json"
-  ./gradlew :android:app:publishReleaseBundle "${gradle_args[@]}" -PplayCredentials="$tmp/play-credentials.json"
+  ${lease[@]+"${lease[@]}"} ./gradlew :android:app:publishReleaseBundle "${gradle_args[@]}" -PplayCredentials="$tmp/play-credentials.json"
   echo "release-android: uploaded $version_name ($version_code) to the Play internal track"
 fi

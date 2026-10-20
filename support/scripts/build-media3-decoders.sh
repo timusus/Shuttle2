@@ -67,7 +67,11 @@ android {
 EOF
 done
 
-./gradlew --quiet :lib-decoder-flac:assembleRelease :lib-decoder-opus:assembleRelease
+# A build lease, not remote-gradle: this builds in a temp checkout outside the repo, and the
+# AARs are read back from there, which remote-gradle does not sync.
+LEASE=()
+if command -v lease >/dev/null 2>&1; then LEASE=(lease --class build --); fi
+${LEASE[@]+"${LEASE[@]}"} ./gradlew --quiet :lib-decoder-flac:assembleRelease :lib-decoder-opus:assembleRelease
 
 READELF="$(ls "$SDK_DIR/ndk/$NDK_VERSION"/toolchains/llvm/prebuilt/*/bin/llvm-readelf | head -1)"
 mkdir -p "$OUT_DIR"
