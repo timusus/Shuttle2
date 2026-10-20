@@ -105,8 +105,10 @@ fi
 mkdir -p "$dd" && echo "$pins" >"$dd/.s2-spm-pins"
 # ARCHS=arm64 here, not in project.yml: the tests share AudioPlaybackKit's targets with the app, so Xcode links them
 # as dynamic package frameworks, which ignore the project's EXCLUDED_ARCHS, and FFmpeg has no x86_64 simulator slice.
+LEASE=()
+if command -v lease >/dev/null 2>&1; then LEASE=(lease --class build --); fi
 build() {
-  xcodebuild build-for-testing -project S2.xcodeproj -scheme S2 -configuration Debug \
+  ${LEASE[@]+"${LEASE[@]}"} xcodebuild build-for-testing -project S2.xcodeproj -scheme S2 -configuration Debug \
     -destination 'generic/platform=iOS Simulator' -derivedDataPath "$dd" ARCHS=arm64 \
     -clonedSourcePackagesDirPath "$spm_cache" COMPILER_INDEX_STORE_ENABLE=NO "$@" -quiet
 }
