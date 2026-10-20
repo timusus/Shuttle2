@@ -158,15 +158,18 @@ radb() { ANDROID_ADB_SERVER_PORT="$(local_port "$LANE")" adb -s "$(serial_of "$L
 
 fallback() { echo "remote-emu: $* -- fall back to the local AVD" >&2; exit 3; }
 
-# build-brief condenses Gradle's console output when it's on PATH, keeping the
-# exit code and, on a compile failure, the file:line and message; falls back
-# to plain ./gradlew otherwise.
+# remote-build.sh (remote-gradle) builds on the WSL box or, under a build lease, on the Mac, and
+# syncs the APK back here; without remote-gradle on PATH, a leased ./gradlew, through build-brief
+# (condensed output, same exit code) when it's there.
 run_gradle() {
-  if command -v build-brief >/dev/null 2>&1; then
-    build-brief ./gradlew "$@"
-  else
-    ./gradlew "$@"
+  local lease=() runner=(./gradlew)
+  if command -v remote-gradle >/dev/null 2>&1; then
+    support/scripts/remote-build.sh "$@"
+    return
   fi
+  if command -v lease >/dev/null 2>&1; then lease=(lease --class build --); fi
+  if command -v build-brief >/dev/null 2>&1; then runner=(build-brief ./gradlew); fi
+  ${lease[@]+"${lease[@]}"} "${runner[@]}" "$@"
 }
 
 check_available() {
