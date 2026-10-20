@@ -215,6 +215,8 @@ struct ServerSignInContent: View {
     @State private var password: String
     @State private var rememberPassword: Bool
     @State private var headers: [ServerSignInState.Header]
+    /// One per header, so a row keeps its identity (focus, text cursor) when an earlier one is removed.
+    @State private var headerIds: [UUID]
     @State private var showAdvanced: Bool
 
     private enum Focus: Hashable {
@@ -229,6 +231,7 @@ struct ServerSignInContent: View {
         _password = State(initialValue: state.password)
         _rememberPassword = State(initialValue: state.rememberPassword)
         _headers = State(initialValue: state.headers)
+        _headerIds = State(initialValue: state.headers.map { _ in UUID() })
         _showAdvanced = State(initialValue: state.showAdvanced)
     }
 
@@ -349,7 +352,7 @@ struct ServerSignInContent: View {
                 .s2Switch()
                 .accessibilityIdentifier("serverSignIn.advanced")
             if showAdvanced {
-                ForEach(headers.indices, id: \.self) { index in
+                ForEach(Array(headerIds.enumerated()), id: \.element) { index, _ in
                     HStack {
                         VStack {
                             TextField("Header", text: headerBinding(index, \.name))
@@ -361,6 +364,7 @@ struct ServerSignInContent: View {
                         .autocorrectionDisabled()
                         Button("Remove Header", systemImage: "minus.circle.fill", role: .destructive) {
                             headers.remove(at: index)
+                            headerIds.remove(at: index)
                             actions.onRemoveHeader(index)
                         }
                         .labelStyle(.iconOnly)
@@ -370,6 +374,7 @@ struct ServerSignInContent: View {
                 }
                 Button("Add Header", systemImage: "plus.circle") {
                     headers.append(ServerSignInState.Header(name: "", value: ""))
+                    headerIds.append(UUID())
                     actions.onAddHeader()
                 }
                 .accessibilityIdentifier("serverSignIn.addHeader")
