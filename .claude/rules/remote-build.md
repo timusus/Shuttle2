@@ -24,10 +24,10 @@ and, on a non-zero exit, names each failing test as `Class.method: first line` (
 Different worktrees build side by side; two calls from one worktree queue on a local lock. One-time box setup:
 `support/scripts/remote-build-setup.sh` (idempotent; only checks the CI-shared SDK at `/opt/android-sdk`).
 
-Opt in with `S2_REMOTE_BUILD=1`, or `--remote-build` as the first argument to `support/scripts/unit-test` / an argument to
-`emu-verify.sh`. Line for briefs:
+`support/scripts/unit-test` goes through it by default; `--local` (or `S2_REMOTE_BUILD=0`) as its first argument keeps Gradle on
+the Mac under a build lease. `emu-verify.sh` opts in with `--remote-build`. Line for briefs:
 
-> Build with `support/scripts/unit-test --remote-build [module]`, `support/scripts/emu-verify.sh --remote-build ...`, or
+> Build with `support/scripts/unit-test [module]`, `support/scripts/emu-verify.sh --remote-build ...`, or
 > `support/scripts/remote-build.sh <tasks>` for anything else (foreground, generous timeout): it picks the Mac or the box
 > itself. The landing verify is one Mac invocation: `support/scripts/remote-build.sh --local -q testDebugUnitTest
 > :android:app:assembleDebug :android:app:verifyRoborazziDebug :android:designsystem:verifyRoborazziDebug`.

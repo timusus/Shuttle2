@@ -26,12 +26,18 @@ GRADLE_RUNNER=(./gradlew)
 if command -v build-brief >/dev/null 2>&1; then
   GRADLE_RUNNER=(build-brief ./gradlew)
 fi
-# A leading --remote-build (or S2_REMOTE_BUILD=1) runs Gradle through
-# remote-build.sh, which builds on the Mac unless it's loaded, else on the WSL
-# box, syncing the test results back here (#451, #546).
+# Gradle runs through remote-build.sh (devtools' remote-gradle: the WSL box when
+# a slot is free, else the Mac under a build lease), syncing test results back
+# here (#451, #546). A leading --local (or S2_REMOTE_BUILD=0) keeps it on the
+# Mac, still under a build lease; --remote-build is accepted for old callers.
+LEASE=()
+if command -v lease >/dev/null 2>&1; then LEASE=(lease --class build --); fi
+if [ "${1:-}" = "--local" ]; then S2_REMOTE_BUILD=0; shift; fi
 if [ "${1:-}" = "--remote-build" ]; then S2_REMOTE_BUILD=1; shift; fi
-if [ "${S2_REMOTE_BUILD:-0}" = "1" ]; then
+if [ "${S2_REMOTE_BUILD:-1}" = "1" ] && command -v remote-gradle >/dev/null 2>&1; then
   GRADLE_RUNNER=("${SCRIPT_DIR}/remote-build.sh")
+else
+  GRADLE_RUNNER=(${LEASE[@]+"${LEASE[@]}"} "${GRADLE_RUNNER[@]}")
 fi
 
 # Parse the TEST-*.xml files written since ${marker} and print each failed/
@@ -58,13 +64,13 @@ run_and_report() {
 
   # Only a tool flake if no fresh TEST-*.xml records a failure: a real test
   # failure can mention these exceptions too, and must not trigger a re-run.
-  if [ "${rc}" -ne 0 ] && [ "${GRADLE_RUNNER[0]}" = "build-brief" ] \
+  if [ "${rc}" -ne 0 ] && [[ " ${GRADLE_RUNNER[*]} " == *" build-brief "* ]] \
       && grep -qE 'EOFException|NoSuchFileException' "${outfile}" \
       && ! find "${REPO_ROOT}" -path '*/build/test-results/*/TEST-*.xml' -newer "${marker}" \
         -exec grep -lqE '<(failure|error)[ >]' {} + 2>/dev/null; then
     echo "build-brief's output parser failed (EOFException/NoSuchFileException, not a test failure); re-running with plain ./gradlew" >&2
     set +e
-    ./gradlew "$@" 2>&1 | tee "${outfile}"
+    ${LEASE[@]+"${LEASE[@]}"} ./gradlew "$@" 2>&1 | tee "${outfile}"
     rc=${PIPESTATUS[0]}
     set -e
   fi
@@ -141,8 +147,9 @@ Examples:
   support/scripts/unit-test --changed --base main --dry-run
   support/scripts/unit-test --changed-tests
 
-Set VERBOSE=1 to print each command as it runs. A leading --remote-build (or
-S2_REMOTE_BUILD=1) runs Gradle via remote-build.sh, which picks the Mac or the WSL box.
+Set VERBOSE=1 to print each command as it runs. Gradle runs via remote-build.sh,
+which picks the Mac or the WSL box. A leading --local (or S2_REMOTE_BUILD=0) keeps
+it on the Mac, under a build lease.
 EOF
 }
 
