@@ -5,14 +5,17 @@ import android.net.Uri
 import android.provider.DocumentsContract
 import java.io.FileNotFoundException
 import kotlin.coroutines.cancellation.CancellationException
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 
-object SafDirectoryHelper {
+/** Lists documents under SAF tree grants; every content resolver query runs on [ioDispatcher]. */
+class SafDirectoryHelper(
+    private val ioDispatcher: CoroutineDispatcher
+) {
     /**
      * Traverses the contents of [rootUri], building a [DocumentNodeTree] (Trie) representing the directory structure.
      *
@@ -45,7 +48,7 @@ object SafDirectoryHelper {
                 null
             }
         emit(tree?.let { TreeStatus.Complete(it) } ?: TreeStatus.Unavailable(rootUri))
-    }.flowOn(Dispatchers.IO)
+    }.flowOn(ioDispatcher)
 
     /**
      * The contents of [folder], a folder of the tree at [rootUri] that [buildFolderNodeTree] skipped, as a tree of its own.
@@ -75,7 +78,7 @@ object SafDirectoryHelper {
     suspend fun findDocument(
         contentResolver: ContentResolver,
         documentUri: Uri
-    ): DocumentLookup = withContext(Dispatchers.IO) {
+    ): DocumentLookup = withContext(ioDispatcher) {
         try {
             contentResolver.query(documentUri, DOCUMENT_PROJECTION, null, null, null).use { cursor ->
                 // A documents provider answers a query for a document that doesn't exist with no cursor
@@ -162,7 +165,7 @@ object SafDirectoryHelper {
         contentResolver: ContentResolver,
         uri: Uri,
         rootUri: Uri
-    ): List<DocumentNode> = withContext(Dispatchers.IO) {
+    ): List<DocumentNode> = withContext(ioDispatcher) {
         val documentNodes = mutableListOf<DocumentNode>()
         contentResolver.query(
             uri,

@@ -37,6 +37,7 @@ internal class TaglibPlaylists(
     private val grantedTrees: () -> List<Uri>,
     private val folders: () -> ScannerFolders,
     private val ioDispatcher: CoroutineDispatcher,
+    private val saf: SafDirectoryHelper,
     // The playlist files the last song walk found in each tree it walked, by [treeKey]
     private val walkedPlaylistFiles: () -> Map<String, List<PlaylistFile>>
 ) {
@@ -108,7 +109,7 @@ internal class TaglibPlaylists(
     }
 
     /** The playlist files in [tree], or null if it couldn't be walked in full. */
-    private suspend fun walkPlaylistFiles(tree: Uri): List<PlaylistFile>? = SafDirectoryHelper.buildFolderNodeTree(context.contentResolver, tree)
+    private suspend fun walkPlaylistFiles(tree: Uri): List<PlaylistFile>? = saf.buildFolderNodeTree(context.contentResolver, tree)
         .filterIsInstance<SafDirectoryHelper.TreeStatus.Complete>()
         .map { complete -> complete.tree.getLeaves().filter { it.isPlaylist() }.map { it.toPlaylistFile() } }
         .toList()

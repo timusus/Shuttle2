@@ -80,7 +80,9 @@ class TaglibMediaProvider(
     @Volatile
     private var walkedPlaylistFiles: Map<String, List<PlaylistFile>> = emptyMap()
 
-    private val playlists = TaglibPlaylists(context, type, grantedTrees, folders, ioDispatcher) { walkedPlaylistFiles }
+    private val saf = SafDirectoryHelper(ioDispatcher)
+
+    private val playlists = TaglibPlaylists(context, type, grantedTrees, folders, ioDispatcher, saf) { walkedPlaylistFiles }
 
     /** Reuses the listing [remapLegacySongs] read, so both see the same files and no song is moved to a path it then misses. */
     @Volatile
@@ -243,7 +245,7 @@ class TaglibMediaProvider(
         .asFlow()
         .concurrentMap((Runtime.getRuntime().availableProcessors() - 1).coerceAtLeast(1)) { (song, document) ->
             // A song that can't be found or read keeps its path, for findSongs to look up again
-            (SafDirectoryHelper.findDocument(context.contentResolver, document.uri) as? SafDirectoryHelper.DocumentLookup.Found)?.let { found ->
+            (saf.findDocument(context.contentResolver, document.uri) as? SafDirectoryHelper.DocumentLookup.Found)?.let { found ->
                 SongPathRemap(songId = song.id, path = DocumentsContract.buildDocumentUriUsingTree(document.tree, found.node.documentId).toString())
             }
         }
@@ -308,7 +310,7 @@ class TaglibMediaProvider(
             trees
                 .map { treeUri ->
                     // An excluded folder covers everything beneath it, so its songs aren't walked at all
-                    SafDirectoryHelper.buildFolderNodeTree(context.contentResolver, treeUri) { folder ->
+                    saf.buildFolderNodeTree(context.contentResolver, treeUri) { folder ->
                         val path = externalStorageTreeFolder(folder.uri.authority, folder.documentId, primaryStoragePath)
                         (path != null && !excludes.accepts("$path/")).also { excluded -> if (excluded) excludedFolders += folder }
                     }
@@ -319,7 +321,7 @@ class TaglibMediaProvider(
         // Excludes limit songs, not playlists, so the playlists in excluded folders are looked for there alone
         val excludedPlaylists =
             excludedFolders.toList().mapNotNull { folder ->
-                SafDirectoryHelper.walkFolder(context.contentResolver, folder.rootUri, folder)
+                saf.walkFolder(context.contentResolver, folder.rootUri, folder)
                     ?.let { tree -> treeKey(tree.rootUri) to tree.getLeaves().filter { it.isPlaylist() }.map { it.toPlaylistFile() } }
             }
         walkedPlaylistFiles =
@@ -415,7 +417,7 @@ class TaglibMediaProvider(
     ): Flow<Song> = songs
         .asFlow()
         .concurrentMap((Runtime.getRuntime().availableProcessors() - 1).coerceAtLeast(1)) { (song, document) ->
-            when (val lookup = SafDirectoryHelper.findDocument(context.contentResolver, document.uri)) {
+            when (val lookup = saf.findDocument(context.contentResolver, document.uri)) {
                 is SafDirectoryHelper.DocumentLookup.Found -> {
                     val node = if (document.filePath != null) lookup.node.atSecondPrecision() else lookup.node
                     walkedSong(song.path, node, merger, document.filePath?.let { path -> folderImagesNear(path, folderImageReader) }.orEmpty())
