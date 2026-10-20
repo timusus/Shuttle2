@@ -37,7 +37,15 @@ emu_resolve_apk() {
         echo "emu-lane: reusing cached APK for HEAD (${head_sha:0:12}) at $APK"
         return 0
     fi
-    gradle=(./gradlew); [ "${REMOTE_BUILD:-0}" = 1 ] && gradle=(support/scripts/remote-build.sh)
+    # remote-build.sh (remote-gradle) syncs the APK back to the Mac path read below; REMOTE_BUILD=1
+    # is kept for callers but no longer needed. Without remote-gradle: a leased ./gradlew.
+    if command -v remote-gradle >/dev/null 2>&1; then
+        gradle=(support/scripts/remote-build.sh)
+    elif command -v lease >/dev/null 2>&1; then
+        gradle=(lease --class build -- ./gradlew)
+    else
+        gradle=(./gradlew)
+    fi
     step "building assembleDebug" "${gradle[@]}" :android:app:assembleDebug -q || return 1
     APK=android/app/build/outputs/apk/debug/app-debug.apk
     if [ -z "$(git status --porcelain)" ]; then
