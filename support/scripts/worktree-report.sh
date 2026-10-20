@@ -9,7 +9,7 @@
 # (or listed landed/abandoned in ~/.claude/stale-worktrees.md), its tree is clean, it isn't
 # `git worktree lock`ed, and no process has its cwd inside it — worktree-clean.sh already checks
 # all of that. This script narrows the candidate list first: it skips worktrees named
-# "bridge-*" (owned by a bridge session, not landing state), pool slots "pool-*" (worktree-pool.sh; never
+# "bridge-*" (owned by a bridge session, not landing state), pool slots "pool-*" (devtools worktree-pool; never
 # removed, a stale lease is reaped instead) and any worktree with a file
 # modified in the last 2 hours (mid-edit, even if everything else lines up), then hands the
 # remaining names to worktree-clean.sh.
@@ -36,10 +36,10 @@ report() {  # $1 = optional label
   kb=$(( ${kb:-0} - pool_kb ))
   gb=$(awk -v k="${kb:-0}" 'BEGIN { printf "%.1f", k/1024/1024 }')
   echo "worktree-report: ${label:+$label }$count worktree(s) under .claude/worktrees, ${gb}GB"
-  # Pool slots (worktree-pool.sh) are reported separately: they are kept on purpose, never pruned.
+  # Pool slots (devtools worktree-pool) are reported separately: they are kept on purpose, never pruned.
   pool_n=$(find "$wt_dir" -mindepth 1 -maxdepth 1 -type d -name 'pool-*' 2>/dev/null | wc -l | tr -d ' ')
   if [ "$pool_n" -gt 0 ]; then
-    pool_leased=$("$here/worktree-pool.sh" list 2>/dev/null | awk -F'\t' '$2 != "free"' | wc -l | tr -d ' ')
+    pool_leased=$(worktree-pool list 2>/dev/null | awk -F'\t' '$2 != "free"' | wc -l | tr -d ' ')
     pool_gb=$(awk -v k="${pool_kb:-0}" 'BEGIN { printf "%.1f", k/1024/1024 }')
     echo "worktree-report: pool $pool_n slot(s), $pool_leased leased, $((pool_n - pool_leased)) free, ${pool_gb}GB"
   fi

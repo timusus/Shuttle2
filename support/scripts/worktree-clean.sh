@@ -54,7 +54,7 @@ while IFS=$'\t' read -r path branch locked; do
   name=${path##*/}
   case "$path" in
     "$primary/.claude/worktrees/pool-"*)
-      # Pool slots are never removed (they stay build-warm); worktree-pool.sh reap (below) releases the
+      # Pool slots are never removed (they stay build-warm); worktree-pool reap (below) releases the
       # ones whose leased branch is gone.
       kept=$((kept + 1)); echo "keep    $name (pool slot)"; continue ;;
   esac
@@ -86,7 +86,7 @@ done <<< "$list"
 
 # Pool reap detaches slots whose branch landed and names those branches; they are on main, so delete them here.
 if [ $dry = 0 ]; then
-  reaped=$("$(dirname "$0")/worktree-pool.sh" reap 2>/dev/null || true)
+  reaped=$(worktree-pool reap 2>/dev/null || true)
   while read -r tag branch; do
     [ "$tag" = landed ] && [ -n "$branch" ] && git branch -D "$branch" >/dev/null 2>&1
   done <<< "$reaped"

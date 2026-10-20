@@ -28,7 +28,7 @@ paths:
 - **Full verify.** `support/scripts/full-verify.sh` (via `detach start full-verify -- ...`) runs the whole suites
   (including `iosSimulatorArm64Test`) at `origin/main` and records the sha as the watermark; `--status` shows how far main
   is past it, SessionStart prints the same, and `/deploy-android` runs it before tagging if the watermark isn't the release commit.
-- **Worker worktree pool (#923).** `support/scripts/worktree-pool.sh lease <name>` hands a worker one of `S2_WORKTREE_POOL_SIZE`
+- **Worker worktree pool (#923).** `worktree-pool lease <name>` (devtools; on PATH) hands a worker one of `S2_WORKTREE_POOL_SIZE`
   (default 5) locked, reusable slots `.claude/worktrees/pool-<k>` on a fresh `worktree-<name>` branch at `origin/main`, so the Gradle
   configuration cache, `build/`, `ios/build/DerivedData` and Shared.framework stay warm (tracked changes and untracked non-ignored
   files are discarded at lease; ignored files stay). It prints the slot dir on stdout; exit 3 means every slot is leased, so the caller
