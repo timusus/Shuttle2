@@ -687,6 +687,14 @@ class LibraryScreenTest {
     }
 
     @Test
+    fun `a library whose server has nothing offers to sync it`() {
+        robot.setEmptyLibrary(LibraryAvailability.Empty(MusicAccess.NotRequested, hasServer = true))
+
+        robot.assertTextDisplayed("Sync now")
+        robot.assertTextNotDisplayed("Allow access to music")
+    }
+
+    @Test
     fun `a library with only this device and no permission asks for access`() {
         robot.setEmptyLibrary(LibraryAvailability.Empty(MusicAccess.NotRequested))
 

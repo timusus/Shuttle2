@@ -13,6 +13,8 @@
     <string name="sources_no_music_title">No music found</string>
     <string name="sources_no_music_message">Shuttle Music didn\'t find any music on this device. Add a folder, or connect a server.</string>
     <string name="sources_no_music_scan_message">Shuttle Music didn\'t find any music on this device. Scan again, or connect a server.</string>
+    <string name="sources_no_music_server_message">Shuttle Music didn\'t find any music on your server. Sync again, or add a folder from this device.</string>
+    <string name="sources_sync_now">Sync now</string>
     <string name="sources_scan_again">Scan again</string>
 
     <!-- Settings > Sources: a card per source with its status (#663) -->

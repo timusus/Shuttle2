@@ -1,0 +1,1 @@
+{ "type": "fixes", "text": "An empty Library no longer stays on \"Syncing your music\" when a server's first sync is cancelled, and a newly added server shows the sync instead of \"No music found\". With only a server connected, the empty Library now offers Sync now.", "commits": [] }

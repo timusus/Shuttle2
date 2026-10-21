@@ -3,6 +3,7 @@ package com.simplecityapps.shuttle.ui.screens.sources
 import com.simplecityapps.mediaprovider.SongImportState
 import com.simplecityapps.mediaprovider.SongImportStateProvider
 import com.simplecityapps.shuttle.di.AppCoroutineScope
+import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.ui.actions.ObserveSongs
 import com.simplecityapps.shuttle.ui.screens.library.LibraryAvailability
 import com.simplecityapps.shuttle.ui.screens.library.ScanProgress
@@ -10,12 +11,14 @@ import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.SingleIn
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.runningFold
 import kotlinx.coroutines.flow.stateIn
 
 /**
@@ -38,10 +41,10 @@ class MusicAccessCoordinator @Inject constructor(
             access,
             importState.songImportState,
             mediaSources.enabledTypes,
-        ) { hasSongs, access, import, enabled ->
+            firstImports(importState),
+        ) { hasSongs, access, import, enabled, firstImports ->
             val hasServer = enabled.any { !it.isLocal }
-            // A server's first import starts a moment after sign-in; until it ends, this is a sync, not a missing permission.
-            val awaitingFirstImport = hasServer && !mediaSources.hasScanned && import !is SongImportState.ImportComplete
+            val awaitingFirstImport = firstImports.pending.isNotEmpty()
             when {
                 hasSongs -> LibraryAvailability.HasMusic
 
@@ -55,6 +58,29 @@ class MusicAccessCoordinator @Inject constructor(
                 )
             }
         }.stateIn(appCoroutineScope, SharingStarted.WhileSubscribed(5_000), LibraryAvailability.Loading)
+
+    /**
+     * Which servers' first imports are still to end. A server joins when it is enabled (at launch, only if nothing has
+     * ever been scanned) and leaves when its import ends however it ends: completes, fails or is cancelled back to idle.
+     * An import that never starts stays pending until the server is disabled.
+     */
+    private fun firstImports(importState: SongImportStateProvider): Flow<FirstImports> = combine(mediaSources.enabledTypes, importState.providerImportStates) { enabled, states ->
+        Triple(enabled.filterNot { it.isLocal }.toSet(), states.filterValues { it is SongImportState.ImportProgress }.keys, states.filterValues { it is SongImportState.ImportComplete }.keys)
+    }.runningFold(FirstImports()) { previous, (servers, running, complete) ->
+        val added = if (previous.known == null) servers.takeUnless { mediaSources.hasScanned }.orEmpty() else servers - previous.known
+        val ended = (previous.started - running) + complete
+        FirstImports(
+            pending = (previous.pending + added).intersect(servers) - ended,
+            started = (previous.started + running).intersect(servers) - ended,
+            known = servers,
+        )
+    }
+
+    private data class FirstImports(
+        val pending: Set<MediaProviderType> = emptySet(),
+        val started: Set<MediaProviderType> = emptySet(),
+        val known: Set<MediaProviderType>? = null,
+    )
 
     fun onChecked(granted: Boolean, showRationale: Boolean) {
         val previous = access.value

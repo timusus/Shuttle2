@@ -77,6 +77,9 @@ class OnboardingScreenshotTest {
     fun noPermission() = shot("empty-no-permission", emptyState(LibraryAvailability.Empty(MusicAccess.NotRequested)))
 
     @Test
+    fun serverEmpty() = shot("empty-server", emptyState(LibraryAvailability.Empty(MusicAccess.NotRequested, hasServer = true)))
+
+    @Test
     fun denied() = shot("empty-denied", emptyState(LibraryAvailability.Empty(MusicAccess.PermanentlyDenied)))
 
     @Test

@@ -140,6 +140,15 @@ private fun LibraryEmptyContent(
             }
         }
 
+        // Only a server is in play: the device holds no music to add a folder for, so offer the sync first.
+        state.hasServer && state.access != MusicAccess.Granted -> EmptyState(
+            title = stringResource(R.string.sources_no_music_title),
+            message = stringResource(R.string.sources_no_music_server_message),
+            action = StateAction(stringResource(R.string.sources_sync_now), onScan),
+            secondaryAction = onAddFolder?.let { StateAction(stringResource(R.string.sources_add_folder), it) },
+            modifier = modifier.testTag("library-no-music"),
+        )
+
         // With a server connected, the device's permission isn't what's missing.
         state.access == MusicAccess.Granted || state.hasServer -> EmptyState(
             title = stringResource(R.string.sources_no_music_title),

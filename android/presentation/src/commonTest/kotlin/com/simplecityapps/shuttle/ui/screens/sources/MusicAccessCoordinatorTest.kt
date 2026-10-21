@@ -91,6 +91,44 @@ class MusicAccessCoordinatorTest {
     }
 
     @Test
+    fun `a first server import cancelled back to idle returns to the empty state`() = runTest {
+        songRepository.setSongs(emptyList())
+        mediaSources.enable(MediaProviderType.Emby)
+        val coordinator = coordinator()
+        coordinator.onChecked(granted = false, showRationale = false)
+        importState.setState(SongImportState.ImportProgress(MediaProviderType.Emby, "Syncing Emby", null))
+
+        importState.setState(SongImportState.Idle)
+
+        coordinator.availability.value shouldBe LibraryAvailability.Empty(MusicAccess.NotRequested, hasServer = true)
+    }
+
+    @Test
+    fun `a server added after a scan that found nothing shows syncing`() = runTest {
+        songRepository.setSongs(emptyList())
+        mediaSources.hasScanned = true
+        val coordinator = coordinator()
+        coordinator.onChecked(granted = true, showRationale = false)
+        coordinator.availability.value shouldBe LibraryAvailability.Empty(MusicAccess.Granted)
+
+        mediaSources.enable(MediaProviderType.Emby)
+
+        coordinator.availability.value shouldBe LibraryAvailability.Empty(MusicAccess.Granted, ScanProgress(), hasServer = true)
+    }
+
+    @Test
+    fun `a first server import's progress wins over the placeholder`() = runTest {
+        songRepository.setSongs(emptyList())
+        mediaSources.enable(MediaProviderType.Emby)
+        val coordinator = coordinator()
+        coordinator.onChecked(granted = false, showRationale = false)
+
+        importState.setState(SongImportState.ImportProgress(MediaProviderType.Emby, "Syncing Emby", Progress(1, 4)))
+
+        coordinator.availability.value shouldBe LibraryAvailability.Empty(MusicAccess.NotRequested, ScanProgress("Syncing Emby", 0.25f), hasServer = true)
+    }
+
+    @Test
     fun `a grant from the prompt enables the S2 scanner and scans`() = runTest {
         songRepository.setSongs(emptyList())
         val coordinator = coordinator()
