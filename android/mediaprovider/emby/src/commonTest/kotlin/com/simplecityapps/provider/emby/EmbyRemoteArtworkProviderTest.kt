@@ -60,8 +60,31 @@ class EmbyRemoteArtworkProviderTest {
     @Test
     fun `a song whose album has no image shows its own primary image`() = runTest {
         server.respond("/Users/user-1/Items/105", "item_own_image.json")
+        server.respond("/Users/user-1/Items/202", "album_no_image.json")
 
         provider.getAlbumArtworkUrl(song("emby://item/105")) shouldBe "${server.address}/Items/105/Images/Primary?maxWidth=1000&maxHeight=1000"
+    }
+
+    @Test
+    fun `a song with its own image still shows the album's image when Emby sends no album image tag`() = runTest {
+        server.respond("/Users/user-1/Items/105", "item_own_image.json")
+        server.respond("/Users/user-1/Items/202", "album_with_image.json")
+
+        provider.getAlbumArtworkUrl(song("emby://item/105")) shouldBe "${server.address}/Items/202/Images/Primary?maxWidth=1000&maxHeight=1000"
+    }
+
+    @Test
+    fun `a song borrowing a sibling's image shows the album's image when the album has one`() = runTest {
+        server.respond("/Users/user-1/Items/202", "album_with_image.json")
+
+        provider.getAlbumArtworkUrl(song("emby://item/107").copy(serverAlbumId = "202", artworkItemId = "105")) shouldBe "${server.address}/Items/202/Images/Primary?maxWidth=1000&maxHeight=1000"
+    }
+
+    @Test
+    fun `a song borrowing a sibling's image shows it when the album has none`() = runTest {
+        server.respond("/Users/user-1/Items/202", "album_no_image.json")
+
+        provider.getAlbumArtworkUrl(song("emby://item/107").copy(serverAlbumId = "202", artworkItemId = "105")) shouldBe "${server.address}/Items/105/Images/Primary?maxWidth=1000&maxHeight=1000"
     }
 
     @Test

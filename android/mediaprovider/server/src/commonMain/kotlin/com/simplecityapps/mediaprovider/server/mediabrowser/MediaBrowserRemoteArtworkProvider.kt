@@ -1,11 +1,14 @@
 package com.simplecityapps.mediaprovider.server.mediabrowser
 
 import com.simplecityapps.mediaprovider.RemoteArtworkProvider
+import com.simplecityapps.mediaprovider.server.AuthenticatedCredentials
 import com.simplecityapps.networking.retrofit.NetworkResult
 import com.simplecityapps.shuttle.model.Song
 import io.ktor.http.parseUrl
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
-/** Artwork urls on the signed-in server; the song's own image when its album has none; null when the server doesn't know the song's album, or when signed out. */
+/** Artwork urls on the signed-in server; the album's image, else the song's own; null when the server doesn't know the song's album, or when signed out. */
 open class MediaBrowserRemoteArtworkProvider(
     private val authenticationManager: MediaBrowserAuthenticationManager,
     private val itemsService: ItemsService
@@ -15,25 +18,42 @@ open class MediaBrowserRemoteArtworkProvider(
     override fun handles(scheme: String?): Boolean = scheme == this.scheme
 
     override suspend fun getAlbumArtworkUrl(song: Song): String? {
-        song.artworkItemId?.let { sibling ->
-            val address = authenticationManager.getAddress() ?: return null
-            if (authenticationManager.getAuthenticatedCredentials() == null) return null
-            return primaryImageUrl(address, sibling)
-        }
-        val itemId = parseUrl(song.path)?.segments?.lastOrNull() ?: return null
         val address = authenticationManager.getAddress() ?: return null
-        val authenticatedCredentials = authenticationManager.getAuthenticatedCredentials() ?: return null
+        val credentials = authenticationManager.getAuthenticatedCredentials() ?: return null
 
-        val result = authenticationManager.checkSession(authenticatedCredentials, itemsService.item(address, authenticatedCredentials.accessToken, authenticatedCredentials.userId, itemId))
-        if (result is NetworkResult.Success) {
-            val item = result.body
-            // An album with no image of its own 404s, while its songs may carry one each
-            if (item.albumPrimaryImageTag == null && item.imageTags.containsKey("Primary")) return primaryImageUrl(address, item.id)
-            val albumId = item.albumId ?: return null
-            return primaryImageUrl(address, albumId)
+        val sibling = song.artworkItemId
+        if (sibling != null) {
+            // Emby sends no album image tag, so a stored version can't say whether the album has an image
+            val albumId = song.serverAlbumId
+            return primaryImageUrl(address, if (albumId != null && albumHasImage(address, credentials, albumId)) albumId else sibling)
         }
 
-        return null
+        val itemId = parseUrl(song.path)?.segments?.lastOrNull() ?: return null
+        val result = authenticationManager.checkSession(credentials, itemsService.item(address, credentials.accessToken, credentials.userId, itemId))
+        if (result !is NetworkResult.Success) return null
+        val item = result.body
+        val albumId = item.albumId
+        val hasOwnImage = item.imageTags.containsKey("Primary")
+        if (albumId == null) return if (hasOwnImage) primaryImageUrl(address, item.id) else null
+        // An album with no image of its own 404s, while its songs may carry one each
+        if (item.albumPrimaryImageTag != null || !hasOwnImage || albumHasImage(address, credentials, albumId)) return primaryImageUrl(address, albumId)
+        return primaryImageUrl(address, item.id)
+    }
+
+    private val albumImages = mutableMapOf<String, Boolean>()
+
+    private val albumImagesLock = Mutex()
+
+    private suspend fun albumHasImage(
+        address: String,
+        credentials: AuthenticatedCredentials,
+        albumId: String
+    ): Boolean = albumImagesLock.withLock {
+        albumImages[albumId]?.let { return@withLock it }
+        val result = authenticationManager.checkSession(credentials, itemsService.item(address, credentials.accessToken, credentials.userId, albumId))
+        // A failed lookup assumes the image exists, as before songs could fall back, and isn't remembered
+        if (result !is NetworkResult.Success) return@withLock true
+        result.body.let { it.albumPrimaryImageTag != null || it.imageTags.containsKey("Primary") }.also { albumImages[albumId] = it }
     }
 
     /** The artist item's own primary image: the song's item needn't be asked, the artist's id being known already. */
