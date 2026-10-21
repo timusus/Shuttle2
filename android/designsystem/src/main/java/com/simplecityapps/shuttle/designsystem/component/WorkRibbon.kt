@@ -78,7 +78,7 @@ fun S2WorkRibbon(
                 if (continuous) {
                     Box(Modifier.fillMaxSize().tapTarget(openListLabel, onOpenList))
                 } else {
-                    Row(Modifier.fillMaxSize()) {
+                    Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(SegmentGap)) {
                         segments.forEachIndexed { i, length ->
                             val fraction = (length / total).coerceAtLeast(0.001f)
                             val target = if (barWidth * fraction >= MinJumpWidth) Modifier.tapTarget(segmentLabel(i)) { onSegmentClick(i) } else Modifier.tapTarget(openListLabel, onOpenList)
@@ -117,7 +117,7 @@ private fun Bar(
     // Quieter than the seek bar's solid primary: earlier movements and the track are muted, only the current fill is accent.
     val muted = MaterialTheme.colorScheme.onSurfaceVariant
     val played = muted.copy(alpha = 0.6f)
-    val track = muted.copy(alpha = 0.2f)
+    val track = muted.copy(alpha = 0.3f)
     val current = MaterialTheme.colorScheme.primary
     Row(modifier.fillMaxWidth().height(BarHeight).clip(CircleShape), horizontalArrangement = Arrangement.spacedBy(gap)) {
         segments.forEachIndexed { i, length ->
