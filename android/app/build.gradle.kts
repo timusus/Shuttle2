@@ -402,7 +402,7 @@ fun versionName(): String = findProperty("versionName")?.toString() ?: getVersio
 fun versionCode(): Int = findProperty("versionCode")?.toString()?.toIntOrNull() ?: getVersionFromGitTag().first
 
 roborazzi {
-    outputDir.set(file("src/test/snapshots/images"))
+    outputDir.set(layout.projectDirectory.dir("src/test/snapshots/images"))
 }
 
 class MissingEnvVarException(private val name: String) : Exception() {

@@ -40,7 +40,7 @@ kotlin {
 // The catalogue boards are recorded straight into the review pages: `recordRoborazziDebug` writes
 // docs/design/catalog/<component>/*.png, and support/scripts/catalog regenerates the index.
 roborazzi {
-    outputDir.set(rootProject.file("docs/design/catalog"))
+    outputDir.set(rootProject.layout.projectDirectory.dir("docs/design/catalog"))
 }
 
 dependencies {

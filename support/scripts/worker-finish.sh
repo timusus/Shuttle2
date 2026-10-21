@@ -16,7 +16,8 @@
 # --record-screenshots lists the PNGs it changed (designsystem via support/scripts/catalog, which also
 # rewrites the index pages); with --dry-run it restores them afterwards.
 # The message must carry the `Changelog:` trailer when the commit-msg hook asks for one
-# (`Changelog: none` for tooling). --no-test skips the test run, for docs-only changes.
+# (`Changelog: none` for tooling). --no-test skips the test run, for docs-only changes;
+# with --record-screenshots it still records the baselines (a baseline-only change).
 # --dry-run runs every check but stages and commits nothing. --record-screenshots re-records those
 # modules' baselines instead of verifying them and commits the PNGs with the change.
 # Exits non-zero WITHOUT committing on failure, naming the failing task/tests and keeping the log
@@ -196,7 +197,10 @@ if [ "$run_tests" = 1 ]; then
     whole="$(grep -c 'running whole' "$log")"
     echo "tests: ok ($classes mapped classes, $whole whole-module runs, $((SECONDS - start))s)"
   fi
+fi
 
+# --record-screenshots with --no-test records the baselines and skips the unit tests.
+if [ "$run_tests" = 1 ] || [ "$record" = 1 ]; then
   if [ "${#shot_tasks[@]}" -gt 0 ]; then
     # The app's goldens render the other modules' components, so any UI change verifies it too.
     add_shot_module :android:app
@@ -248,9 +252,6 @@ if [ "$run_tests" = 1 ]; then
   elif [ "$record" = 1 ]; then
     echo "screenshots: no Roborazzi module changed, nothing to record"
   fi
-elif [ "$record" = 1 ]; then
-  echo "--record-screenshots needs the test step; drop --no-test" >&2
-  exit 2
 elif [ "${#shot_tasks[@]}" -gt 0 ]; then
   echo "--no-test would skip the screenshot verify for ${shot_tasks[*]}; drop --no-test" >&2
   exit 2
