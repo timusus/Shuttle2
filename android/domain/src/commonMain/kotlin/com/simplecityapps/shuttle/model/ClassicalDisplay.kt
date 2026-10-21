@@ -5,13 +5,15 @@ package com.simplecityapps.shuttle.model
  * SHOWMOVEMENT=0 vetoes the tags so the title shows; grouping reads the raw tags, so such a song still joins a work around it.
  */
 val Song.isClassical: Boolean
-    get() = showMovement != false && (!movementName.isNullOrBlank() || (movementNumber ?: 0) >= 1 || showMovement == true)
+    get() = showMovement != false && (hasMovementTags || showMovement == true)
+
+private val Song.hasMovementTags: Boolean get() = !movementName.isNullOrBlank() || (movementNumber ?: 0) >= 1
 
 /** [isClassical] unless the song's genre is a popular one, which a stray movement tag on a pop track doesn't override. */
 val Song.showsMovementLabel: Boolean
     get() = isClassical && !hasNonClassicalGenre(genres)
 
-private fun Song.hasClassicalSignal(): Boolean = isClassical || !conductor.isNullOrBlank() || hasClassicalGenre(genres) ||
+private fun Song.hasClassicalSignal(): Boolean = hasMovementTags || showMovement == true || !conductor.isNullOrBlank() || hasClassicalGenre(genres) ||
     listOfNotNull(work, name, album).any { catalogueSearchKeys(it).isNotEmpty() }
 
 /**

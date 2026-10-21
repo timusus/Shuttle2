@@ -266,6 +266,33 @@ class AlbumRowsTest {
     }
 
     @Test
+    fun `lone tracks by composers A B A get three headings in order`() {
+        val songs = sonata("Ines Varga") + listOf(
+            movement(null, "Rondo", "Ada Alder", track = 4),
+            movement(null, "Fantasy", "Bea Birch", track = 5),
+            movement(null, "Etude", "Ada Alder", track = 6),
+        )
+
+        val rows = buildAlbumRows(songs, albumArtist = "Ines Varga", currentSongId = null, toggled = emptySet())!!.rows
+
+        rows.filterIsInstance<AlbumRow.ComposerHeading>().map { it.name } shouldBe listOf("Alder", "Birch", "Alder")
+    }
+
+    @Test
+    fun `a track without a composer does not split a composer run`() {
+        val songs = sonata("Ines Varga") + listOf(
+            movement(null, "Rondo", "Ada Alder", track = 4),
+            movement(null, "Bonus", composer = null, track = 5),
+            movement(null, "Etude", "Ada Alder", track = 6),
+            movement(null, "Fantasy", "Bea Birch", track = 7),
+        )
+
+        val rows = buildAlbumRows(songs, albumArtist = "Ines Varga", currentSongId = null, toggled = emptySet())!!.rows
+
+        rows.filterIsInstance<AlbumRow.ComposerHeading>().map { it.name } shouldBe listOf("Alder", "Birch")
+    }
+
+    @Test
     fun `an album starting with a work on disc one has no leading disc divider`() {
         val songs = sonata() + listOf(
             movement("Prelude in D", "I. Slow", track = 1, disc = 2),

@@ -29,6 +29,16 @@ class ClassicalDisplayTest {
     }
 
     @Test
+    fun `a work whose movements all hide their numbers still groups as classical`() {
+        val movements = (1..3).map { n ->
+            song(id = n.toLong()).copy(work = "Sonata in A", name = "Movement $n", movementName = "Mvt $n", movementNumber = n, showMovement = false)
+        }
+
+        movements.isClassicalBlock() shouldBe true
+        movements.map { it.isClassical } shouldBe listOf(false, false, false)
+    }
+
+    @Test
     fun `the movement label uses roman numerals`() {
         song(id = 1).copy(movementName = "Allegro", movementNumber = 4).movementLabel() shouldBe "IV. Allegro"
         song(id = 1).copy(movementName = "Finale", movementNumber = 9).movementLabel() shouldBe "IX. Finale"
