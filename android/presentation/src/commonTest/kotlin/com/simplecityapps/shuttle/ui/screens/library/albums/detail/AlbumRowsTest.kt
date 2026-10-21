@@ -213,6 +213,59 @@ class AlbumRowsTest {
     }
 
     @Test
+    fun `a lone track tagged with a movement but SHOWMOVEMENT=0 renders by its title`() {
+        val songs = sonata() + movement(null, "Introduction and Rondo", composer = null).copy(movementName = "Andante. Rondo", movementNumber = 3, showMovement = false)
+
+        val track = buildAlbumRows(songs, albumArtist = "Ines Varga", currentSongId = null, toggled = emptySet())!!.rows.last().shouldBeInstanceOf<AlbumRow.Track>()
+
+        track.title shouldBe "Introduction and Rondo"
+    }
+
+    private fun recital() = listOf(
+        movement("Sonata in A", "I. Allegro", "Ada Alder", track = 1),
+        movement("Sonata in A", "II. Adagio", "Ada Alder", track = 2),
+        movement(null, "Rondo", "Bea Birch", track = 3),
+        movement(null, "Fantasy", "Cy Cedar", track = 4),
+        movement(null, "Etude", "Cy Cedar", track = 5),
+    )
+
+    @Test
+    fun `a recital of one work and lone tracks shows a heading per composer run`() {
+        val rows = buildAlbumRows(recital(), albumArtist = "Ines Varga", currentSongId = null, toggled = emptySet())!!.rows
+
+        rows.filterIsInstance<AlbumRow.ComposerHeading>().map { it.name } shouldBe listOf("Alder", "Birch", "Cedar")
+        rows.map { it::class.simpleName } shouldBe listOf(
+            "ComposerHeading", "WorkHeader", "Movement", "Movement",
+            "ComposerHeading", "Track",
+            "ComposerHeading", "Track", "Track",
+        )
+    }
+
+    @Test
+    fun `a lone track by another composer between two works sits under its own heading`() {
+        val songs = sonata("Ada Alder") + movement(null, "Rondo", "Bea Birch") + listOf(
+            movement("Prelude in D", "I. Slow", "Cy Cedar"),
+            movement("Prelude in D", "II. Fast", "Cy Cedar"),
+        )
+
+        val rows = buildAlbumRows(songs, albumArtist = "Ines Varga", currentSongId = null, toggled = emptySet())!!.rows
+
+        val heading = rows.indexOfFirst { it is AlbumRow.ComposerHeading && it.name == "Birch" }
+        rows[heading + 1].shouldBeInstanceOf<AlbumRow.Track>()
+        rows.filterIsInstance<AlbumRow.ComposerHeading>().map { it.name } shouldBe listOf("Alder", "Birch", "Cedar")
+    }
+
+    @Test
+    fun `a lone track without a composer tag does not break the run`() {
+        val songs = recital() + movement(null, "Bonus", composer = null, track = 6)
+
+        val rows = buildAlbumRows(songs, albumArtist = "Ines Varga", currentSongId = null, toggled = emptySet())!!.rows
+
+        rows.filterIsInstance<AlbumRow.ComposerHeading>().map { it.name } shouldBe listOf("Alder", "Birch", "Cedar")
+        rows.last().shouldBeInstanceOf<AlbumRow.Track>().title shouldBe "Bonus"
+    }
+
+    @Test
     fun `an album starting with a work on disc one has no leading disc divider`() {
         val songs = sonata() + listOf(
             movement("Prelude in D", "I. Slow", track = 1, disc = 2),

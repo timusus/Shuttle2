@@ -89,8 +89,13 @@ fun buildAlbumRows(songs: List<Song>, albumArtist: String?, currentSongId: Long?
 
     fun WorkBlock.composerName(): String? = this.songs.firstOrNull { it.composerName() != null }?.shownComposer()
 
-    val composers = blocks.mapNotNull { it.composerName() }.distinct()
-    val headings = composers.size > 1
+    fun AlbumItem.composer(): String? = when (this) {
+        is AlbumItem.Work -> block.composerName()
+        is AlbumItem.Track -> song.shownComposer()
+    }
+
+    // Lone tracks count too: a recital is mostly lone pieces. An untagged one (a bonus track) neither opens nor breaks a run.
+    val headings = items.mapNotNull { it.composer() }.distinct().size > 1
     val multiDisc = songs.mapTo(HashSet()) { it.disc ?: 1 }.size > 1
     val playIndexes = songs.withIndex().associate { (index, song) -> song.id to index }
 
@@ -107,20 +112,23 @@ fun buildAlbumRows(songs: List<Song>, albumArtist: String?, currentSongId: Long?
     }
 
     items.forEach { item ->
+        if (headings) {
+            item.composer()?.takeIf { it != lastComposer }?.let {
+                val first = if (item is AlbumItem.Work) item.block.songs else listOf((item as AlbumItem.Track).song)
+                rows += AlbumRow.ComposerHeading(it, first.first().id, first.firstNotNullOfOrNull { s -> s.composerName() }?.name)
+                lastComposer = it
+            }
+        }
         when (item) {
             is AlbumItem.Track -> {
-                discDivider(item.song, beforeWork = false)
                 val song = item.song
+                discDivider(song, beforeWork = false)
                 rows += AlbumRow.Track(song, if (song.showsMovementLabel) song.movementLabel() else song.name, song.id == currentSongId, playIndexes.getValue(song.id))
             }
 
             is AlbumItem.Work -> {
                 val block = item.block
                 val first = block.songs.first()
-                if (headings) {
-                    block.composerName()?.takeIf { it != lastComposer }?.let { rows += AlbumRow.ComposerHeading(it, first.id, block.songs.firstNotNullOfOrNull { s -> s.composerName() }?.name) }
-                    lastComposer = block.composerName()
-                }
                 discDivider(first, beforeWork = true)
                 val collapsed = block.collapsedByDefault != (first.id in toggled)
                 rows += AlbumRow.WorkHeader(
