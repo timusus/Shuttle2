@@ -11,7 +11,6 @@ import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.SingleIn
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -35,13 +34,36 @@ class MusicAccessCoordinator @Inject constructor(
 ) {
     private val access = MutableStateFlow<MusicAccess?>(null)
 
+    /**
+     * Which servers' first imports are still to end. A server joins when it is enabled (at launch, only if nothing has
+     * ever been scanned) and leaves when its import ends however it ends: completes, fails or is cancelled back to idle.
+     * An import that never starts stays pending until the server is disabled. Held for the process, not for the
+     * subscribers of [availability]: a cancelled import never marks the library scanned, so refolding on resubscribe
+     * would put the server back to pending with nothing running. `enabledTypes` is a StateFlow, so the launch state is
+     * read synchronously and there is no window before it loads.
+     */
+    private val firstImports: StateFlow<FirstImports> = run {
+        val launchServers = mediaSources.enabledTypes.value.filterNot { it.isLocal }.toSet()
+        val launch = FirstImports(pending = launchServers.takeUnless { mediaSources.hasScanned }.orEmpty(), known = launchServers)
+        combine(mediaSources.enabledTypes, importState.providerImportStates) { enabled, states ->
+            Triple(enabled.filterNot { it.isLocal }.toSet(), states.filterValues { it is SongImportState.ImportProgress }.keys, states.filterValues { it is SongImportState.ImportComplete }.keys)
+        }.runningFold(launch) { previous, (servers, running, complete) ->
+            val ended = (previous.started - running) + complete
+            FirstImports(
+                pending = (previous.pending + (servers - previous.known)).intersect(servers) - ended,
+                started = (previous.started + running).intersect(servers) - ended,
+                known = servers,
+            )
+        }.stateIn(appCoroutineScope, SharingStarted.Eagerly, launch)
+    }
+
     val availability: StateFlow<LibraryAvailability> =
         combine(
             observeSongs(includeUnavailable = true).map { songs -> songs.isNotEmpty() }.distinctUntilChanged(),
             access,
             importState.songImportState,
             mediaSources.enabledTypes,
-            firstImports(importState),
+            firstImports,
         ) { hasSongs, access, import, enabled, firstImports ->
             val hasServer = enabled.any { !it.isLocal }
             val awaitingFirstImport = firstImports.pending.isNotEmpty()
@@ -59,27 +81,10 @@ class MusicAccessCoordinator @Inject constructor(
             }
         }.stateIn(appCoroutineScope, SharingStarted.WhileSubscribed(5_000), LibraryAvailability.Loading)
 
-    /**
-     * Which servers' first imports are still to end. A server joins when it is enabled (at launch, only if nothing has
-     * ever been scanned) and leaves when its import ends however it ends: completes, fails or is cancelled back to idle.
-     * An import that never starts stays pending until the server is disabled.
-     */
-    private fun firstImports(importState: SongImportStateProvider): Flow<FirstImports> = combine(mediaSources.enabledTypes, importState.providerImportStates) { enabled, states ->
-        Triple(enabled.filterNot { it.isLocal }.toSet(), states.filterValues { it is SongImportState.ImportProgress }.keys, states.filterValues { it is SongImportState.ImportComplete }.keys)
-    }.runningFold(FirstImports()) { previous, (servers, running, complete) ->
-        val added = if (previous.known == null) servers.takeUnless { mediaSources.hasScanned }.orEmpty() else servers - previous.known
-        val ended = (previous.started - running) + complete
-        FirstImports(
-            pending = (previous.pending + added).intersect(servers) - ended,
-            started = (previous.started + running).intersect(servers) - ended,
-            known = servers,
-        )
-    }
-
     private data class FirstImports(
         val pending: Set<MediaProviderType> = emptySet(),
         val started: Set<MediaProviderType> = emptySet(),
-        val known: Set<MediaProviderType>? = null,
+        val known: Set<MediaProviderType> = emptySet(),
     )
 
     fun onChecked(granted: Boolean, showRationale: Boolean) {

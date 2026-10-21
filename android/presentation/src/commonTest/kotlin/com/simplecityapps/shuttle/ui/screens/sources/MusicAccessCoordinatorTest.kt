@@ -20,9 +20,11 @@ import kotlin.test.Test
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
@@ -101,6 +103,61 @@ class MusicAccessCoordinatorTest {
         importState.setState(SongImportState.Idle)
 
         coordinator.availability.value shouldBe LibraryAvailability.Empty(MusicAccess.NotRequested, hasServer = true)
+    }
+
+    @Test
+    fun `a first server import that completes stops syncing`() = runTest {
+        songRepository.setSongs(emptyList())
+        mediaSources.enable(MediaProviderType.Emby)
+        val coordinator = coordinator()
+        coordinator.onChecked(granted = false, showRationale = false)
+
+        importState.setState(SongImportState.ImportComplete(MediaProviderType.Emby, error = null))
+
+        coordinator.availability.value shouldBe LibraryAvailability.Empty(MusicAccess.NotRequested, hasServer = true)
+    }
+
+    @Test
+    fun `syncing continues while another server's first import is still pending`() = runTest {
+        songRepository.setSongs(emptyList())
+        mediaSources.enable(MediaProviderType.Emby)
+        mediaSources.enable(MediaProviderType.Plex)
+        val coordinator = coordinator()
+        coordinator.onChecked(granted = false, showRationale = false)
+
+        importState.setState(SongImportState.ImportComplete(MediaProviderType.Emby, error = null))
+
+        coordinator.availability.value shouldBe LibraryAvailability.Empty(MusicAccess.NotRequested, ScanProgress(), hasServer = true)
+    }
+
+    @Test
+    fun `the first emission after launch already shows a pending first import as syncing`() = runTest {
+        songRepository.setSongs(emptyList())
+        mediaSources.enable(MediaProviderType.Emby)
+        val coordinator = MusicAccessCoordinator(ObserveSongs(songRepository, FakeOfflineSongs().filter), importState, mediaSources, settings, CoroutineScope(UnconfinedTestDispatcher(testScheduler)))
+        coordinator.onChecked(granted = false, showRationale = false)
+
+        val first = coordinator.availability.first { it != LibraryAvailability.Loading }
+
+        first shouldBe LibraryAvailability.Empty(MusicAccess.NotRequested, ScanProgress(), hasServer = true)
+    }
+
+    @Test
+    fun `a cancelled first import stays ended after the library screen is left and reopened`() = runTest {
+        songRepository.setSongs(emptyList())
+        mediaSources.enable(MediaProviderType.Emby)
+        val coordinator = MusicAccessCoordinator(ObserveSongs(songRepository, FakeOfflineSongs().filter), importState, mediaSources, settings, CoroutineScope(UnconfinedTestDispatcher(testScheduler)))
+        coordinator.onChecked(granted = false, showRationale = false)
+        val screen = launch(UnconfinedTestDispatcher(testScheduler)) { coordinator.availability.collect {} }
+        importState.setState(SongImportState.ImportProgress(MediaProviderType.Emby, "Syncing Emby", null))
+        importState.setState(SongImportState.Idle)
+
+        screen.cancel()
+        advanceTimeBy(6_000)
+        val reopened = launch(UnconfinedTestDispatcher(testScheduler)) { coordinator.availability.collect {} }
+
+        coordinator.availability.value shouldBe LibraryAvailability.Empty(MusicAccess.NotRequested, hasServer = true)
+        reopened.cancel()
     }
 
     @Test
