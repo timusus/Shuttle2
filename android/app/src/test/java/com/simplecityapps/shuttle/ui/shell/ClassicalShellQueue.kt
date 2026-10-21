@@ -13,10 +13,17 @@ private val SymphonyMovements = listOf("Allegro con brio", "Andante con moto", "
 fun classicalShellQueue(
     movements: Int = SymphonyMovements.size,
     playing: Int = 1,
+    /** The last movement is split over every track from the fourth on, all tagged movement 4 of 4. */
+    splitFinale: Boolean = false,
 ): PlayerUiState {
     val songs = sampleSongs(movements).mapIndexed { index, song ->
         song.copy(
-            name = SymphonyMovements.getOrNull(index)?.takeIf { movements == SymphonyMovements.size } ?: "Variation ${index + 1}",
+            name = when {
+                splitFinale -> SymphonyMovements.getOrNull(index) ?: "Allegro, part ${index - 2}"
+                else -> SymphonyMovements.getOrNull(index)?.takeIf { movements == SymphonyMovements.size } ?: "Variation ${index + 1}"
+            },
+            movementNumber = if (splitFinale) minOf(index + 1, 4) else null,
+            movementTotal = if (splitFinale) 4 else null,
             composer = "Harrow",
             composerSort = "Harrow, Ines",
             conductor = "Mira Calder",

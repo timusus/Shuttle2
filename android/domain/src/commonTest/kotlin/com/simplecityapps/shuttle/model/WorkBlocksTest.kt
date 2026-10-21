@@ -178,13 +178,26 @@ class WorkBlocksTest {
     }
 
     @Test
-    fun `a repeated tagged movement number keeps its numeral`() {
+    fun `a repeated tagged movement number shows its numeral once`() {
         val songs = listOf(
             movement(1, "Symphony No. 5", "Allegro", 1).copy(movementNumber = 2, movementTotal = 4),
             movement(2, "Symphony No. 5", "Andante", 2).copy(movementNumber = 2, movementTotal = 4)
         )
         val block = (groupWorks(songs).single() as AlbumItem.Work).block
-        block.movements.map { it.numeral } shouldBe listOf("II", "II")
+        block.movements.map { it.numeral } shouldBe listOf("II", null)
+    }
+
+    @Test
+    fun `the ribbon has one segment per movement when a movement is split over tracks`() {
+        val songs = listOf(1, 2, 2, 2, 3).mapIndexed { i, n ->
+            movement(i + 1L, "Symphony No. 5", "Part $i", i + 1).copy(movementNumber = n, movementTotal = 3, duration = 60_000)
+        }
+        val progress = workProgress(songs, 2, 30_000)!!
+        progress.segments shouldBe listOf(60_000L, 180_000L, 60_000L)
+        progress.segmentStarts shouldBe listOf(0, 1, 4)
+        progress.currentSegment shouldBe 1
+        progress.currentSegmentOffsetMs shouldBe 60_000L
+        nowPlayingWork(songs, 2)!!.tracks.map { it.numeral } shouldBe listOf("I", "II", "", "", "III")
     }
 
     @Test

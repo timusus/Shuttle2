@@ -16,6 +16,15 @@ data class WorkProgress(
     val currentSegmentOffsetMs: Long = 0
 )
 
+/** Track ranges of the block's movements: consecutive tracks sharing a movement number are one movement. */
+internal fun WorkBlock.movementGroups(): List<IntRange> {
+    val groups = mutableListOf<IntRange>()
+    movements.forEachIndexed { index, movement ->
+        if (index > 0 && movement.number == movements[index - 1].number) groups[groups.lastIndex] = groups.last().first..index else groups += index..index
+    }
+    return groups
+}
+
 /** Null when the song at [index] is not part of a work of two or more movements. [positionMs] is the playback position in that song. */
 fun workProgress(queue: List<Song>, index: Int, positionMs: Long = 0): WorkProgress? {
     if (index !in queue.indices) return null
@@ -25,7 +34,7 @@ fun workProgress(queue: List<Song>, index: Int, positionMs: Long = 0): WorkProgr
 
 internal fun workProgress(run: Run, block: WorkBlock, index: Int, positionMs: Long): WorkProgress {
     val current = index - run.range.first
-    val ranges = block.acts.map { it.movements }.ifEmpty { block.movements.indices.map { it..it } }
+    val ranges = block.acts.map { it.movements }.ifEmpty { block.movementGroups() }
     val durations = block.movements.map { it.song.duration.toLong() }
     val segments = ranges.map { range -> range.sumOf { durations[it] } }
     val played = positionMs.coerceIn(0, durations[current])

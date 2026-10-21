@@ -73,9 +73,9 @@ internal fun buildBlock(songs: List<Song>, work: String, inferred: Boolean, albu
         val tagged = song.movementNumber?.takeIf { it >= 1 }
         val fromTitle = if (tagged == null) movementNumberIn(raw, work, loose) else null
         val number = tagged ?: fromTitle ?: (index + 1)
-        // A movement split over several tracks ("V. ...", "V. ...") is numbered on its first track only; a tagged number is never repeated by mistake.
-        val repeated = fromTitle != null && fromTitle == previous
-        previous = fromTitle
+        // A movement split over several tracks ("V. ...", "V. ...") is numbered on its first track only.
+        val repeated = number == previous
+        previous = number
         val numeral = if (!repeated && (songs.size > 1 || song.movementNumber != null) && numbering.styleFor(name) != NumeralStyle.None) numbering.format(number) else null
         Movement(song, number, name, numeral)
     }

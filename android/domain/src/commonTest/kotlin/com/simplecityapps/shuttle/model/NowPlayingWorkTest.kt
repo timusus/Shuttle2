@@ -75,7 +75,7 @@ class NowPlayingWorkTest {
         continuation.ordinal shouldBe "V"
         continuation.movement shouldBe "V. Langsam"
         continuation.ribbon.movementCount shouldBe 8
-        continuation.ribbon.segments.size shouldBe 8
+        continuation.ribbon.segments.size shouldBe 5
         continuation.ordinals shouldBe listOf("I", "II", "III", "IV", "V", "V", "V", "V")
     }
 

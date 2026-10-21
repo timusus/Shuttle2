@@ -53,7 +53,10 @@ fun nowPlayingWork(queue: List<Song>, index: Int, library: Collection<ComposerNa
         ordinal = position(block.numbering, movement.number),
         total = position(block.numbering, block.movementTotal),
         ordinals = block.movements.map { position(block.numbering, it.number) },
-        tracks = block.movements.map { WorkTrack(position(block.numbering, it.number), it.name.ifEmpty { it.song.name.orEmpty() }, it.song.duration.toLong()) }
+        tracks = block.movements.mapIndexed { i, it ->
+            val numeral = if (i > 0 && it.number == block.movements[i - 1].number) "" else position(block.numbering, it.number)
+            WorkTrack(numeral, it.name.ifEmpty { it.song.name.orEmpty() }, it.song.duration.toLong())
+        }
     )
 }
 

@@ -198,7 +198,7 @@ class RealAlbumTagsTest {
         val finale = nowPlayingWork(songs, 8)!!
         finale.ordinal shouldBe "V"
         finale.movement shouldBe "V. Langsam. Misterioso"
-        finale.ribbon.segments.size shouldBe 11
+        finale.ribbon.segments.size shouldBe 5
     }
 
     @Test

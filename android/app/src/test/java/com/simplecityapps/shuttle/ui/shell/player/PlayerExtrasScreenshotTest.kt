@@ -123,6 +123,15 @@ class PlayerExtrasScreenshotTest {
     }
 
     @Test
+    fun classicalMovementListSplitFinale() {
+        nowPlaying(ArtworkCovers[0])
+        robot.setQueue(classicalShellQueue(movements = 7, playing = 4, splitFinale = true))
+        composeTestRule.onNodeWithText("IV of IV", substring = true).performClick()
+        composeTestRule.onNodeWithText("Allegro, part 2").assertIsDisplayed()
+        shot("now-playing-classical-movements-split-finale")
+    }
+
+    @Test
     fun sleepTimer() {
         nowPlaying(ArtworkCovers[0])
         robot.tapPanelButton(NowPlayingPanel.SleepTimer)
