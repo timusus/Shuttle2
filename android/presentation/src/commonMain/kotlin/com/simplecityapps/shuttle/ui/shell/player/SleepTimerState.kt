@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.ui.shell.player
 
 import com.simplecityapps.playback.sleeptimer.SleepTimer
+import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
@@ -28,13 +29,12 @@ data class SleepTimerFields(
 class SleepTimerState @Inject constructor(
     private val sleepTimer: SleepTimer,
     private val controlSleepTimer: ControlSleepTimer,
-    observeSleepTimerAtEndOfWork: ObserveSleepTimerAtEndOfWork,
-    readSleepTimerPlayToEnd: ReadSleepTimerPlayToEnd,
+    preferenceManager: GeneralPreferenceManager,
 ) {
     /** Bumped when the timer is started or stopped here. */
     private val changes = MutableStateFlow(0)
-    private val playToEnd = MutableStateFlow(readSleepTimerPlayToEnd())
-    private val atEndOfWork: Flow<Boolean> = observeSleepTimerAtEndOfWork()
+    private val playToEnd = MutableStateFlow(preferenceManager.sleepTimerPlayToEnd)
+    private val atEndOfWork: Flow<Boolean> = sleepTimer.atEndOfWork
 
     // Ticks only while a timer runs.
     private val active: Flow<Boolean> =

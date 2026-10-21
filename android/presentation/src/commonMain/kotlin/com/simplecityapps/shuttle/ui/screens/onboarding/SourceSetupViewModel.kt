@@ -8,6 +8,7 @@ import com.simplecityapps.shuttle.analytics.MonetisationAnalytics
 import com.simplecityapps.shuttle.analytics.OnboardingPath
 import com.simplecityapps.shuttle.entitlement.TryAddServer
 import com.simplecityapps.shuttle.model.MediaProviderType
+import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.ui.screens.sources.ConnectServer
 import com.simplecityapps.shuttle.ui.screens.sources.MediaSources
 import com.simplecityapps.shuttle.ui.screens.sources.isLocal
@@ -49,14 +50,14 @@ data class SourceSetupUiState(
 @ContributesIntoMap(AppScope::class)
 class SourceSetupViewModel @Inject constructor(
     private val mediaSources: MediaSources,
-    isSourceSetupCompleted: IsSourceSetupCompleted,
+    preferences: GeneralPreferenceManager,
     private val completeSourceSetup: CompleteSourceSetup,
     importState: SongImportStateProvider,
     private val tryAddServer: TryAddServer,
     private val connectServer: ConnectServer,
     private val analytics: MonetisationAnalytics,
 ) : ViewModel() {
-    private val completed = MutableStateFlow(isSourceSetupCompleted())
+    private val completed = MutableStateFlow(preferences.sourceSetupCompleted)
     private val serverImport = MutableStateFlow<SourceSetupImport>(SourceSetupImport.NotStarted)
 
     init {

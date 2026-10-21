@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.simplecityapps.mediaprovider.server.AccountServer
 import com.simplecityapps.mediaprovider.server.DiscoveredServer
 import com.simplecityapps.mediaprovider.server.SavedServerLogin
+import com.simplecityapps.mediaprovider.server.ServerAuthentication
 import com.simplecityapps.mediaprovider.server.ServerDiscovery
 import com.simplecityapps.mediaprovider.server.ServerLogin
 import com.simplecityapps.shuttle.entitlement.ObserveServerStreamingNeedsPro
@@ -49,7 +50,7 @@ class ServerSignInViewModel @AssistedInject constructor(
     @Assisted private val type: MediaProviderType,
     private val readServerLogin: ReadServerLogin,
     private val signInToServer: SignInToServer,
-    private val forgetServerLogin: ForgetServerLogin,
+    private val authentications: Map<MediaProviderType, ServerAuthentication>,
     observeServerStreamingNeedsPro: ObserveServerStreamingNeedsPro,
     checkQuickConnectAvailable: CheckQuickConnectAvailable,
     private val signInWithQuickConnect: SignInWithQuickConnect,
@@ -58,9 +59,8 @@ class ServerSignInViewModel @AssistedInject constructor(
     private val songDownloader: SongDownloader,
     private val serverDiscovery: ServerDiscovery,
     private val localNetworkAccess: LocalNetworkAccess,
-    private val readServerHeaders: ReadServerHeaders,
     prepareServerConnection: PrepareServerConnection,
-    serverConnections: ServerConnectionStore,
+    private val serverConnections: ServerConnectionStore,
 ) : ViewModel() {
     @AssistedFactory
     @ManualViewModelAssistedFactoryKey(Factory::class)
@@ -83,7 +83,7 @@ class ServerSignInViewModel @AssistedInject constructor(
                 username = saved.username.orEmpty(),
                 password = saved.password.orEmpty(),
                 passwordRevealable = saved.password == null,
-                headers = saved.address?.let(readServerHeaders::invoke).orEmpty(),
+                headers = saved.address?.let { serverConnections.connection(it).headers }.orEmpty(),
             ).let { it.copy(showAdvanced = it.headers.isNotEmpty()) }
         },
     )
@@ -200,7 +200,7 @@ class ServerSignInViewModel @AssistedInject constructor(
     /** Turning it off forgets the saved login straight away. */
     fun onRememberPasswordChange(remember: Boolean) {
         form.update { it.copy(rememberPassword = remember) }
-        if (!remember) forgetServerLogin(type)
+        if (!remember) authentications.getValue(type).forgetLogin()
     }
 
     fun onAuthenticate() {

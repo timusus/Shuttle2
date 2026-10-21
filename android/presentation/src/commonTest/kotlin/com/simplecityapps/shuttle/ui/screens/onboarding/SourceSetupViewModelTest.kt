@@ -45,7 +45,7 @@ class SourceSetupViewModelTest {
 
     private fun TestScope.viewModel(mediaSources: FakeMediaSources = FakeMediaSources()) = SourceSetupViewModel(
         mediaSources,
-        IsSourceSetupCompleted(preferences),
+        preferences,
         CompleteSourceSetup(preferences),
         importState,
         TryAddServer { serverAllowed },

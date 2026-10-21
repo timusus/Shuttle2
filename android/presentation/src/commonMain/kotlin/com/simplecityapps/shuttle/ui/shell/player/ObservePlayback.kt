@@ -1,24 +1,14 @@
 package com.simplecityapps.shuttle.ui.shell.player
 
 import com.simplecityapps.playback.CastDevice
-import com.simplecityapps.playback.PlaybackProgress
 import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.PlaybackStateSource
 import com.simplecityapps.playback.queue.QueueOperations
-import com.simplecityapps.playback.queue.QueueState
 import com.simplecityapps.playback.queue.RepeatMode
 import com.simplecityapps.playback.queue.ShuffleMode
 import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-
-/** The queue as the active shuffle mode presents it; a StateFlow, so its latest snapshot can be read at any time. */
-class ObserveQueue @Inject constructor(
-    private val queueOperations: QueueOperations,
-) {
-    operator fun invoke(): StateFlow<QueueState> = queueOperations.queueStateFlow
-}
 
 /** How playback is going: whether it plays, its shuffle and repeat modes, its speed, and the Cast device it plays on. */
 data class PlaybackStatus(
@@ -44,11 +34,4 @@ class ObservePlayback @Inject constructor(
         playbackStateSource.castDeviceFlow,
         ::PlaybackStatus,
     )
-}
-
-/** Playback's progress through the current song, ticking while it plays; null until the first. */
-class ObserveProgress @Inject constructor(
-    private val playbackStateSource: PlaybackStateSource,
-) {
-    operator fun invoke(): Flow<PlaybackProgress?> = playbackStateSource.progressFlow
 }

@@ -131,17 +131,17 @@ class PlayerViewModelTest {
         val mediaActions = TestMediaActions(songRepository = songRepository, playlistRepository = playlistRepository, queueOperations = queueOperations, playbackOperations = playbackOperations)
         mediaActions.entitlement.value = entitlement
         return PlayerViewModel(
-            observeQueue = ObserveQueue(queueOperations),
+            queueOperations = queueOperations,
             observeQueueSource = ObserveQueueSource(ResolveHomeItems(suggestionsRepository, playlistRepository)),
             observePlayback = ObservePlayback(playbackOperations, queueOperations),
-            observeProgress = ObserveProgress(playbackOperations),
+            playbackStateSource = playbackOperations,
             observeGatedServerSkip = ObserveGatedServerSkip { gatedSongs },
             controlPlayback = ControlPlayback(playbackOperations, queueOperations),
             editQueue = EditQueue(playbackOperations, queueOperations),
             observeFavouriteSongIds = ObserveFavouriteSongIds(songRepository),
             setFavourite = ToggleFavourite(songRepository),
             playlistRepository = playlistRepository,
-            sleepTimer = SleepTimerState(sleepTimer, ControlSleepTimer(sleepTimer, preferenceManager), ObserveSleepTimerAtEndOfWork(sleepTimer), ReadSleepTimerPlayToEnd(preferenceManager)),
+            sleepTimer = SleepTimerState(sleepTimer, ControlSleepTimer(sleepTimer, preferenceManager), preferenceManager),
             observeSetting = ObserveSetting(settingsStore),
             saveSetting = SaveSetting(settingsStore),
             replayGainModeSetting = replayGainModeSetting,

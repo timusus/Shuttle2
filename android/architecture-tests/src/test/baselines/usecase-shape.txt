@@ -2,11 +2,4 @@
 # Baseline of existing violations (#443). Only remove lines; see Baseline.kt.
 com.simplecityapps.shuttle.settings.ObserveSetting: forwards one call (inject the dependency instead)
 com.simplecityapps.shuttle.settings.ReadSetting: forwards one call (inject the dependency instead)
-com.simplecityapps.shuttle.ui.screens.onboarding.IsSourceSetupCompleted: forwards one call (inject the dependency instead)
-com.simplecityapps.shuttle.ui.screens.sources.servers.ForgetServerLogin: forwards one call (inject the dependency instead)
-com.simplecityapps.shuttle.ui.screens.sources.servers.ReadServerHeaders: forwards one call (inject the dependency instead)
 com.simplecityapps.shuttle.ui.screens.sources.servers.ReadServerLogin: forwards one call (inject the dependency instead)
-com.simplecityapps.shuttle.ui.shell.player.ObserveProgress: forwards one call (inject the dependency instead)
-com.simplecityapps.shuttle.ui.shell.player.ObserveQueue: forwards one call (inject the dependency instead)
-com.simplecityapps.shuttle.ui.shell.player.ObserveSleepTimerAtEndOfWork: forwards one call (inject the dependency instead)
-com.simplecityapps.shuttle.ui.shell.player.ReadSleepTimerPlayToEnd: forwards one call (inject the dependency instead)

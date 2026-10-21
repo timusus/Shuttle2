@@ -76,7 +76,7 @@ class ServerSignInViewModelTest {
             type,
             ReadServerLogin(servers),
             SignInToServer(servers, monetisation, classifyFailure),
-            ForgetServerLogin(servers),
+            servers,
             ObserveServerStreamingNeedsPro { needsPro },
             CheckQuickConnectAvailable(quickConnects),
             SignInWithQuickConnect(quickConnects, monetisation, classifyFailure),
@@ -85,7 +85,6 @@ class ServerSignInViewModelTest {
             songDownloader,
             discovery,
             localNetwork,
-            ReadServerHeaders(connections),
             PrepareServerConnection(connections),
             connections,
         ).also { viewModel ->

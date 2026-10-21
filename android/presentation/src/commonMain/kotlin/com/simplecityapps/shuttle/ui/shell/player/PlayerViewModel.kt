@@ -8,8 +8,10 @@ import androidx.lifecycle.viewmodel.CreationExtras
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistQuery
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
 import com.simplecityapps.playback.PlaybackState
+import com.simplecityapps.playback.PlaybackStateSource
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainMode
 import com.simplecityapps.playback.persistence.NowPlayingSnapshot
+import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.playback.queue.QueueState
 import com.simplecityapps.playback.queue.ShuffleMode
 import com.simplecityapps.shuttle.model.Playlist
@@ -56,10 +58,10 @@ import kotlinx.coroutines.launch
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class PlayerViewModel @AssistedInject constructor(
-    observeQueue: ObserveQueue,
+    queueOperations: QueueOperations,
     observeQueueSource: ObserveQueueSource,
     observePlayback: ObservePlayback,
-    observeProgress: ObserveProgress,
+    playbackStateSource: PlaybackStateSource,
     observeGatedServerSkip: ObserveGatedServerSkip,
     private val controlPlayback: ControlPlayback,
     private val editQueue: EditQueue,
@@ -113,7 +115,7 @@ class PlayerViewModel @AssistedInject constructor(
         }
     }
 
-    private val queue: StateFlow<QueueState> = observeQueue()
+    private val queue: StateFlow<QueueState> = queueOperations.queueStateFlow
 
     private val currentSong: Flow<Song?> = queue.map { it.currentItem?.song }.distinctUntilChanged()
 
@@ -168,7 +170,7 @@ class PlayerViewModel @AssistedInject constructor(
 
     // The total is the song's own duration, as the queue rows show it; the player's reported duration can differ by a rounding second.
     private val progress: Flow<PlayerProgress> =
-        combine(observeProgress(), currentSong) { progress, song ->
+        combine(playbackStateSource.progressFlow, currentSong) { progress, song ->
             val songDuration = song?.duration?.toLong()?.takeIf { it > 0 }
             when {
                 progress != null -> PlayerProgress(progress.position.toLong(), songDuration ?: progress.duration.toLong(), progress.buffered.toLong())
