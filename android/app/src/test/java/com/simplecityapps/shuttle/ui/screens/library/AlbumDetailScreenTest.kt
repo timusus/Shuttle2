@@ -28,6 +28,21 @@ class AlbumDetailScreenTest {
     }
 
     @Test
+    fun `the header names the album artist, not every featured track artist`() {
+        val album = createAlbum(
+            name = "Skin",
+            albumArtist = "Juniper Static",
+            artists = listOf("Juniper Static", "Verdigris", "Soft Machines", "Phase Garden"),
+            songCount = 12,
+            year = 2016
+        )
+        robot.setAlbum(readyAlbumDetail(album = album))
+
+        robot.assertTextDisplayed("Juniper Static · 2016 · 12 songs", substring = true)
+        robot.assertTextNotDisplayed("Verdigris, Soft Machines", substring = true)
+    }
+
+    @Test
     fun `the header gives the song count and a runtime under an hour in minutes`() {
         val album = createAlbum(name = "Phase Garden", albumArtist = "Juniper Static", songCount = 12, duration = 2_700_000, year = 2021)
         robot.setAlbum(readyAlbumDetail(album = album))

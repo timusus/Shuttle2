@@ -1,0 +1,1 @@
+{ "type": "fixes", "text": "The album page header now shows the album artist instead of listing every artist on the album, so Play and Shuffle stay in view.", "commits": [] }

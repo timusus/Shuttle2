@@ -145,7 +145,8 @@ private fun albumSubtitle(
     // Whole minutes, rounded down; an album under a minute shows no runtime.
     val minutes = (album.duration.toLong() / 60_000).toInt()
     return listOfNotNull(
-        album.friendlyArtistName.takeIf { withArtist },
+        // The album artist, not every track artist: featured artists are on each row.
+        (album.albumArtist?.takeIf { it.isNotBlank() } ?: album.friendlyArtistName).takeIf { withArtist },
         performers,
         album.year?.toString(),
         pluralString(R.plurals.songsPlural, album.songCount),
