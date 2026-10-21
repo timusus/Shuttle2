@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -38,7 +37,7 @@ import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
 private val MinJumpWidth = 24.dp
 private val BarHeight = 4.dp
 private val TickHeight = 8.dp
-private val SegmentGap = 2.dp
+private val SegmentGap = 4.dp
 
 /**
  * A thin unlabelled bar over a multi-movement work: one segment per entry of [segments], sized by duration, the
@@ -93,9 +92,10 @@ fun S2WorkRibbon(
             text = caption,
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
+            // Hugs the bar so the two read as one unit, apart from the seek bar below.
             modifier = Modifier
-                .minimumInteractiveComponentSize()
-                .clickable(onClickLabel = openListLabel, role = Role.Button, onClick = onOpenList),
+                .clickable(onClickLabel = openListLabel, role = Role.Button, onClick = onOpenList)
+                .padding(vertical = S2Spacing.small),
         )
     }
 }
@@ -114,8 +114,11 @@ private fun Bar(
     gap: Dp,
     modifier: Modifier,
 ) {
-    val played = MaterialTheme.colorScheme.primary
-    val unplayed = MaterialTheme.colorScheme.surfaceContainerHighest
+    // Quieter than the seek bar's solid primary: earlier movements and the track are muted, only the current fill is accent.
+    val muted = MaterialTheme.colorScheme.onSurfaceVariant
+    val played = muted.copy(alpha = 0.6f)
+    val track = muted.copy(alpha = 0.2f)
+    val current = MaterialTheme.colorScheme.primary
     Row(modifier.fillMaxWidth().height(BarHeight).clip(CircleShape), horizontalArrangement = Arrangement.spacedBy(gap)) {
         segments.forEachIndexed { i, length ->
             Box(
@@ -123,7 +126,7 @@ private fun Bar(
                     .weight((length / total).coerceAtLeast(0.001f))
                     .fillMaxHeight()
                     .clip(CircleShape)
-                    .background(if (i < currentSegment) played else unplayed),
+                    .background(if (i < currentSegment) played else track),
             ) {
                 if (i == currentSegment) {
                     Box(
@@ -133,7 +136,7 @@ private fun Bar(
                             .graphicsLayer {
                                 scaleX = currentFill().coerceIn(0f, 1f)
                                 transformOrigin = TransformOrigin(0f, 0.5f)
-                            }.background(played),
+                            }.background(current),
                     )
                 }
             }

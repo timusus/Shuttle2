@@ -167,7 +167,7 @@ internal fun NowPlayingTitle(
                 S2PlayingOn(castingTo, style = MaterialTheme.typography.bodyMedium)
             } else if (!largeText) {
                 current?.song?.qualityLine(player.delivered)?.let { quality ->
-                    Text(text = quality, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(text = quality, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
             }
         }
@@ -256,7 +256,7 @@ internal fun Transport(
         modifier = modifier.fillMaxWidth().padding(bottom = gap).testTag(PlayerTestTags.Transport),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        player.work?.let { WorkRibbonBar(it, player, progress, actions, Modifier.padding(bottom = S2Spacing.small)) }
+        player.work?.let { WorkRibbonBar(it, player, progress, actions, Modifier.padding(bottom = S2Spacing.medium)) }
         SeekBar(player, progress, actions)
         Box(Modifier.padding(horizontal = S2Spacing.small), contentAlignment = Alignment.Center) {
             val seekable = player.current?.song?.type?.isSeekable == true
