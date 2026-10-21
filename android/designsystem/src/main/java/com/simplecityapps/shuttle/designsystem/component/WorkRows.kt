@@ -162,37 +162,40 @@ fun MovementRow(
             .padding(start = RuleInset + RuleWidth + S2Spacing.xsmall, end = S2Spacing.medium),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        // A wide numeral grows left into the gutter beside the rail; past that it shrinks rather than touch the rail.
-        val numeralStyle = MaterialTheme.typography.rowMeta.copy(fontFeatureSettings = "tnum")
-        val maxNumeralWidth = with(LocalDensity.current) { (NumeralColumn + S2Spacing.xsmall).roundToPx() }
-        var numeralScale by remember(numeral, maxNumeralWidth, numeralStyle.fontSize) { mutableFloatStateOf(1f) }
-        Text(
-            text = numeral.orEmpty(),
-            modifier = Modifier.alignByBaseline().width(NumeralColumn).wrapContentWidth(Alignment.End, unbounded = true),
-            style = numeralStyle.copy(fontSize = numeralStyle.fontSize * numeralScale),
-            color = if (playing) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.End,
-            maxLines = 1,
-            softWrap = false,
-            onTextLayout = { if (it.size.width > maxNumeralWidth) numeralScale *= maxNumeralWidth.toFloat() / it.size.width },
-        )
-        Text(
-            text = name,
-            modifier = Modifier.weight(1f).alignByBaseline().padding(start = TitleGap),
-            style = MaterialTheme.typography.rowTitle,
-            color = if (playing) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis,
-        )
-        if (playing) {
-            Icon(Icons.Rounded.GraphicEq, stringResource(R.string.ds_now_playing), Modifier.padding(start = S2Spacing.small).size(S2IconSize.small), tint = MaterialTheme.colorScheme.primary)
+        // Baseline alignment only works inside a Row that centres its own group; the outer Row then centres the group.
+        Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
+            // A wide numeral grows left into the gutter beside the rail; past that it shrinks rather than touch the rail.
+            val numeralStyle = MaterialTheme.typography.rowMeta.copy(fontFeatureSettings = "tnum")
+            val maxNumeralWidth = with(LocalDensity.current) { (NumeralColumn + S2Spacing.xsmall).roundToPx() }
+            var numeralScale by remember(numeral, maxNumeralWidth, numeralStyle.fontSize) { mutableFloatStateOf(1f) }
+            Text(
+                text = numeral.orEmpty(),
+                modifier = Modifier.alignByBaseline().width(NumeralColumn).wrapContentWidth(Alignment.End, unbounded = true),
+                style = numeralStyle.copy(fontSize = numeralStyle.fontSize * numeralScale),
+                color = if (playing) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.End,
+                maxLines = 1,
+                softWrap = false,
+                onTextLayout = { if (it.size.width > maxNumeralWidth) numeralScale *= maxNumeralWidth.toFloat() / it.size.width },
+            )
+            Text(
+                text = name,
+                modifier = Modifier.weight(1f).alignByBaseline().padding(start = TitleGap),
+                style = MaterialTheme.typography.rowTitle,
+                color = if (playing) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+            if (playing) {
+                Icon(Icons.Rounded.GraphicEq, stringResource(R.string.ds_now_playing), Modifier.padding(start = S2Spacing.small).size(S2IconSize.small), tint = MaterialTheme.colorScheme.primary)
+            }
+            Text(
+                duration,
+                Modifier.alignByBaseline().padding(start = S2Spacing.small),
+                style = MaterialTheme.typography.rowMeta.copy(fontFeatureSettings = "tnum"),
+                color = if (playing) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
-        Text(
-            duration,
-            Modifier.alignByBaseline().padding(start = S2Spacing.small),
-            style = MaterialTheme.typography.rowMeta.copy(fontFeatureSettings = "tnum"),
-            color = if (playing) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-        )
         if (onMore != null) RowMoreButton(onClick = onMore)
     }
 }
