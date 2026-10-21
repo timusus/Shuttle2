@@ -1,4 +1,7 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --quiet --script
+# /// script
+# dependencies = ["google-auth", "requests"]
+# ///
 """Fetch and reply to Google Play reviews for S2 via the Android Publisher API."""
 
 import argparse
