@@ -1,8 +1,11 @@
 package com.simplecityapps.shuttle.model
 
-/** Whether the song carries movement tags. A work tag alone never counts (Picard writes one for pop songs), and titles are never split on ":". */
+/**
+ * Whether the song carries movement tags. A work tag alone never counts (Picard writes one for pop songs), and titles are never split on ":".
+ * SHOWMOVEMENT=0 vetoes the tags so the title shows; grouping reads the raw tags, so such a song still joins a work around it.
+ */
 val Song.isClassical: Boolean
-    get() = !movementName.isNullOrBlank() || (movementNumber ?: 0) >= 1 || showMovement == true
+    get() = showMovement != false && (!movementName.isNullOrBlank() || (movementNumber ?: 0) >= 1 || showMovement == true)
 
 /** [isClassical] unless the song's genre is a popular one, which a stray movement tag on a pop track doesn't override. */
 val Song.showsMovementLabel: Boolean

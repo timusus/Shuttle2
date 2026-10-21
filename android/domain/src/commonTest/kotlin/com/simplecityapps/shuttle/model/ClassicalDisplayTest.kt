@@ -20,6 +20,15 @@ class ClassicalDisplayTest {
     }
 
     @Test
+    fun `SHOWMOVEMENT=0 vetoes the movement label and the classical player text`() {
+        val lone = song(id = 1).copy(name = "Hungarian Fantasy", movementName = "Fantaisie Hongroise", movementNumber = 1, showMovement = false)
+
+        lone.isClassical shouldBe false
+        lone.showsMovementLabel shouldBe false
+        lone.classicalText(artist = "Erik", album = "Recital") shouldBe null
+    }
+
+    @Test
     fun `the movement label uses roman numerals`() {
         song(id = 1).copy(movementName = "Allegro", movementNumber = 4).movementLabel() shouldBe "IV. Allegro"
         song(id = 1).copy(movementName = "Finale", movementNumber = 9).movementLabel() shouldBe "IX. Finale"
