@@ -28,13 +28,12 @@ sealed interface FolderRulesEvent {
 @ContributesIntoMap(AppScope::class)
 class FolderRulesViewModel @Inject constructor(
     private val mediaSources: MediaSources,
-    observeScannerFolders: ObserveScannerFolders,
     private val folderStore: ScannerFolderStore,
 ) : ViewModel() {
     private val events = PendingEvents<FolderRulesEvent>()
 
     val uiState: StateFlow<FolderRulesUiState> =
-        combine(observeScannerFolders(), events.flow) { folders, events -> FolderRulesUiState(folders, events) }
+        combine(folderStore.folders, events.flow) { folders, events -> FolderRulesUiState(folders, events) }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), FolderRulesUiState())
 
     /** Re-reads each folder's access, for a grant revoked while the screen was away. */

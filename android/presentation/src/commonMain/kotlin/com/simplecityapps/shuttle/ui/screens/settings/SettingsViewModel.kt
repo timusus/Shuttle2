@@ -90,10 +90,8 @@ class SettingsViewModel @Inject constructor(
     observeSetting: ObserveSetting,
     private val readSetting: ReadSetting,
     private val saveSetting: SaveSetting,
-    readLastScanDate: ReadLastScanDate,
     sourceState: SourceStateStore,
     equalizerPresetStore: EqualizerPresetStore,
-    readEqualizerPreset: ReadEqualizerPreset,
     isLastFmConfigured: IsLastFmConfigured,
     private val effects: SettingsEffects,
     catalog: SettingsCatalog,
@@ -114,7 +112,7 @@ class SettingsViewModel @Inject constructor(
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = SettingsUiState(values = catalogSettings.associate { it.key to readSetting(it) }, lastScanDate = readLastScanDate(), equalizerPreset = readEqualizerPreset(), lastFmConfigured = lastFmConfigured)
+            initialValue = SettingsUiState(values = catalogSettings.associate { it.key to readSetting(it) }, lastScanDate = sourceState.lastMediaImportDate, equalizerPreset = equalizerPresetStore.preset, lastFmConfigured = lastFmConfigured)
         )
 
     private val sliderEffects = mutableMapOf<String, Job>()

@@ -73,7 +73,6 @@ val ServerTypes = listOf(MediaProviderType.Jellyfin, MediaProviderType.Emby, Med
 @ContributesIntoMap(AppScope::class)
 class SourcesViewModel @Inject constructor(
     private val mediaSources: MediaSources,
-    observeScannerFolders: ObserveScannerFolders,
     private val folderStore: ScannerFolderStore,
     importState: SongImportStateProvider,
     private val tryAddServer: TryAddServer,
@@ -93,7 +92,7 @@ class SourcesViewModel @Inject constructor(
         combine(importState.songImportState, importState.providerImportStates, observeSongCounts(), combine(observeSourceReachability(), observeSourceUpdated(), observeListingShortfalls(), observeDeviceSkippedFiles(), ::Stored), ::Imports)
 
     val uiState: StateFlow<SourcesUiState> =
-        combine(mediaSources.enabledTypes, observeScannerFolders(), imports, sourceState.observeLastMediaImportDate()) { types, folders, imports, lastImport ->
+        combine(mediaSources.enabledTypes, folderStore.folders, imports, sourceState.observeLastMediaImportDate()) { types, folders, imports, lastImport ->
             val latest = imports.latest
             SourcesUiState(
                 thisDevice = types.any { it.isLocal },

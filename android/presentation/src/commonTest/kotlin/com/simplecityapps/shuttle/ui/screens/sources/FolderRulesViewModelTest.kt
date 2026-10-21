@@ -32,7 +32,6 @@ class FolderRulesViewModelTest {
 
     private fun TestScope.viewModel(mediaSources: FakeMediaSources) = FolderRulesViewModel(
         mediaSources,
-        ObserveScannerFolders(folderStore),
         folderStore,
     ).also { viewModel ->
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.uiState.collect {} }

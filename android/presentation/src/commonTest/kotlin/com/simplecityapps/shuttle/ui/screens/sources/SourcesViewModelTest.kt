@@ -60,7 +60,6 @@ class SourcesViewModelTest {
 
     private fun TestScope.viewModel(mediaSources: FakeMediaSources) = SourcesViewModel(
         mediaSources,
-        ObserveScannerFolders(folderStore),
         folderStore,
         importState,
         TryAddServer { type ->

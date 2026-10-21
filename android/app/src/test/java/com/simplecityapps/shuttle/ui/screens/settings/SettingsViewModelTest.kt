@@ -74,7 +74,7 @@ class SettingsViewModelTest {
         proFeatureGate.tryUse(feature)
     }
 
-    private fun viewModel() = SettingsViewModel(ObserveSetting(store), ReadSetting(store), SaveSetting(store), ReadLastScanDate(preferenceManager), preferenceManager, KeyValueEqualizerPresetStore(prefs), ReadEqualizerPreset(KeyValueEqualizerPresetStore(prefs)), IsLastFmConfigured { lastFmConfigured }, effects, AndroidSettingsCatalog, backupFlow, tryUseProFeature)
+    private fun viewModel() = SettingsViewModel(ObserveSetting(store), ReadSetting(store), SaveSetting(store), preferenceManager, KeyValueEqualizerPresetStore(prefs), IsLastFmConfigured { lastFmConfigured }, effects, AndroidSettingsCatalog, backupFlow, tryUseProFeature)
 
     private inline fun <reified T : SettingItem> item(key: String): T = AndroidSettingsCatalog.items.filterIsInstance<T>().first { it.key == key }
 
