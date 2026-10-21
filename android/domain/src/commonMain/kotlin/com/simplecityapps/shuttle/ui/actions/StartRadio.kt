@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.ui.actions
 
 import com.simplecityapps.mediaprovider.AggregateSimilarSongsProvider
+import com.simplecityapps.mediaprovider.repository.genres.GenreQuery
 import com.simplecityapps.mediaprovider.repository.genres.GenreRepository
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.shuttle.model.PlayContext
@@ -59,7 +60,7 @@ class StartRadio(
 
     private suspend fun localMix(seedSongs: List<Song>): List<Song> {
         val artists = seedSongs.flatMap { it.albumArtistKeys }.distinct()
-        val genres = seedSongs.flatMap { it.genres }.distinct()
+        val genres = storedGenreNames(seedSongs.flatMap { it.genres })
         val byArtist = if (artists.isEmpty()) emptyList() else songRepository.loadSongs(SongQuery.ArtistGroupKeys(artists.map { SongQuery.ArtistGroupKey(it) }))
         val byGenre = if (genres.isEmpty()) emptyList() else genreRepository.getSongsForGenres(genres, SongQuery.All()).first()
         return withContext(defaultDispatcher) {
@@ -70,6 +71,13 @@ class StartRadio(
                 .shuffled(random)
                 .take(LIMIT)
         }
+    }
+
+    // The genre lookup is keyed by the stored name, so match the seed's tags to it ignoring case.
+    private suspend fun storedGenreNames(seedGenres: List<String>): List<String> {
+        if (seedGenres.isEmpty()) return emptyList()
+        val wanted = seedGenres.map { it.lowercase() }.toSet()
+        return genreRepository.getGenres(GenreQuery.All()).first().map { it.name }.filter { it.lowercase() in wanted }
     }
 
     private companion object {
