@@ -1,0 +1,8 @@
+{
+  "Name": "Duet (instrumental)",
+  "Id": "song-5",
+  "Album": "First Album",
+  "AlbumId": "album-1",
+  "AlbumArtist": "Artist One",
+  "ImageTags": { "Primary": "song-tag" }
+}

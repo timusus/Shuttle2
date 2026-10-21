@@ -59,6 +59,14 @@ class JellyfinRemoteArtworkProviderTest {
     }
 
     @Test
+    fun `a song with its own image still shows the album's image when the album has one`() = runTest {
+        server.respond("/Users/user-1/Items/song-5", "item_own_image.json")
+        server.respond("/Users/user-1/Items/album-1", "album_with_image.json")
+
+        provider.getAlbumArtworkUrl(song("jellyfin://item/song-5")) shouldBe "${server.address}/Items/album-1/Images/Primary?maxWidth=1000&maxHeight=1000"
+    }
+
+    @Test
     fun `a song with a sibling's artwork item asks for that item's image - without asking for the song`() = runTest {
         provider.getAlbumArtworkUrl(song("jellyfin://item/song-2").copy(artworkItemId = "song-3")) shouldBe "${server.address}/Items/song-3/Images/Primary?maxWidth=1000&maxHeight=1000"
         server.requests.shouldBeEmpty()

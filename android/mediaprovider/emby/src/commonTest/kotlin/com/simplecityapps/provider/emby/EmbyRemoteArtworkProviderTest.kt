@@ -88,6 +88,56 @@ class EmbyRemoteArtworkProviderTest {
     }
 
     @Test
+    fun `a song borrowing a sibling's image shows it when the album lookup fails`() = runTest {
+        server.respond("/Users/user-1/Items/202", code = 500)
+
+        provider.getAlbumArtworkUrl(song("emby://item/107").copy(serverAlbumId = "202", artworkItemId = "105")) shouldBe "${server.address}/Items/105/Images/Primary?maxWidth=1000&maxHeight=1000"
+    }
+
+    @Test
+    fun `a failed album lookup is asked again next time`() = runTest {
+        val sibling = song("emby://item/107").copy(serverAlbumId = "202", artworkItemId = "105")
+        server.respond("/Users/user-1/Items/202", code = 500)
+        provider.getAlbumArtworkUrl(sibling)
+
+        server.respond("/Users/user-1/Items/202", "album_with_image.json")
+
+        provider.getAlbumArtworkUrl(sibling) shouldBe "${server.address}/Items/202/Images/Primary?maxWidth=1000&maxHeight=1000"
+    }
+
+    @Test
+    fun `a song with its own image shows it when the album lookup fails`() = runTest {
+        server.respond("/Users/user-1/Items/105", "item_own_image.json")
+        server.respond("/Users/user-1/Items/202", code = 500)
+
+        provider.getAlbumArtworkUrl(song("emby://item/105")) shouldBe "${server.address}/Items/105/Images/Primary?maxWidth=1000&maxHeight=1000"
+    }
+
+    @Test
+    fun `songs of one album share a single album lookup`() = runTest {
+        server.respond("/Users/user-1/Items/202", "album_with_image.json")
+
+        provider.getAlbumArtworkUrl(song("emby://item/107").copy(serverAlbumId = "202", artworkItemId = "105"))
+        provider.getAlbumArtworkUrl(song("emby://item/108").copy(serverAlbumId = "202", artworkItemId = "105"))
+
+        server.requestsTo("/Users/user-1/Items/202").size shouldBe 1
+    }
+
+    @Test
+    fun `a song borrowing a sibling's image shows it when the server doesn't know the album`() = runTest {
+        provider.getAlbumArtworkUrl(song("emby://item/107").copy(artworkItemId = "105")) shouldBe "${server.address}/Items/105/Images/Primary?maxWidth=1000&maxHeight=1000"
+        server.requests.shouldBeEmpty()
+    }
+
+    @Test
+    fun `a song with neither an album nor an image of its own has no artwork`() = runTest {
+        server.respond("/Users/user-1/Items/104", "loose_item.json")
+
+        provider.getAlbumArtworkUrl(song("emby://item/104")) shouldBe null
+        server.requestsTo("/Users/user-1/Items/104").size shouldBe 1
+    }
+
+    @Test
     fun `an album image wins over the song's own primary image`() = runTest {
         server.respond("/Users/user-1/Items/106", "item_album_and_own_image.json")
 
