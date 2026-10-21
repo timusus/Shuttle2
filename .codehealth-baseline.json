@@ -2,9 +2,24 @@
   "version": 1,
   "findings": [
     {
-      "fingerprint": "a314ca0d34b790a18beba37f978c369a383fb26a",
-      "rule": "arch-nondeterminism-in-core",
-      "path": "android/app/src/main/java/com/simplecityapps/shuttle/ui/actions/ConfirmationHandoff.kt"
+      "fingerprint": "2534c5cb3c9a73c91b8ca1523c6cd2ceab12159f",
+      "rule": "issue-citation-kt",
+      "path": "android/app/build.gradle.kts"
+    },
+    {
+      "fingerprint": "b34c0b781f0b2b090a28c63a160ff8a9d5f80c38",
+      "rule": "issue-citation-kt",
+      "path": "android/app/build.gradle.kts"
+    },
+    {
+      "fingerprint": "da2b83ae0aea9c44545690a6366af48d2d51970f",
+      "rule": "issue-citation-kt",
+      "path": "android/app/build.gradle.kts"
+    },
+    {
+      "fingerprint": "45644f1e6850eb79d7cb51c476e9f52cc56c6500",
+      "rule": "arch-cycle",
+      "path": "android/app/src/main/java/com/simplecityapps/shuttle/ShuttleApplication.kt"
     },
     {
       "fingerprint": "557478060726d7189d68f16386db31964c24f6d0",
@@ -12,14 +27,29 @@
       "path": "android/app/src/main/java/com/simplecityapps/shuttle/ui/common/mediaactions/MediaActionsHost.kt"
     },
     {
+      "fingerprint": "fa02b76724c63010806cddfbb16ef5f8772bb9b4",
+      "rule": "arch-cycle",
+      "path": "android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/home/HomeScreen.kt"
+    },
+    {
       "fingerprint": "b01fcdc52bdb3c30b96bd7bb690e3bbaa7ec3817",
       "rule": "size-function",
       "path": "android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/library/AlbumArtistDetailScreen.kt"
     },
     {
-      "fingerprint": "d01ce574d31b44349d489be9e424b1a7eb418c43",
-      "rule": "kotlin-hardcoded-dispatcher",
-      "path": "android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/settings/AndroidSettingsEffects.kt"
+      "fingerprint": "8d23eed1a7bf0f2bd3cf474ae7eb95177bd602a7",
+      "rule": "arch-cycle",
+      "path": "android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/paywall/PaywallEvents.kt"
+    },
+    {
+      "fingerprint": "6cd47dbc5e6566adf3c0e6b1dd2953633499f10b",
+      "rule": "arch-cycle",
+      "path": "android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/search/SearchEvents.kt"
+    },
+    {
+      "fingerprint": "0292b35d6111b25b65a7e305b2f7e9d4a8fc646f",
+      "rule": "arch-cycle",
+      "path": "android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/settings/SettingsRoutes.kt"
     },
     {
       "fingerprint": "f7964791b711d53f2061e241ae2e407180b3ae76",
@@ -32,49 +62,49 @@
       "path": "android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/settings/scrobbling/ScrobblingScreen.kt"
     },
     {
-      "fingerprint": "25dd3b55fe0dd596ce4a966557cca84c823595d4",
-      "rule": "kotlin-hardcoded-dispatcher",
-      "path": "android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/tageditor/DeviceTagFileAccess.kt"
+      "fingerprint": "e20ef5ee6a709960968a0d7a420d374797d785c5",
+      "rule": "arch-cycle",
+      "path": "android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/tageditor/TagEditorRoutes.kt"
     },
     {
-      "fingerprint": "4c07b2ce1a004b7ec216db4160ceb95305df96c0",
-      "rule": "kotlin-hardcoded-dispatcher",
-      "path": "android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/tageditor/DeviceTagFileAccess.kt"
+      "fingerprint": "a7adcf4aae4f181d860380ce8bcc68bd20b527f2",
+      "rule": "arch-layer-direction",
+      "path": "android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/welcome/WelcomeScreen.kt"
     },
     {
-      "fingerprint": "6bd1b86e54919493c24fadaa76dce500485ba1e2",
-      "rule": "kotlin-hardcoded-dispatcher",
-      "path": "android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/tageditor/DeviceTagFileAccess.kt"
+      "fingerprint": "790781280ee3fbbf9e43350f4d5691ae6c1b3ca2",
+      "rule": "arch-cycle",
+      "path": "android/app/src/main/java/com/simplecityapps/shuttle/ui/shell/player/FullPlayer.kt"
     },
     {
-      "fingerprint": "0e8bac7e4b9d1e029bfd167e8f7fe257751ac1b4",
-      "rule": "kotlin-hardcoded-dispatcher",
-      "path": "android/app/src/main/java/com/simplecityapps/shuttle/widgets/WidgetArtworkStore.kt"
+      "fingerprint": "94b55b59c4181914872d46b636a7c093baf6f6e4",
+      "rule": "tests-slow-kind-fast-subject",
+      "path": "android/app/src/test/java/com/simplecityapps/shuttle/sources/SafScannerFolderStoreTest.kt"
     },
     {
-      "fingerprint": "262a6461b07f4298d791f9d429696d22d4ff6c42",
-      "rule": "kotlin-hardcoded-dispatcher",
-      "path": "android/app/src/main/java/com/simplecityapps/shuttle/widgets/WidgetArtworkStore.kt"
+      "fingerprint": "69bfd664b80e47a04ecd92860655910bb57192b4",
+      "rule": "gradle-api-exposure",
+      "path": "android/core/build.gradle.kts"
     },
     {
-      "fingerprint": "2e7fc5bc2116eacdc2a757e72440c40967bf81d1",
-      "rule": "kotlin-hardcoded-dispatcher",
-      "path": "android/app/src/main/java/com/simplecityapps/shuttle/widgets/WidgetArtworkStore.kt"
+      "fingerprint": "35f7707f328aa1406ab1875f43464ed182c6c28b",
+      "rule": "gradle-module-hub",
+      "path": "android/core/build.gradle.kts"
     },
     {
-      "fingerprint": "9af4dbb6ac5434ccb07508dfcdfee425b98e5ea5",
-      "rule": "pure-layer-android-import",
-      "path": "android/core/src/androidMain/kotlin/com/simplecityapps/shuttle/di/AppGraphOwner.kt"
+      "fingerprint": "ec35432849a1a139541a9dfa71e89cb120bec049",
+      "rule": "issue-citation-kt",
+      "path": "android/core/build.gradle.kts"
     },
     {
-      "fingerprint": "b9bc1be083a7e04cbc1110925aad4a35d3006f4a",
-      "rule": "pure-layer-android-import",
-      "path": "android/core/src/androidMain/kotlin/com/simplecityapps/shuttle/pendingintent/PendingIntentCompat.kt"
+      "fingerprint": "5b04f054703e8f70c00d59464ec94a72bf8da410",
+      "rule": "gradle-api-exposure",
+      "path": "android/designsystem/build.gradle.kts"
     },
     {
-      "fingerprint": "c757eb95c957d12ac7f3b411886b38e2d84f7400",
-      "rule": "pure-layer-android-import",
-      "path": "android/core/src/androidMain/kotlin/com/simplecityapps/shuttle/pendingintent/PendingIntentCompat.kt"
+      "fingerprint": "dc28b50c2033ac829b183f0e3e4fca105bb35e20",
+      "rule": "issue-citation-kt",
+      "path": "android/designsystem/build.gradle.kts"
     },
     {
       "fingerprint": "a8c1813f1f28effebcbb92b95476176f04f4e847",
@@ -82,9 +112,29 @@
       "path": "android/designsystem/src/main/java/com/simplecityapps/shuttle/designsystem/component/SeekBar.kt"
     },
     {
-      "fingerprint": "f9c3ed582ada6e489cd62cbe0ca3f35ec0f0be48",
-      "rule": "arch-nondeterminism-in-core",
-      "path": "android/domain/src/commonMain/kotlin/com/simplecityapps/localmediaprovider/local/provider/TagLibProperty.kt"
+      "fingerprint": "c4901c11d26c4e9ff23ff59dfa2adf62f8aea3bc",
+      "rule": "gradle-module-hub",
+      "path": "android/domain/build.gradle.kts"
+    },
+    {
+      "fingerprint": "18588a56a03e6af0d9efa8e2744fc67adddfe203",
+      "rule": "issue-citation-kt",
+      "path": "android/domain/build.gradle.kts"
+    },
+    {
+      "fingerprint": "383fa51da3716c8051f3e0d3d5abbb5dd3cfc9e0",
+      "rule": "issue-citation-kt",
+      "path": "android/domain/build.gradle.kts"
+    },
+    {
+      "fingerprint": "9f189bc953e5cf29b767de6118b2559dbe4d03d8",
+      "rule": "issue-citation-kt",
+      "path": "android/domain/build.gradle.kts"
+    },
+    {
+      "fingerprint": "9268e507033750f7ac27fd2796230c2f900e0ea2",
+      "rule": "arch-cycle",
+      "path": "android/domain/src/commonMain/kotlin/com/simplecityapps/mediaprovider/repository/playlists/PlaylistRepository.kt"
     },
     {
       "fingerprint": "3cd21a37800ab254eacdf1635b0072d758208ada",
@@ -127,44 +177,19 @@
       "path": "android/domain/src/commonMain/kotlin/com/simplecityapps/mediaprovider/server/ServerAuthentication.kt"
     },
     {
-      "fingerprint": "ed420bf4f46168adb333b016999e3cf897cfbcdb",
-      "rule": "arch-nondeterminism-in-core",
-      "path": "android/domain/src/commonMain/kotlin/com/simplecityapps/shuttle/query/SongQuery.kt"
+      "fingerprint": "bd10565518df9fc7aeca0aaf72a6d21ad03fc8f7",
+      "rule": "gradle-api-exposure",
+      "path": "android/mediaprovider/core/build.gradle.kts"
     },
     {
-      "fingerprint": "91d617d039b857b01414c0218208c31001d3f7a4",
-      "rule": "arch-nondeterminism-in-core",
-      "path": "android/domain/src/commonMain/kotlin/com/simplecityapps/shuttle/ui/actions/ResumeContext.kt"
+      "fingerprint": "c6052dfde678fd8514863a2d2b4c5a61b33966e8",
+      "rule": "gradle-module-hub",
+      "path": "android/mediaprovider/core/build.gradle.kts"
     },
     {
-      "fingerprint": "1c938a276b6ad47bda9fe35bb6d5310d564221d6",
-      "rule": "arch-nondeterminism-in-core",
-      "path": "android/domain/src/commonMain/kotlin/com/simplecityapps/shuttle/ui/actions/ShuffleAlbums.kt"
-    },
-    {
-      "fingerprint": "1f6d526390add15da1f90363d9f99c9dfabd6a2f",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/imageloader/src/test/java/com/simplecityapps/imageloading/coil/ArtworkFetcherTest.kt"
-    },
-    {
-      "fingerprint": "78585eeabf09422a6f79c519db736d7bfe47500f",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/imageloader/src/test/java/com/simplecityapps/imageloading/coil/ArtworkFetcherTest.kt"
-    },
-    {
-      "fingerprint": "57c8bd90129ae786263db84fe288da0178076a47",
-      "rule": "pure-layer-android-import",
-      "path": "android/mediaprovider/core/src/androidMain/kotlin/com/simplecityapps/mediaprovider/M3uEntryMatcher.kt"
-    },
-    {
-      "fingerprint": "f79d1689eba060964808ae45fbe53e8b71fb5b2a",
-      "rule": "pure-layer-android-import",
-      "path": "android/mediaprovider/core/src/androidMain/kotlin/com/simplecityapps/mediaprovider/MediaProviderTypeResources.kt"
-    },
-    {
-      "fingerprint": "44163d5cd3fb020f8640978772c8b1c1affd6f2f",
-      "rule": "pure-layer-android-import",
-      "path": "android/mediaprovider/core/src/androidMain/kotlin/com/simplecityapps/mediaprovider/ResourceMediaImportStrings.kt"
+      "fingerprint": "eb2e04c2776001347583c36bbc7b152b273bb313",
+      "rule": "issue-citation-kt",
+      "path": "android/mediaprovider/core/build.gradle.kts"
     },
     {
       "fingerprint": "c4d4517f3b00d838dfdd4964fa1c64053c9680b6",
@@ -175,11 +200,6 @@
       "fingerprint": "d470a24999188479058aae7f9a05a4c661f3c741",
       "rule": "kotlin-hardcoded-dispatcher",
       "path": "android/mediaprovider/core/src/androidMain/kotlin/com/simplecityapps/mediaprovider/TagReadGuard.kt"
-    },
-    {
-      "fingerprint": "543a42faf7a5ab5010537f2547086c6377735fcd",
-      "rule": "pure-layer-android-import",
-      "path": "android/mediaprovider/core/src/androidMain/kotlin/com/simplecityapps/mediaprovider/worker/ImportScheduler.kt"
     },
     {
       "fingerprint": "92bc2c95805543f224567418f086884056e4fbdd",
@@ -217,444 +237,59 @@
       "path": "android/mediaprovider/core/src/commonMain/kotlin/com/simplecityapps/mediaprovider/SongImporter.kt"
     },
     {
-      "fingerprint": "4e24497ebe5936b98e698377e1a0de7f68c6a159",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/emby/src/commonTest/kotlin/com/simplecityapps/provider/emby/EmbyAuthenticationTest.kt"
+      "fingerprint": "9ed34526bb2b944d7dc4792e4806803f0d1df9aa",
+      "rule": "issue-citation-kt",
+      "path": "android/mediaprovider/emby/build.gradle.kts"
     },
     {
-      "fingerprint": "92765bf09382bf7381832d027773d25c64cf8ff5",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/emby/src/commonTest/kotlin/com/simplecityapps/provider/emby/EmbyAuthenticationTest.kt"
+      "fingerprint": "00885e0c194b5f4a0c1571e03f512d2fd238a6ca",
+      "rule": "arch-hidden-coupling",
+      "path": "android/mediaprovider/emby/src/commonMain/kotlin/com/simplecityapps/provider/emby/di/EmbyMediaProviderModule.kt"
     },
     {
-      "fingerprint": "ab06f0f3652ce8be23e1ce21bc9912f8a89d981e",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/emby/src/commonTest/kotlin/com/simplecityapps/provider/emby/EmbyAuthenticationTest.kt"
+      "fingerprint": "119ad960aaee563256f0db18b4e86b4f16d3c012",
+      "rule": "issue-citation-kt",
+      "path": "android/mediaprovider/jellyfin/build.gradle.kts"
     },
     {
-      "fingerprint": "b4da6de9895b27c9be7416f714278dcdfd915b5d",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/emby/src/commonTest/kotlin/com/simplecityapps/provider/emby/EmbyAuthenticationTest.kt"
+      "fingerprint": "0bab6db98cb43ba0d9b0d2df877e265170f49d2a",
+      "rule": "gradle-api-exposure",
+      "path": "android/mediaprovider/local/build.gradle.kts"
     },
     {
-      "fingerprint": "c14e6e51593299715c0a07698d0460f26629de95",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/emby/src/commonTest/kotlin/com/simplecityapps/provider/emby/EmbyAuthenticationTest.kt"
+      "fingerprint": "6cc6e2f725abca5d356dae46b528e4f9182c4e6e",
+      "rule": "issue-citation-kt",
+      "path": "android/mediaprovider/local/build.gradle.kts"
     },
     {
-      "fingerprint": "e94680b76e6db82ac71c398c98c1fddde7e55d83",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/emby/src/commonTest/kotlin/com/simplecityapps/provider/emby/EmbyAuthenticationTest.kt"
+      "fingerprint": "9555e6f640b388b2d7b023a88bcd835a3420bd2e",
+      "rule": "issue-citation-kt",
+      "path": "android/mediaprovider/local/build.gradle.kts"
     },
     {
-      "fingerprint": "ff49ec6072e6c79565eec7ea1d1ebb48021ef48e",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/emby/src/commonTest/kotlin/com/simplecityapps/provider/emby/EmbyAuthenticationTest.kt"
+      "fingerprint": "fe0a0b3ebd2b74f4217129fac8d7737874eec59f",
+      "rule": "arch-hidden-coupling",
+      "path": "android/mediaprovider/local/src/androidMain/kotlin/com/simplecityapps/localmediaprovider/local/provider/AudioFileExt.kt"
     },
     {
-      "fingerprint": "029c646257ec254a6733684b6193d800c21b9b32",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/emby/src/commonTest/kotlin/com/simplecityapps/provider/emby/EmbyPlaybackReporterTest.kt"
+      "fingerprint": "a12a8112c24c1fd3298c7be014a53d4399efbf7b",
+      "rule": "arch-cycle",
+      "path": "android/mediaprovider/local/src/androidMain/kotlin/com/simplecityapps/localmediaprovider/local/provider/taglib/MediaStoreAudioFiles.kt"
     },
     {
-      "fingerprint": "198dc1c6171444b34150da86c406ba9ac82a561a",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/emby/src/commonTest/kotlin/com/simplecityapps/provider/emby/EmbyPlaybackReporterTest.kt"
+      "fingerprint": "02568a20f74821fa1cfb3efd42afb80f76731d68",
+      "rule": "arch-nondeterminism-in-core",
+      "path": "android/mediaprovider/local/src/commonMain/kotlin/com/simplecityapps/localmediaprovider/local/repository/LocalAlbumRepository.kt"
     },
     {
-      "fingerprint": "47e132c786e1bba8b356f665a78bbb4b0a7923fb",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/emby/src/commonTest/kotlin/com/simplecityapps/provider/emby/EmbyPlaybackReporterTest.kt"
+      "fingerprint": "38f7049c64a30ed295b487fb312e87b787d64e6c",
+      "rule": "issue-citation-kt",
+      "path": "android/mediaprovider/plex/build.gradle.kts"
     },
     {
-      "fingerprint": "4f70236058ab44cbc7e4b4eb226e0ff295aa1a97",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/emby/src/commonTest/kotlin/com/simplecityapps/provider/emby/EmbyPlaybackReporterTest.kt"
-    },
-    {
-      "fingerprint": "59cb536ac2a73fa51d73d7d40118b51738ad03b0",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/emby/src/commonTest/kotlin/com/simplecityapps/provider/emby/EmbyPlaybackReporterTest.kt"
-    },
-    {
-      "fingerprint": "7bdf1848982ba76564a26f242a8fd0475d86aeff",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/emby/src/commonTest/kotlin/com/simplecityapps/provider/emby/EmbyPlaybackReporterTest.kt"
-    },
-    {
-      "fingerprint": "a8e7c655907fa2c03a6e55fa5e2e50d193488803",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/emby/src/commonTest/kotlin/com/simplecityapps/provider/emby/EmbyPlaybackReporterTest.kt"
-    },
-    {
-      "fingerprint": "b06fa3daf9e5efe03e3e2f91b42e340e50819942",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/emby/src/commonTest/kotlin/com/simplecityapps/provider/emby/EmbyPlaybackReporterTest.kt"
-    },
-    {
-      "fingerprint": "c49a0b1edbb81b71bf8257b301cee288448e9637",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/emby/src/commonTest/kotlin/com/simplecityapps/provider/emby/EmbyPlaybackReporterTest.kt"
-    },
-    {
-      "fingerprint": "31ce48375ad4e18ce837e0800e22909a6f3cd696",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/jellyfin/src/commonTest/kotlin/com/simplecityapps/provider/jellyfin/JellyfinAuthenticationTest.kt"
-    },
-    {
-      "fingerprint": "48e724fa044e3a5fb36a6f81164c2de50d801d70",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/jellyfin/src/commonTest/kotlin/com/simplecityapps/provider/jellyfin/JellyfinAuthenticationTest.kt"
-    },
-    {
-      "fingerprint": "4f59cb277551d10f1a5e21199eae952fe85ee0b3",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/jellyfin/src/commonTest/kotlin/com/simplecityapps/provider/jellyfin/JellyfinAuthenticationTest.kt"
-    },
-    {
-      "fingerprint": "9ddf37fc877dcf9cff6736d2892bbfab94a51afb",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/jellyfin/src/commonTest/kotlin/com/simplecityapps/provider/jellyfin/JellyfinAuthenticationTest.kt"
-    },
-    {
-      "fingerprint": "9f5a12947a3bed29fb8b6fb5d54938ab41676184",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/jellyfin/src/commonTest/kotlin/com/simplecityapps/provider/jellyfin/JellyfinAuthenticationTest.kt"
-    },
-    {
-      "fingerprint": "f08db56909b32bbd06f39735e3e1e496cd7cb8e2",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/jellyfin/src/commonTest/kotlin/com/simplecityapps/provider/jellyfin/JellyfinAuthenticationTest.kt"
-    },
-    {
-      "fingerprint": "f97758ae45d5926b64fe21ed725c6d9da1f1479d",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/jellyfin/src/commonTest/kotlin/com/simplecityapps/provider/jellyfin/JellyfinAuthenticationTest.kt"
-    },
-    {
-      "fingerprint": "1164a9b2b15218e2354cec743dfe0ec0d4bdbbc4",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/jellyfin/src/commonTest/kotlin/com/simplecityapps/provider/jellyfin/JellyfinPlaybackReporterTest.kt"
-    },
-    {
-      "fingerprint": "233f6afc6f136911391df06684b90d12d8f04ab1",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/jellyfin/src/commonTest/kotlin/com/simplecityapps/provider/jellyfin/JellyfinPlaybackReporterTest.kt"
-    },
-    {
-      "fingerprint": "2cd4b5d8853b0f1e7d790cb754f42161449d13d7",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/jellyfin/src/commonTest/kotlin/com/simplecityapps/provider/jellyfin/JellyfinPlaybackReporterTest.kt"
-    },
-    {
-      "fingerprint": "3a3126be5c9a96e8b75ed57c11007d86c21bfdd8",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/jellyfin/src/commonTest/kotlin/com/simplecityapps/provider/jellyfin/JellyfinPlaybackReporterTest.kt"
-    },
-    {
-      "fingerprint": "c4e7c4f0965f36dbec459551165a28a3557590a3",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/jellyfin/src/commonTest/kotlin/com/simplecityapps/provider/jellyfin/JellyfinPlaybackReporterTest.kt"
-    },
-    {
-      "fingerprint": "dbd642338a363ea4e3acd4edec61e42257d53334",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/jellyfin/src/commonTest/kotlin/com/simplecityapps/provider/jellyfin/JellyfinPlaybackReporterTest.kt"
-    },
-    {
-      "fingerprint": "ded96f21117e668180d097045c3e3d5eb8c0ab8d",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/jellyfin/src/commonTest/kotlin/com/simplecityapps/provider/jellyfin/JellyfinPlaybackReporterTest.kt"
-    },
-    {
-      "fingerprint": "e820b08b978fe05bec279c4c7161a9c1d2678f02",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/jellyfin/src/commonTest/kotlin/com/simplecityapps/provider/jellyfin/JellyfinPlaybackReporterTest.kt"
-    },
-    {
-      "fingerprint": "e8b7de5c06cd936ba2166e34e521bab544ca5361",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/jellyfin/src/commonTest/kotlin/com/simplecityapps/provider/jellyfin/JellyfinPlaybackReporterTest.kt"
-    },
-    {
-      "fingerprint": "43a29525f7744e749b05ae9f4ac675fb1a6251ee",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/jellyfin/src/commonTest/kotlin/com/simplecityapps/provider/jellyfin/JellyfinQuickConnectTest.kt"
-    },
-    {
-      "fingerprint": "4cd81ae597bb043d92ed8c78686c8f63f2a8e4dd",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/jellyfin/src/commonTest/kotlin/com/simplecityapps/provider/jellyfin/JellyfinQuickConnectTest.kt"
-    },
-    {
-      "fingerprint": "589c68ffe43c91edb2b5e636512bd1049b80e9f3",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/jellyfin/src/commonTest/kotlin/com/simplecityapps/provider/jellyfin/JellyfinQuickConnectTest.kt"
-    },
-    {
-      "fingerprint": "5e31e558fa586c8fbf767ff528e331bf8896f7da",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/jellyfin/src/commonTest/kotlin/com/simplecityapps/provider/jellyfin/JellyfinQuickConnectTest.kt"
-    },
-    {
-      "fingerprint": "5f53766a03523e4ebe1ac00912e81c506353b356",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/jellyfin/src/commonTest/kotlin/com/simplecityapps/provider/jellyfin/JellyfinQuickConnectTest.kt"
-    },
-    {
-      "fingerprint": "90461ab09a60ccd7c6934ceaee947699e966aa9b",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/jellyfin/src/commonTest/kotlin/com/simplecityapps/provider/jellyfin/JellyfinQuickConnectTest.kt"
-    },
-    {
-      "fingerprint": "d907f85b84f3a86153f0eeb7a2324bab63a77df6",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/jellyfin/src/commonTest/kotlin/com/simplecityapps/provider/jellyfin/JellyfinQuickConnectTest.kt"
-    },
-    {
-      "fingerprint": "fd6546e33e42335a3f05266825ad86db421411ff",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/jellyfin/src/commonTest/kotlin/com/simplecityapps/provider/jellyfin/JellyfinQuickConnectTest.kt"
-    },
-    {
-      "fingerprint": "d435c81079d8ff72584822e3422058e773653ff7",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/jellyfin/src/commonTest/kotlin/com/simplecityapps/provider/jellyfin/JellyfinServerAuthenticationTest.kt"
-    },
-    {
-      "fingerprint": "0caeb58e7af86720ded244bf4156931dd241cd1c",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/local/src/androidHostTest/kotlin/com/simplecityapps/localmediaprovider/local/provider/mediastore/MediaStoreFileTagsTest.kt"
-    },
-    {
-      "fingerprint": "2596ecf5055ac91c0a5d07c9b0ed9214fc9a4bcc",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/local/src/androidHostTest/kotlin/com/simplecityapps/localmediaprovider/local/provider/mediastore/MediaStoreFileTagsTest.kt"
-    },
-    {
-      "fingerprint": "268d0a43d988239f7e1cb370b63a9fc304e77430",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/local/src/androidHostTest/kotlin/com/simplecityapps/localmediaprovider/local/provider/mediastore/MediaStoreFileTagsTest.kt"
-    },
-    {
-      "fingerprint": "2a353c060368e775bfb9ebbc7cef74429d33cbce",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/local/src/androidHostTest/kotlin/com/simplecityapps/localmediaprovider/local/provider/mediastore/MediaStoreFileTagsTest.kt"
-    },
-    {
-      "fingerprint": "3869bc972d28bfdbae4f37fe2da6d55598bac80e",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/local/src/androidHostTest/kotlin/com/simplecityapps/localmediaprovider/local/provider/mediastore/MediaStoreFileTagsTest.kt"
-    },
-    {
-      "fingerprint": "40ba94f9e215a0d0412dbdac8f3c196cd9a52706",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/local/src/androidHostTest/kotlin/com/simplecityapps/localmediaprovider/local/provider/mediastore/MediaStoreFileTagsTest.kt"
-    },
-    {
-      "fingerprint": "44b0ccffc1cc9d3f8995c1c50824fe6a43eb1d3d",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/local/src/androidHostTest/kotlin/com/simplecityapps/localmediaprovider/local/provider/mediastore/MediaStoreFileTagsTest.kt"
-    },
-    {
-      "fingerprint": "4ac4d3473afc16edff298e2112d68431cfaf3dbb",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/local/src/androidHostTest/kotlin/com/simplecityapps/localmediaprovider/local/provider/mediastore/MediaStoreFileTagsTest.kt"
-    },
-    {
-      "fingerprint": "5c4fbb18575e8a912f560a6e9bdbe789b59d6e68",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/local/src/androidHostTest/kotlin/com/simplecityapps/localmediaprovider/local/provider/mediastore/MediaStoreFileTagsTest.kt"
-    },
-    {
-      "fingerprint": "7486ac5713c29ed24ee90b69afdb0f2cc76f9de3",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/local/src/androidHostTest/kotlin/com/simplecityapps/localmediaprovider/local/provider/mediastore/MediaStoreFileTagsTest.kt"
-    },
-    {
-      "fingerprint": "963ecb4cd41200ff15915595fa496e64e9c25005",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/local/src/androidHostTest/kotlin/com/simplecityapps/localmediaprovider/local/provider/mediastore/MediaStoreFileTagsTest.kt"
-    },
-    {
-      "fingerprint": "a0bc6a8a4bbcabf25a068ba1b235f7eebca2e004",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/local/src/androidHostTest/kotlin/com/simplecityapps/localmediaprovider/local/provider/mediastore/MediaStoreFileTagsTest.kt"
-    },
-    {
-      "fingerprint": "a6fb2d0ceeabd545e3ec5ba820c75826a238ec45",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/local/src/androidHostTest/kotlin/com/simplecityapps/localmediaprovider/local/provider/mediastore/MediaStoreFileTagsTest.kt"
-    },
-    {
-      "fingerprint": "b0372b295e6e61fbd9034901ab4d97d3988af1ad",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/local/src/androidHostTest/kotlin/com/simplecityapps/localmediaprovider/local/provider/mediastore/MediaStoreFileTagsTest.kt"
-    },
-    {
-      "fingerprint": "c9dd3ae6bfde146991cd1181a8492500e6d9f644",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/local/src/androidHostTest/kotlin/com/simplecityapps/localmediaprovider/local/provider/mediastore/MediaStoreFileTagsTest.kt"
-    },
-    {
-      "fingerprint": "d2655569bb5ba16514b295ef6612593e397797e4",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/local/src/androidHostTest/kotlin/com/simplecityapps/localmediaprovider/local/provider/mediastore/MediaStoreFileTagsTest.kt"
-    },
-    {
-      "fingerprint": "df99eae1f16c5b11f0e1e864253da104d815cff0",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/local/src/androidHostTest/kotlin/com/simplecityapps/localmediaprovider/local/provider/mediastore/MediaStoreFileTagsTest.kt"
-    },
-    {
-      "fingerprint": "0906bbafb5397f4ccd07bbd088ead9cc2631fadb",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/local/src/androidHostTest/kotlin/com/simplecityapps/localmediaprovider/local/provider/mediastore/MediaStoreImportListingTest.kt"
-    },
-    {
-      "fingerprint": "332f34035116f880dcf13d6a2c66583b786391fb",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/local/src/androidHostTest/kotlin/com/simplecityapps/localmediaprovider/local/provider/mediastore/MediaStoreImportListingTest.kt"
-    },
-    {
-      "fingerprint": "4b7538d2a96cb60437759edcaa58d44c03e24a8a",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/local/src/androidHostTest/kotlin/com/simplecityapps/localmediaprovider/local/provider/mediastore/MediaStoreImportListingTest.kt"
-    },
-    {
-      "fingerprint": "65fc4b82fe6f705afb4f8ace0847ca274740b978",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/local/src/androidHostTest/kotlin/com/simplecityapps/localmediaprovider/local/provider/mediastore/MediaStoreImportListingTest.kt"
-    },
-    {
-      "fingerprint": "f75cc5d7a17ee3852c001ebeaf5a5a953e389b41",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/local/src/androidHostTest/kotlin/com/simplecityapps/localmediaprovider/local/provider/mediastore/MediaStoreImportListingTest.kt"
-    },
-    {
-      "fingerprint": "265e95512fdf857b59cb9b33c207014e6a4e2b5d",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/local/src/androidHostTest/kotlin/com/simplecityapps/localmediaprovider/local/provider/taglib/TaglibHybridScanTest.kt"
-    },
-    {
-      "fingerprint": "266b66e1a14c244bc059a5e139b9e20228ad7379",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/local/src/androidHostTest/kotlin/com/simplecityapps/localmediaprovider/local/provider/taglib/TaglibHybridScanTest.kt"
-    },
-    {
-      "fingerprint": "35197119a344d13d2214af392c456939c6cc64a1",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/local/src/androidHostTest/kotlin/com/simplecityapps/localmediaprovider/local/provider/taglib/TaglibHybridScanTest.kt"
-    },
-    {
-      "fingerprint": "46dfee990f21b7b73e77bc9da6984007935e230f",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/local/src/androidHostTest/kotlin/com/simplecityapps/localmediaprovider/local/provider/taglib/TaglibHybridScanTest.kt"
-    },
-    {
-      "fingerprint": "db1782d4765419bd297f41472dcde4e012177eff",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/local/src/androidHostTest/kotlin/com/simplecityapps/localmediaprovider/local/provider/taglib/TaglibHybridScanTest.kt"
-    },
-    {
-      "fingerprint": "12911383bc9707bd554c52546d26bbef52a39bc2",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/local/src/androidHostTest/kotlin/com/simplecityapps/localmediaprovider/local/provider/taglib/TaglibMediaProviderTest.kt"
-    },
-    {
-      "fingerprint": "2bfc9660c53019a7a231fca9e41c59a1e5ccf782",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/local/src/androidHostTest/kotlin/com/simplecityapps/localmediaprovider/local/provider/taglib/TaglibMediaProviderTest.kt"
-    },
-    {
-      "fingerprint": "33edc0eacbdf1ff84323fdc3bd405fc639d62747",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/local/src/androidHostTest/kotlin/com/simplecityapps/localmediaprovider/local/provider/taglib/TaglibMediaProviderTest.kt"
-    },
-    {
-      "fingerprint": "3ebacfff7928ac36f3fcc7a2dd4a926096e0e87f",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/local/src/androidHostTest/kotlin/com/simplecityapps/localmediaprovider/local/provider/taglib/TaglibMediaProviderTest.kt"
-    },
-    {
-      "fingerprint": "4091d1a1810cfb9658408acdce2a4fb5db30e682",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/local/src/androidHostTest/kotlin/com/simplecityapps/localmediaprovider/local/provider/taglib/TaglibMediaProviderTest.kt"
-    },
-    {
-      "fingerprint": "4c882c53e40e00d45df861009ddb8964185b65be",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/local/src/androidHostTest/kotlin/com/simplecityapps/localmediaprovider/local/provider/taglib/TaglibMediaProviderTest.kt"
-    },
-    {
-      "fingerprint": "540615256bc4f9d20af7495d39d557aa8ff8e786",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/local/src/androidHostTest/kotlin/com/simplecityapps/localmediaprovider/local/provider/taglib/TaglibMediaProviderTest.kt"
-    },
-    {
-      "fingerprint": "59528e7ef43ed696099fef36a70dd2e2320d488f",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/local/src/androidHostTest/kotlin/com/simplecityapps/localmediaprovider/local/provider/taglib/TaglibMediaProviderTest.kt"
-    },
-    {
-      "fingerprint": "6df35278d22f9a3143b0218c1fd5ce4de714b189",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/local/src/androidHostTest/kotlin/com/simplecityapps/localmediaprovider/local/provider/taglib/TaglibMediaProviderTest.kt"
-    },
-    {
-      "fingerprint": "98aa02883abe12d536c16aaa835d2758bf695cc8",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/local/src/androidHostTest/kotlin/com/simplecityapps/localmediaprovider/local/provider/taglib/TaglibMediaProviderTest.kt"
-    },
-    {
-      "fingerprint": "9fde6abfd583cc544bde5951864a9b2c1cfcc6f8",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/local/src/androidHostTest/kotlin/com/simplecityapps/localmediaprovider/local/provider/taglib/TaglibMediaProviderTest.kt"
-    },
-    {
-      "fingerprint": "a142f39f4d6c681316eddb7aa9aafb2261aedcb2",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/local/src/androidHostTest/kotlin/com/simplecityapps/localmediaprovider/local/provider/taglib/TaglibMediaProviderTest.kt"
-    },
-    {
-      "fingerprint": "b95b733d68c912c1ccbccdb6077c18c6c313992c",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/local/src/androidHostTest/kotlin/com/simplecityapps/localmediaprovider/local/provider/taglib/TaglibMediaProviderTest.kt"
-    },
-    {
-      "fingerprint": "cbd00f8f69e8a582284b001e927f9c0764fb1885",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/local/src/androidHostTest/kotlin/com/simplecityapps/localmediaprovider/local/provider/taglib/TaglibMediaProviderTest.kt"
-    },
-    {
-      "fingerprint": "dfabc5430e28c1e38f7ef022455377021667eea7",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/local/src/androidHostTest/kotlin/com/simplecityapps/localmediaprovider/local/provider/taglib/TaglibMediaProviderTest.kt"
-    },
-    {
-      "fingerprint": "e9b67a3ccfa6c04a036ed3f8e69bf15da8b28537",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/local/src/androidHostTest/kotlin/com/simplecityapps/localmediaprovider/local/provider/taglib/TaglibMediaProviderTest.kt"
-    },
-    {
-      "fingerprint": "f2453a7febeda7cb6b481914ea55d4eec6c13a61",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/local/src/androidHostTest/kotlin/com/simplecityapps/localmediaprovider/local/provider/taglib/TaglibMediaProviderTest.kt"
-    },
-    {
-      "fingerprint": "8af1b93613b2436bf551fe175f2c201eda92420a",
-      "rule": "pure-layer-android-import",
-      "path": "android/mediaprovider/plex/src/androidMain/kotlin/com/simplecityapps/provider/plex/PlexMediaInfoProvider.kt"
-    },
-    {
-      "fingerprint": "c1ca8f0aaafbffd0b303f0dd24448f8103aef6f3",
-      "rule": "pure-layer-android-import",
-      "path": "android/mediaprovider/plex/src/androidMain/kotlin/com/simplecityapps/provider/plex/PlexMediaInfoProvider.kt"
-    },
-    {
-      "fingerprint": "b14fba201387269d4e86025c80f6dd209a87be6c",
-      "rule": "pure-layer-android-import",
-      "path": "android/mediaprovider/plex/src/androidMain/kotlin/com/simplecityapps/provider/plex/ResourcePlexStrings.kt"
+      "fingerprint": "f5d1619c54bdd0db3eae23795d7137d427042b7f",
+      "rule": "arch-cycle",
+      "path": "android/mediaprovider/plex/src/commonMain/kotlin/com/simplecityapps/provider/plex/PlexAuthenticationManager.kt"
     },
     {
       "fingerprint": "2d6d52f276423cf3a1902cb76a650d410b859946",
@@ -677,94 +312,29 @@
       "path": "android/mediaprovider/plex/src/commonMain/kotlin/com/simplecityapps/provider/plex/PlexAuthenticationManager.kt"
     },
     {
-      "fingerprint": "661043f9f425bb62b373b993b96683bcee93655c",
-      "rule": "arch-nondeterminism-in-core",
-      "path": "android/mediaprovider/plex/src/commonMain/kotlin/com/simplecityapps/provider/plex/PlexMediaProvider.kt"
+      "fingerprint": "11826d1d47816493b4a712e209f9b79b6e6bc3cc",
+      "rule": "gradle-module-hub",
+      "path": "android/mediaprovider/server/build.gradle.kts"
     },
     {
-      "fingerprint": "a25e50d1c095bc2b41aa92b0a71af04af8d3023e",
-      "rule": "pure-layer-android-import",
-      "path": "android/mediaprovider/server/src/androidMain/kotlin/com/simplecityapps/mediaprovider/server/ResourceServerStrings.kt"
+      "fingerprint": "2eb45eab840db369ceba56f6905322fce117b6ea",
+      "rule": "issue-citation-kt",
+      "path": "android/mediaprovider/server/build.gradle.kts"
     },
     {
-      "fingerprint": "09d9057dea144a084a2864c421ca4fcd7ebc2627",
-      "rule": "pure-layer-android-import",
-      "path": "android/mediaprovider/server/src/androidMain/kotlin/com/simplecityapps/mediaprovider/server/mediabrowser/MediaBrowserMediaInfoProvider.kt"
+      "fingerprint": "7a7e63db0ba43d5afa97048e4d88c2290b37d650",
+      "rule": "issue-citation-kt",
+      "path": "android/mediaprovider/server/build.gradle.kts"
     },
     {
-      "fingerprint": "33e39632089ec844d2dd93cc014977b37be419ec",
-      "rule": "pure-layer-android-import",
-      "path": "android/mediaprovider/server/src/androidMain/kotlin/com/simplecityapps/mediaprovider/server/mediabrowser/MediaBrowserMediaInfoProvider.kt"
+      "fingerprint": "b675cc0a91c5c9f0e9c65e71399aaf59d63643d7",
+      "rule": "kotlin-result-return",
+      "path": "android/mediaprovider/server/src/commonMain/kotlin/com/simplecityapps/mediaprovider/server/mediabrowser/MediaBrowserAuthenticationManager.kt"
     },
     {
-      "fingerprint": "e703d82c1e4d39798f72de2beb1083273028c480",
-      "rule": "arch-nondeterminism-in-core",
-      "path": "android/mediaprovider/server/src/commonMain/kotlin/com/simplecityapps/mediaprovider/server/PagedFlow.kt"
-    },
-    {
-      "fingerprint": "70638c9bacfb6e3ff695c5fa7a3efb481df0a337",
-      "rule": "arch-nondeterminism-in-core",
-      "path": "android/mediaprovider/server/src/commonMain/kotlin/com/simplecityapps/mediaprovider/server/mediabrowser/MediaBrowserMediaProvider.kt"
-    },
-    {
-      "fingerprint": "23d4980786d499ef1e79c9e66bf1fabb95d1d082",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/server/src/commonTest/kotlin/com/simplecityapps/mediaprovider/server/mediabrowser/MediaBrowserFavouriteWriterTest.kt"
-    },
-    {
-      "fingerprint": "9363544882af3ace9dee3a86942df62050d15129",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/server/src/commonTest/kotlin/com/simplecityapps/mediaprovider/server/mediabrowser/MediaBrowserFavouriteWriterTest.kt"
-    },
-    {
-      "fingerprint": "ddf24078cdfec515547340d7ed88261f9c147dbf",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/server/src/commonTest/kotlin/com/simplecityapps/mediaprovider/server/mediabrowser/MediaBrowserFavouriteWriterTest.kt"
-    },
-    {
-      "fingerprint": "e5acad46860a985f9f9876ab8200068352237090",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/server/src/commonTest/kotlin/com/simplecityapps/mediaprovider/server/mediabrowser/MediaBrowserFavouriteWriterTest.kt"
-    },
-    {
-      "fingerprint": "ecf0b56d46785f9077af2a897222be112bd464b3",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/server/src/commonTest/kotlin/com/simplecityapps/mediaprovider/server/mediabrowser/MediaBrowserFavouriteWriterTest.kt"
-    },
-    {
-      "fingerprint": "7709c6bc03e92f6f362bdb4385dc43c7d6c88d98",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/server/src/commonTest/kotlin/com/simplecityapps/mediaprovider/server/mediabrowser/MediaBrowserSimilarSongsProviderTest.kt"
-    },
-    {
-      "fingerprint": "a52b50ca7be5ba6fea7634625ef4d0024983dde0",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/server/src/commonTest/kotlin/com/simplecityapps/mediaprovider/server/mediabrowser/MediaBrowserSimilarSongsProviderTest.kt"
-    },
-    {
-      "fingerprint": "b87758d57d16bfddb0cce04570cf71725ce40228",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/server/src/commonTest/kotlin/com/simplecityapps/mediaprovider/server/mediabrowser/MediaBrowserSimilarSongsProviderTest.kt"
-    },
-    {
-      "fingerprint": "c7f857981f2df811ca8bf5071119d6fa6c6ddc5c",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/server/src/commonTest/kotlin/com/simplecityapps/mediaprovider/server/mediabrowser/MediaBrowserSimilarSongsProviderTest.kt"
-    },
-    {
-      "fingerprint": "f55562f67944590e6353b5993b070b1fb6dd4bdd",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/server/src/commonTest/kotlin/com/simplecityapps/mediaprovider/server/mediabrowser/MediaBrowserSimilarSongsProviderTest.kt"
-    },
-    {
-      "fingerprint": "0348f95ad74061de875224f309fbc3480fc30466",
-      "rule": "pure-layer-android-import",
-      "path": "android/mediaprovider/subsonic/src/androidMain/kotlin/com/simplecityapps/provider/subsonic/SubsonicMediaInfoProvider.kt"
-    },
-    {
-      "fingerprint": "6c012ccb2a9792f2b650983a97b8c549886d73ad",
-      "rule": "pure-layer-android-import",
-      "path": "android/mediaprovider/subsonic/src/androidMain/kotlin/com/simplecityapps/provider/subsonic/SubsonicMediaInfoProvider.kt"
+      "fingerprint": "8535eb5b03a4ceb6451377ba6d2487a75569e621",
+      "rule": "issue-citation-kt",
+      "path": "android/mediaprovider/subsonic/build.gradle.kts"
     },
     {
       "fingerprint": "000c602f9db9aa2aaea888a31ac6d137cd10337a",
@@ -772,204 +342,29 @@
       "path": "android/mediaprovider/subsonic/src/commonMain/kotlin/com/simplecityapps/provider/subsonic/SubsonicAuthenticationManager.kt"
     },
     {
-      "fingerprint": "61f21827a22d87c5aef7b84f91d97ca4651555c4",
-      "rule": "arch-nondeterminism-in-core",
-      "path": "android/mediaprovider/subsonic/src/commonMain/kotlin/com/simplecityapps/provider/subsonic/SubsonicCredentials.kt"
+      "fingerprint": "0e9c5a42fb60c8cae33dfd8fc982a7fca5a10f76",
+      "rule": "gradle-api-exposure",
+      "path": "android/networking/build.gradle.kts"
     },
     {
-      "fingerprint": "f6acf8ac288b6d6b4582b05b6cd91c3a37b8af65",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/subsonic/src/commonTest/kotlin/com/simplecityapps/provider/subsonic/SubsonicMediaProviderTest.kt"
+      "fingerprint": "a0fb7fcba4b49ab82f8679cc32c2371f77e6146e",
+      "rule": "gradle-module-hub",
+      "path": "android/networking/build.gradle.kts"
     },
     {
-      "fingerprint": "16ee1ebe96ae1a685c56865d2cfc2df1516ea9d8",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/subsonic/src/commonTest/kotlin/com/simplecityapps/provider/subsonic/SubsonicReportingTest.kt"
+      "fingerprint": "caefea3c6edf052921f8d3e372bb730bbb1b089d",
+      "rule": "issue-citation-kt",
+      "path": "android/networking/build.gradle.kts"
     },
     {
-      "fingerprint": "32d19e6253229619b83207cdad2653afb29271c4",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/subsonic/src/commonTest/kotlin/com/simplecityapps/provider/subsonic/SubsonicReportingTest.kt"
+      "fingerprint": "ce0ada391769afe12d345d9f5b3c45cba1d5213c",
+      "rule": "gradle-api-exposure",
+      "path": "android/playback/core/build.gradle.kts"
     },
     {
-      "fingerprint": "552b2c34bf3931c380f3e8c5b72accc753e3c729",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/subsonic/src/commonTest/kotlin/com/simplecityapps/provider/subsonic/SubsonicReportingTest.kt"
-    },
-    {
-      "fingerprint": "8e6a144ce77b19b34dfc8ce9f5949b732e3ff699",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/subsonic/src/commonTest/kotlin/com/simplecityapps/provider/subsonic/SubsonicReportingTest.kt"
-    },
-    {
-      "fingerprint": "91b193c15462a004c04a5437e6d69cb5894c58bd",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/subsonic/src/commonTest/kotlin/com/simplecityapps/provider/subsonic/SubsonicReportingTest.kt"
-    },
-    {
-      "fingerprint": "a3588289f66ebf4b6c311291d5ded9d904d660bf",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/subsonic/src/commonTest/kotlin/com/simplecityapps/provider/subsonic/SubsonicReportingTest.kt"
-    },
-    {
-      "fingerprint": "b260e6bb4a7f8f9ea79376dca551b76a7a10704d",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/subsonic/src/commonTest/kotlin/com/simplecityapps/provider/subsonic/SubsonicReportingTest.kt"
-    },
-    {
-      "fingerprint": "150b4095814739e284fc58a4564c29fab8a6dfad",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/subsonic/src/commonTest/kotlin/com/simplecityapps/provider/subsonic/SubsonicSignInTest.kt"
-    },
-    {
-      "fingerprint": "1a7242329550f1d700cae31be15382a4509851d4",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/subsonic/src/commonTest/kotlin/com/simplecityapps/provider/subsonic/SubsonicSignInTest.kt"
-    },
-    {
-      "fingerprint": "6aaa2019790a18b406f8e54e08cb03e9cee802ce",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/subsonic/src/commonTest/kotlin/com/simplecityapps/provider/subsonic/SubsonicSignInTest.kt"
-    },
-    {
-      "fingerprint": "76ded80dd408563e44b4322cf4608de29a958810",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/subsonic/src/commonTest/kotlin/com/simplecityapps/provider/subsonic/SubsonicSignInTest.kt"
-    },
-    {
-      "fingerprint": "8bbc9fdc78ee8c496ec3381f26856293210fcca3",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/subsonic/src/commonTest/kotlin/com/simplecityapps/provider/subsonic/SubsonicSignInTest.kt"
-    },
-    {
-      "fingerprint": "b64438f838145767b322d9bae4b34940137476e0",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/subsonic/src/commonTest/kotlin/com/simplecityapps/provider/subsonic/SubsonicSignInTest.kt"
-    },
-    {
-      "fingerprint": "fc88b2b317dea2b28e102c1f2fa11e27e88400ed",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/subsonic/src/commonTest/kotlin/com/simplecityapps/provider/subsonic/SubsonicSignInTest.kt"
-    },
-    {
-      "fingerprint": "2161e9f94280a1ef7659f82150515e4c9eea8d1e",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/subsonic/src/commonTest/kotlin/com/simplecityapps/provider/subsonic/SubsonicStreamsTest.kt"
-    },
-    {
-      "fingerprint": "2835aafb2f0c5066c6598114268b0337ca017a1d",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/subsonic/src/commonTest/kotlin/com/simplecityapps/provider/subsonic/SubsonicStreamsTest.kt"
-    },
-    {
-      "fingerprint": "422f0a3ed9db202cf0e2a3ec201cd444b0aae782",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/subsonic/src/commonTest/kotlin/com/simplecityapps/provider/subsonic/SubsonicStreamsTest.kt"
-    },
-    {
-      "fingerprint": "55b925463d74c722dbcf4e9c1284406c8b8b8f21",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/subsonic/src/commonTest/kotlin/com/simplecityapps/provider/subsonic/SubsonicStreamsTest.kt"
-    },
-    {
-      "fingerprint": "61d26021981ffa1bcaac8af0411f172cd3bb1e87",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/subsonic/src/commonTest/kotlin/com/simplecityapps/provider/subsonic/SubsonicStreamsTest.kt"
-    },
-    {
-      "fingerprint": "63672d4df35836b7345731cce514afaf8aee9612",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/subsonic/src/commonTest/kotlin/com/simplecityapps/provider/subsonic/SubsonicStreamsTest.kt"
-    },
-    {
-      "fingerprint": "678de7176702f84cae3ce211faadad248cf72b7b",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/subsonic/src/commonTest/kotlin/com/simplecityapps/provider/subsonic/SubsonicStreamsTest.kt"
-    },
-    {
-      "fingerprint": "8d13bc302e7b2982ff9c4b08c2e6f223a662fbd6",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/subsonic/src/commonTest/kotlin/com/simplecityapps/provider/subsonic/SubsonicStreamsTest.kt"
-    },
-    {
-      "fingerprint": "8e7f4653e8eed9b0fb3a60c669d6d751789cb070",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/subsonic/src/commonTest/kotlin/com/simplecityapps/provider/subsonic/SubsonicStreamsTest.kt"
-    },
-    {
-      "fingerprint": "924769a4f2d7f08704abb697cd1c5f929e6432ce",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/subsonic/src/commonTest/kotlin/com/simplecityapps/provider/subsonic/SubsonicStreamsTest.kt"
-    },
-    {
-      "fingerprint": "bdf0140c89d3b3cb040c6340282a7ae66818c09f",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/subsonic/src/commonTest/kotlin/com/simplecityapps/provider/subsonic/SubsonicStreamsTest.kt"
-    },
-    {
-      "fingerprint": "be6e91e0c11d9c022c8f1da71f9be693f129a0d7",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/subsonic/src/commonTest/kotlin/com/simplecityapps/provider/subsonic/SubsonicStreamsTest.kt"
-    },
-    {
-      "fingerprint": "cb2147843bddc6d6bcdea472d07f551949d7d9cb",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/subsonic/src/commonTest/kotlin/com/simplecityapps/provider/subsonic/SubsonicStreamsTest.kt"
-    },
-    {
-      "fingerprint": "ccb0e83658b6b8ae9523e454dac3349ce6f594f2",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/subsonic/src/commonTest/kotlin/com/simplecityapps/provider/subsonic/SubsonicStreamsTest.kt"
-    },
-    {
-      "fingerprint": "ddc94258e0153eca891da9b14fe76a6f6eb8d0f5",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/mediaprovider/subsonic/src/commonTest/kotlin/com/simplecityapps/provider/subsonic/SubsonicStreamsTest.kt"
-    },
-    {
-      "fingerprint": "a179bfe4b5c36fa08dccd0d8fdba4632a471af9f",
-      "rule": "consistency-minority-mechanism",
-      "path": "android/playback/src/main/java/com/simplecityapps/playback/CallHold.kt"
-    },
-    {
-      "fingerprint": "3aad7b7ee11c04970fc17e4b1a58271e94687e83",
-      "rule": "consistency-minority-mechanism",
-      "path": "android/playback/src/main/java/com/simplecityapps/playback/CallMonitor.kt"
-    },
-    {
-      "fingerprint": "28fa5acf20c01678f71e363ee31500ab634d3c6b",
-      "rule": "consistency-minority-mechanism",
-      "path": "android/playback/src/main/java/com/simplecityapps/playback/PlaybackService.kt"
-    },
-    {
-      "fingerprint": "65d0ef10bde78b4ad45a31adac15386e8e023769",
-      "rule": "kotlin-hardcoded-dispatcher",
-      "path": "android/playback/src/main/java/com/simplecityapps/playback/androidauto/MediaIdHelper.kt"
-    },
-    {
-      "fingerprint": "9399f41b9cceab91d11dd24e9c868410f41f8533",
-      "rule": "kotlin-hardcoded-dispatcher",
-      "path": "android/playback/src/main/java/com/simplecityapps/playback/androidauto/MediaIdHelper.kt"
-    },
-    {
-      "fingerprint": "a689a69279b2d7ed8c48bd210067bb0154e38a9a",
-      "rule": "kotlin-hardcoded-dispatcher",
-      "path": "android/playback/src/main/java/com/simplecityapps/playback/androidauto/MediaIdHelper.kt"
-    },
-    {
-      "fingerprint": "b474e924d2652723e9f37bc19037a2002fb3c03c",
-      "rule": "kotlin-hardcoded-dispatcher",
-      "path": "android/playback/src/main/java/com/simplecityapps/playback/androidauto/MediaIdHelper.kt"
-    },
-    {
-      "fingerprint": "6e7548dcdf8f491ed8f3cc8bb9d1f1831c30a85d",
-      "rule": "kotlin-hardcoded-dispatcher",
-      "path": "android/playback/src/main/java/com/simplecityapps/playback/chromecast/CastService.kt"
-    },
-    {
-      "fingerprint": "6faf23d0d6760ae239d159a50c4e7adffbcceabe",
-      "rule": "arch-nondeterminism-in-core",
-      "path": "android/playback/src/main/java/com/simplecityapps/playback/chromecast/CastStreams.kt"
+      "fingerprint": "5e2c6bb92be021b66948f23ea5aa4cf2b6adca07",
+      "rule": "issue-citation-kt",
+      "path": "android/playback/core/build.gradle.kts"
     },
     {
       "fingerprint": "495edf8faa2657b3d21cbe6c1a0aeb10d2f4714e",
@@ -982,49 +377,9 @@
       "path": "android/playback/src/main/java/com/simplecityapps/playback/mediasession/ArtworkBitmapLoader.kt"
     },
     {
-      "fingerprint": "3bf17d7cbb989183c76fe6a18aaffc5bedd612d2",
-      "rule": "arch-layer-direction",
-      "path": "android/playback/src/main/java/com/simplecityapps/playback/mediasession/PlayRequests.kt"
-    },
-    {
-      "fingerprint": "9913abfd5f1a090cfc29397406d000ba70186766",
-      "rule": "kotlin-hardcoded-dispatcher",
-      "path": "android/playback/src/main/java/com/simplecityapps/playback/mediasession/PlayRequests.kt"
-    },
-    {
       "fingerprint": "f7cf00e15b16c43c17f2dec6af8bd15d0c912a99",
       "rule": "consistency-minority-mechanism",
       "path": "android/playback/src/main/java/com/simplecityapps/playback/mediasession/SessionCallback.kt"
-    },
-    {
-      "fingerprint": "db65ab0e98f88d862bfd5abd5cdfd334c8a31dcf",
-      "rule": "kotlin-hardcoded-dispatcher",
-      "path": "android/playback/src/main/java/com/simplecityapps/playback/mediasession/UriSongResolver.kt"
-    },
-    {
-      "fingerprint": "be9422af51d41b895320df99bc7cae7281144af0",
-      "rule": "kotlin-hardcoded-dispatcher",
-      "path": "android/playback/src/main/java/com/simplecityapps/playback/mediasession/VoiceSearch.kt"
-    },
-    {
-      "fingerprint": "efbe464a720f96c7139135c1485479ea96d23f17",
-      "rule": "kotlin-hardcoded-dispatcher",
-      "path": "android/playback/src/main/java/com/simplecityapps/playback/mediasession/VoiceSearch.kt"
-    },
-    {
-      "fingerprint": "22c77e9d220a90003fa55ea3f28e89284022f3b2",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/playback/src/test/java/com/simplecityapps/playback/androidauto/MediaIdHelperAlbumKeyTest.kt"
-    },
-    {
-      "fingerprint": "331f871f7375a8e085cbceb1b00512b584d0ee62",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/playback/src/test/java/com/simplecityapps/playback/androidauto/MediaIdHelperAlbumKeyTest.kt"
-    },
-    {
-      "fingerprint": "8a0e210ac2dee2262e110311ee8680bbeaadf0df",
-      "rule": "tests-kotlin-runblocking",
-      "path": "android/playback/src/test/java/com/simplecityapps/playback/androidauto/MediaIdHelperAlbumKeyTest.kt"
     },
     {
       "fingerprint": "95b1723d6f155db7ca07c85174353d9cf1c68857",
@@ -1107,6 +462,11 @@
       "path": "android/playback/src/test/java/com/simplecityapps/playback/engine/SongUriResolverTest.kt"
     },
     {
+      "fingerprint": "768ad937372a5c3d3515ad2fb494462d9213e4e1",
+      "rule": "tests-slow-kind-fast-subject",
+      "path": "android/playback/src/test/java/com/simplecityapps/playback/exoplayer/LazyPreparationTest.kt"
+    },
+    {
       "fingerprint": "312099cee9dd75398a04503786ceaca0f24c4daf",
       "rule": "tests-kotlin-runblocking",
       "path": "android/playback/src/test/java/com/simplecityapps/playback/queue/NewQueueTest.kt"
@@ -1137,34 +497,134 @@
       "path": "android/playback/src/test/java/com/simplecityapps/playback/queue/NewQueueTest.kt"
     },
     {
-      "fingerprint": "e990cf920e50528b7f842cbc84aa7f2857353e8a",
-      "rule": "arch-nondeterminism-in-core",
-      "path": "android/presentation/src/commonMain/kotlin/com/simplecityapps/shuttle/ui/screens/home/PickRandomShuffle.kt"
+      "fingerprint": "3d8d99f518bf87aaf35a7d1efda9e04ab95aa261",
+      "rule": "tests-slow-kind-fast-subject",
+      "path": "android/playback/src/test/java/com/simplecityapps/playback/spec/ForegroundStartSpecTest.kt"
     },
     {
-      "fingerprint": "0f86a4efc9a3b1f62c53ae5644c8bf857160ba11",
-      "rule": "kotlin-hardcoded-dispatcher",
-      "path": "android/saf/src/main/java/com/simplecityapps/saf/SafDirectoryHelper.kt"
+      "fingerprint": "3aa970cec0ca6efa99214b6b73f1695309f11ad2",
+      "rule": "tests-slow-kind-fast-subject",
+      "path": "android/playback/src/test/java/com/simplecityapps/playback/spec/LargeQueueSessionSpikeTest.kt"
     },
     {
-      "fingerprint": "323a9c29dd39a5d4c23ac180b8cab3588cfa48df",
-      "rule": "kotlin-hardcoded-dispatcher",
-      "path": "android/saf/src/main/java/com/simplecityapps/saf/SafDirectoryHelper.kt"
+      "fingerprint": "96af48bda70be81d3f2ebbeae35db3b720077ac4",
+      "rule": "tests-slow-kind-fast-subject",
+      "path": "android/playback/src/test/java/com/simplecityapps/playback/spec/MediaSessionSpecTest.kt"
     },
     {
-      "fingerprint": "a075d15668375f4c34fea0fa7dd44df1bd1d430a",
-      "rule": "kotlin-hardcoded-dispatcher",
-      "path": "android/saf/src/main/java/com/simplecityapps/saf/SafDirectoryHelper.kt"
+      "fingerprint": "a7b71af024e1ea8db5c222311fc41fad3408a60a",
+      "rule": "tests-blocking-reaches-delay",
+      "path": "android/playback/src/test/java/com/simplecityapps/playback/spec/PlaybackHarness.kt"
     },
     {
-      "fingerprint": "d16ffa031d6147ed500cbf3087efa74b2b9b3a2d",
-      "rule": "arch-nondeterminism-in-core",
-      "path": "android/scrobbling/src/commonMain/kotlin/com/simplecityapps/shuttle/scrobbling/PlaybackScrobbling.kt"
+      "fingerprint": "b5a136cbb09a873bc57c4dbfdb9f3ad41a6460e6",
+      "rule": "gradle-api-exposure",
+      "path": "android/presentation/build.gradle.kts"
     },
     {
-      "fingerprint": "a71ad55fa587cbeaba92b3ae1805bee24ab7df54",
-      "rule": "arch-nondeterminism-in-core",
+      "fingerprint": "751897afd8d2a1d06ea9136217b4ada0c736578c",
+      "rule": "issue-citation-kt",
+      "path": "android/presentation/build.gradle.kts"
+    },
+    {
+      "fingerprint": "da7e27495a1a16f1175381a69e63abbe2dd86458",
+      "rule": "arch-cycle",
+      "path": "android/presentation/src/commonMain/kotlin/com/simplecityapps/shuttle/ui/actions/ExportPlaylist.kt"
+    },
+    {
+      "fingerprint": "5acffe62eb6091c9ef016401adeee14668032c87",
+      "rule": "arch-cycle",
+      "path": "android/presentation/src/commonMain/kotlin/com/simplecityapps/shuttle/ui/screens/home/HomeModel.kt"
+    },
+    {
+      "fingerprint": "dd905ef255960e04eda2f27a4705219c80bce844",
+      "rule": "arch-cycle",
+      "path": "android/presentation/src/commonMain/kotlin/com/simplecityapps/shuttle/ui/screens/library/LibraryEmptyViewModel.kt"
+    },
+    {
+      "fingerprint": "4b0ecfa84f1b52ea0a56cfc16726b6ab394236d3",
+      "rule": "arch-cycle",
+      "path": "android/presentation/src/commonMain/kotlin/com/simplecityapps/shuttle/ui/screens/settings/equalizer/EqualizerViewModel.kt"
+    },
+    {
+      "fingerprint": "ada1698e51a9fd9b42e89d5071b04993de5101f7",
+      "rule": "arch-cycle",
+      "path": "android/presentation/src/commonMain/kotlin/com/simplecityapps/shuttle/ui/screens/sources/SourcesViewModel.kt"
+    },
+    {
+      "fingerprint": "d21da331d95b85c88c8bc64af3214df390e80912",
+      "rule": "gradle-api-exposure",
+      "path": "android/scrobbling/build.gradle.kts"
+    },
+    {
+      "fingerprint": "12fd449bbca2427d514bb248e2bc2c88934d0773",
+      "rule": "issue-citation-kt",
+      "path": "android/scrobbling/build.gradle.kts"
+    },
+    {
+      "fingerprint": "8cdb8f4656d906ef889c1bc1c4fc61d584c31b04",
+      "rule": "issue-citation-kt",
+      "path": "android/scrobbling/build.gradle.kts"
+    },
+    {
+      "fingerprint": "35ec486c13d3e5ff49efcd6dff9f873ee515c145",
+      "rule": "arch-cycle",
       "path": "android/scrobbling/src/commonMain/kotlin/com/simplecityapps/shuttle/scrobbling/flush/ScrobbleFlusher.kt"
+    },
+    {
+      "fingerprint": "9bee05a3d37fd3971469e6182ee826d36775c802",
+      "rule": "arch-cycle",
+      "path": "android/trial/src/main/java/com/simplecityapps/trial/Billing.kt"
+    },
+    {
+      "fingerprint": "14df1c5b408be61ed1dc9168c0466ac2d7872143",
+      "rule": "gradle-cross-module-config",
+      "path": "build.gradle.kts"
+    },
+    {
+      "fingerprint": "34758768a4a1387bb88db5623cd183cb76737da5",
+      "rule": "issue-citation-kt",
+      "path": "build.gradle.kts"
+    },
+    {
+      "fingerprint": "45d0efe8c3564f65def3707fd54f054dba0d101a",
+      "rule": "issue-citation-kt",
+      "path": "build.gradle.kts"
+    },
+    {
+      "fingerprint": "515390b8a6a2a1041688e0b7d65909e0a567beb4",
+      "rule": "issue-citation-kt",
+      "path": "build.gradle.kts"
+    },
+    {
+      "fingerprint": "a793053c73b89dd6a98e511039331f4d822abcca",
+      "rule": "issue-citation-kt",
+      "path": "build.gradle.kts"
+    },
+    {
+      "fingerprint": "f57d74cea21d5e62028af518288b669bbf94723c",
+      "rule": "issue-citation-kt",
+      "path": "build.gradle.kts"
+    },
+    {
+      "fingerprint": "f5b441db885e9bbb4f462593c8eeb59962f9c4c0",
+      "rule": "issue-citation-kt",
+      "path": "build.gradle.kts"
+    },
+    {
+      "fingerprint": "27fc14565d0bfe65647c043109390c11656e1d7b",
+      "rule": "gradle-buildsrc",
+      "path": "buildSrc/build.gradle.kts"
+    },
+    {
+      "fingerprint": "81da2edc5e29cffa7332789f34096f62ac24fc2b",
+      "rule": "issue-citation-kt",
+      "path": "buildSrc/src/main/kotlin/s2.kmp-library.gradle.kts"
+    },
+    {
+      "fingerprint": "a21d9caf98cb7fff665864d728cd331ca3b88549",
+      "rule": "swift-not-swift6-mode",
+      "path": "ios/Core/Package.swift"
     },
     {
       "fingerprint": "f2689710a5721498fe4b7f694ea82695eba92a90",
@@ -1172,9 +632,14 @@
       "path": "ios/Playback/Package.swift"
     },
     {
-      "fingerprint": "7dcf59f9ca0dc3202dbf399794d6eac76d27f617",
-      "rule": "swift-unchecked-sendable-nolock",
-      "path": "ios/Playback/Sources/S2Playback/DSP/LimiterProcessor.swift"
+      "fingerprint": "0036f08a63accb016ba83bccb6faa105175409e4",
+      "rule": "issue-citation",
+      "path": "ios/Playback/Sources/CS2Tags/include/tag_read.h"
+    },
+    {
+      "fingerprint": "7a8cdf93187e32d95ff3707af58150da5f21cd8e",
+      "rule": "issue-citation",
+      "path": "ios/Playback/Sources/CS2Tags/tag_read.c"
     },
     {
       "fingerprint": "7d2e88cf8cec22dd1b800658f3a8a9f3df0f6dd8",
@@ -1217,6 +682,16 @@
       "path": "ios/Playback/Tests/S2PlaybackTests/StreamReadAheadTests.swift"
     },
     {
+      "fingerprint": "1b89df82c772529d33399c52010798a6d027c23e",
+      "rule": "tests-swift-xctest-unit",
+      "path": "ios/Playback/Tests/S2PlaybackTests/StreamStoreTests.swift"
+    },
+    {
+      "fingerprint": "d0dc3fdd4ef1a51c6b2d5863e637a0262d587411",
+      "rule": "tests-swift-xctest-unit",
+      "path": "ios/Playback/Tests/S2PlaybackTests/StreamWarmUpTests.swift"
+    },
+    {
       "fingerprint": "bd49923c3d9e2dc3b709c78fc3c70a6fed1d5a8e",
       "rule": "tests-swift-xctest-unit",
       "path": "ios/Playback/Tests/S2PlaybackTests/TimeOffsetItemSourceTests.swift"
@@ -1232,9 +707,9 @@
       "path": "ios/S2.xcodeproj/project.pbxproj"
     },
     {
-      "fingerprint": "f9ca897d9182434070e355f18cfac1ad1976a03b",
-      "rule": "arch-layer-direction",
-      "path": "ios/S2/ContentView.swift"
+      "fingerprint": "bdc25851efe82c5170dfdfa8a761203b513da47d",
+      "rule": "app-target-pure-logic-swift",
+      "path": "ios/S2/Artwork/ArtworkCandidate.swift"
     },
     {
       "fingerprint": "bd2b16e0aa66c91b83138d8c06ccbf0b1ec89c23",
@@ -1272,18 +747,8 @@
       "path": "ios/S2/Features/Playback/PlayIntent.swift"
     },
     {
-      "fingerprint": "93f5f49285a0897fd17b0c055a80d6e857cf977a",
-      "rule": "swift-nonisolated-unsafe",
-      "path": "ios/S2/Features/Playback/PlayerBinding.swift"
-    },
-    {
-      "fingerprint": "e1e23bb382e90a7f2088b5bb77f854b65de2237f",
-      "rule": "swift-nonisolated-unsafe",
-      "path": "ios/S2/Features/Playback/PlayerBinding.swift"
-    },
-    {
-      "fingerprint": "fce6227c2abd71bb115822fac1e0fd2ba78f1185",
-      "rule": "swift-nonisolated-unsafe",
+      "fingerprint": "6800272ec3c9012195e6dc28f352591fbccc73f3",
+      "rule": "arch-ui-import-in-model",
       "path": "ios/S2/Features/Playback/PlayerBinding.swift"
     },
     {
@@ -1294,16 +759,6 @@
     {
       "fingerprint": "5d42b66ebb0c539ff7b38856c7d467d0dc6dacb9",
       "rule": "size-file",
-      "path": "ios/S2/Features/Sources/ServerSignInView.swift"
-    },
-    {
-      "fingerprint": "89ae1c207ad0c3abe230f3f172ef57fa9eb1b130",
-      "rule": "swiftui-foreach-enumerated-offset",
-      "path": "ios/S2/Features/Sources/ServerSignInView.swift"
-    },
-    {
-      "fingerprint": "487f04a77a214e3b2547ce9e8efc18b1ebb52612",
-      "rule": "swiftui-foreach-index-delete",
       "path": "ios/S2/Features/Sources/ServerSignInView.swift"
     },
     {
@@ -1327,9 +782,9 @@
       "path": "ios/S2/KMP/ViewModelCache.swift"
     },
     {
-      "fingerprint": "d094607244b87e233d45c7ec1862ec086fb21c12",
-      "rule": "arch-layer-direction",
-      "path": "ios/S2/Navigation/RouteDestination.swift"
+      "fingerprint": "e2c131ce135941b42172eae8ec1a9d46d0fdac42",
+      "rule": "app-target-pure-logic-swift",
+      "path": "ios/S2/Navigation/Route.swift"
     },
     {
       "fingerprint": "7e6a1012afe9c9d7be9f564be0f221390284905d",
@@ -1342,14 +797,9 @@
       "path": "ios/S2/Platform/CarPlay/CarPlayArtworkLoader.swift"
     },
     {
-      "fingerprint": "eed2b058afae378af0b268e2cfb7a2e9ee3ae922",
-      "rule": "consistency-minority-mechanism",
-      "path": "ios/S2/Platform/CarPlay/CarPlayOffline.swift"
-    },
-    {
-      "fingerprint": "88eb214db1886d304a1040174d1ebc9e7e87eb5a",
-      "rule": "arch-nondeterminism-in-core",
-      "path": "ios/S2/Platform/Diagnostics/StartupTrace.swift"
+      "fingerprint": "a25d90003c630a4111bee0c284b5e0cd54cd3667",
+      "rule": "app-target-pure-logic-swift",
+      "path": "ios/S2/Platform/CarPlay/CarPlayCatalog.swift"
     },
     {
       "fingerprint": "d5c28877ec1972bbb872400463d6907b02c6f3e9",
@@ -1462,14 +912,244 @@
       "path": "ios/S2Widgets/PlaybackControl.swift"
     },
     {
-      "fingerprint": "2e9f2f08de641fa1517fe9845b587a23246b2a99",
-      "rule": "arch-nondeterminism-in-core",
-      "path": "shared/src/iosMain/kotlin/com/simplecityapps/shuttle/shared/local/IosLocalMediaProvider.kt"
+      "fingerprint": "674ff66b0d7562febba6c5b7e92148b0c6452fc2",
+      "rule": "shellcheck-SC1087",
+      "path": "ios/scripts/generate-lastfm-config.sh"
     },
     {
-      "fingerprint": "a6ffbc5c33dd3897462f55ce86c8e5e907ce80f2",
-      "rule": "kotlin-hardcoded-dispatcher",
-      "path": "shared/src/iosMain/kotlin/com/simplecityapps/shuttle/shared/local/IosLocalMediaProvider.kt"
+      "fingerprint": "39ee10d49ebf5f8d343224857944f0a5dfb11252",
+      "rule": "arch-hidden-coupling",
+      "path": "ios/scripts/run-sim-server.sh"
+    },
+    {
+      "fingerprint": "5c679cc6b454e7062bcdb0bda0006a29173749f4",
+      "rule": "shellcheck-SC2034",
+      "path": "ios/scripts/xcode-cache.sh"
+    },
+    {
+      "fingerprint": "177353f62813963aab5dfd20021a69db591c885e",
+      "rule": "issue-citation-kt",
+      "path": "shared/build.gradle.kts"
+    },
+    {
+      "fingerprint": "9cdf9dedc74669c550582356fa56af66a34f1cad",
+      "rule": "issue-citation-kt",
+      "path": "shared/build.gradle.kts"
+    },
+    {
+      "fingerprint": "a60d731298f78edf2a775ce98903f87d1ed3e36c",
+      "rule": "issue-citation-kt",
+      "path": "shared/build.gradle.kts"
+    },
+    {
+      "fingerprint": "f3c84ac677e4059be2c7e1e4cc63d4fff183163c",
+      "rule": "issue-citation-kt",
+      "path": "shared/build.gradle.kts"
+    },
+    {
+      "fingerprint": "32456d9da4652833e13e40e50d30c986aca0e8d4",
+      "rule": "arch-cycle",
+      "path": "shared/src/commonMain/kotlin/com/simplecityapps/shuttle/shared/playback/IosAudioPlayer.kt"
+    },
+    {
+      "fingerprint": "6d76df8d8cac9f6c0f0e0dbe9e9ae24f1901d884",
+      "rule": "arch-hidden-coupling",
+      "path": "shared/src/iosMain/kotlin/com/simplecityapps/shuttle/shared/settings/IosSettingsCatalog.kt"
+    },
+    {
+      "fingerprint": "649eaf1a7b43e7f8e7785275d2d31811576e8cff",
+      "rule": "shellcheck-SC2034",
+      "path": "support/bench/bench.sh"
+    },
+    {
+      "fingerprint": "0f5060b82b9cd8332adc1a4d104f1d6a92e1ede4",
+      "rule": "arch-hidden-coupling",
+      "path": "support/scripts/crossfade-check.sh"
+    },
+    {
+      "fingerprint": "b92f289126f6e756137d0f868bf7b7806b6a954c",
+      "rule": "shellcheck-SC2034",
+      "path": "support/scripts/design-shots.sh"
+    },
+    {
+      "fingerprint": "330043148046469c7456b4d203ddcdb3606780df",
+      "rule": "size-file",
+      "path": "support/scripts/design-shots.sh"
+    },
+    {
+      "fingerprint": "a00734d9a4e6449c766860f6309ded64de731421",
+      "rule": "bash-eval",
+      "path": "support/scripts/emu-lane.sh"
+    },
+    {
+      "fingerprint": "5fde4b3772b35fa84d0c42ca260b5a6a6ba35b7c",
+      "rule": "shellcheck-SC2034",
+      "path": "support/scripts/emu-verify.sh"
+    },
+    {
+      "fingerprint": "a362f0a8dc86b82d624b96dc1cf17ae5a83b2fcf",
+      "rule": "size-file",
+      "path": "support/scripts/generate-fake-artwork.py"
+    },
+    {
+      "fingerprint": "2ed53f569ad95c1f1459c8798e3b8c71768e1967",
+      "rule": "bash-eval",
+      "path": "support/scripts/release-compare.sh"
+    },
+    {
+      "fingerprint": "02e83d9573491977a36e7c2e0cef68d8bb560644",
+      "rule": "shellcheck-SC2034",
+      "path": "support/scripts/release-compare.sh"
+    },
+    {
+      "fingerprint": "0531a26c184d137ef92ad9fd7039834dd7c5df33",
+      "rule": "shellcheck-SC2034",
+      "path": "support/scripts/release-compare.sh"
+    },
+    {
+      "fingerprint": "05e1713dd1734adf1bd430928954c54a289e1aaf",
+      "rule": "shellcheck-SC2034",
+      "path": "support/scripts/release-compare.sh"
+    },
+    {
+      "fingerprint": "11016f8379b86b863b2b59861a6c18c8152c662f",
+      "rule": "shellcheck-SC2034",
+      "path": "support/scripts/release-compare.sh"
+    },
+    {
+      "fingerprint": "15902aca22c258509bf162b6a393f39d054e89fc",
+      "rule": "shellcheck-SC2034",
+      "path": "support/scripts/release-compare.sh"
+    },
+    {
+      "fingerprint": "268e37f12577fb1097774628f3dd1df1169e7a1e",
+      "rule": "shellcheck-SC2034",
+      "path": "support/scripts/release-compare.sh"
+    },
+    {
+      "fingerprint": "2ac34ab3f6abfa0f5d02009782ba0a80d1f7bf9e",
+      "rule": "shellcheck-SC2034",
+      "path": "support/scripts/release-compare.sh"
+    },
+    {
+      "fingerprint": "2d981697c5d029135ce5d1e7464657de7ba0ea0e",
+      "rule": "shellcheck-SC2034",
+      "path": "support/scripts/release-compare.sh"
+    },
+    {
+      "fingerprint": "35d3b2e3ca0b4a710f51a664ee7a64852a86e1b7",
+      "rule": "shellcheck-SC2034",
+      "path": "support/scripts/release-compare.sh"
+    },
+    {
+      "fingerprint": "531028ca041b6800e43ba75856ca15dc1764fa70",
+      "rule": "shellcheck-SC2034",
+      "path": "support/scripts/release-compare.sh"
+    },
+    {
+      "fingerprint": "5cc095bb42414754e3dbae65907cc312d51b726a",
+      "rule": "shellcheck-SC2034",
+      "path": "support/scripts/release-compare.sh"
+    },
+    {
+      "fingerprint": "6c67de1e7e6ad2076212e175b74643447f8ecaa1",
+      "rule": "shellcheck-SC2034",
+      "path": "support/scripts/release-compare.sh"
+    },
+    {
+      "fingerprint": "87442740c9b556cc8e738e9d928254044505ca9a",
+      "rule": "shellcheck-SC2034",
+      "path": "support/scripts/release-compare.sh"
+    },
+    {
+      "fingerprint": "9f0159fa1dcb5369b9f1431d4caa78834e4f50be",
+      "rule": "shellcheck-SC2034",
+      "path": "support/scripts/release-compare.sh"
+    },
+    {
+      "fingerprint": "a13822005b34e192aef5bbe2bbb7c87c6214e04f",
+      "rule": "shellcheck-SC2034",
+      "path": "support/scripts/release-compare.sh"
+    },
+    {
+      "fingerprint": "a4d0f889bef8c7c56f0552d2309696e832d74b92",
+      "rule": "shellcheck-SC2034",
+      "path": "support/scripts/release-compare.sh"
+    },
+    {
+      "fingerprint": "aa6e39821b861dc6a682b43379666a90de69dd14",
+      "rule": "shellcheck-SC2034",
+      "path": "support/scripts/release-compare.sh"
+    },
+    {
+      "fingerprint": "b9d6f879931879cf686f5902c9d917799c255a1a",
+      "rule": "shellcheck-SC2034",
+      "path": "support/scripts/release-compare.sh"
+    },
+    {
+      "fingerprint": "bfa58de25e99176f3fa21f3f714768eb26c65c48",
+      "rule": "shellcheck-SC2034",
+      "path": "support/scripts/release-compare.sh"
+    },
+    {
+      "fingerprint": "d5f1052895deddb20a1c03493aebe7d997391a5a",
+      "rule": "shellcheck-SC2034",
+      "path": "support/scripts/release-compare.sh"
+    },
+    {
+      "fingerprint": "dd5fb5952ed4deaad40e022819fde7304201144c",
+      "rule": "shellcheck-SC2034",
+      "path": "support/scripts/release-compare.sh"
+    },
+    {
+      "fingerprint": "dec15eccf8b01f93aa2f462f3969773fbd6a72ce",
+      "rule": "shellcheck-SC2034",
+      "path": "support/scripts/release-compare.sh"
+    },
+    {
+      "fingerprint": "15e9a7604d50dbadd15a44b07d3e7971a40c4052",
+      "rule": "shellcheck-SC2034",
+      "path": "support/scripts/remote-emu.sh"
+    },
+    {
+      "fingerprint": "331f85dd47b0b481d0369a70e80d4284cbc5ae2b",
+      "rule": "shellcheck-SC2034",
+      "path": "support/scripts/remote-emu.sh"
+    },
+    {
+      "fingerprint": "72e5cdac4aaf2a725363ffb0028884fef922700e",
+      "rule": "shellcheck-SC2034",
+      "path": "support/scripts/remote-emu.sh"
+    },
+    {
+      "fingerprint": "85fe7bae340275b32da699066de3ed4baf495f25",
+      "rule": "shellcheck-SC2034",
+      "path": "support/scripts/remote-emu.sh"
+    },
+    {
+      "fingerprint": "aed56738569ff0c72dac167eefa1f482d8de810b",
+      "rule": "shellcheck-SC2034",
+      "path": "support/scripts/remote-emu.sh"
+    },
+    {
+      "fingerprint": "b7dad58cd907790e94802ad27fe54f141fd4e913",
+      "rule": "shellcheck-SC2034",
+      "path": "support/scripts/remote-emu.sh"
+    },
+    {
+      "fingerprint": "ee140e233f2894163f056b6ccb178571aa909c53",
+      "rule": "shellcheck-SC2034",
+      "path": "support/scripts/remote-emu.sh"
+    },
+    {
+      "fingerprint": "f9bd9dd7f62161361eea6897ccc200d11f9f998d",
+      "rule": "bash-eval",
+      "path": "support/scripts/upgrade-check.sh"
+    },
+    {
+      "fingerprint": "edd2dd1e03495a8e163be03bf84463f8dba98fdd",
+      "rule": "arch-hidden-coupling",
+      "path": "support/scripts/worktree-clean.sh"
     }
   ]
 }
