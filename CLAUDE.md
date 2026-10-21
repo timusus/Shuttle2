@@ -63,3 +63,23 @@ Kotlin 2.x, Java 17 with desugaring; the Gradle daemon runs on JDK 21 (pinned in
 - KTLint `android_studio` style (`.editorconfig`); Composables exempt from naming rules. A hook formats Kotlin on edit and `.githooks/pre-commit` runs `ktlint -F` (`SKIP_LINT=1` bypasses).
 - Trunk-based on `main`; never commit on the primary checkout (the pre-commit hook refuses; `ALLOW_MAIN_COMMIT=1` overrides). Work on a worktree branch and land with `git push origin HEAD:main`; a hook then fast-forwards the primary. Don't mix unrelated changes into a feature branch. Use `/commit` (conventional commits, module scopes), `/check` after changes, `/verify-ui` after Compose changes.
 - A `vYYMMDDNN` tag marks a release; `/deploy-android` then runs `support/scripts/release-android` to build and upload to Google Play internal. External contributors open PRs to `main`; there is no CI, so run `lint` and `unit-test` first.
+
+## Code health (codehealth)
+
+- Before editing a file, run `codehealth here <files>`. It prints what those files already carry: open findings
+  by finding unit, the Start here entries naming the file, and its cycle, hidden-coupling group and layer.
+  Under 2 s once `build/codehealth/report.json` matches HEAD; the first run after a new commit rebuilds it.
+- A repo with `brief=on` in `.claude/codehealth.conf` may print up to five fact lines (`codehealth brief <file>`)
+  before your first edit of a file: what reaches it, what it changes with, its tests and times, open findings.
+  It prints nothing while the report is rebuilding.
+- Before planning work across several files, read **Start here** in `build/codehealth/report.md`.
+- Before you commit or land, run `codehealth gate --base origin/main`. Exit 0: nothing new at warning or above.
+  Exit 1: your change added a blocking finding. Exit 2: the tool failed, not your change.
+- A block states a fact about the diff and the principle it breaks. Whether and how to fix it is your call; a
+  `hint` is an optional suggestion. Rerun the gate after a change.
+  If the finding is wrong for this site, suppress it with a stated reason:
+  `// codehealth-ignore <rule>: <why this site is accepted>` on the line or the one above.
+  A bare ignore prints a warning and is itself a finding. Rule-wide choices go in `.claude/codehealth.conf`
+  (`disable=<rule>`), old debt in `codehealth baseline`.
+- Never work around the gate: no splitting a change to dodge a rule, no editing code just to silence one.
+- `build/codehealth/` is generated; don't commit it.
