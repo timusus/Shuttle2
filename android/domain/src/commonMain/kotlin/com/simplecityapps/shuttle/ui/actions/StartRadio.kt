@@ -1,15 +1,16 @@
 package com.simplecityapps.shuttle.ui.actions
 
 import com.simplecityapps.mediaprovider.AggregateSimilarSongsProvider
+import com.simplecityapps.mediaprovider.repository.genres.GenreRepository
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.shuttle.model.PlayContext
 import com.simplecityapps.shuttle.model.Song
-import com.simplecityapps.shuttle.model.isByArtist
 import com.simplecityapps.shuttle.query.SongQuery
 import dev.zacsweers.metro.Inject
 import kotlin.random.Random
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 
 /**
@@ -20,6 +21,7 @@ import kotlinx.coroutines.withContext
 @Inject
 class StartRadio(
     private val songRepository: SongRepository,
+    private val genreRepository: GenreRepository,
     private val resolveSongs: ResolveSongs,
     private val similarSongsProvider: AggregateSimilarSongsProvider,
     private val playSongs: PlaySongs,
@@ -50,22 +52,21 @@ class StartRadio(
         if (!similarSongsProvider.handles(seed)) return emptyList()
         val ids = similarSongsProvider.similarSongIds(seed, LIMIT + seedSongs.size)
         if (ids.isEmpty()) return emptyList()
-        val library = songRepository.loadSongs(SongQuery.All(providerType = seed.mediaProvider)).associateBy { it.externalId }
+        val found = songRepository.loadSongs(SongQuery.ExternalIds(ids, seed.mediaProvider)).associateBy { it.externalId }
         val seedIds = seedSongs.map { it.id }.toSet()
-        return ids.mapNotNull { library[it] }.filter { it.id !in seedIds }.take(LIMIT)
+        return ids.mapNotNull { found[it] }.filter { it.id !in seedIds }.take(LIMIT)
     }
 
     private suspend fun localMix(seedSongs: List<Song>): List<Song> {
-        val library = songRepository.loadSongs(SongQuery.All())
+        val artists = seedSongs.flatMap { it.albumArtistKeys }.distinct()
+        val genres = seedSongs.flatMap { it.genres }.distinct()
+        val byArtist = if (artists.isEmpty()) emptyList() else songRepository.loadSongs(SongQuery.ArtistGroupKeys(artists.map { SongQuery.ArtistGroupKey(it) }))
+        val byGenre = if (genres.isEmpty()) emptyList() else genreRepository.getSongsForGenres(genres, SongQuery.All()).first()
         return withContext(defaultDispatcher) {
             val seedIds = seedSongs.map { it.id }.toSet()
-            val artists = seedSongs.flatMap { it.albumArtistKeys }.toSet()
-            val genres = seedSongs.flatMap { it.genres }.map { it.lowercase() }.toSet()
-            library
-                .filter { song ->
-                    song.id !in seedIds &&
-                        (artists.any { song.isByArtist(it) } || song.genres.any { it.lowercase() in genres })
-                }
+            (byArtist + byGenre)
+                .distinctBy { it.id }
+                .filter { it.id !in seedIds }
                 .shuffled(random)
                 .take(LIMIT)
         }

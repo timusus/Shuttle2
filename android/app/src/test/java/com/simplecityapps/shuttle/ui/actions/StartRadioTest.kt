@@ -2,12 +2,14 @@ package com.simplecityapps.shuttle.ui.actions
 
 import com.simplecityapps.createAlbum
 import com.simplecityapps.createSong
+import com.simplecityapps.fakes.FakeGenreRepository
 import com.simplecityapps.fakes.FakeQueueOperations
 import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.fakes.TestMediaActions
 import com.simplecityapps.mediaprovider.SimilarSongsProvider
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.query.SongQuery
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldNotContain
 import io.kotest.matchers.shouldBe
@@ -19,7 +21,8 @@ class StartRadioTest {
 
     private val songRepository = FakeSongRepository().apply { applyQueryPredicates = true }
     private val queue = FakeQueueOperations()
-    private val actions = TestMediaActions(songRepository = songRepository, queueOperations = queue)
+    private val genreRepository = FakeGenreRepository()
+    private val actions = TestMediaActions(songRepository = songRepository, genreRepository = genreRepository, queueOperations = queue)
     private val startRadio = actions.startRadio
 
     private fun song(id: Long, artist: String = "Other", genre: String? = null, provider: MediaProviderType = MediaProviderType.Shuttle, externalId: String? = null): Song = createSong(id = id, albumArtist = artist, mediaProvider = provider)
@@ -51,6 +54,7 @@ class StartRadioTest {
         val sameGenre = song(3, genre = "jazz")
         val unrelated = song(4, genre = "Metal")
         songRepository.setSongs(listOf(seed, sameArtist, sameGenre, unrelated))
+        genreRepository.setSongsForGenre("Jazz", listOf(seed, sameGenre))
 
         startRadio(MediaSelection.Songs(listOf(seed)))
 
@@ -58,6 +62,29 @@ class StartRadioTest {
         queued.first() shouldBe seed
         queued.drop(1).map { it.id }.toSet() shouldBe setOf(2L, 3L)
         queued.filter { it.id == 1L }.size shouldBe 1
+    }
+
+    @Test
+    fun `local fallback queries by artist and genre and never loads the whole library`() = runTest {
+        val seed = song(1, artist = "Band", genre = "Jazz")
+        songRepository.setSongs(listOf(seed, song(2, artist = "Band")))
+
+        startRadio(MediaSelection.Songs(listOf(seed)))
+
+        songRepository.queries.filterIsInstance<SongQuery.All>() shouldBe emptyList()
+        songRepository.queries.filterIsInstance<SongQuery.ArtistGroupKeys>().size shouldBe 1
+    }
+
+    @Test
+    fun `server mix looks the ids up by external id and never loads the whole library`() = runTest {
+        val seed = song(1, provider = MediaProviderType.Jellyfin, externalId = "a")
+        songRepository.setSongs(listOf(seed, song(2, provider = MediaProviderType.Jellyfin, externalId = "b")))
+        actions.similarSongsProviders += similar(MediaProviderType.Jellyfin, "b")
+
+        startRadio(MediaSelection.Songs(listOf(seed)))
+
+        songRepository.queries.filterIsInstance<SongQuery.All>() shouldBe emptyList()
+        songRepository.queries.filterIsInstance<SongQuery.ExternalIds>() shouldBe listOf(SongQuery.ExternalIds(listOf("b"), MediaProviderType.Jellyfin))
     }
 
     @Test

@@ -95,6 +95,13 @@ abstract class SongDataDao {
     /** [getByIds], read once. */
     suspend fun loadByIds(ids: List<Long>): List<Song> = ids.distinct().chunked(MAX_BOUND_VARIABLES).flatMap { chunk -> songDataByIds(chunk).map { songData -> songData.toSong() } }
 
+    @Transaction
+    @Query("SELECT $SONG_COLUMNS FROM songs WHERE externalId IN (:externalIds)")
+    abstract suspend fun songDataByExternalIds(externalIds: List<String>): List<SongData>
+
+    /** The songs with these server ids, read once; chunked like [loadByIds]. They don't hold their album identities. */
+    suspend fun loadByExternalIds(externalIds: List<String>): List<Song> = externalIds.distinct().chunked(MAX_BOUND_VARIABLES).flatMap { chunk -> songDataByExternalIds(chunk).map { songData -> songData.toSong() } }
+
     @Insert(onConflict = IGNORE)
     abstract suspend fun insert(songData: List<SongData>): List<Long>
 

@@ -73,7 +73,7 @@ class TestMediaActions(
 
     /** The providers radio asks for similar songs; none by default, so a radio is built from the library. */
     val similarSongsProviders = mutableSetOf<SimilarSongsProvider>()
-    val startRadio = StartRadio(songRepository, resolveSongs, AggregateSimilarSongsProvider(similarSongsProviders), playSongs)
+    val startRadio = StartRadio(songRepository, genreRepository, resolveSongs, AggregateSimilarSongsProvider(similarSongsProviders), playSongs)
     val resumeContext = ResumeContext(queueOperations, playbackOperations, playHistoryRepository, resolveSongs, filterPlayableSongs, Random(0))
     val enqueueSongs = EnqueueSongs(playbackOperations, resolveSongs, filterPlayableSongs)
     val playAfterWork = PlayAfterWork(queueOperations, playbackOperations, resolveSongs, filterPlayableSongs)

@@ -38,8 +38,12 @@ class FakeSongRepository : SongRepository {
     var getSongsCalls = 0
         private set
 
+    /** Every query [getSongs] was called with, in order. */
+    val queries: MutableList<SongQuery> = threadSafeList()
+
     override fun getSongs(query: SongQuery): Flow<List<Song>?> {
         getSongsCalls++
+        queries += query
         return if (applyQueryPredicates) songs.map { songs -> songs?.filter(query.predicate) } else songs
     }
 

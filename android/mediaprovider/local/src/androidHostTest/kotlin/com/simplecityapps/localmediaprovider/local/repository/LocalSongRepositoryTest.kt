@@ -84,6 +84,18 @@ class LocalSongRepositoryTest {
     }
 
     @Test
+    fun `songs are read by external id, not from the whole library`() = runTest {
+        val repository = LocalSongRepository(backgroundScope, UnconfinedTestDispatcher(testScheduler), database.songDataDao(), database.libraryAlbumIndex())
+        database.songDataDao().insert(listOf("a", "b", "c").map { id -> songData("Song $id").copy(externalId = id, path = "/music/$id.mp3") })
+        songQueries.clear()
+
+        val songs = repository.loadSongs(SongQuery.ExternalIds(listOf("a", "c", "missing")))
+
+        songs.map(Song::name) shouldContainExactlyInAnyOrder listOf("Song a", "Song c")
+        songQueries.filterNot { sql -> sql.contains("externalId IN") || sql == SONG_IDENTITY_QUERY } shouldBe emptyList()
+    }
+
+    @Test
     fun `more ids than SQLite binds in one statement are all read`() = runTest {
         val repository = LocalSongRepository(backgroundScope, UnconfinedTestDispatcher(testScheduler), database.songDataDao(), database.libraryAlbumIndex())
         val songs = insertSongs((1..1_500).map { index -> "Song $index" })

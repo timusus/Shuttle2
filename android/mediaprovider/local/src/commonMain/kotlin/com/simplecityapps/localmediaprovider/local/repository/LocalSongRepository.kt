@@ -90,7 +90,11 @@ class LocalSongRepository(
      */
     override suspend fun loadSongs(query: SongQuery): List<Song> = withContext(ioDispatcher) {
         val index = albumIndex.albumIndex()
-        val songs = index.songIdsFor(query)?.let { ids -> songDataDao.loadByIds(ids) } ?: songDataDao.get().map { songData -> songData.toSong() }
+        val songs = if (query is SongQuery.ExternalIds) {
+            songDataDao.loadByExternalIds(query.externalIds)
+        } else {
+            index.songIdsFor(query)?.let { ids -> songDataDao.loadByIds(ids) } ?: songDataDao.get().map { songData -> songData.toSong() }
+        }
         val min = if (query is SongQuery.SongIds) MinTrackLength.Off else minTrackLength.first()
         songs
             .withAlbumIdentities(index.identities)

@@ -65,6 +65,15 @@ sealed class SongQuery(
         predicate = { song -> songIds.contains(song.id) }
     )
 
+    /** The songs whose [Song.externalId] (the media server's id) is among [externalIds], in no particular order. */
+    data class ExternalIds(
+        val externalIds: List<String>,
+        override val providerType: MediaProviderType? = null
+    ) : SongQuery(
+        predicate = { song -> song.externalId in externalIds },
+        providerType = providerType
+    )
+
     /** Local songs in the folder at [path] (see [SongFolder]) or any of its subfolders. */
     data class Folder(
         val path: List<String>
