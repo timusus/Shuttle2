@@ -144,11 +144,9 @@ setup() {
         run_flow "$ver" "$id" "$([ "$id" = sign-in ] && echo creds)"; rc=$?
         [ "$rc" = 2 ] && continue
         [ "$rc" = 1 ] && { echo "release-compare: ${ver}: setup stopped at ${id}" >&2; return 1; }
-        # new lands on the Library, syncing for a few seconds once signing in finishes the Welcome: a Maestro start is
-        # too slow to catch it, so the progress is the frame right after sign-in; 1.0.10 imports after onboarding
-        [ "$id" = sign-in ] && [ "$ver" = new ] && new_import_progress
         capture "$ver" "$id"
-        [ "$id" = sign-in ] && [ "$ver" = new ] && new_import_progress_check
+        # new syncs for a few seconds once signing in finishes the Welcome; 1.0.10 imports after onboarding
+        [ "$id" = sign-in ] && [ "$ver" = new ] && import_progress new
     done
     [ "$ver" = new ] || import_progress "$ver"
     wait_import "$ver" || return 1

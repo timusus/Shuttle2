@@ -1,0 +1,6 @@
+# Sign-in leaves the Library syncing for a few seconds: wait for its progress text so the frame is the progress UI, not the sign-in screen.
+appId: ${APP_ID}
+---
+- extendedWaitUntil:
+    visible: "(Scanning your music|Fetching|Syncing).*"
+    timeout: 10000

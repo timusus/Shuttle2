@@ -1,8 +1,4 @@
-# Ends on the Library's sync progress, which the script captures straight away; a sync that already finished is fine.
+# The progress frame is taken after this by new/import-progress.yaml, so the sign-in shot stays the sign-in result.
 appId: ${APP_ID}
 ---
 - runFlow: ../sign-in.yaml
-- extendedWaitUntil:
-    visible: "Scanning your music"
-    timeout: 5000
-    optional: true

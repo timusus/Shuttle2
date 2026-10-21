@@ -31,6 +31,7 @@
 #                          home artist-list artist-detail album-list album-detail song-list playlist-list
 #                          playlist-detail genre-list genre-detail folder-list search mini-player now-playing
 #                          queue sleep-timer sound lyrics notification settings equaliser folder-detail
+#                          album-detail-list (the album page from the Albums list; album-detail goes through search)
 #                        folder-detail (new only) runs last, after the local music is un-parked and imported.
 #                        A screen a version doesn't have is null in the manifest (pairing old_only/new_only).
 #     --out <dir>        output directory (default build/release-compare/<old>-vs-<new>, from the APK version
@@ -94,11 +95,12 @@ ENV_FILE="$HOME/.config/s2-test/emby-appreview.env"
 FLOWS="support/maestro/release-compare"
 STEPS=(launch permission analytics source add-source emby-form sign-in import-progress home artist-list artist-detail
     album-list album-detail song-list playlist-list playlist-detail genre-list genre-detail folder-list
-    search mini-player now-playing queue sleep-timer sound lyrics notification settings equaliser folder-detail)
+    search mini-player now-playing queue sleep-timer sound lyrics notification settings equaliser folder-detail
+    album-detail-list)
 SETUP_IDS=(launch permission analytics source add-source emby-form sign-in)
 SCREEN_IDS=(home artist-list artist-detail album-list album-detail song-list playlist-list playlist-detail genre-list
     genre-detail folder-list search mini-player now-playing queue sleep-timer sound lyrics notification
-    settings equaliser)
+    settings equaliser album-detail-list)
 # folder-detail needs the AVD's local music, so it is captured after every Emby screen (local_folder_phase); its file
 # number is 31, the slot after equaliser, and the old 20 stays unused so every other screen keeps its number
 LOCAL_ID=folder-detail

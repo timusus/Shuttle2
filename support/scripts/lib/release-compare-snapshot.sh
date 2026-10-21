@@ -105,23 +105,6 @@ import_progress_missed() {
     echo "release-compare: ${1}: import progress not caught (manifest note)"
 }
 
-NEW_PROGRESS_SEEN=0
-new_import_progress() {
-    capture new import-progress live
-    # read after the frame, so progress still on screen was on it too
-    dump_texts 2>/dev/null | grep -qE 'Scanning your music|Fetching|Syncing' && NEW_PROGRESS_SEEN=1
-}
-
-# new_import_progress_check: a progress frame that matches the settled landing showed none.
-new_import_progress_check() {
-    local p="${OUT}/new/08-import-progress.png" s="${OUT}/new/07-sign-in.png"
-    selected import-progress && [ "$NEW_PROGRESS_SEEN" = 0 ] && [ -f "$p" ] && [ -f "$s" ] || return 0
-    cmp -s "$p" "$s" || { echo "release-compare: new: import progress frame kept (sync was done by the text check)" >>"$LOG"; return 0; }
-    rm -f "$p"
-    forget new import-progress
-    import_progress_missed new
-}
-
 # ensure_installed <version>: screens must shoot the build the manifest names. Refuses when the spec now resolves to
 # another commit than setup's (its data came from that build), and reinstalls over the data when the installed APK
 # isn't setup's (another run, or a phase on another lane, replaced it).

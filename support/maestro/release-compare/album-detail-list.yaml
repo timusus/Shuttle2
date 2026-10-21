@@ -1,0 +1,14 @@
+# The standalone album page, from the Albums list (album-detail reaches it through search).
+appId: ${APP_ID}
+---
+- runFlow: _start.yaml
+- tapOn: "Library"
+- tapOn: "Albums"
+- scrollUntilVisible:
+    element:
+      text: "${ALBUM}"
+    timeout: 60000
+- tapOn: "${ALBUM}"
+- extendedWaitUntil:
+    visible: "${ALBUM_TRACK}"
+    timeout: 10000
