@@ -72,6 +72,9 @@ Kotlin 2.x, Java 17 with desugaring; the Gradle daemon runs on JDK 21 (pinned in
 - A repo with `brief=on` in `.claude/codehealth.conf` may print up to five fact lines (`codehealth brief <file>`)
   before your first edit of a file: what reaches it, what it changes with, its tests and times, open findings.
   It prints nothing while the report is rebuilding.
+- The same opt-in runs `codehealth edit-check <file>` after each edit of a production file: up to eight
+  `path:line:` facts (syntax errors, new imports nothing declares, changed public signatures and the lines that
+  call them). It is a parser and an index, not a compiler: nothing printed means it found nothing.
 - Before planning work across several files, read **Start here** in `build/codehealth/report.md`.
 - Before you commit or land, run `codehealth gate --base origin/main`. Exit 0: nothing new at warning or above.
   Exit 1: your change added a blocking finding. Exit 2: the tool failed, not your change.
