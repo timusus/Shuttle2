@@ -174,10 +174,12 @@ def write(args, client, what, method, path, body):
 
 def resolve_app(client, bundle):
     bundle = bundle or os.environ.get("ASC_APP_BUNDLE") or DEFAULT_BUNDLE
-    d = client.call("GET", "/v1/apps", {"filter[bundleId]": bundle, "limit": "1"})["data"]
-    if not d:
-        die(f"no app with bundle id {bundle}")
-    return d[0]["id"], bundle
+    # The bundleId filter matches by prefix, so pick the exact match from the page.
+    d = client.call("GET", "/v1/apps", {"filter[bundleId]": bundle, "limit": "200"})["data"]
+    exact = [x for x in d if x["attributes"]["bundleId"] == bundle]
+    if not exact:
+        die(f"no app with bundle id {bundle} (exact match; the filter also returned {len(d)} prefix matches)")
+    return exact[0]["id"], bundle
 
 
 def resolve_group(client, app_id, name):
