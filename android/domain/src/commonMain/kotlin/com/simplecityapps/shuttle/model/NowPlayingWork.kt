@@ -38,7 +38,7 @@ fun nowPlayingWork(queue: List<Song>, index: Int, library: Collection<ComposerNa
     val movement = block.movements[ribbon.movementIndex]
     val composer = song.composerDisplayName(library)
     // A continuation track ("V. ..." again) has no numeral on the album page but is still that movement on Now Playing.
-    val continuation = movement.numeral == null && ribbon.movementIndex > 0 && movement.number == block.movements[ribbon.movementIndex - 1].number && block.numbering.styleFor(movement.name) != NumeralStyle.None
+    val continuation = movement.continues && block.numbering.styleFor(movement.name) != NumeralStyle.None
     val label = (if (continuation) "${position(block.numbering, movement.number)}. ${movement.name}" else movement.label).ifEmpty { song.name.orEmpty() }
     val title = block.title
     return NowPlayingWork(
@@ -53,8 +53,8 @@ fun nowPlayingWork(queue: List<Song>, index: Int, library: Collection<ComposerNa
         ordinal = position(block.numbering, movement.number),
         total = position(block.numbering, block.movementTotal),
         ordinals = block.movements.map { position(block.numbering, it.number) },
-        tracks = block.movements.mapIndexed { i, it ->
-            val numeral = if (i > 0 && it.number == block.movements[i - 1].number) "" else position(block.numbering, it.number)
+        tracks = block.movements.map {
+            val numeral = if (it.continues) "" else position(block.numbering, it.number)
             WorkTrack(numeral, it.name.ifEmpty { it.song.name.orEmpty() }, it.song.duration.toLong())
         }
     )

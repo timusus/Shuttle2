@@ -7,8 +7,11 @@ sealed interface AlbumItem {
     data class Work(val block: WorkBlock) : AlbumItem
 }
 
-/** [numeral] is null when the name carries its own label or a lone track has no number; [name] never repeats the numeral or the work. */
-data class Movement(val song: Song, val number: Int, val name: String, val numeral: String?) {
+/**
+ * [numeral] is null when the name carries its own label or a lone track has no number; [name] never repeats the numeral or the work.
+ * [continues] is true when the previous track carries the same tagged or titled number: one movement split over tracks.
+ */
+data class Movement(val song: Song, val number: Int, val name: String, val numeral: String?, val continues: Boolean = false) {
     /** "II. Andante con moto", or just the name when there is no numeral. */
     val label: String get() = if (numeral != null) "$numeral. $name" else name
 }
@@ -64,7 +67,7 @@ private fun actSections(movements: List<Movement>): List<ActSection> {
 
 internal fun buildBlock(songs: List<Song>, work: String, inferred: Boolean, albumCredits: String?): WorkBlock {
     val numbering = workNumbering(songs)
-    var previous: Int? = null
+    var previous: Int? = null // the previous track's number when it was tagged or titled, null when it was position-numbered
     val raws = songs.map { song -> song.movementName?.trim()?.takeIf { it.isNotEmpty() } ?: song.workParts()?.second ?: song.name.orEmpty() }
     val loose = looseNumeralsFormRun(raws, work)
     val movements = songs.mapIndexed { index, song ->
@@ -74,10 +77,11 @@ internal fun buildBlock(songs: List<Song>, work: String, inferred: Boolean, albu
         val fromTitle = if (tagged == null) movementNumberIn(raw, work, loose) else null
         val number = tagged ?: fromTitle ?: (index + 1)
         // A movement split over several tracks ("V. ...", "V. ...") is numbered on its first track only.
-        val repeated = number == previous
-        previous = number
+        val real = tagged ?: fromTitle
+        val repeated = real != null && real == previous
+        previous = real
         val numeral = if (!repeated && (songs.size > 1 || song.movementNumber != null) && numbering.styleFor(name) != NumeralStyle.None) numbering.format(number) else null
-        Movement(song, number, name, numeral)
+        Movement(song, number, name, numeral, repeated)
     }
     return WorkBlock(
         work = work,

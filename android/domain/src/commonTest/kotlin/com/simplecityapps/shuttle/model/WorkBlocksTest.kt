@@ -188,6 +188,29 @@ class WorkBlocksTest {
     }
 
     @Test
+    fun `a tagged number equal to the next untagged track's position does not merge them`() {
+        val songs = listOf(
+            movement(1, "Symphony No. 5", "Allegro", 1).copy(movementNumber = 2, movementTotal = 4),
+            movement(2, "Symphony No. 5", "Andante", 2)
+        )
+        val block = (groupWorks(songs).single() as AlbumItem.Work).block
+        block.movements.map { it.numeral } shouldBe listOf("II", "II")
+        workProgress(songs, 0)!!.let {
+            it.segments.size shouldBe 2
+            it.movementCount shouldBe 2
+        }
+        nowPlayingWork(songs, 0)!!.tracks.map { it.numeral } shouldBe listOf("II", "II")
+    }
+
+    @Test
+    fun `position-numbered tracks each keep their numeral and segment`() {
+        val songs = symphony()
+        val block = (groupWorks(songs).single() as AlbumItem.Work).block
+        block.movements.map { it.numeral } shouldBe listOf("I", "II", "III", "IV")
+        workProgress(songs, 0)!!.segments.size shouldBe 4
+    }
+
+    @Test
     fun `the ribbon has one segment per movement when a movement is split over tracks`() {
         val songs = listOf(1, 2, 2, 2, 3).mapIndexed { i, n ->
             movement(i + 1L, "Symphony No. 5", "Part $i", i + 1).copy(movementNumber = n, movementTotal = 3, duration = 60_000)

@@ -20,7 +20,7 @@ data class WorkProgress(
 internal fun WorkBlock.movementGroups(): List<IntRange> {
     val groups = mutableListOf<IntRange>()
     movements.forEachIndexed { index, movement ->
-        if (index > 0 && movement.number == movements[index - 1].number) groups[groups.lastIndex] = groups.last().first..index else groups += index..index
+        if (movement.continues) groups[groups.lastIndex] = groups.last().first..index else groups += index..index
     }
     return groups
 }
@@ -43,7 +43,7 @@ internal fun workProgress(run: Run, block: WorkBlock, index: Int, positionMs: Lo
         segmentStarts = ranges.map { run.range.first + it.first },
         currentSegment = ranges.indexOfFirst { current in it },
         movementIndex = current,
-        movementCount = block.movements.size,
+        movementCount = block.movementGroups().size,
         remainingMs = durations.drop(current).sum() - played,
         continuous = segments.size > 12,
         currentSegmentOffsetMs = ranges.first { current in it }.let { range -> range.first.until(current).sumOf { durations[it] } }
