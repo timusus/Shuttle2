@@ -135,39 +135,6 @@ class PresentationRules {
     }
 
     /**
-     * Only `invoke`, whose body is one call on a constructor property with `invoke`'s own parameters as the arguments
-     * (optionally `.flowOn(..)`/`.first()`): the caller can inject that dependency itself. Mirrors codehealth's
-     * `kotlin-usecase-pass-through` rule.
-     */
-    private fun KoClassDeclaration.isForwarder(): Boolean {
-        val invoke = functions(includeNested = false, includeLocal = false).singleOrNull { it.name == "invoke" } ?: return false
-        val others = functions(includeNested = false, includeLocal = false)
-            .any { it != invoke && it.hasPublicOrDefaultModifier && !it.hasOverrideModifier }
-        val constructorParameters = primaryConstructor?.parameters.orEmpty()
-        val bodyProperties = properties(includeNested = false).any { property -> constructorParameters.none { it.name == property.name } }
-        if (others || bodyProperties || hasSecondaryConstructors() || Regex("""\binit\s*\{""").containsMatchIn(text)) return false
-        if (constructorParameters.any { !it.hasValModifier && !it.hasVarModifier }) return false
-        val signatureEnd = invoke.text.substringAfter("fun invoke").let { afterName ->
-            var depth = 0
-            val close = afterName.indexOfFirst { char ->
-                if (char == '(') {
-                    depth++
-                } else if (char == ')') {
-                    depth--
-                }
-                char == ')' && depth == 0
-            }
-            if (close < 0) return false
-            afterName.substring(close + 1)
-        }
-        val body = signatureEnd.substring(signatureEnd.indexOfFirst { it == '=' || it == '{' }.takeIf { it >= 0 } ?: return false).trim()
-        val arguments = invoke.parameters.joinToString("""\s*,\s*""") { Regex.escape(it.name) }
-        val call = Regex("""^(=\s*|\{\s*(return\s+)?)(\w+)\s*\.\s*\w+\(\s*$arguments\s*\)(\s*\.\s*(flowOn\([\w.]+\)|first\(\)))*\s*\}?$""")
-        val receiver = call.matchEntire(body)?.groupValues?.get(3) ?: return false
-        return constructorParameters.any { it.name == receiver }
-    }
-
-    /**
      * Contributed to metrox-viewmodel's maps: `@ViewModelKey` on the class, or, for an assisted ViewModel, a
      * nested factory keyed with `@ManualViewModelAssistedFactoryKey` or `@ViewModelAssistedFactoryKey`.
      */
