@@ -118,6 +118,22 @@ fun splitWorkAlbumDetail(): AlbumDetailUiState {
     return classicalState(songs)
 }
 
+/** A work whose long title and detail line must not fight the count and duration. */
+fun longTitleWorkAlbumDetail(): AlbumDetailUiState {
+    val songs = listOf("Allegro maestoso", "Andante", "Rondo").mapIndexed { i, name ->
+        createSong(id = i + 1L, name = name, albumArtist = "Ines Varga", album = "Violin Concertos", track = i + 1, duration = 500_000).copy(
+            composer = "Ludwig Harrow",
+            composerSort = "Harrow, Ludwig",
+            conductor = "Ines Varga",
+            work = "Concerto for Violin and Orchestra in D major",
+            movementName = name,
+            movementNumber = i + 1,
+            genres = listOf("Classical"),
+        )
+    }
+    return classicalState(songs)
+}
+
 val loadingAlbumDetail = AlbumDetailUiState(loadingState = AlbumDetailUiState.LoadingState.Loading)
 
 val missingAlbumDetail = AlbumDetailUiState(album = null, loadingState = AlbumDetailUiState.LoadingState.Empty)

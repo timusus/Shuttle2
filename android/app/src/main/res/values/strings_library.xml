@@ -15,6 +15,11 @@
         <item quantity="one"><xliff:g example="1" id="count">%1$d</xliff:g>&#160;song</item>
         <item quantity="other"><xliff:g example="12" id="count">%1$d</xliff:g>&#160;songs</item>
     </plurals>
+    <!-- The number of tracks on an album, in the album detail header -->
+    <plurals name="album_detail_tracks">
+        <item quantity="one"><xliff:g example="1" id="count">%1$d</xliff:g>&#160;track</item>
+        <item quantity="other"><xliff:g example="12" id="count">%1$d</xliff:g>&#160;tracks</item>
+    </plurals>
     <!-- The number of movements in a classical work -->
     <plurals name="work_movements">
         <item quantity="one"><xliff:g example="1" id="count">%1$d</xliff:g>&#160;movement</item>

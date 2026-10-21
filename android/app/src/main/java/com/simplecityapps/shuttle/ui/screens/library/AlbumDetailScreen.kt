@@ -134,7 +134,7 @@ internal fun albumMoreTarget(album: Album, goToAlbumLabel: String, onOpen: () ->
     extraActions = listOf(S2Action(goToAlbumLabel, onOpen, Icons.Rounded.Album)),
 )
 
-/** "Artist · year · N songs · duration", without the artist on a classical page, whose credits line names them. */
+/** "Artist · year · N tracks · duration", without the artist on a classical page, whose credits line names them. */
 @Composable
 private fun albumSubtitle(
     album: Album,
@@ -149,7 +149,7 @@ private fun albumSubtitle(
         (album.albumArtist?.takeIf { it.isNotBlank() } ?: album.friendlyArtistName).takeIf { withArtist },
         performers,
         album.year?.toString(),
-        pluralString(R.plurals.songsPlural, album.songCount),
+        pluralString(R.plurals.album_detail_tracks, album.songCount),
         if (minutes > 0) formatMinutes(minutes) else null,
     ).filter { it.isNotBlank() }.joinToString(" · ")
 }

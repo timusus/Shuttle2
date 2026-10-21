@@ -309,6 +309,20 @@ class LibraryScreenshotTest {
         shot("phone-album-detail-classical-split")
     }
 
+    @Test
+    @Config(qualifiers = "w411dp-h891dp-xhdpi")
+    fun phoneLongTitleWorkAlbumDetail() {
+        detail.setAlbum(longTitleWorkAlbumDetail())
+        shot("phone-album-detail-classical-long-title")
+    }
+
+    @Test
+    @Config(qualifiers = "w411dp-h891dp-xhdpi")
+    fun phoneLongTitleWorkAlbumDetailLargeText() {
+        detail.setAlbum(longTitleWorkAlbumDetail(), fontScale = 1.3f)
+        shot("phone-album-detail-classical-long-title-large-text")
+    }
+
     /** Wide numerals ("XXIV") grow into the gutter beside the rail instead of clipping, and the titles stay aligned (#1065). */
     @Test
     @Config(qualifiers = "w411dp-h891dp-xhdpi")

@@ -59,7 +59,7 @@ private val TitleGap = S2Spacing.smallMedium
 
 /**
  * A classical work on an album page: its [title], a [detail] line (key, catalogue, arrangement), an optional [credits]
- * line and a [meta] summary ("4 movements · 31:20") on the right. The play button plays the whole work; tapping the row
+ * line and a [meta] summary ("4 movements · 31:20") under the detail. The play button plays the whole work; tapping the row
  * runs [onClick] (a collapse toggle, for a [collapsed] of non-null) and long-pressing it [onLongClick]. [playing] tints the
  * title while one of its movements is the current song. A non-null [otherRecordings] label ("Other recordings (3)") shows
  * under the credits and runs [onOtherRecordings].
@@ -97,7 +97,7 @@ fun WorkHeaderRow(
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
-            listOfNotNull(detail, credits).forEach {
+            listOfNotNull(detail, meta, credits).forEach {
                 Text(it, style = MaterialTheme.typography.rowSubtitle, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
             if (otherRecordings != null) {
@@ -111,7 +111,6 @@ fun WorkHeaderRow(
                 )
             }
         }
-        Text(meta, style = MaterialTheme.typography.rowMeta, color = MaterialTheme.colorScheme.onSurfaceVariant)
         if (collapsed != null) {
             Icon(
                 imageVector = if (collapsed) Icons.Rounded.ExpandMore else Icons.Rounded.ExpandLess,
@@ -169,7 +168,7 @@ fun MovementRow(
         var numeralScale by remember(numeral, maxNumeralWidth, numeralStyle.fontSize) { mutableFloatStateOf(1f) }
         Text(
             text = numeral.orEmpty(),
-            modifier = Modifier.width(NumeralColumn).wrapContentWidth(Alignment.End, unbounded = true),
+            modifier = Modifier.alignByBaseline().width(NumeralColumn).wrapContentWidth(Alignment.End, unbounded = true),
             style = numeralStyle.copy(fontSize = numeralStyle.fontSize * numeralScale),
             color = if (playing) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.End,
@@ -179,7 +178,7 @@ fun MovementRow(
         )
         Text(
             text = name,
-            modifier = Modifier.weight(1f).padding(start = TitleGap),
+            modifier = Modifier.weight(1f).alignByBaseline().padding(start = TitleGap),
             style = MaterialTheme.typography.rowTitle,
             color = if (playing) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
             maxLines = 2,
@@ -190,7 +189,7 @@ fun MovementRow(
         }
         Text(
             duration,
-            Modifier.padding(start = S2Spacing.small),
+            Modifier.alignByBaseline().padding(start = S2Spacing.small),
             style = MaterialTheme.typography.rowMeta.copy(fontFeatureSettings = "tnum"),
             color = if (playing) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
         )

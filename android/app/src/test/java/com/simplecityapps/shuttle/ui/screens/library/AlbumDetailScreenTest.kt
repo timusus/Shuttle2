@@ -22,7 +22,7 @@ class AlbumDetailScreenTest {
         robot.setAlbum(readyAlbumDetail())
 
         robot.assertTextDisplayed("Phase Garden")
-        robot.assertTextDisplayed("Juniper Static\u00A0· 2021\u00A0· 3\u00A0songs", substring = true)
+        robot.assertTextDisplayed("Juniper Static · 2021 · 3 tracks", substring = true)
         robot.assertTextDisplayed("Chlorophyll Loop")
         robot.assertTextDisplayed("Soft Machines at Dawn")
     }
@@ -47,7 +47,7 @@ class AlbumDetailScreenTest {
         val album = createAlbum(name = "Phase Garden", albumArtist = "Juniper Static", songCount = 12, duration = 2_700_000, year = 2021)
         robot.setAlbum(readyAlbumDetail(album = album))
 
-        robot.assertTextDisplayed("12 songs · 45 min", substring = true)
+        robot.assertTextDisplayed("12 tracks · 45 min", substring = true)
     }
 
     @Test
@@ -55,7 +55,7 @@ class AlbumDetailScreenTest {
         val album = createAlbum(name = "Phase Garden", albumArtist = "Juniper Static", songCount = 1, duration = 7_500_000, year = 2021)
         robot.setAlbum(readyAlbumDetail(album = album))
 
-        robot.assertTextDisplayed("1 song · 2 hr, 5 min", substring = true)
+        robot.assertTextDisplayed("1 track · 2 hr, 5 min", substring = true)
     }
 
     @Test
@@ -72,8 +72,8 @@ class AlbumDetailScreenTest {
         val album = createAlbum(name = "Phase Garden", albumArtist = "Juniper Static", songCount = 2, duration = duration, year = 2021)
         robot.setAlbum(readyAlbumDetail(album = album))
 
-        robot.assertTextDisplayed("Juniper Static · 2021 · 2 songs", substring = true)
-        robot.assertTextNotDisplayed("2 songs ·", substring = true)
+        robot.assertTextDisplayed("Juniper Static · 2021 · 2 tracks", substring = true)
+        robot.assertTextNotDisplayed("2 tracks ·", substring = true)
         robot.assertTextNotDisplayed("min", substring = true)
     }
 
@@ -82,7 +82,7 @@ class AlbumDetailScreenTest {
         val album = createAlbum(name = "Phase Garden", albumArtist = "Juniper Static", songCount = 1, duration = 3_540_000, year = 2021)
         robot.setAlbum(readyAlbumDetail(album = album))
 
-        robot.assertTextDisplayed("1 song · 59 min", substring = true)
+        robot.assertTextDisplayed("1 track · 59 min", substring = true)
     }
 
     @Test
@@ -90,7 +90,7 @@ class AlbumDetailScreenTest {
         val album = createAlbum(name = "Phase Garden", albumArtist = "Juniper Static", songCount = 1, duration = 3_600_000, year = 2021)
         robot.setAlbum(readyAlbumDetail(album = album))
 
-        robot.assertTextDisplayed("1 song · 1 hr", substring = true)
+        robot.assertTextDisplayed("1 track · 1 hr", substring = true)
         robot.assertTextNotDisplayed("0 min", substring = true)
     }
 
