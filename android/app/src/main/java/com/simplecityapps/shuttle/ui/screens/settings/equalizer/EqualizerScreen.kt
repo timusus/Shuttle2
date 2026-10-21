@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.ui.screens.settings.equalizer
 
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -97,17 +98,23 @@ fun EqualizerScreen(
                         )
                         // Sets the preamp, which shifts every band, apart from the bands themselves.
                         S2VerticalDivider(Modifier.height(200.dp).padding(horizontal = 6.dp))
-                        // Ten bands at 48dp don't fit a phone, so they scroll while the preamp stays put.
-                        Row(Modifier.weight(1f).horizontalScroll(rememberScrollState()), verticalAlignment = Alignment.CenterVertically) {
-                            uiState.bands.forEach { band ->
-                                EqBand(
-                                    frequency = frequencyLabel(band.frequency),
-                                    gainDb = band.gainDb,
-                                    onGainChange = { onBandGainChange(band.frequency, it) },
-                                    modifier = Modifier.width(EqBandWidth),
-                                    enabled = uiState.enabled,
-                                    onGainChangeFinished = onBandGainChangeFinished
-                                )
+                        // Bands spread across wide screens; where they can't each get 48dp they scroll while the preamp stays put.
+                        BoxWithConstraints(Modifier.weight(1f)) {
+                            val fits = maxWidth >= EqBandWidth * uiState.bands.size
+                            Row(
+                                if (fits) Modifier.fillMaxWidth() else Modifier.horizontalScroll(rememberScrollState()),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                uiState.bands.forEach { band ->
+                                    EqBand(
+                                        frequency = frequencyLabel(band.frequency),
+                                        gainDb = band.gainDb,
+                                        onGainChange = { onBandGainChange(band.frequency, it) },
+                                        modifier = if (fits) Modifier.weight(1f) else Modifier.width(EqBandWidth),
+                                        enabled = uiState.enabled,
+                                        onGainChangeFinished = onBandGainChangeFinished
+                                    )
+                                }
                             }
                         }
                     }

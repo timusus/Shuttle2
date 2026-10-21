@@ -133,6 +133,11 @@ class SettingsScreenshotTest {
     @Config(qualifiers = "w360dp-h800dp-xhdpi")
     fun equalizerDarkNarrow() = shot("equalizer-dark-narrow", AppThemeState(theme = ThemeMode.Dark)) { EqualizerScenario() }
 
+    /** A tablet-width landscape window, where the bands spread across the row instead of bunching left. */
+    @Test
+    @Config(qualifiers = "w1024dp-h768dp-mdpi")
+    fun equalizerWide() = shot("equalizer-wide") { EqualizerScenario() }
+
     @Composable
     private fun EqualizerScenario() {
         val preset = Equalizer.Presets.bassBoost
