@@ -38,7 +38,7 @@ class AlbumDetailScreenTest {
         )
         robot.setAlbum(readyAlbumDetail(album = album))
 
-        robot.assertTextDisplayed("Juniper Static · 2016 · 12 songs", substring = true)
+        robot.assertTextDisplayed("Juniper Static · 2016 · 12 tracks", substring = true)
         robot.assertTextNotDisplayed("Verdigris, Soft Machines", substring = true)
     }
 
