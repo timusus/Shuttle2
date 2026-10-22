@@ -369,7 +369,10 @@ class SettingsViewModelTest {
         viewModel.exportBackupTo("content://dest")
         runCurrent()
 
-        events(viewModel) shouldBe listOf(SettingsUiEvent.BackupExportRequested("shuttle-library-backup-$TODAY_ISO_STRING.json"), SettingsUiEvent.BackupExportSaved)
+        events(viewModel) shouldBe listOf(
+            SettingsUiEvent.BackupExportRequested("shuttle-library-backup-$TODAY_ISO_STRING.json"),
+            SettingsUiEvent.BackupExportSaved,
+        )
         backupFlow.written shouldBe mapOf("content://dest" to "{\"staged\":true}")
     }
 
