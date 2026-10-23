@@ -320,7 +320,7 @@ sentry {
     val token = System.getenv("SENTRY_AUTH_TOKEN")
     includeProguardMapping = !token.isNullOrEmpty()
     autoUploadProguardMapping = !token.isNullOrEmpty()
-    org = "simplecity-apps"
+    org = "shuttle2"
     projectName = "s2-android"
     authToken = token
     // The SDK is declared above, and nothing uses tracing, so no bytecode instrumentation either

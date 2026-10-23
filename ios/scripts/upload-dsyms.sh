@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Uploads S2's dSYMs to Sentry (org simplecity-apps, project s2-ios; #776) so crashes symbolicate. archive-and-upload.sh
+# Uploads S2's dSYMs to Sentry (org shuttle2, project s2-ios; #776) so crashes symbolicate. archive-and-upload.sh
 # runs it after a successful archive; run it by hand for an archive or a build products folder:
 #
 #   ios/scripts/upload-dsyms.sh                                  # ios/build/S2.xcarchive
@@ -18,7 +18,7 @@ set -euo pipefail
 repo_root="$(cd "$(dirname "$0")/../.." && pwd)"
 target="${1:-$repo_root/ios/build/S2.xcarchive}"
 env_file="${S2_TELEMETRY_ENV:-$HOME/.config/s2-telemetry/ios.env}"
-org=simplecity-apps
+org=shuttle2
 project=s2-ios
 
 skip() {
