@@ -239,8 +239,7 @@ private fun JumpBackInTile(
     val state = when {
         progress == null -> null
         progress.finished -> stringResource(R.string.home_state_finished)
-        progress.shuffled -> stringResource(R.string.home_state_shuffled)
-        else -> progress.songName
+        else -> progress.songName ?: stringResource(R.string.home_state_shuffled).takeIf { progress.shuffled }
     }
     val detail = state?.let { stringResource(R.string.home_tile_subtitle, kind, it) } ?: kind
     val description = jumpBackInDescription(title, kind, progress, relativeTime = null)
