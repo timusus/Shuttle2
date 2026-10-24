@@ -14,12 +14,17 @@ import com.simplecityapps.playback.engine.notFound
 import com.simplecityapps.playback.queue.queueEntryOrNull
 import com.simplecityapps.shuttle.model.Song
 import java.net.ConnectException
+import java.net.NoRouteToHostException
+import java.net.SocketTimeoutException
 import java.net.UnknownHostException
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
 import timber.log.Timber
 
 /**
@@ -62,10 +67,14 @@ class ItemLoader(
     /** Each song that fails to play, except one whose stream can't be resolved (a server that can't be reached). */
     val failureFlow: SharedFlow<Song> = _failureFlow.asSharedFlow()
 
-    private val _loadFailureFlow = MutableSharedFlow<SongLoadFailure>(extraBufferCapacity = EVENT_BUFFER, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    private val _loadFailure = MutableStateFlow<SongLoadFailure?>(null)
 
-    /** Each song that fails to load, with whether its server couldn't be reached: [failureFlow] plus the songs whose stream can't be resolved. */
-    val loadFailureFlow: SharedFlow<SongLoadFailure> = _loadFailureFlow.asSharedFlow()
+    /**
+     * Why the current entry can't play: set when it fails to load and stays current, cleared when it becomes ready,
+     * another entry becomes current or the queue is emptied or replaced. Unlike [failureFlow] it includes a stream that
+     * can't be resolved.
+     */
+    val loadFailure: StateFlow<SongLoadFailure?> = _loadFailure.asStateFlow()
 
     /** Whether a [load] is waiting for its item to be ready. */
     val isLoading: Boolean
@@ -104,12 +113,21 @@ class ItemLoader(
         when (playbackState) {
             Player.STATE_READY -> {
                 readyUid = player.currentMediaItem?.queueEntryOrNull?.uid
+                if (_loadFailure.value?.uid == readyUid) clearLoadFailure()
                 loadFailures = 0
                 complete(Result.success(pendingLoad?.attempt == 1))
             }
 
             Player.STATE_IDLE -> readyUid = null
         }
+    }
+
+    override fun onTimelineChanged(
+        timeline: Timeline,
+        reason: Int
+    ) {
+        val failedUid = _loadFailure.value?.uid ?: return
+        if ((0 until player.mediaItemCount).none { player.getMediaItemAt(it).queueEntryOrNull?.uid == failedUid }) clearLoadFailure()
     }
 
     /**
@@ -121,6 +139,7 @@ class ItemLoader(
         mediaItem: MediaItem?,
         reason: Int
     ) {
+        if (_loadFailure.value?.uid != mediaItem?.queueEntryOrNull?.uid) clearLoadFailure()
         val playsOn = reason == Player.MEDIA_ITEM_TRANSITION_REASON_AUTO || reason == Player.MEDIA_ITEM_TRANSITION_REASON_REPEAT
         if (playsOn && player.playerError == null) {
             readyUid = mediaItem?.queueEntryOrNull?.uid
@@ -158,7 +177,6 @@ class ItemLoader(
         if (!error.isResolutionFailure()) {
             failedEntry?.song?.let(_failureFlow::tryEmit)
         }
-        failedEntry?.song?.let { _loadFailureFlow.tryEmit(SongLoadFailure(it, error.isConnectionFailure())) }
         val skips = player.playWhenReady || pendingLoad?.skipUnloadable != false
         if (failedEntry != null && failedEntry.uid != readyUid && skips) {
             loadFailures++
@@ -171,8 +189,15 @@ class ItemLoader(
             }
         }
         loadFailures = 0
+        if (failedEntry != null && failedIndex == player.currentMediaItemIndex) {
+            _loadFailure.value = SongLoadFailure(failedEntry.uid, failedEntry.song, error.isConnectionFailure())
+        }
         complete(Result.failure(error))
         giveUp()
+    }
+
+    private fun clearLoadFailure() {
+        _loadFailure.value = null
     }
 
     /** Reopens the current transcode after a 404: the server drops a transcode when another starts, and the player keeps no buffer to seek back into. */
@@ -220,8 +245,7 @@ class ItemLoader(
 }
 
 /** Whether this failed for want of a connection to the server (or to resolve its stream), not for anything in the song. */
-private fun Throwable.isConnectionFailure(): Boolean = isResolutionFailure() ||
-    generateSequence(this) { it.cause }.any { (it is HttpDataSource.HttpDataSourceException && it !is HttpDataSource.InvalidResponseCodeException) || it is ConnectException || it is UnknownHostException }
+private fun Throwable.isConnectionFailure(): Boolean = generateSequence(this) { it.cause }.any { it is ConnectException || it is UnknownHostException || it is SocketTimeoutException || it is NoRouteToHostException }
 
 /** How many events a flow of them buffers for a collector that hasn't caught up. */
 internal const val EVENT_BUFFER = 64

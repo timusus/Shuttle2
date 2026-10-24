@@ -1,7 +1,7 @@
 package com.simplecityapps.playback
 
 import com.simplecityapps.shuttle.model.Song
-import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 
@@ -17,8 +17,9 @@ data class Play(
     val uid: Long
 )
 
-/** [song] failed to load; [serverUnreachable] when the cause was a connection error rather than the song itself. */
+/** The queue entry [uid] (a copy of [song]) failed to load; [serverUnreachable] when the cause was a connection error rather than the song itself. */
 data class SongLoadFailure(
+    val uid: Long,
     val song: Song,
     val serverUnreachable: Boolean
 )
@@ -57,12 +58,12 @@ interface PlaybackStateSource {
     val playbackFailureFlow: SharedFlow<Song>
 
     /**
-     * Each song that fails to load, and whether its server couldn't be reached. Unlike [playbackFailureFlow] it also
-     * carries a song whose stream couldn't be resolved. An event, like [trackEndedFlow]. Nothing on a player that
-     * doesn't tell the two apart.
+     * Why the current queue entry can't play, while that stands: set when it fails to load and stays current, cleared
+     * when it becomes ready, another entry becomes current or the queue is emptied or replaced. State, so a collector
+     * that arrives after the failure (a restore) still sees it. Null on a player that doesn't tell failures apart.
      */
-    val loadFailureFlow: SharedFlow<SongLoadFailure>
-        get() = MutableSharedFlow()
+    val loadFailure: StateFlow<SongLoadFailure?>
+        get() = MutableStateFlow(null)
 
     fun playbackState(): PlaybackState
     fun getProgress(): Int?

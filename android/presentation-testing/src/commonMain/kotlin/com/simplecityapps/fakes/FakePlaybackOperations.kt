@@ -26,7 +26,7 @@ class FakePlaybackOperations :
     override val trackEndedFlow = MutableSharedFlow<TrackEnd>(extraBufferCapacity = 64)
     override val pausePositionFlow = MutableSharedFlow<SongPosition>(extraBufferCapacity = 64)
     override val playbackFailureFlow = MutableSharedFlow<Song>(extraBufferCapacity = 64)
-    override val loadFailureFlow = MutableSharedFlow<SongLoadFailure>(extraBufferCapacity = 64)
+    override val loadFailure = MutableStateFlow<SongLoadFailure?>(null)
 
     var addedToQueue = mutableListOf<Song>()
     var playedNext = mutableListOf<Song>()

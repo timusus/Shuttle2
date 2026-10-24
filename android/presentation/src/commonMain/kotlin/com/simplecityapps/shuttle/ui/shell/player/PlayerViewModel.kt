@@ -81,7 +81,6 @@ class PlayerViewModel @AssistedInject constructor(
     private val availableMediaActions: AvailableMediaActions,
     private val mediaActionHandler: MediaActionHandler,
     observeLyrics: ObserveLyrics,
-    observeLoadFailure: ObserveLoadFailure,
     @Assisted private val savedStateHandle: SavedStateHandle,
 ) : ViewModel(),
     PlayerActions {
@@ -167,8 +166,8 @@ class PlayerViewModel @AssistedInject constructor(
             state.copy(panel = panel.takeIf { state.hasQueue == true && (it != NowPlayingPanel.Lyrics || state.lyrics != null) })
         }.combine(queueSource) { state, source ->
             state.copy(queueSource = source)
-        }.combine(observeLoadFailure()) { state, loadFailure ->
-            state.copy(loadFailure = loadFailure)
+        }.combine(playbackStateSource.loadFailure) { state, loadFailure ->
+            state.copy(loadFailure = loadFailure?.toLoadFailure())
         }.distinctUntilChanged()
 
     // The total is the song's own duration, as the queue rows show it; the player's reported duration can differ by a rounding second.

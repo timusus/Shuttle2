@@ -156,7 +156,6 @@ class PlayerViewModelTest {
             availableMediaActions = AvailableMediaActions(mediaActions.resolveSongs, mediaActions.songDownloader, createPlatformFeatures(), queueOperations, ObserveSetting(settingsStore)),
             mediaActionHandler = mediaActions.handler,
             observeLyrics = ObserveLyrics(LoadLyrics(songRepository, onlineLyrics)),
-            observeLoadFailure = ObserveLoadFailure(playbackOperations, queueOperations),
             savedStateHandle = savedStateHandle,
         ).also { viewModel ->
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.uiState.collect {} }
@@ -887,7 +886,7 @@ class PlayerViewModelTest {
         val song = remoteSong(1)
         queueOperations.queueStateFlow.value = queueOf(listOf(song))
 
-        playbackOperations.loadFailureFlow.tryEmit(SongLoadFailure(song, serverUnreachable = true))
+        playbackOperations.loadFailure.value = SongLoadFailure(uid = 1, song = song, serverUnreachable = true)
 
         viewModel.uiState.value.player.loadFailure shouldBe LoadFailure.ServerUnreachable(MediaProviderType.Plex)
     }
@@ -898,7 +897,7 @@ class PlayerViewModelTest {
         val song = remoteSong(1)
         queueOperations.queueStateFlow.value = queueOf(listOf(song))
 
-        playbackOperations.loadFailureFlow.tryEmit(SongLoadFailure(song, serverUnreachable = false))
+        playbackOperations.loadFailure.value = SongLoadFailure(uid = 1, song = song, serverUnreachable = false)
 
         viewModel.uiState.value.player.loadFailure shouldBe LoadFailure.CantPlay
     }
@@ -909,53 +908,30 @@ class PlayerViewModelTest {
         val song = createSong(id = 1, name = "Local")
         queueOperations.queueStateFlow.value = queueOf(listOf(song))
 
-        playbackOperations.loadFailureFlow.tryEmit(SongLoadFailure(song, serverUnreachable = true))
+        playbackOperations.loadFailure.value = SongLoadFailure(uid = 1, song = song, serverUnreachable = true)
 
         viewModel.uiState.value.player.loadFailure shouldBe LoadFailure.CantPlay
     }
 
     @Test
-    fun `a failure of a song that isn't current is not shown`() = runTest {
+    fun `a failure from before the player was shown is shown`() = runTest {
+        val song = remoteSong(1)
+        queueOperations.queueStateFlow.value = queueOf(listOf(song))
+        playbackOperations.loadFailure.value = SongLoadFailure(uid = 1, song = song, serverUnreachable = true)
+
         val viewModel = viewModel()
-        queueOperations.queueStateFlow.value = queueOf(listOf(remoteSong(1), remoteSong(2)))
 
-        playbackOperations.loadFailureFlow.tryEmit(SongLoadFailure(remoteSong(2), serverUnreachable = true))
-
-        viewModel.uiState.value.player.loadFailure shouldBe null
+        viewModel.uiState.value.player.loadFailure shouldBe LoadFailure.ServerUnreachable(MediaProviderType.Plex)
     }
 
     @Test
-    fun `the failure clears when the song loads again`() = runTest {
+    fun `the failure clears when the player clears it`() = runTest {
         val viewModel = viewModel()
         val song = remoteSong(1)
         queueOperations.queueStateFlow.value = queueOf(listOf(song))
-        playbackOperations.loadFailureFlow.tryEmit(SongLoadFailure(song, serverUnreachable = true))
+        playbackOperations.loadFailure.value = SongLoadFailure(uid = 1, song = song, serverUnreachable = true)
 
-        playbackOperations.playbackStateFlow.value = PlaybackState.Loading
-
-        viewModel.uiState.value.player.loadFailure shouldBe null
-    }
-
-    @Test
-    fun `the failure clears when the current song changes`() = runTest {
-        val viewModel = viewModel()
-        val songs = listOf(remoteSong(1), remoteSong(2))
-        queueOperations.queueStateFlow.value = queueOf(songs)
-        playbackOperations.loadFailureFlow.tryEmit(SongLoadFailure(songs[0], serverUnreachable = true))
-
-        queueOperations.queueStateFlow.value = queueOf(songs, current = 1)
-
-        viewModel.uiState.value.player.loadFailure shouldBe null
-    }
-
-    @Test
-    fun `the failure clears when the queue is replaced`() = runTest {
-        val viewModel = viewModel()
-        val song = remoteSong(1)
-        queueOperations.queueStateFlow.value = queueOf(listOf(song))
-        playbackOperations.loadFailureFlow.tryEmit(SongLoadFailure(song, serverUnreachable = true))
-
-        queueOperations.queueStateFlow.value = QueueState.Empty.copy(isRestored = true)
+        playbackOperations.loadFailure.value = null
 
         viewModel.uiState.value.player.loadFailure shouldBe null
     }

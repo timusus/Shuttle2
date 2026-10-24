@@ -12,6 +12,7 @@ import androidx.media3.test.utils.FakeClock
 import androidx.media3.test.utils.TestExoPlayerBuilder
 import com.simplecityapps.playback.engine.MediaResolutionException
 import com.simplecityapps.playback.fakes.testSong
+import com.simplecityapps.playback.queue.queueEntryOrNull
 import com.simplecityapps.playback.queue.toMediaItem
 import com.simplecityapps.playback.queue.toQueueEntry
 import com.simplecityapps.playback.queue.uri
@@ -20,6 +21,7 @@ import com.simplecityapps.playback.spec.PlaybackHarness
 import com.simplecityapps.shuttle.model.Song
 import io.kotest.matchers.longs.shouldBeGreaterThanOrEqual
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -52,8 +54,6 @@ class ItemLoaderTest {
     private val scope = CoroutineScope(Dispatchers.Unconfined)
 
     private val failures = mutableListOf<Song>().also { failures -> scope.launch { loader.failureFlow.collect { failures += it } } }
-
-    private val loadFailures = mutableListOf<SongLoadFailure>().also { list -> scope.launch { loader.loadFailureFlow.collect { list += it } } }
 
     private val missing = testSong(1, path = PlaybackHarness.MISSING_FILE_URI, mimeType = "audio/wav")
 
@@ -245,40 +245,146 @@ class ItemLoaderTest {
         driver.idle()
     }
 
-    private fun playingFailure(cause: Throwable): List<SongLoadFailure> {
-        queue(playable)
+    private fun uidAt(index: Int) = checkNotNull(player.getMediaItemAt(index).queueEntryOrNull).uid
+
+    /** Plays [songs] from the first, then fails the item playing with [cause]. */
+    private fun playingFailure(
+        cause: Throwable,
+        vararg songs: Song = arrayOf(playable)
+    ): SongLoadFailure? {
+        queue(*songs)
         load(skipUnloadable = true)
         player.play()
         driver.runUntil { player.isPlaying }
         failWith(cause)
-        return loadFailures
+        return loader.loadFailure.value
+    }
+
+    private fun openFailure(cause: Throwable?) = HttpDataSource.HttpDataSourceException("open", cause as? java.io.IOException, DataSpec(Uri.parse("http://127.0.0.1:4533/stream")), PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_FAILED, HttpDataSource.HttpDataSourceException.TYPE_OPEN)
+
+    private fun serverUnreachable(cause: Throwable): Boolean? {
+        val failure = playingFailure(cause)
+        return failure?.serverUnreachable
     }
 
     @Test
     fun `a failure caused by a refused connection says the server can't be reached`() {
-        val refused = HttpDataSource.HttpDataSourceException("refused", java.net.ConnectException("refused"), DataSpec(Uri.parse("http://127.0.0.1:4533/stream")), PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_FAILED, HttpDataSource.HttpDataSourceException.TYPE_OPEN)
-
-        playingFailure(refused) shouldBe listOf(SongLoadFailure(playable, serverUnreachable = true))
+        playingFailure(openFailure(java.net.ConnectException("refused"))) shouldBe SongLoadFailure(uidAt(0), playable, serverUnreachable = true)
     }
 
     @Test
     fun `a failure caused by an unknown host says the server can't be reached`() {
-        val unknownHost = java.io.IOException("lookup", java.net.UnknownHostException("nas.local"))
+        serverUnreachable(java.io.IOException("lookup", java.net.UnknownHostException("nas.local"))) shouldBe true
+    }
 
-        playingFailure(unknownHost) shouldBe listOf(SongLoadFailure(playable, serverUnreachable = true))
+    @Test
+    fun `a socket timeout says the server can't be reached`() {
+        serverUnreachable(openFailure(java.net.SocketTimeoutException("timed out"))) shouldBe true
+    }
+
+    @Test
+    fun `no route to the host says the server can't be reached`() {
+        serverUnreachable(java.io.IOException("route", java.net.NoRouteToHostException("no route"))) shouldBe true
     }
 
     @Test
     fun `a failure of the stream itself doesn't blame the server`() {
         val notFound = HttpDataSource.InvalidResponseCodeException(404, "Not Found", null, emptyMap(), DataSpec(Uri.parse("https://plex/segment.ts")), ByteArray(0))
 
-        playingFailure(notFound) shouldBe listOf(SongLoadFailure(playable, serverUnreachable = false))
+        serverUnreachable(notFound) shouldBe false
     }
 
     @Test
-    fun `a stream that can't be resolved says the server can't be reached`() {
-        playingFailure(MediaResolutionException("no route")) shouldBe listOf(SongLoadFailure(playable, serverUnreachable = true))
+    fun `a failed open with no network cause doesn't blame the server`() {
+        serverUnreachable(openFailure(null)) shouldBe false
+    }
+
+    @Test
+    fun `a failed open caused by something else than the network doesn't blame the server`() {
+        serverUnreachable(openFailure(java.io.IOException("reset"))) shouldBe false
+    }
+
+    @Test
+    fun `a stream that can't be resolved because the network failed says the server can't be reached`() {
+        serverUnreachable(MediaResolutionException("no route", java.net.ConnectException("refused"))) shouldBe true
         failures shouldBe emptyList()
+    }
+
+    @Test
+    fun `a stream that can't be resolved for another reason doesn't blame the server`() {
+        serverUnreachable(MediaResolutionException("no such song")) shouldBe false
+        failures shouldBe emptyList()
+    }
+
+    @Test
+    fun `a failure while restoring stays visible to a collector that arrives after it`() {
+        queue(missing, playable)
+
+        load(skipUnloadable = false).isFailure shouldBe true
+
+        loader.loadFailure.value shouldBe SongLoadFailure(uidAt(0), missing, serverUnreachable = false)
+    }
+
+    @Test
+    fun `a failure that skips on to the next item leaves nothing to show`() {
+        queue(missing, playable)
+
+        load(skipUnloadable = true) shouldBe Result.success(false)
+
+        loader.loadFailure.value shouldBe null
+    }
+
+    @Test
+    fun `the failure clears when its entry becomes ready`() {
+        playingFailure(java.io.IOException("broken")) shouldBe SongLoadFailure(uidAt(0), playable, serverUnreachable = false)
+
+        load(skipUnloadable = true) shouldBe Result.success(true)
+
+        loader.loadFailure.value shouldBe null
+    }
+
+    @Test
+    fun `the failure clears when another entry becomes current`() {
+        playingFailure(java.io.IOException("broken"), playable, PlaybackHarness.song(4))
+
+        player.seekTo(1, 0)
+        driver.idle()
+
+        loader.loadFailure.value shouldBe null
+    }
+
+    @Test
+    fun `the failure clears when the queue is replaced`() {
+        playingFailure(java.io.IOException("broken"))
+
+        queue(PlaybackHarness.song(4))
+        driver.idle()
+
+        loader.loadFailure.value shouldBe null
+    }
+
+    @Test
+    fun `the failure clears when the queue is emptied`() {
+        playingFailure(java.io.IOException("broken"))
+
+        player.clearMediaItems()
+        driver.idle()
+
+        loader.loadFailure.value shouldBe null
+    }
+
+    @Test
+    fun `the same song twice in the queue keys the failure on the entry that failed`() {
+        queue(playable, playable)
+        player.seekTo(1, 0)
+        load(skipUnloadable = true)
+        player.play()
+        driver.runUntil { player.isPlaying }
+
+        failWith(java.io.IOException("broken"))
+
+        uidAt(0) shouldNotBe uidAt(1)
+        loader.loadFailure.value shouldBe SongLoadFailure(uidAt(1), playable, serverUnreachable = false)
     }
 
     @Test
