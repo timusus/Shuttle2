@@ -50,7 +50,7 @@ class LibraryScreenTest {
     }
 
     @Test
-    fun `the large top bar collapses as the page scrolls`() {
+    fun `the top bar stays pinned as the page scrolls`() {
         val songs = (1..60L).map { createSong(id = it, name = "Track $it") }
         robot.setContent(
             libraryState(currentTab = LibraryTab.Songs),
@@ -61,7 +61,7 @@ class LibraryScreenTest {
 
         robot.dragPageUp()
 
-        (robot.titleTop() < titleTop) shouldBe true
+        robot.titleTop() shouldBe titleTop
     }
 
     @Test

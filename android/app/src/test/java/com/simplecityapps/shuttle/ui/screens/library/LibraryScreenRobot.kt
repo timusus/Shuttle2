@@ -331,20 +331,12 @@ class LibraryScreenRobot(private val rule: ComposeContentTestRule) {
         return a.top == b.top && a.left != b.left
     }
 
-    /** The section chip labels, in order: the row is lazy, so this scrolls it end to end and reads each window. */
-    fun tabLabels(): List<String> {
-        val labels = mutableListOf<String>()
-        var index = 0
-        while (runCatching { sections().performScrollToIndex(index) }.isSuccess) {
-            rule.onAllNodes(hasClickAction() and hasAnyAncestor(hasTestTag("library-sections")))
-                .fetchSemanticsNodes()
-                .sortedBy { node -> node.boundsInRoot.left }
-                .map { node -> node.config.getOrElseNullable(SemanticsProperties.Text) { null }.orEmpty().joinToString { it.text } }
-                .forEach { label -> if (label !in labels) labels += label }
-            index++
-        }
-        return labels
-    }
+    /** The section tab labels, in order, including any scrolled out of the row's window. */
+    fun tabLabels(): List<String> = rule.onAllNodes(hasClickAction() and hasAnyAncestor(hasTestTag("library-sections")))
+        .fetchSemanticsNodes()
+        .sortedBy { node -> node.boundsInRoot.left }
+        .map { node -> node.config.getOrElseNullable(SemanticsProperties.Text) { null }.orEmpty().joinToString { it.text } }
+        .distinct()
 
     /** The sort button, found by what a screen reader announces for it, such as "Sort: Album name". */
     fun assertSortAnnounced(description: String) {
@@ -387,7 +379,6 @@ class LibraryScreenRobot(private val rule: ComposeContentTestRule) {
 
     /** Taps a section chip, first scrolling the chip row until it's on screen, as a finger would. */
     fun clickTab(label: String) {
-        sections().performScrollToNode(hasText(label))
         tab(label).performClick()
         rule.waitForIdle()
     }
@@ -404,7 +395,7 @@ class LibraryScreenRobot(private val rule: ComposeContentTestRule) {
         rule.waitForIdle()
     }
 
-    /** Where the bar's title sits, from the top of the screen: it moves as the large bar collapses. */
+    /** Where the bar's title sits, from the top of the screen. */
     fun titleTop(): Float = rule.onNodeWithText("Library").fetchSemanticsNode().boundsInRoot.top
 
     /** Drags the current page's list up, as a finger scrolling it would. */

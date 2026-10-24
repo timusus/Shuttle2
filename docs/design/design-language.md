@@ -243,7 +243,8 @@ catalogue — #553).
 
 | ID | M3 basis | Variants | States |
 |---|---|---|---|
-| `top-bar` | `LargeFlexibleTopAppBar`, `TopAppBar` (detail), `MediumFlexibleTopAppBar` | title, title + subtitle, actions, back | expanded, collapsed, with overflow menu. No collapsing hero |
+| `top-bar` | `TopAppBar` (Library, Home, detail), `LargeFlexibleTopAppBar` (Settings root, Paywall), `MediumFlexibleTopAppBar` | title, title + subtitle, actions, back | expanded, collapsed, with overflow menu. No collapsing hero |
+| `tab-row` | `PrimaryScrollableTabRow` (`S2TabRow`) | peer sections of one screen (Library), single-select, paired with a pager | selected, unselected, scrolled to the selected tab |
 | `nav-bar` | `ShortNavigationBar` | 3 and 4 items | selected per item, badge, pressed |
 | `nav-rail` | `WideNavigationRail` | collapsed, expanded | selected, expanding |
 | `search` | `SearchBar` with `SearchBarState`, `ExpandedFullScreenSearchBar` (compact), `ExpandedDockedSearchBar` (expanded+) | — | collapsed, focused empty, typing, results, no results |

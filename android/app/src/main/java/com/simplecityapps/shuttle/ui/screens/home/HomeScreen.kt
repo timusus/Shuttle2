@@ -48,11 +48,11 @@ import com.simplecityapps.shuttle.designsystem.component.S2ButtonStyle
 import com.simplecityapps.shuttle.designsystem.component.S2Card
 import com.simplecityapps.shuttle.designsystem.component.S2Icon
 import com.simplecityapps.shuttle.designsystem.component.S2IconButton
-import com.simplecityapps.shuttle.designsystem.component.S2LargeTopBar
 import com.simplecityapps.shuttle.designsystem.component.S2Menu
 import com.simplecityapps.shuttle.designsystem.component.S2PullToRefreshBox
 import com.simplecityapps.shuttle.designsystem.component.S2Scaffold
 import com.simplecityapps.shuttle.designsystem.component.S2Text
+import com.simplecityapps.shuttle.designsystem.component.S2TopBar
 import com.simplecityapps.shuttle.designsystem.component.SectionHeader
 import com.simplecityapps.shuttle.designsystem.component.SectionHeaderStyle
 import com.simplecityapps.shuttle.designsystem.theme.S2ShelfTileWidth
@@ -85,7 +85,6 @@ class HomeCallbacks(
 )
 
 /** Home: Jump back in, then library shelves; the mini player stands in for a resume hero. */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     uiState: HomeUiState,
@@ -97,13 +96,12 @@ fun HomeScreen(
     // Fully drawn, for the startup metrics and the Baseline Profile (docs/performance/android-startup.md), once the
     // library has loaded: the sections, or the empty state.
     ReportDrawnWhen { uiState !is HomeUiState.Loading }
-    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     S2Scaffold(
-        modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        modifier = modifier,
         // The shell pads destinations clear of the nav bar and player; the bar takes the status bar.
         contentWindowInsets = WindowInsets(0),
         topBar = {
-            S2LargeTopBar(
+            S2TopBar(
                 title = stringResource(R.string.shell_tab_home),
                 actions = {
                     // Cold start has its own, larger Shuffle all.
@@ -130,7 +128,6 @@ fun HomeScreen(
                     }
                     S2IconButton(icon = Icons.Rounded.Settings, contentDescription = stringResource(R.string.settings_menu_settings), onClick = callbacks.onOpenSettings)
                 },
-                scrollBehavior = scrollBehavior,
             )
         },
     ) { padding ->

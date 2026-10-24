@@ -241,8 +241,9 @@ and designsystem components get the decision as a parameter. No orientation lock
 
 | Screen | Compact width, any height | Medium/Expanded width, Compact height | Medium+ height |
 |---|---|---|---|
-| Library, Search, Playlists | large flexible bar, one pane | small `enterAlways` bar, chips kept, one pane | large flexible bar; list-detail from Expanded |
-| Home | pinned small bar, shelves | same, content capped to the window | same |
+| Library | pinned small bar and tab row, one pane | same | same; list-detail from Expanded |
+| Search, Playlists | large flexible bar, one pane | small `enterAlways` bar, chips kept, one pane | large flexible bar; list-detail from Expanded |
+| Home | pinned small bar titled "Home", shelves | same, content capped to the window | same |
 | Album, artist, playlist, genre detail | `DetailScaffold`, one column | two columns in the screen: hero and actions (~40%) beside tracks, scrolling independently | one column; list-detail panes from Expanded |
 | Settings | one pane | one pane, pages pushed | list-detail from Expanded |
 | Full player | sheet column | artwork left, controls right | column, or side by side with a panel |
@@ -289,13 +290,16 @@ The saveable state sits above the class branch, so one instance survives the swi
 The shell draws no top bar. Each destination owns a `Scaffold(topBar = …)` and the status-bar
 inset through the bar's default `windowInsets`.
 
-- **Top-level and list screens** (Library, Search, Playlists, Settings): `LargeFlexibleTopAppBar`
+- **Library**: the pinned small `TopAppBar` ("Library" and its actions in one row) over a pinned
+  `PrimaryScrollableTabRow` of the sections (`S2TabRow`); the nav bar already names the tab, so no
+  large title.
+- **Other top-level and list screens** (Search, Playlists, Settings): `LargeFlexibleTopAppBar`
   with title and subtitle (for example the library count), `exitUntilCollapsedScrollBehavior`
   connected to the screen's list. This is a collapsing *bar*, not a hero.
 - **Settings sub-pages** (Appearance, Sources, the equalizer, and the rest under the Settings root):
   the pinned small `TopAppBar`, so they read as a level below the root (#496).
-- **Home**: a pinned small bar with no title, holding only Shuffle all and the Settings gear (#490),
-  so the first screen opens on the resume hero and shelves rather than the word "Home".
+- **Home**: the pinned small bar titled "Home" with its shuffle and Settings actions, so the first
+  screen opens on the resume hero and shelves.
 - **Artwork detail** (album, artist, genre, playlist): the existing `DetailScaffold`: pinned small
   bar, artwork as a list item. No collapsing hero; the NestedScrollConnection and graphics-layer
   attempts failed and are not retried.
@@ -305,9 +309,8 @@ inset through the bar's default `windowInsets`.
 ### The risk: Library
 
 Library's tabs share one bar and one contextual bar (the #344 ownership bug), each tab brings its
-own options menu, and the collapsing bar must follow whichever page is scrolling. Design: one
-`LargeFlexibleTopAppBar` over a `HorizontalPager`, per-page `nestedScroll(…)`, the contextual bar and
-actions read from the visible page's UiState. `ToolbarHost` and `ComposeContextualToolbarHelper` are
+own options menu. Design: one pinned small `TopAppBar` and a tab row over a `HorizontalPager`, the
+contextual bar and actions read from the visible page's UiState. `ToolbarHost` and `ComposeContextualToolbarHelper` are
 deleted, not ported. Step 5A proves the bar follows the page and the selection counts per page.
 
 ## 4. Navigation

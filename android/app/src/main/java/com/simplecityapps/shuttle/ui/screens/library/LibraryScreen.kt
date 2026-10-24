@@ -68,6 +68,7 @@ import com.simplecityapps.shuttle.designsystem.component.S2ModalSheet
 import com.simplecityapps.shuttle.designsystem.component.S2Scaffold
 import com.simplecityapps.shuttle.designsystem.component.S2SelectionToolbar
 import com.simplecityapps.shuttle.designsystem.component.S2Switch
+import com.simplecityapps.shuttle.designsystem.component.S2TabRow
 import com.simplecityapps.shuttle.designsystem.component.S2Text
 import com.simplecityapps.shuttle.designsystem.component.S2TopBar
 import com.simplecityapps.shuttle.designsystem.component.StateAction
@@ -91,11 +92,10 @@ class LibraryTabChrome(
 )
 
 /**
- * The Library container: a collapsing large top bar, then a pinned row of section chips over a pager.
+ * The Library container: a pinned top bar, then a pinned row of section tabs over a pager.
  * Each page leads with its tab's controls row (count, sort, grid/list, Shuffle, Play) as its list's first item, so it
  * scrolls away with the page. The selection toolbar replaces the top bar while the current tab has a selection.
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LibraryScreen(
     uiState: LibraryUiState,
@@ -119,19 +119,13 @@ fun LibraryScreen(
     var editingTabs by rememberSaveable { mutableStateOf(false) }
     BackHandler(enabled = chrome.selectedCount > 0, onBack = chrome.onClearSelection)
 
-    // A landscape phone has no height for the large bar: a small one that hides on scroll down and returns on scroll up.
-    val compactHeight = LocalShellLayout.current.compactHeight
-    val scrollBehavior = if (compactHeight) TopAppBarDefaults.enterAlwaysScrollBehavior() else TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     S2Scaffold(
-        // Each page's list scrolls inside the pager; its scroll reaches the bar through this ancestor.
-        modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        modifier = modifier,
         // The shell pads destinations clear of the nav bar and player; the bar takes the status bar.
         contentWindowInsets = WindowInsets(0),
         topBar = {
             LibraryTopBar(
                 chrome = chrome,
-                compactHeight = compactHeight,
-                scrollBehavior = scrollBehavior,
                 trialDaysLeft = trialDaysLeft,
                 onOpenTrial = onOpenTrial,
                 offlineMode = offlineMode,
@@ -162,13 +156,10 @@ fun LibraryScreen(
     }
 }
 
-/** The selection toolbar while the tab has a selection, else the large (or, in landscape, small) bar with the chrome actions. */
-@OptIn(ExperimentalMaterial3Api::class)
+/** The selection toolbar while the tab has a selection, else the pinned bar with the chrome actions. */
 @Composable
 private fun LibraryTopBar(
     chrome: LibraryTabChrome,
-    compactHeight: Boolean,
-    scrollBehavior: TopAppBarScrollBehavior,
     trialDaysLeft: Int?,
     onOpenTrial: () -> Unit,
     offlineMode: Boolean,
@@ -231,11 +222,7 @@ private fun LibraryTopBar(
                 }
                 S2IconButton(icon = Icons.Rounded.Settings, contentDescription = stringResource(R.string.settings_menu_settings), onClick = onOpenSettings)
             }
-            if (compactHeight) {
-                S2TopBar(title = stringResource(R.string.title_library), actions = barActions, scrollBehavior = scrollBehavior)
-            } else {
-                S2LargeTopBar(title = stringResource(R.string.title_library), scrollBehavior = scrollBehavior, actions = barActions)
-            }
+            S2TopBar(title = stringResource(R.string.title_library), actions = barActions)
         }
     }
 }
@@ -258,11 +245,13 @@ private fun LibraryPager(
         snapshotFlow { pagerState.settledPage }.collect { index -> tabs.getOrNull(index)?.let(onTabSelected) }
     }
     Column(modifier.fillMaxSize()) {
-        // The target page, so a tap or a swipe marks its chip straight away rather than each page it passes.
-        LibrarySectionChips(
-            tabs = tabs,
+        // The target page, so a tap or a swipe marks its tab straight away rather than each page it passes.
+        val labels = tabs.map { it.label() }
+        S2TabRow(
+            labels = labels,
             selectedIndex = pagerState.targetPage.coerceIn(0, tabs.lastIndex),
             onSelect = { index -> scope.launch { pagerState.animateScrollToPage(index) } },
+            modifier = Modifier.testTag("library-sections"),
         )
         HorizontalPager(state = pagerState, key = { tabs[it] }, modifier = Modifier.fillMaxSize().testTag("library-pager")) { index ->
             // Only the visible section scrolls to the top on a re-select.
@@ -271,62 +260,6 @@ private fun LibraryPager(
         }
     }
 }
-
-/**
- * The sections as a scrolling row of single-select chips, in the user's order. The row scrolls only when the selected
- * chip is not fully in view, and then by the least that shows it: to the start edge when it's before the window, to the
- * end edge when it's after. The first placement snaps, so the row opens on the selected chip rather than sliding to it.
- */
-@Composable
-private fun LibrarySectionChips(
-    tabs: List<LibraryTab>,
-    selectedIndex: Int,
-    onSelect: (Int) -> Unit,
-) {
-    val listState = rememberLazyListState()
-    var placed by remember { mutableStateOf(false) }
-    LaunchedEffect(tabs, selectedIndex) {
-        // Once the row holds these tabs, so the screen can open on a section past the row's edge.
-        snapshotFlow { listState.layoutInfo }.first { it.viewportSize.width > 0 && it.totalItemsCount == tabs.size }
-        // The layout that published it may still be running; scrolling now would remeasure inside it.
-        withFrameNanos { }
-        // A second pass when the chip was out of the window, whose width the first could only estimate.
-        repeat(2) {
-            val scrollOffset = listState.layoutInfo.revealScrollOffset(selectedIndex) ?: return@repeat
-            if (placed) listState.animateScrollToItem(selectedIndex, scrollOffset) else listState.scrollToItem(selectedIndex, scrollOffset)
-        }
-        placed = true
-    }
-    LazyRow(
-        state = listState,
-        contentPadding = PaddingValues(horizontal = SectionChipsPadding),
-        horizontalArrangement = Arrangement.spacedBy(S2Spacing.small),
-        modifier = Modifier.fillMaxWidth().testTag("library-sections"),
-    ) {
-        itemsIndexed(tabs, key = { _, tab -> tab }) { index, tab ->
-            S2FilterChip(label = tab.label(), selected = index == selectedIndex, onClick = { onSelect(index) })
-        }
-    }
-}
-
-/**
- * The scroll offset for `scrollToItem(index, offset)` that brings item [index] fully inside the content padding by the
- * least movement, or null when it already is. Offsets run from the start edge, so this holds in either layout direction.
- */
-private fun LazyListLayoutInfo.revealScrollOffset(index: Int): Int? {
-    val item = visibleItemsInfo.firstOrNull { it.index == index }
-    val contentEnd = viewportEndOffset - afterContentPadding
-    val beforeWindow = if (item != null) item.offset < 0 else index < (visibleItemsInfo.firstOrNull()?.index ?: 0)
-    // Out of the window, the chip's width is unknown until it's laid out; its neighbour's stands in.
-    val size = item?.size ?: visibleItemsInfo.lastOrNull()?.size ?: 0
-    return when {
-        beforeWindow -> 0
-        item == null || item.offset + item.size > contentEnd -> -(contentEnd - size).coerceAtLeast(0)
-        else -> null
-    }
-}
-
-private val SectionChipsPadding = S2Spacing.medium
 
 @Composable
 fun LibraryTab.label(): String = stringResource(
