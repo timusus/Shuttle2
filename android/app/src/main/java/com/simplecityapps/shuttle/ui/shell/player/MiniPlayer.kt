@@ -60,7 +60,7 @@ internal fun MiniPlayer(
             val seekable = current.song.type.isSeekable
             S2MiniPlayer(
                 title = player.work?.miniTitle ?: current.title,
-                subtitle = player.work?.miniSubtitle ?: current.artist.orEmpty(),
+                subtitle = player.loadFailure?.message() ?: player.work?.miniSubtitle ?: current.artist.orEmpty(),
                 playing = player.playing,
                 progress = { progress().fraction },
                 onPlayPause = actions::togglePlayback,

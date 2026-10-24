@@ -6,12 +6,15 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.Timeline
+import androidx.media3.datasource.HttpDataSource
 import androidx.media3.exoplayer.ExoPlaybackException
 import androidx.media3.exoplayer.ExoPlayer
 import com.simplecityapps.playback.engine.isResolutionFailure
 import com.simplecityapps.playback.engine.notFound
 import com.simplecityapps.playback.queue.queueEntryOrNull
 import com.simplecityapps.shuttle.model.Song
+import java.net.ConnectException
+import java.net.UnknownHostException
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -58,6 +61,11 @@ class ItemLoader(
 
     /** Each song that fails to play, except one whose stream can't be resolved (a server that can't be reached). */
     val failureFlow: SharedFlow<Song> = _failureFlow.asSharedFlow()
+
+    private val _loadFailureFlow = MutableSharedFlow<SongLoadFailure>(extraBufferCapacity = EVENT_BUFFER, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+
+    /** Each song that fails to load, with whether its server couldn't be reached: [failureFlow] plus the songs whose stream can't be resolved. */
+    val loadFailureFlow: SharedFlow<SongLoadFailure> = _loadFailureFlow.asSharedFlow()
 
     /** Whether a [load] is waiting for its item to be ready. */
     val isLoading: Boolean
@@ -150,6 +158,7 @@ class ItemLoader(
         if (!error.isResolutionFailure()) {
             failedEntry?.song?.let(_failureFlow::tryEmit)
         }
+        failedEntry?.song?.let { _loadFailureFlow.tryEmit(SongLoadFailure(it, error.isConnectionFailure())) }
         val skips = player.playWhenReady || pendingLoad?.skipUnloadable != false
         if (failedEntry != null && failedEntry.uid != readyUid && skips) {
             loadFailures++
@@ -209,6 +218,10 @@ class ItemLoader(
         val positionMs: Long
     )
 }
+
+/** Whether this failed for want of a connection to the server (or to resolve its stream), not for anything in the song. */
+private fun Throwable.isConnectionFailure(): Boolean = isResolutionFailure() ||
+    generateSequence(this) { it.cause }.any { (it is HttpDataSource.HttpDataSourceException && it !is HttpDataSource.InvalidResponseCodeException) || it is ConnectException || it is UnknownHostException }
 
 /** How many events a flow of them buffers for a collector that hasn't caught up. */
 internal const val EVENT_BUFFER = 64

@@ -64,6 +64,8 @@ import com.simplecityapps.shuttle.designsystem.theme.artworkRole
 import com.simplecityapps.shuttle.designsystem.theme.isLargeText
 import com.simplecityapps.shuttle.model.NowPlayingWork
 import com.simplecityapps.shuttle.ui.screens.library.ComposerRoute
+import com.simplecityapps.shuttle.ui.screens.settings.SettingsDestinationRoute
+import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsDestination
 
 /** The name of the Cast device playback plays on, or null while it plays on this one. */
 @Composable
@@ -163,7 +165,10 @@ internal fun NowPlayingTitle(
                 )
             }
             val castingTo = player.castingTo()
-            if (castingTo != null) {
+            val loadFailure = player.loadFailure
+            if (loadFailure != null) {
+                LoadFailureMessage(loadFailure, onOpenSources = { onOpenRoute(SettingsDestinationRoute(SettingsDestination.Sources)) })
+            } else if (castingTo != null) {
                 S2PlayingOn(castingTo, style = MaterialTheme.typography.bodyMedium)
             } else if (!largeText) {
                 current?.song?.qualityLine(player.delivered)?.let { quality ->
@@ -313,7 +318,7 @@ private fun SeekBar(
         positionMs = current.positionMs,
         durationMs = current.durationMs,
         onSeek = actions::seekTo,
-        enabled = player.current != null,
+        enabled = player.current != null && player.loadFailure == null,
         buffering = player.buffering,
         bufferedMs = current.bufferedMs,
         showRemaining = player.showRemainingTime,

@@ -6,6 +6,7 @@ import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.PlaybackProgress
 import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.PlaybackStateSource
+import com.simplecityapps.playback.SongLoadFailure
 import com.simplecityapps.playback.SongPosition
 import com.simplecityapps.playback.TrackEnd
 import com.simplecityapps.playback.queue.QueueItem
@@ -25,6 +26,7 @@ class FakePlaybackOperations :
     override val trackEndedFlow = MutableSharedFlow<TrackEnd>(extraBufferCapacity = 64)
     override val pausePositionFlow = MutableSharedFlow<SongPosition>(extraBufferCapacity = 64)
     override val playbackFailureFlow = MutableSharedFlow<Song>(extraBufferCapacity = 64)
+    override val loadFailureFlow = MutableSharedFlow<SongLoadFailure>(extraBufferCapacity = 64)
 
     var addedToQueue = mutableListOf<Song>()
     var playedNext = mutableListOf<Song>()

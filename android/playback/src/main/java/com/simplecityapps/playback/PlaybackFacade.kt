@@ -120,6 +120,7 @@ class PlaybackFacade(
     override val pausePositionFlow: SharedFlow<SongPosition> = _pausePositionFlow.asSharedFlow()
 
     override val playbackFailureFlow: SharedFlow<Song> = loader.failureFlow
+    override val loadFailureFlow: SharedFlow<SongLoadFailure> = loader.loadFailureFlow
 
     /** Each pause at the end of an item: the local player's (see [pauseAtEndOfItem]), a Cast receiver's, or the queue's last. */
     private val _endOfItemPauses = MutableSharedFlow<Unit>(extraBufferCapacity = EVENT_BUFFER, onBufferOverflow = BufferOverflow.DROP_OLDEST)

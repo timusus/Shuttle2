@@ -77,6 +77,8 @@ data class PlayerUiState(
     val panel: NowPlayingPanel? = null,
     /** What the queue is playing from, shown and opened from the queue's header; null for none. */
     val queueSource: HomeItem? = null,
+    /** Why [current] can't play, shown in place of the seek bar (which is disabled meanwhile); null while it can. */
+    val loadFailure: LoadFailure? = null,
 ) {
     companion object {
         val Unknown = PlayerUiState(hasQueue = null, current = null, items = emptyList())

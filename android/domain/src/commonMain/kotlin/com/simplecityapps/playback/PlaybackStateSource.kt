@@ -1,6 +1,7 @@
 package com.simplecityapps.playback
 
 import com.simplecityapps.shuttle.model.Song
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 
@@ -14,6 +15,12 @@ class TrackEnd(
 data class Play(
     val id: String,
     val uid: Long
+)
+
+/** [song] failed to load; [serverUnreachable] when the cause was a connection error rather than the song itself. */
+data class SongLoadFailure(
+    val song: Song,
+    val serverUnreachable: Boolean
 )
 
 /** The read side of playback: state, progress and events; commands are on [PlaybackOperations]. */
@@ -48,6 +55,14 @@ interface PlaybackStateSource {
 
     /** The current song, each time the playback fails to play it (e.g. its file can't be read). An event, like [trackEndedFlow]. */
     val playbackFailureFlow: SharedFlow<Song>
+
+    /**
+     * Each song that fails to load, and whether its server couldn't be reached. Unlike [playbackFailureFlow] it also
+     * carries a song whose stream couldn't be resolved. An event, like [trackEndedFlow]. Nothing on a player that
+     * doesn't tell the two apart.
+     */
+    val loadFailureFlow: SharedFlow<SongLoadFailure>
+        get() = MutableSharedFlow()
 
     fun playbackState(): PlaybackState
     fun getProgress(): Int?

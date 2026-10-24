@@ -10,6 +10,7 @@ import androidx.media3.exoplayer.ExoPlaybackException
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.test.utils.FakeClock
 import androidx.media3.test.utils.TestExoPlayerBuilder
+import com.simplecityapps.playback.engine.MediaResolutionException
 import com.simplecityapps.playback.fakes.testSong
 import com.simplecityapps.playback.queue.toMediaItem
 import com.simplecityapps.playback.queue.toQueueEntry
@@ -51,6 +52,8 @@ class ItemLoaderTest {
     private val scope = CoroutineScope(Dispatchers.Unconfined)
 
     private val failures = mutableListOf<Song>().also { failures -> scope.launch { loader.failureFlow.collect { failures += it } } }
+
+    private val loadFailures = mutableListOf<SongLoadFailure>().also { list -> scope.launch { loader.loadFailureFlow.collect { list += it } } }
 
     private val missing = testSong(1, path = PlaybackHarness.MISSING_FILE_URI, mimeType = "audio/wav")
 
@@ -234,6 +237,48 @@ class ItemLoaderTest {
         val notFound = HttpDataSource.InvalidResponseCodeException(404, "Not Found", null, emptyMap(), DataSpec(Uri.parse("https://plex/segment.ts")), ByteArray(0))
         player.createMessage { _, _ -> throw ExoPlaybackException.createForSource(notFound, PlaybackException.ERROR_CODE_IO_BAD_HTTP_STATUS) }.send()
         driver.idle()
+    }
+
+    /** Fails the player as [cause] does, from its playback thread. */
+    private fun failWith(cause: Throwable) {
+        player.createMessage { _, _ -> throw ExoPlaybackException.createForSource(cause as java.io.IOException, PlaybackException.ERROR_CODE_IO_UNSPECIFIED) }.send()
+        driver.idle()
+    }
+
+    private fun playingFailure(cause: Throwable): List<SongLoadFailure> {
+        queue(playable)
+        load(skipUnloadable = true)
+        player.play()
+        driver.runUntil { player.isPlaying }
+        failWith(cause)
+        return loadFailures
+    }
+
+    @Test
+    fun `a failure caused by a refused connection says the server can't be reached`() {
+        val refused = HttpDataSource.HttpDataSourceException("refused", java.net.ConnectException("refused"), DataSpec(Uri.parse("http://127.0.0.1:4533/stream")), PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_FAILED, HttpDataSource.HttpDataSourceException.TYPE_OPEN)
+
+        playingFailure(refused) shouldBe listOf(SongLoadFailure(playable, serverUnreachable = true))
+    }
+
+    @Test
+    fun `a failure caused by an unknown host says the server can't be reached`() {
+        val unknownHost = java.io.IOException("lookup", java.net.UnknownHostException("nas.local"))
+
+        playingFailure(unknownHost) shouldBe listOf(SongLoadFailure(playable, serverUnreachable = true))
+    }
+
+    @Test
+    fun `a failure of the stream itself doesn't blame the server`() {
+        val notFound = HttpDataSource.InvalidResponseCodeException(404, "Not Found", null, emptyMap(), DataSpec(Uri.parse("https://plex/segment.ts")), ByteArray(0))
+
+        playingFailure(notFound) shouldBe listOf(SongLoadFailure(playable, serverUnreachable = false))
+    }
+
+    @Test
+    fun `a stream that can't be resolved says the server can't be reached`() {
+        playingFailure(MediaResolutionException("no route")) shouldBe listOf(SongLoadFailure(playable, serverUnreachable = true))
+        failures shouldBe emptyList()
     }
 
     @Test
