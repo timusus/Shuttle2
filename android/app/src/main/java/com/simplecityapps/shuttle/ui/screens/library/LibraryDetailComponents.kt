@@ -42,6 +42,7 @@ import com.simplecityapps.shuttle.designsystem.theme.S2ShelfTileWidth
 import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.ui.common.components.DetailScaffold
+import com.simplecityapps.shuttle.ui.shell.albumArtworkKey
 import com.simplecityapps.shuttle.ui.shell.sharedArtwork
 
 // The pieces every library detail screen shares, on DetailScaffold (app-shell.md, section 3): the DetailHero with
@@ -174,7 +175,7 @@ fun LazyListScope.albumShelf(
                     subtitle = subtitle(album),
                     onClick = { onClick(album) },
                     onLongClick = { onLongClick(album) },
-                    artwork = { LibraryArtwork(album, ArtworkPlaceholder.Album, Modifier.fillMaxSize(), size = ArtworkSize.Grid) },
+                    artwork = { LibraryArtwork(album, ArtworkPlaceholder.Album, Modifier.sharedArtwork(albumArtworkKey(album.route)).fillMaxSize(), size = ArtworkSize.Grid) },
                     modifier = Modifier.width(S2ShelfTileWidth.compact),
                 )
             }

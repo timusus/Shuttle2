@@ -17,6 +17,8 @@ import androidx.compose.material.icons.rounded.LibraryMusic
 import androidx.compose.material.icons.rounded.Replay
 import androidx.compose.material.icons.rounded.Shuffle
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -45,6 +47,9 @@ import com.simplecityapps.shuttle.ui.screens.library.CoverMosaic
 import com.simplecityapps.shuttle.ui.screens.library.LibraryArtwork
 import com.simplecityapps.shuttle.ui.screens.library.nameKey
 import com.simplecityapps.shuttle.ui.screens.library.pluralString
+import com.simplecityapps.shuttle.ui.screens.library.route
+import com.simplecityapps.shuttle.ui.shell.albumArtworkKey
+import com.simplecityapps.shuttle.ui.shell.sharedArtwork
 import com.simplecityapps.shuttle.ui.text.stringResource as stringResourceKey
 
 /** The kind of thing a [HomeItem] is, as its tiles label it; a smart playlist is a playlist to the user. */
@@ -133,6 +138,12 @@ fun HomeItem.subtitle(mixed: Boolean): String {
     return if (mixed) stringResource(R.string.home_tile_subtitle, type, detail) else detail
 }
 
+/**
+ * The key of the item last opened from Home. An album can sit in several shelves at once, and only the tapped tile may
+ * share its artwork into the album page; null (previews, tests) leaves every album tile shareable.
+ */
+internal val LocalOpenedHomeItem = staticCompositionLocalOf<MutableState<String?>?> { null }
+
 /** Playlists and genres without their own art get a mosaic of their albums' [covers]; others use [GeneratedArtwork]. */
 @Composable
 fun HomeItemArtwork(
@@ -141,12 +152,23 @@ fun HomeItemArtwork(
     size: ArtworkSize,
     modifier: Modifier = Modifier,
 ) {
+    val opened = LocalOpenedHomeItem.current
     when {
-        item is HomeItem.AlbumItem -> LibraryArtwork(item.album, item.placeholder, modifier, size = size)
+        item is HomeItem.AlbumItem -> LibraryArtwork(
+            item.album,
+            item.placeholder,
+            modifier.sharedArtwork(albumArtworkKey(item.album.route), isEnabled = { opened == null || opened.value == item.key }),
+            size = size,
+        )
+
         item is HomeItem.ArtistItem -> LibraryArtwork(item.albumArtist, item.placeholder, modifier, size = size)
+
         covers.isNotEmpty() -> CoverMosaic(covers, item.placeholder, modifier, size = size)
+
         item is HomeItem.PlaylistItem -> GeneratedArtwork(item.playlist.name, Icons.AutoMirrored.Rounded.QueueMusic, modifier, size = size)
+
         item is HomeItem.SmartPlaylistItem -> GeneratedArtwork(item.smartPlaylistId.id, item.smartPlaylistId.icon, modifier, size = size)
+
         item is HomeItem.GenreItem -> GeneratedArtwork(item.genre.name, Icons.Rounded.LibraryMusic, modifier, size = size)
     }
 }

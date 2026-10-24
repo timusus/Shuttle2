@@ -26,6 +26,8 @@ import com.simplecityapps.shuttle.ui.screens.library.albums.AlbumListUiState
 import com.simplecityapps.shuttle.ui.screens.library.albums.albumThumbLabel
 import com.simplecityapps.shuttle.ui.shell.ScrollToTopOnReselect
 import com.simplecityapps.shuttle.ui.shell.ShellTab
+import com.simplecityapps.shuttle.ui.shell.albumArtworkKey
+import com.simplecityapps.shuttle.ui.shell.sharedArtwork
 
 /** Albums: a grid by default or a list. */
 @Composable
@@ -69,7 +71,7 @@ fun AlbumsPage(
                             onLongClick = { onAlbumLongClick(album) },
                             selected = album in state.selectedAlbums,
                             titleMaxLines = if (compact) 1 else null,
-                            artwork = { LibraryArtwork(album, ArtworkPlaceholder.Album, Modifier.fillMaxSize(), size = ArtworkSize.Grid) },
+                            artwork = { LibraryArtwork(album, ArtworkPlaceholder.Album, Modifier.sharedArtwork(albumArtworkKey(album.route)).fillMaxSize(), size = ArtworkSize.Grid) },
                         )
                     }
                 }
@@ -88,7 +90,7 @@ fun AlbumsPage(
                             onLongClick = { onAlbumLongClick(album) },
                             onMore = { onAlbumMore(album) },
                             selected = album in state.selectedAlbums,
-                            artwork = { LibraryArtwork(album, ArtworkPlaceholder.Album) },
+                            artwork = { LibraryArtwork(album, ArtworkPlaceholder.Album, Modifier.sharedArtwork(albumArtworkKey(album.route))) },
                         )
                     }
                 }

@@ -24,6 +24,7 @@ import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Shuffle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -64,7 +65,7 @@ import com.simplecityapps.shuttle.ui.shell.adaptive.LocalShellLayout
 import com.simplecityapps.shuttle.ui.shell.adaptive.ShellWidth
 import com.simplecityapps.shuttle.ui.text.resId
 
-class HomeCallbacks(
+data class HomeCallbacks(
     val onOpenSettings: () -> Unit = {},
     val onShuffleAll: () -> Unit = {},
     val onShuffleRandom: (ShuffleBy) -> Unit = {},
@@ -164,6 +165,24 @@ val HomeSectionId.hasSeeAll: Boolean
 
 @Composable
 private fun HomeContent(
+    content: HomeUiState.Content,
+    homeCallbacks: HomeCallbacks,
+    modifier: Modifier,
+) {
+    val opened = remember { mutableStateOf<String?>(null) }
+    val callbacks = remember(homeCallbacks) {
+        homeCallbacks.copy(onOpenItem = { item ->
+            opened.value = item.key
+            homeCallbacks.onOpenItem(item)
+        })
+    }
+    CompositionLocalProvider(LocalOpenedHomeItem provides opened) {
+        HomeShelves(content, callbacks, modifier)
+    }
+}
+
+@Composable
+private fun HomeShelves(
     content: HomeUiState.Content,
     callbacks: HomeCallbacks,
     modifier: Modifier,

@@ -22,6 +22,8 @@ import com.simplecityapps.shuttle.ui.actions.MediaSelection
 import com.simplecityapps.shuttle.ui.actions.NavigationTarget
 import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsHost
 import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsTarget
+import com.simplecityapps.shuttle.ui.shell.albumArtworkKey
+import com.simplecityapps.shuttle.ui.shell.sharedArtwork
 import dev.zacsweers.metrox.viewmodel.assistedMetroViewModel
 
 /** Genre detail (inventory §1): the albums its songs come from, then every song. */
@@ -64,7 +66,7 @@ fun GenreDetailScreen(
                 title = album.name ?: unknown,
                 artist = album.friendlyArtistName.orEmpty(),
                 onClick = { onAlbumClick(album) },
-                artwork = { LibraryArtwork(album, ArtworkPlaceholder.Album, size = ArtworkSize.Medium) },
+                artwork = { LibraryArtwork(album, ArtworkPlaceholder.Album, Modifier.sharedArtwork(albumArtworkKey(album.route)), size = ArtworkSize.Medium) },
                 onMore = { onAlbumMore(album) },
             )
         }
