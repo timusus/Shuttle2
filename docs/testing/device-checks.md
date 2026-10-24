@@ -659,3 +659,9 @@ Automated: `support/scripts/emu-verify.sh --check legacy-purchaser-offline` seed
   from 17% to 12% of the height for the tab row under the small bar.
 - [ ] Swipe between Library sections: the tab row stays pinned, the selected tab scrolls into view, a tap animates the pager.
 - [ ] Jump back in on Android and iOS: a shuffled album or playlist tile shows the song it was left on.
+
+## Shared album artwork into album detail (Oct 2026)
+
+- [ ] Android: tap album artwork in the Library grid, the Library list, a Home shelf, Jump back in, an artist's album shelf and a genre page. The artwork flies into the album page header with rounded corners throughout; back (button and predictive gesture) flies it home.
+- [ ] Android: an album shown in two Home shelves at once flies only from the tile tapped, with no flicker on the other.
+- [ ] Android, Developer options > Remove animations on (or Animator duration scale off): album opens with a plain transition, no flying artwork; switching it back on mid-session restores the flight without relaunching.
