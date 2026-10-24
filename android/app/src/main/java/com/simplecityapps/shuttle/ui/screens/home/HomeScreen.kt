@@ -28,6 +28,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -169,16 +170,32 @@ private fun HomeContent(
     homeCallbacks: HomeCallbacks,
     modifier: Modifier,
 ) {
-    val opened = remember { mutableStateOf<String?>(null) }
-    val callbacks = remember(homeCallbacks) {
-        homeCallbacks.copy(onOpenItem = { item ->
-            opened.value = item.key
-            homeCallbacks.onOpenItem(item)
-        })
+    // Saved, so the tile that shares its artwork on the way back is still known after a config change or process death.
+    val opened = rememberSaveable { mutableStateOf<String?>(null) }
+    CompositionLocalProvider(LocalOpenedHomeTile provides opened) {
+        HomeShelves(content, homeCallbacks, modifier)
     }
-    CompositionLocalProvider(LocalOpenedHomeItem provides opened) {
-        HomeShelves(content, callbacks, modifier)
+}
+
+/** Composes one section's tiles under [LocalHomeSection], with [callbacks] noting which of its tiles is opened. */
+@Composable
+private fun HomeSectionTiles(
+    section: HomeSectionId,
+    callbacks: HomeCallbacks,
+    tiles: @Composable (HomeCallbacks) -> Unit,
+) {
+    val opened = LocalOpenedHomeTile.current
+    val tracking = remember(callbacks, section, opened) {
+        if (opened == null) {
+            callbacks
+        } else {
+            callbacks.copy(onOpenItem = { item ->
+                opened.value = homeTileId(section, item)
+                callbacks.onOpenItem(item)
+            })
+        }
     }
+    CompositionLocalProvider(LocalHomeSection provides section) { tiles(tracking) }
 }
 
 @Composable
@@ -214,14 +231,16 @@ private fun HomeShelves(
                 section.id == HomeSectionId.JumpBackIn -> {
                     header(section, lead = section.id == leadSection, callbacks)
                     item(key = section.id.name) {
-                        JumpBackInGrid(
-                            items = section.items,
-                            progress = section.progress,
-                            covers = content.covers,
-                            columns = columns,
-                            callbacks = callbacks,
-                            modifier = Modifier.animateItem().padding(horizontal = S2Spacing.medium),
-                        )
+                        HomeSectionTiles(section.id, callbacks) { tracking ->
+                            JumpBackInGrid(
+                                items = section.items,
+                                progress = section.progress,
+                                covers = content.covers,
+                                columns = columns,
+                                callbacks = tracking,
+                                modifier = Modifier.animateItem().padding(horizontal = S2Spacing.medium),
+                            )
+                        }
                     }
                 }
 
@@ -263,21 +282,23 @@ private fun LazyListScope.shelf(
     header(section, lead, callbacks)
     val mixed = section.items.map { it.kind }.distinct().size > 1
     item(key = section.id.name) {
-        LazyRow(
-            modifier = Modifier.animateItem(),
-            contentPadding = PaddingValues(horizontal = S2Spacing.medium),
-            horizontalArrangement = Arrangement.spacedBy(S2Spacing.smallMedium),
-        ) {
-            items(section.items, key = { it.key }) { item ->
-                HomeShelfTile(
-                    item = item,
-                    covers = covers[item.key].orEmpty(),
-                    mixed = mixed,
-                    width = tileWidth,
-                    largeText = largeText,
-                    callbacks = callbacks,
-                    modifier = Modifier.animateItem(),
-                )
+        HomeSectionTiles(section.id, callbacks) { tracking ->
+            LazyRow(
+                modifier = Modifier.animateItem(),
+                contentPadding = PaddingValues(horizontal = S2Spacing.medium),
+                horizontalArrangement = Arrangement.spacedBy(S2Spacing.smallMedium),
+            ) {
+                items(section.items, key = { it.key }) { item ->
+                    HomeShelfTile(
+                        item = item,
+                        covers = covers[item.key].orEmpty(),
+                        mixed = mixed,
+                        width = tileWidth,
+                        largeText = largeText,
+                        callbacks = tracking,
+                        modifier = Modifier.animateItem(),
+                    )
+                }
             }
         }
     }

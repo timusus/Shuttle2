@@ -18,6 +18,7 @@ import androidx.compose.material.icons.rounded.Replay
 import androidx.compose.material.icons.rounded.Shuffle
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -139,10 +140,18 @@ fun HomeItem.subtitle(mixed: Boolean): String {
 }
 
 /**
- * The key of the item last opened from Home. An album can sit in several shelves at once, and only the tapped tile may
- * share its artwork into the album page; null (previews, tests) leaves every album tile shareable.
+ * The tile last opened from Home, as [homeTileId]. An album can sit in several shelves at once, and only the tapped tile
+ * may share its artwork into the album page; until a tile has been opened none does.
  */
-internal val LocalOpenedHomeItem = staticCompositionLocalOf<MutableState<String?>?> { null }
+internal val LocalOpenedHomeTile = staticCompositionLocalOf<MutableState<String?>?> { null }
+
+/** The section whose tiles are being composed, so a tile's identity is unique even for the same item in two shelves. */
+internal val LocalHomeSection = staticCompositionLocalOf<HomeSectionId?> { null }
+
+internal fun homeTileId(
+    section: HomeSectionId,
+    item: HomeItem,
+): String = "${section.name}:${item.key}"
 
 /** Playlists and genres without their own art get a mosaic of their albums' [covers]; others use [GeneratedArtwork]. */
 @Composable
@@ -152,12 +161,14 @@ fun HomeItemArtwork(
     size: ArtworkSize,
     modifier: Modifier = Modifier,
 ) {
-    val opened = LocalOpenedHomeItem.current
+    val opened = LocalOpenedHomeTile.current
+    val tileId = LocalHomeSection.current?.let { homeTileId(it, item) }
+    val isShared = remember(opened, tileId) { { tileId != null && opened?.value == tileId } }
     when {
         item is HomeItem.AlbumItem -> LibraryArtwork(
             item.album,
             item.placeholder,
-            modifier.sharedArtwork(albumArtworkKey(item.album.route), isEnabled = { opened == null || opened.value == item.key }),
+            modifier.sharedArtwork(albumArtworkKey(item.album.route), size, isShared),
             size = size,
         )
 

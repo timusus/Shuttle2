@@ -66,7 +66,7 @@ fun GenreDetailScreen(
                 title = album.name ?: unknown,
                 artist = album.friendlyArtistName.orEmpty(),
                 onClick = { onAlbumClick(album) },
-                artwork = { LibraryArtwork(album, ArtworkPlaceholder.Album, Modifier.sharedArtwork(albumArtworkKey(album.route)), size = ArtworkSize.Medium) },
+                artwork = { LibraryArtwork(album, ArtworkPlaceholder.Album, Modifier.sharedArtwork(albumArtworkKey(album.route), ArtworkSize.Medium), size = ArtworkSize.Medium) },
                 onMore = { onAlbumMore(album) },
             )
         }

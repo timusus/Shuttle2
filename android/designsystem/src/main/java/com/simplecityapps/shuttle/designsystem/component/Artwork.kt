@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.QueueMusic
 import androidx.compose.material.icons.automirrored.rounded.TrendingUp
@@ -165,7 +164,7 @@ fun ArtworkPlaceholderGlyph(placeholder: ArtworkPlaceholder, size: ArtworkSize) 
 /** Row artwork gets the small corner, tiles the large, the hero the Expressive large-increased. */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-internal fun artworkShape(shape: ArtworkShape, size: ArtworkSize): Shape = when (shape) {
+fun artworkShape(shape: ArtworkShape, size: ArtworkSize): Shape = when (shape) {
     ArtworkShape.Circle -> CircleShape
 
     ArtworkShape.Rounded -> when (size) {
@@ -182,6 +181,3 @@ private fun ArtworkPreview() {
         Artwork(ArtworkPlaceholder.Album, size = ArtworkSize.Grid, model = SampleLibrary.albums.first())
     }
 }
-
-/** Proportional corners for artwork in flight, so its shape holds while it scales between a row, a tile and a detail hero. */
-val SharedArtworkShape: Shape = RoundedCornerShape(percent = 10)

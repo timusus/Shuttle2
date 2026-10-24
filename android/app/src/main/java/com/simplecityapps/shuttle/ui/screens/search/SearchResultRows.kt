@@ -62,7 +62,7 @@ internal fun AlbumResult(results: SearchResults, index: Int, onEvent: (SearchEve
         artist = artistText,
         meta = album.year?.toString(),
         onClick = { onEvent(results.tapEvent(SearchCategory.Albums, index)) },
-        artwork = { LibraryArtwork(album, ArtworkPlaceholder.Album, Modifier.sharedArtwork(albumArtworkKey(album.route)), size = ArtworkSize.Small) },
+        artwork = { LibraryArtwork(album, ArtworkPlaceholder.Album, Modifier.sharedArtwork(albumArtworkKey(album.route), ArtworkSize.Small), size = ArtworkSize.Small) },
         onLongClick = showActions,
         onMore = showActions,
     )

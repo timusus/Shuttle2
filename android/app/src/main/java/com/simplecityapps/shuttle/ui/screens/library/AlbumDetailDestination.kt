@@ -21,6 +21,7 @@ import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsTarget
 import com.simplecityapps.shuttle.ui.screens.library.albums.detail.AlbumDetailViewModel
 import com.simplecityapps.shuttle.ui.screens.library.albums.detail.AlbumRow
 import com.simplecityapps.shuttle.ui.shell.AlbumRoute
+import com.simplecityapps.shuttle.ui.shell.albumArtworkKey
 import dev.zacsweers.metrox.viewmodel.assistedMetroViewModel
 
 @Composable
@@ -49,6 +50,7 @@ fun AlbumDetailDestination(
         }
         AlbumDetailScreen(
             uiState = uiState,
+            artworkKey = remember(route) { albumArtworkKey(route) },
             onNavigateUp = onNavigateUp,
             onPlay = { songs, index -> actions.dispatch(MediaAction.Play(MediaSelection.Songs(songs), index, uiState.playContext)) },
             onShuffle = {

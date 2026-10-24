@@ -71,7 +71,7 @@ fun AlbumsPage(
                             onLongClick = { onAlbumLongClick(album) },
                             selected = album in state.selectedAlbums,
                             titleMaxLines = if (compact) 1 else null,
-                            artwork = { LibraryArtwork(album, ArtworkPlaceholder.Album, Modifier.sharedArtwork(albumArtworkKey(album.route)).fillMaxSize(), size = ArtworkSize.Grid) },
+                            artwork = { LibraryArtwork(album, ArtworkPlaceholder.Album, Modifier.sharedArtwork(albumArtworkKey(album.route), ArtworkSize.Grid).fillMaxSize(), size = ArtworkSize.Grid) },
                         )
                     }
                 }
@@ -90,7 +90,7 @@ fun AlbumsPage(
                             onLongClick = { onAlbumLongClick(album) },
                             onMore = { onAlbumMore(album) },
                             selected = album in state.selectedAlbums,
-                            artwork = { LibraryArtwork(album, ArtworkPlaceholder.Album, Modifier.sharedArtwork(albumArtworkKey(album.route))) },
+                            artwork = { LibraryArtwork(album, ArtworkPlaceholder.Album, Modifier.sharedArtwork(albumArtworkKey(album.route), ArtworkSize.Medium)) },
                         )
                     }
                 }

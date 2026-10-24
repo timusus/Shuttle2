@@ -27,7 +27,6 @@ import com.simplecityapps.shuttle.ui.common.downloads.offlineState
 import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsTarget
 import com.simplecityapps.shuttle.ui.common.utils.rememberMinutesFormat
 import com.simplecityapps.shuttle.ui.screens.library.albums.detail.AlbumDetailUiState
-import com.simplecityapps.shuttle.ui.shell.albumArtworkKey
 
 /** Album detail (inventory §1): the album's songs by disc, Play / Shuffle, the album's actions in the overflow, and More by the artist's other albums. */
 @Composable
@@ -41,6 +40,8 @@ fun AlbumDetailScreen(
     onOpenAlbum: (Album) -> Unit,
     onMoreByAlbumMore: (Album) -> Unit,
     modifier: Modifier = Modifier,
+    /** From the route the screen was opened with, so the hero joins the shared transition before the album loads. */
+    artworkKey: String? = null,
     onPlayWork: (songs: List<Song>) -> Unit = {},
     onToggleWork: (firstSongId: Long) -> Unit = {},
     onWorkMore: (title: String, songs: List<Song>) -> Unit = { _, _ -> },
@@ -74,7 +75,7 @@ fun AlbumDetailScreen(
             artwork = album,
             placeholder = ArtworkPlaceholder.Album,
             artworkSize = ArtworkSize.Grid,
-            artworkKey = album?.let { albumArtworkKey(it.route) },
+            artworkKey = artworkKey,
             onNavigateUp = onNavigateUp,
             onPlay = { onPlay(songs, 0) },
             onShuffle = onShuffle,

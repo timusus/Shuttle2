@@ -43,6 +43,7 @@ internal fun ShellNavDisplay(
         CompositionLocalProvider(
             LocalListBesideDetail provides (directive.maxHorizontalPartitions > 1),
             LocalSharedTransitionScope provides this,
+            LocalAnimationsEnabled provides rememberAnimationsEnabled(),
         ) {
             NavDisplay(
                 entries = navigator.visibleTabs.flatMap { entriesByTab.getValue(it) },

@@ -109,8 +109,9 @@ fun LibraryDetailScaffold(
                         subtitle = subtitle,
                         topInset = topInset,
                         artwork = {
-                            val sharedModifier = Modifier.sharedArtwork(artworkKey)
-                            if (heroArtwork != null) heroArtwork(sharedModifier) else LibraryArtwork(model = artwork, placeholder = placeholder, modifier = sharedModifier, size = if (columnHeight == Dp.Unspecified) artworkSize else ArtworkSize.Hero)
+                            val size = if (columnHeight == Dp.Unspecified) artworkSize else ArtworkSize.Hero
+                            val sharedModifier = Modifier.sharedArtwork(artworkKey, size)
+                            if (heroArtwork != null) heroArtwork(sharedModifier) else LibraryArtwork(model = artwork, placeholder = placeholder, modifier = sharedModifier, size = size)
                         },
                         actions = playShuffle,
                         extra = header,
@@ -175,7 +176,7 @@ fun LazyListScope.albumShelf(
                     subtitle = subtitle(album),
                     onClick = { onClick(album) },
                     onLongClick = { onLongClick(album) },
-                    artwork = { LibraryArtwork(album, ArtworkPlaceholder.Album, Modifier.sharedArtwork(albumArtworkKey(album.route)).fillMaxSize(), size = ArtworkSize.Grid) },
+                    artwork = { LibraryArtwork(album, ArtworkPlaceholder.Album, Modifier.sharedArtwork(albumArtworkKey(album.route), ArtworkSize.Grid).fillMaxSize(), size = ArtworkSize.Grid) },
                     modifier = Modifier.width(S2ShelfTileWidth.compact),
                 )
             }
