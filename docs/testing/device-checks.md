@@ -652,3 +652,10 @@ Automated: `support/scripts/emu-verify.sh --check legacy-purchaser-offline` seed
 - [ ] Android, fresh install (`pm clear` or uninstall first): the app opens on the Welcome screen, with no permission prompt at launch. "Use music on this device" shows the real Music and audio prompt; allow it and the library fills. Repeat, denying it: the app lands on the empty library with its access message, no crash.
 - [ ] Android, fresh install: Welcome > connect a server opens the server picker over the Welcome screen; pick Emby and sign in. Welcome doesn't come back after the server is added, nor on relaunch. Back from the picker returns to Welcome.
 - [ ] Android, upgrade over an existing install with music: no Welcome screen; the library opens as before.
+
+## Library section tabs and the small top bar (Oct 2026)
+
+- [ ] Maestro `support/maestro/device-checks/_library-tab.yaml` still lands on the asked-for section: its swipe moved
+  from 17% to 12% of the height for the tab row under the small bar.
+- [ ] Swipe between Library sections: the tab row stays pinned, the selected tab scrolls into view, a tap animates the pager.
+- [ ] Jump back in on Android and iOS: a shuffled album or playlist tile shows the song it was left on.
