@@ -51,7 +51,6 @@ import com.simplecityapps.shuttle.designsystem.component.S2Button
 import com.simplecityapps.shuttle.designsystem.component.S2ButtonStyle
 import com.simplecityapps.shuttle.designsystem.component.S2IconButton
 import com.simplecityapps.shuttle.designsystem.component.S2Menu
-import com.simplecityapps.shuttle.designsystem.component.S2Tooltip
 import com.simplecityapps.shuttle.designsystem.component.SectionHeader
 import com.simplecityapps.shuttle.designsystem.component.SongRow
 import com.simplecityapps.shuttle.designsystem.theme.ArtworkTheme
@@ -375,13 +374,11 @@ private fun SongsHeader(
         if (allExpanded != null) {
             val label = stringResource(if (allExpanded) R.string.artist_detail_collapse_all else R.string.artist_detail_expand_all)
             Spacer(Modifier.width(S2Spacing.small))
-            S2Tooltip(label) {
-                S2IconButton(
-                    icon = if (allExpanded) Icons.Rounded.UnfoldLess else Icons.Rounded.UnfoldMore,
-                    contentDescription = label,
-                    onClick = if (allExpanded) onCollapseAll else onExpandAll,
-                )
-            }
+            S2IconButton(
+                icon = if (allExpanded) Icons.Rounded.UnfoldLess else Icons.Rounded.UnfoldMore,
+                contentDescription = label,
+                onClick = if (allExpanded) onCollapseAll else onExpandAll,
+            )
         }
     }
 }
