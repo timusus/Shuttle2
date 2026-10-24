@@ -64,13 +64,12 @@ enum JumpBackInText {
         return "\(item.typeLabel) · \(state)"
     }
 
-    /// "Finished", "Shuffled" (where in a shuffled queue says little) or the song the queue was left on; nil for no
-    /// progress.
+    /// "Finished", the song the queue was left on (a shuffled queue resumes in its shuffled order, so the song still
+    /// helps), or "Shuffled" when no song is known; nil for no progress.
     static func state(_ progress: HomeItemProgress?) -> String? {
         guard let progress else { return nil }
         if progress.finished { return "Finished" }
-        if progress.shuffled { return "Shuffled" }
-        return progress.songName
+        return progress.songName ?? (progress.shuffled ? "Shuffled" : nil)
     }
 
     /// What VoiceOver reads for a card or tile: the title, the kind and where it was left ("OK Computer, Album, on

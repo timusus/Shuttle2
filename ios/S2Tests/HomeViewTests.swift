@@ -108,7 +108,7 @@ struct HomeViewTests {
             genre.key: progress(finished: true),
         ])]))
         #expect((try? sut.inspect().find(text: "Jump Back In")) != nil)
-        for detail in ["Album", "Artist · Rooster", "Playlist · Shuffled", "Genre · Finished"] {
+        for detail in ["Album", "Artist · Rooster", "Playlist · Airbag", "Genre · Finished"] {
             #expect((try? sut.inspect().find(text: detail)) != nil, "no \(detail)")
         }
         let labels = try sut.inspect().findAll(ViewType.Button.self, where: { (try? $0.accessibilityIdentifier()) == "homeGrid.cell" })
@@ -164,6 +164,22 @@ struct HomeViewTests {
         #expect((try? sut.find(text: "Finished · Play again")) != nil)
         #expect((try? sut.find(JumpBackInProgressBar.self)) == nil)
         #expect(try sut.find(viewWithAccessibilityIdentifier: "homeGrid.play").accessibilityLabel().string() == "Play OK Computer")
+    }
+
+    @Test func aTileNamesTheSongEvenWhenItsQueueIsShuffled() {
+        let item = HomeItemAlbumItem(album: album("OK Computer"))
+        #expect(JumpBackInText.state(progress(shuffled: true)) == "Airbag")
+        #expect(JumpBackInText.detail(item: item, progress: progress(shuffled: true)) == "Album · Airbag")
+    }
+
+    @Test func aShuffledTileWithoutASongSaysShuffled() {
+        let item = HomeItemAlbumItem(album: album("OK Computer"))
+        #expect(JumpBackInText.state(progress(song: nil, shuffled: true)) == "Shuffled")
+        #expect(JumpBackInText.detail(item: item, progress: progress(song: nil, shuffled: true)) == "Album · Shuffled")
+    }
+
+    @Test func aFinishedTileSaysFinishedEvenWithASong() {
+        #expect(JumpBackInText.state(progress(finished: true)) == "Finished")
     }
 
     @Test func aTileShowsTheBarOnlyWhileItsQueueIsUnderWayInOrder() {
