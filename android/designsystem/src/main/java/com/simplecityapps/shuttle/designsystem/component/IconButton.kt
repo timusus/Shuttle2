@@ -55,7 +55,11 @@ enum class S2IconButtonSize {
         }
 }
 
-/** An M3 icon button with the Expressive press morph. */
+/**
+ * An M3 icon button with the Expressive press morph.
+ *
+ * Shows a tooltip with the value of [contentDescription].
+ */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun S2IconButton(
@@ -73,11 +77,17 @@ fun S2IconButton(
     val content: @Composable () -> Unit = {
         Icon(icon, contentDescription, Modifier.size(size.iconSize))
     }
-    when (style) {
-        S2IconButtonStyle.Standard -> IconButton(onClick, shapes, sizedModifier, enabled, interactionSource = interactionSource, content = content)
-        S2IconButtonStyle.Filled -> FilledIconButton(onClick, shapes, sizedModifier, enabled, interactionSource = interactionSource, content = content)
-        S2IconButtonStyle.Tonal -> FilledTonalIconButton(onClick, shapes, sizedModifier, enabled, interactionSource = interactionSource, content = content)
-        S2IconButtonStyle.Outlined -> OutlinedIconButton(onClick, shapes, sizedModifier, enabled, interactionSource = interactionSource, content = content)
+
+    S2Tooltip(
+        text = contentDescription ?: "",
+        modifier = modifier
+    ) {
+        when (style) {
+            S2IconButtonStyle.Standard -> IconButton(onClick, shapes, sizedModifier, enabled, interactionSource = interactionSource, content = content)
+            S2IconButtonStyle.Filled -> FilledIconButton(onClick, shapes, sizedModifier, enabled, interactionSource = interactionSource, content = content)
+            S2IconButtonStyle.Tonal -> FilledTonalIconButton(onClick, shapes, sizedModifier, enabled, interactionSource = interactionSource, content = content)
+            S2IconButtonStyle.Outlined -> OutlinedIconButton(onClick, shapes, sizedModifier, enabled, interactionSource = interactionSource, content = content)
+        }
     }
 }
 
