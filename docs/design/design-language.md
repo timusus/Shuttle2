@@ -148,7 +148,7 @@ The seek bar is continuous, so it has no per-tick detents.
 - **Row hierarchy**: title `rowTitle` (`bodyLarge`) on `onSurface`; secondary line `rowSubtitle` (`bodyMedium`) on
   `onSurfaceVariant`; trailing meta (duration, count) `rowMeta` (`labelMedium`) on `onSurfaceVariant`. Group
   headers `groupHeader` (`titleSmall`) on `primary`.
-- **Home hierarchy** (#660): the large title bar, as on Library and Settings; the lead section's header
+- **Home hierarchy** (#660): the small pinned title bar, as on Library; the lead section's header
   `headlineSmall`, every shelf after it `titleLarge`; a Jump back in cell's title one line of `titleSmall`, its kind
   `labelMedium`.
 

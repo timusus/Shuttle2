@@ -1,1 +1,1 @@
-{ "type": "improvements", "text": "Library sections are tabs again, and Library and Home lose the oversized title bar so your music starts higher on the screen.", "commits": [] }
+{ "type": "improvements", "text": "Library sections are tabs again, and Library and Home lose the oversized title bar so your music starts higher on the screen.", "commits": ["37ff9cede"] }
