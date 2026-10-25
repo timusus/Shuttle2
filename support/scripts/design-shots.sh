@@ -574,9 +574,8 @@ ios_phase() {
                     record_fail ios setup ipad "boot the \"S2 iPad\" simulator" "already booted by another session"
                     continue
                 fi
-                step "ios: boot iPad" xcrun simctl boot "$ipad" || { record_fail ios setup ipad "simctl boot" "see $LOG"; continue; }
+                step "ios: boot iPad" sim boot "$ipad" || { record_fail ios setup ipad "sim boot (exit 75: no boot slot in 20 min)" "see $LOG"; continue; }
                 IPAD_BOOTED_UDID="$ipad"
-                step "ios: wait for iPad boot" xcrun simctl bootstatus "$ipad" -b || { record_fail ios setup ipad "simctl bootstatus" "see $LOG"; continue; }
                 if ! step "ios: install on iPad" ios_install "$ipad" 0; then
                     record_fail ios setup ipad "install" "see $LOG"
                     continue

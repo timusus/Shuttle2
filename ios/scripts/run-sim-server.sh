@@ -42,7 +42,7 @@ if [ "${BUILD:-1}" = "1" ]; then
 fi
 [ -d "$app" ] || { echo "run-sim-server: no build at $app" >&2; exit 1; }
 
-xcrun simctl boot "$udid" 2>/dev/null || true
+sim boot "$udid" || { echo "run-sim-server: sim boot $udid failed (exit $?; 75 = no boot slot in 20 min)" >&2; exit 1; }
 echo "==> Installing on $udid"
 xcrun simctl install "$udid" "$app"
 if [ "${RESET:-0}" = "1" ]; then

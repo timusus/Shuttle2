@@ -133,7 +133,9 @@ launch_app() {
   fi
 }
 
-[ "$mode" != sim ] || xcrun simctl boot "$udid" 2>/dev/null || true
+if [ "$mode" = sim ]; then
+  sim boot "$udid" || { echo "startup-bench: sim boot $udid failed (exit $?; 75 = no boot slot in 20 min)" >&2; exit 1; }
+fi
 
 reached=0
 for i in $(seq "$runs"); do

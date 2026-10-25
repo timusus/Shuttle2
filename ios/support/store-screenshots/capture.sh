@@ -91,8 +91,7 @@ sys.exit('no simulator named $IPAD_NAME')"
 
 boot_sim() {
   local udid="$1"
-  xcrun simctl boot "$udid" 2>/dev/null || true
-  xcrun simctl bootstatus "$udid" -b >/dev/null
+  sim boot "$udid" || { echo "capture: sim boot $udid failed (exit $?; 75 = no boot slot in 20 min)" >&2; exit 1; }
   xcrun simctl status_bar "$udid" override --time 9:41 --batteryState charged --batteryLevel 100 --wifiBars 3 --cellularBars 4
   STATUS_BAR_UDIDS+=("$udid")
 }
