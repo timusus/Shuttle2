@@ -22,7 +22,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
@@ -266,12 +265,12 @@ internal fun NowPlayingBar(
             if (player.playbackSpeed != 1f) {
                 val speed = rememberSpeedFormat()(player.playbackSpeed)
                 val description = "$playbackSound, ${stringResource(R.string.player_speed_description, speed)}"
-                BarLabelled(stringResource(R.string.player_bar_sound), description, playbackSoundOpen, openPlaybackSound) { button ->
-                    BarValueButton(speed, Icons.Rounded.GraphicEq, playbackSoundOpen, openPlaybackSound, button)
+                BarLabelled(stringResource(R.string.player_bar_sound), description, playbackSoundOpen, openPlaybackSound) { buttonModifier ->
+                    BarValueButton(speed, Icons.Rounded.GraphicEq, playbackSoundOpen, openPlaybackSound, buttonModifier)
                 }
             } else {
-                BarLabelled(stringResource(R.string.player_bar_sound), playbackSound, playbackSoundOpen, openPlaybackSound) { button ->
-                    BarButton(Icons.Rounded.GraphicEq, playbackSoundOpen, openPlaybackSound, button)
+                BarLabelled(stringResource(R.string.player_bar_sound), playbackSound, playbackSoundOpen, openPlaybackSound) { buttonModifier ->
+                    BarButton(Icons.Rounded.GraphicEq, playbackSoundOpen, openPlaybackSound, buttonModifier)
                 }
             }
             val openSleepTimer = { onPanel(NowPlayingPanel.SleepTimer) }
@@ -281,18 +280,18 @@ internal fun NowPlayingBar(
                 val left = remaining?.let { if (it > 0) DateUtils.formatElapsedTime(it / 1000) else stringResource(R.string.player_sleep_timer_track_end) }.orEmpty()
                 // The label's node hides the button's text, so TalkBack hears the time left in the description, as with the speed
                 val description = listOf(stringResource(R.string.player_sleep_timer_on), left).filter { it.isNotEmpty() }.joinToString(", ")
-                BarLabelled(stringResource(R.string.player_bar_sleep), description, sleepTimerOpen, openSleepTimer) { button ->
+                BarLabelled(stringResource(R.string.player_bar_sleep), description, sleepTimerOpen, openSleepTimer) { buttonModifier ->
                     BarValueButton(
                         text = left,
                         icon = Icons.Rounded.Bedtime,
                         checked = sleepTimerOpen,
                         onClick = openSleepTimer,
-                        modifier = button,
+                        modifier = buttonModifier,
                     )
                 }
             } else {
-                BarLabelled(stringResource(R.string.player_bar_sleep), stringResource(R.string.player_sleep_timer), sleepTimerOpen, openSleepTimer) { button ->
-                    BarButton(Icons.Rounded.Bedtime, sleepTimerOpen, openSleepTimer, button)
+                BarLabelled(stringResource(R.string.player_bar_sleep), stringResource(R.string.player_sleep_timer), sleepTimerOpen, openSleepTimer) { buttonModifier ->
+                    BarButton(Icons.Rounded.Bedtime, sleepTimerOpen, openSleepTimer, buttonModifier)
                 }
             }
             if (player.castAvailable) {
@@ -304,14 +303,14 @@ internal fun NowPlayingBar(
             } else {
                 val context = LocalContext.current
                 val showOutputs = { SystemOutputSwitcherDialogController.showDialog(context) }
-                BarLabelled(stringResource(R.string.player_bar_output), stringResource(R.string.player_output), selected = null, onClick = { showOutputs() }) { button ->
-                    OutputButton(button)
+                BarLabelled(stringResource(R.string.player_bar_output), stringResource(R.string.player_output), selected = null, onClick = { showOutputs() }) { buttonModifier ->
+                    OutputButton(buttonModifier)
                 }
             }
             val openQueue = { onPanel(NowPlayingPanel.Queue) }
             val queueOpen = selected == NowPlayingPanel.Queue
-            BarLabelled(stringResource(R.string.player_queue), stringResource(R.string.player_queue), queueOpen, openQueue) { button ->
-                BarButton(Icons.AutoMirrored.Rounded.QueueMusic, queueOpen, openQueue, button)
+            BarLabelled(stringResource(R.string.player_queue), stringResource(R.string.player_queue), queueOpen, openQueue) { buttonModifier ->
+                BarButton(Icons.AutoMirrored.Rounded.QueueMusic, queueOpen, openQueue, buttonModifier)
             }
             // Read inside the sheet, so a lyrics lookup that finishes while it is open enables the item.
             val hasLyrics = rememberUpdatedState(player.lyrics != null)
@@ -323,8 +322,8 @@ internal fun NowPlayingBar(
             )
             val extraActions = listOf(lyrics, clearQueue)
             val showMore = { player.current?.let { mediaActions.showActions(it.actionsTarget(extraActions = extraActions)) } ?: Unit }
-            BarLabelled(stringResource(R.string.player_bar_more), stringResource(DesignR.string.ds_more_options), selected = null, onClick = { showMore() }) { button ->
-                S2IconButton(icon = Icons.Rounded.MoreVert, contentDescription = null, onClick = { showMore() }, modifier = button)
+            BarLabelled(stringResource(R.string.player_bar_more), stringResource(DesignR.string.ds_more_options), selected = null, onClick = { showMore() }) { buttonModifier ->
+                S2IconButton(icon = Icons.Rounded.MoreVert, contentDescription = null, onClick = { showMore() }, modifier = buttonModifier)
             }
         }
     }
