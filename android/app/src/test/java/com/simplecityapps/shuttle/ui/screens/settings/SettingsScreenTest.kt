@@ -22,7 +22,6 @@ class SettingsScreenTest {
 
     private val robot = SettingsRobot(composeTestRule)
 
-    // codehealth-ignore tests-slow-kind-fast-subject: P2 wiring; the destination titles are resources and the row's click must reach onEvent.
     @Test
     fun `the root lists every destination and opens the one tapped`() {
         robot.setRootContent()
@@ -33,7 +32,6 @@ class SettingsScreenTest {
         robot.openedDestinations shouldBe listOf(SettingsDestination.PlaybackAndSound)
     }
 
-    // codehealth-ignore tests-slow-kind-fast-subject: P2 wiring; checks the Pro row's click reaches onEvent.
     @Test
     fun `the root opens Shuttle Music Pro`() {
         robot.setRootContent()
@@ -43,7 +41,6 @@ class SettingsScreenTest {
         robot.openedPro shouldBe true
     }
 
-    // codehealth-ignore tests-slow-kind-fast-subject: P2 wiring; the Back button belongs to the top bar, only in the rendered tree.
     @Test
     fun `back leaves settings`() {
         robot.setRootContent()
@@ -53,7 +50,6 @@ class SettingsScreenTest {
         robot.navigatedUp shouldBe true
     }
 
-    // codehealth-ignore tests-slow-kind-fast-subject: P2 wiring; checks the switch row's click reaches onEvent with the opposite value.
     @Test
     fun `tapping a switch asks for the opposite value`() {
         robot.setDestinationContent(SettingsDestination.Appearance, SettingsScenarios.darkPureBlack)
@@ -63,7 +59,6 @@ class SettingsScreenTest {
         robot.switchChanges shouldBe listOf(AppearanceSettings.PureBlack.key to false)
     }
 
-    // codehealth-ignore tests-slow-kind-fast-subject: P2 — the dialog opens from the row's click and lists its options only in the rendered tree.
     @Test
     fun `tapping the theme row opens its choice dialog`() {
         robot.setDestinationContent(SettingsDestination.Appearance, SettingsScenarios.darkPureBlack)
@@ -73,7 +68,6 @@ class SettingsScreenTest {
         robot.assertDialogDisplayed("Light")
     }
 
-    // codehealth-ignore tests-slow-kind-fast-subject: P2 — a pick in the rendered dialog must reach onChoiceSelect and dismiss the dialog.
     @Test
     fun `picking a theme selects it and closes the dialog`() {
         robot.setDestinationContent(SettingsDestination.Appearance, SettingsScenarios.darkPureBlack)
@@ -85,7 +79,6 @@ class SettingsScreenTest {
         robot.assertNotShown("Light")
     }
 
-    // codehealth-ignore tests-slow-kind-fast-subject: P2 — the confirm dialog's message and button exist only in the rendered tree, and Clear must run the action.
     @Test
     fun `clearing artwork asks first then runs`() {
         robot.setDestinationContent(SettingsDestination.Library)
@@ -98,7 +91,6 @@ class SettingsScreenTest {
         robot.actions shouldBe listOf(SettingsAction.ClearArtworkCache)
     }
 
-    // codehealth-ignore tests-slow-kind-fast-subject: P2 wiring; the enabled state is rendered semantics and the click must reach onEvent.
     @Test
     fun `sharing logs is enabled with debug logging on`() {
         robot.setDestinationContent(SettingsDestination.About, SettingsScenarios.fileLoggingOn)
@@ -108,7 +100,6 @@ class SettingsScreenTest {
         robot.actions shouldBe listOf(SettingsAction.ShareDebugLogs)
     }
 
-    // codehealth-ignore tests-slow-kind-fast-subject: P2 wiring; the version row and the changelog link's click live only in the rendered tree.
     @Test
     fun `about shows the version and opens the changelog`() {
         robot.setDestinationContent(SettingsDestination.About, versionName = "2026.09.25")
@@ -119,7 +110,6 @@ class SettingsScreenTest {
         robot.openedLinks shouldBe listOf(SettingsLink.WhatsNew)
     }
 
-    // codehealth-ignore tests-slow-kind-fast-subject: P2 wiring; checks the licences link's click reaches onEvent.
     @Test
     fun `about opens the licences`() {
         robot.setDestinationContent(SettingsDestination.About)

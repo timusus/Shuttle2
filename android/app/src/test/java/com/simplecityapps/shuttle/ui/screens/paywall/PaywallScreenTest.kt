@@ -18,7 +18,6 @@ class PaywallScreenTest {
 
     private val robot = PaywallRobot(composeTestRule)
 
-    // codehealth-ignore tests-slow-kind-fast-subject: P2 wiring; the trial copy, benefits and price are string resources only the rendered tree resolves.
     @Test
     fun `a free user sees the trial offer, the benefits and the lifetime price`() {
         robot.setContent(PaywallScenarios.free)
@@ -36,7 +35,6 @@ class PaywallScreenTest {
         robot.assertNotShown("$3.99 / year")
     }
 
-    // codehealth-ignore tests-slow-kind-fast-subject: P2 wiring; checks the purchase bar's buttons render their labels and reach onEvent.
     @Test
     fun `a free user's main button starts the trial, and buying is the second button`() {
         robot.setContent(PaywallScenarios.free)
@@ -49,7 +47,6 @@ class PaywallScreenTest {
         robot.purchases shouldBe 1
     }
 
-    // codehealth-ignore tests-slow-kind-fast-subject: P2 wiring; the days-left plural and the enabled state are resolved only in the rendered tree.
     @Test
     fun `the trial shows the days left, what stops after it, and offers Pro`() {
         robot.setContent(PaywallScenarios.trial)
@@ -61,7 +58,6 @@ class PaywallScreenTest {
         robot.assertNotShown("Buy now")
     }
 
-    // codehealth-ignore tests-slow-kind-fast-subject: P2 wiring; checks the footer link's click reaches onEvent.
     @Test
     fun `the privacy policy is linked from the footer`() {
         robot.setContent(PaywallScenarios.pro)
@@ -71,7 +67,6 @@ class PaywallScreenTest {
         robot.privacyPolicyTaps shouldBe 1
     }
 
-    // codehealth-ignore tests-slow-kind-fast-subject: P2 wiring; the checking copy is a string resource only the rendered tree resolves.
     @Test
     fun `before Play answers, the paywall says it is checking rather than offering the trial`() {
         robot.setContent(PaywallScenarios.checking)
@@ -81,7 +76,6 @@ class PaywallScreenTest {
         robot.assertNotShown(TRIAL_TERMS)
     }
 
-    // codehealth-ignore tests-slow-kind-fast-subject: P2 wiring; checks the single purchase button renders and reaches onEvent.
     @Test
     fun `after the trial the only button buys, and there is no second trial`() {
         robot.setContent(PaywallScenarios.trialEnded)
@@ -92,7 +86,6 @@ class PaywallScreenTest {
         robot.purchases shouldBe 1
     }
 
-    // codehealth-ignore tests-slow-kind-fast-subject: P2 wiring; checks the Redeem button's click reaches onEvent.
     @Test
     fun `a user without Pro can redeem a promo code`() {
         robot.setContent(PaywallScenarios.trialEnded)
@@ -102,7 +95,6 @@ class PaywallScreenTest {
         robot.redeemTaps shouldBe 1
     }
 
-    // codehealth-ignore tests-slow-kind-fast-subject: P2 wiring; checks the hidden flag removes the button from the rendered tree.
     @Test
     fun `a Pro user is not offered a promo code`() {
         robot.setContent(PaywallScenarios.pro)
@@ -110,7 +102,6 @@ class PaywallScreenTest {
         robot.assertNotShown("Redeem a code")
     }
 
-    // codehealth-ignore tests-slow-kind-fast-subject: P2 wiring; Back belongs to the top bar, only in the rendered tree, and Restore's click must reach onEvent.
     @Test
     fun `restore and back reach the caller`() {
         robot.setContent(PaywallScenarios.trialEnded)
@@ -122,7 +113,6 @@ class PaywallScreenTest {
         robot.closed shouldBe true
     }
 
-    // codehealth-ignore tests-slow-kind-fast-subject: P2 wiring; the placeholder copy and the enabled states are resolved only in the rendered tree.
     @Test
     fun `while the price loads it shows a placeholder and nothing can be bought`() {
         robot.setContent(PaywallScenarios.loading)
@@ -134,7 +124,6 @@ class PaywallScreenTest {
         robot.assertNotShown("Couldn't load prices")
     }
 
-    // codehealth-ignore tests-slow-kind-fast-subject: P2 wiring; the error state's Retry is a design-system action only the rendered tree exposes.
     @Test
     fun `unavailable prices offer a retry`() {
         robot.setContent(PaywallScenarios.pricesUnavailable)
@@ -147,7 +136,6 @@ class PaywallScreenTest {
         robot.retries shouldBe 1
     }
 
-    // codehealth-ignore tests-slow-kind-fast-subject: P2 wiring; the Pro status copy is a string resource only the rendered tree resolves.
     @Test
     fun `a Pro user sees their status and no plans`() {
         robot.setContent(PaywallScenarios.pro)
@@ -157,7 +145,6 @@ class PaywallScreenTest {
         robot.assertNotShown("Manage subscription")
     }
 
-    // codehealth-ignore tests-slow-kind-fast-subject: P2 wiring; the pitch is fixed string resources only the rendered tree resolves.
     @Test
     fun `the pitch says what is free and what Pro costs before anything else`() {
         robot.setContent(PaywallScenarios.free)
@@ -166,7 +153,6 @@ class PaywallScreenTest {
         robot.assertDisplayed("Free for music on this phone. Pro is a one-time unlock, with a 14-day free trial.")
     }
 
-    // codehealth-ignore tests-slow-kind-fast-subject: P2 wiring; the pending copy and enabled state are rendered, and Restore's click must reach onEvent.
     @Test
     fun `a purchase waiting on payment says so, and another can't be bought meanwhile`() {
         robot.setContent(PaywallScenarios.pending)
@@ -179,7 +165,6 @@ class PaywallScreenTest {
         robot.restores shouldBe 1
     }
 
-    // codehealth-ignore tests-slow-kind-fast-subject: P2 wiring; the legacy thanks is a string resource only the rendered tree resolves.
     @Test
     fun `an earlier purchase is thanked as already owning Pro`() {
         robot.setContent(PaywallScenarios.legacyPro)
@@ -189,7 +174,6 @@ class PaywallScreenTest {
         robot.assertNotShown("Manage subscription")
     }
 
-    // codehealth-ignore tests-slow-kind-fast-subject: P2 wiring; checks the Manage button's click reaches onEvent.
     @Test
     fun `a subscriber can manage their subscription`() {
         robot.setContent(PaywallScenarios.subscriber)

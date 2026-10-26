@@ -24,7 +24,6 @@ class ExcludedSongsScreenTest {
         createSong(id = 2, name = "Beta").copy(blacklisted = true)
     )
 
-    // codehealth-ignore tests-slow-kind-fast-subject: P2 wiring; the empty copy is a string resource only the rendered tree resolves.
     @Test
     fun `shows the empty state with nothing excluded`() {
         robot.setContent(ExcludedSongsUiState(songs = emptyList(), loading = false))
@@ -32,7 +31,6 @@ class ExcludedSongsScreenTest {
         robot.assertDisplayed("Exclude list is empty")
     }
 
-    // codehealth-ignore tests-slow-kind-fast-subject: P2 wiring; checks each row reaches the rendered list.
     @Test
     fun `lists the excluded songs`() {
         robot.setContent(ExcludedSongsUiState(songs = songs, loading = false))
@@ -41,7 +39,6 @@ class ExcludedSongsScreenTest {
         robot.assertDisplayed("Beta")
     }
 
-    // codehealth-ignore tests-slow-kind-fast-subject: P2 wiring; the menu is a popup only the rendered tree shows, and its click must reach onEvent.
     @Test
     fun `a song's menu includes it`() {
         robot.setContent(ExcludedSongsUiState(songs = songs, loading = false))
@@ -53,7 +50,6 @@ class ExcludedSongsScreenTest {
         robot.assertNotShown("Include in library")
     }
 
-    // codehealth-ignore tests-slow-kind-fast-subject: P2 wiring; the confirm dialog is a window only the rendered tree shows, and its confirm must reach onEvent.
     @Test
     fun `include all asks first`() {
         robot.setContent(ExcludedSongsUiState(songs = songs, loading = false))
