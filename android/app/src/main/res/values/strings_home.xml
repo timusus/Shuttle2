@@ -62,7 +62,7 @@
     <string name="home_rediscover">Rediscover</string>
     <!-- Home: section of albums most recently added to the library -->
     <string name="home_recently_added">Recently added</string>
-    <!-- Home: section of albums released this year -->
+    <!-- Home: section of albums released this year or last -->
     <string name="home_recent_releases">Recent releases</string>
     <!-- Home: section of genre tiles; tapping one opens that genre, its shuffle button plays it -->
     <string name="home_genre_picks">Genre picks</string>

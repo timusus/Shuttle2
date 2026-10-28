@@ -11,6 +11,7 @@ import com.simplecityapps.mediaprovider.repository.playhistory.ContextDays
 import com.simplecityapps.mediaprovider.repository.playhistory.GenrePlays
 import com.simplecityapps.mediaprovider.repository.playhistory.RecentContext
 import com.simplecityapps.shuttle.model.playContext
+import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.longs.shouldBeGreaterThanOrEqual
 import io.kotest.matchers.longs.shouldBeLessThan
 import io.kotest.matchers.shouldBe
@@ -79,7 +80,7 @@ class LoadHomeSectionsTest {
         val (heavyRotation, heavyRotationTime) = timed { heavyRotation(now) }
         val (rediscover, rediscoverTime) = timed { rediscover(now) }
         val (recentlyAdded, recentlyAddedTime) = timed { recentlyAdded() }
-        val (recentReleases, recentReleasesTime) = timed { recentReleases(now.toLocalDateTime(TimeZone.UTC).year) }
+        val (recentReleases, recentReleasesTime) = timed { recentReleases(now.toLocalDateTime(TimeZone.UTC).year - 1) }
         val (genrePicks, genrePicksTime) = timed { genrePicks(now) }
         val oneAfterAnother = assembleHomeSections(
             HomeCandidates(true, jumpBackIn, aroundThisTime, heavyRotation, rediscover, recentlyAdded, recentReleases, genrePicks),
@@ -113,6 +114,13 @@ class LoadHomeSectionsTest {
         emissions.map { it.second } shouldBe listOf(all.take(5).map { it.id }, all.map { it.id })
         emissions.first().first shouldBeLessThan 1_000
         emissions.last().first shouldBeGreaterThanOrEqual 1_000
+    }
+
+    @Test
+    fun `recent releases asks for albums from last year on`() = runTest {
+        load(hasHistory = true).last()
+
+        suggestions.calls shouldContain "recentReleaseAlbums(2025, 30)"
     }
 
     @Test

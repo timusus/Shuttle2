@@ -24,13 +24,16 @@ interface SuggestionsDao {
         offset: Int
     ): List<Long>
 
-    /** The ids of the songs released in [year], by when they were added, newest first: a [limit] rows' page from [offset]. */
+    /**
+     * The ids of the songs released in [sinceYear] or later, the latest release year first, then by when they were
+     * added, newest first: a [limit] rows' page from [offset].
+     */
     @Query(
-        "SELECT id FROM songs WHERE blacklisted = 0 AND year = :year " +
-            "ORDER BY COALESCE(dateAdded, lastModified) DESC, id LIMIT :limit OFFSET :offset"
+        "SELECT id FROM songs WHERE blacklisted = 0 AND year >= :sinceYear " +
+            "ORDER BY year DESC, COALESCE(dateAdded, lastModified) DESC, id LIMIT :limit OFFSET :offset"
     )
     suspend fun releasedSongIds(
-        year: Int,
+        sinceYear: Int,
         limit: Int,
         offset: Int
     ): List<Long>

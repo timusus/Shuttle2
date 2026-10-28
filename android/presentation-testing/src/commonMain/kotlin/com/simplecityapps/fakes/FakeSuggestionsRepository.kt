@@ -46,9 +46,9 @@ class FakeSuggestionsRepository : SuggestionsRepository {
     override suspend fun recentlyAddedAlbums(limit: Int): List<AlbumGroupKey> = afterLatency("recentlyAddedAlbums") { recentlyAdded.take(limit).also { calls += "recentlyAddedAlbums($limit)" } }
 
     override suspend fun recentReleaseAlbums(
-        year: Int,
+        sinceYear: Int,
         limit: Int
-    ): List<AlbumGroupKey> = afterLatency("recentReleaseAlbums") { recentReleases.take(limit).also { calls += "recentReleaseAlbums($year, $limit)" } }
+    ): List<AlbumGroupKey> = afterLatency("recentReleaseAlbums") { recentReleases.take(limit).also { calls += "recentReleaseAlbums($sinceYear, $limit)" } }
 
     override suspend fun albumsToRediscover(
         minPlays: Int,

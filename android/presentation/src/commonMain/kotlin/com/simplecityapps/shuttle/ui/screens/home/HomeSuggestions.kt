@@ -223,16 +223,16 @@ class RecentlyAdded @Inject constructor(
     }
 }
 
-/** The library's albums released this year, the most recently added first. */
+/** The library's albums released this year or last, this year's first, then the most recently added. */
 class RecentReleases @Inject constructor(
     private val suggestionsRepository: SuggestionsRepository,
     private val resolveHomeItems: ResolveHomeItems,
 ) {
     suspend operator fun invoke(
-        year: Int,
+        sinceYear: Int,
         reads: HomeReads = HomeReads(),
     ): List<HomeItem> {
-        val contexts = suggestionsRepository.recentReleaseAlbums(year, CANDIDATES).map { PlayContext.Album(it) }
+        val contexts = suggestionsRepository.recentReleaseAlbums(sinceYear, CANDIDATES).map { PlayContext.Album(it) }
         return contexts.resolvedIn(resolveHomeItems(contexts, reads))
     }
 

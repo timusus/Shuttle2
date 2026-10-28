@@ -221,7 +221,7 @@ class LoadHomeSections @Inject constructor(
         load("Heavy rotation", { if (hasHistory) heavyRotation(now, reads) else emptyList() }) { copy(heavyRotation = it) }
         load("Rediscover", { rediscover(now, reads) }) { copy(rediscover = it) }
         load("Recently added", { recentlyAdded(reads) }) { copy(recentlyAdded = it) }
-        load("Recent releases", { recentReleases(now.toLocalDateTime(timeZone).year, reads) }) { copy(recentReleases = it) }
+        load("Recent releases", { recentReleases(now.toLocalDateTime(timeZone).year - 1, reads) }) { copy(recentReleases = it) }
         load("Genre picks", { genrePicks(now, reads) }) { copy(genrePicks = it) }
 
         var jumpBackInProgress: Map<String, HomeItemProgress>? = null

@@ -54,9 +54,9 @@ class LocalSuggestionsRepository(
     override suspend fun recentlyAddedAlbums(limit: Int): List<AlbumGroupKey> = latestAlbums(limit, suggestionsDao::addedSongIds)
 
     override suspend fun recentReleaseAlbums(
-        year: Int,
+        sinceYear: Int,
         limit: Int
-    ): List<AlbumGroupKey> = latestAlbums(limit) { pageSize, offset -> suggestionsDao.releasedSongIds(year, pageSize, offset) }
+    ): List<AlbumGroupKey> = latestAlbums(limit) { pageSize, offset -> suggestionsDao.releasedSongIds(sinceYear, pageSize, offset) }
 
     override suspend fun albumsToRediscover(
         minPlays: Int,

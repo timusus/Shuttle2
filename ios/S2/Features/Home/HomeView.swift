@@ -191,7 +191,7 @@ struct HomeContent: View {
     }
 
     /// The Podcasts-style header, tappable only where a screen holds the whole of what the section samples. Recent
-    /// Releases has none: no existing screen lists exactly this year's albums.
+    /// Releases has none: no existing screen lists exactly this year's and last year's albums.
     @ViewBuilder
     private func header(_ section: HomeSection) -> some View {
         let title = Self.title(section.title)

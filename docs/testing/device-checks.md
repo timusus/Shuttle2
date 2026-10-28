@@ -665,3 +665,9 @@ Automated: `support/scripts/emu-verify.sh --check legacy-purchaser-offline` seed
 - [ ] Android: tap album artwork in the Library grid, the Library list, a Home shelf, Jump back in, an artist's album shelf and a genre page. The artwork flies into the album page header with rounded corners throughout; back (button and predictive gesture) flies it home.
 - [ ] Android: an album shown in two Home shelves at once flies only from the tile tapped, with no flicker on the other.
 - [ ] Android, Developer options > Remove animations on (or Animator duration scale off): album opens with a plain transition, no flying artwork; switching it back on mid-session restores the flight without relaunching.
+
+## Home section headers and Recent Releases (Oct 2026)
+
+- [ ] iOS: long-press a playable Home shelf header (Recently Added, Recent Releases): the menu shows "Play <title>" and plays it. VoiceOver: the header's actions rotor offers the same Play action.
+- [ ] iOS: tap a Home header with a destination (Recently Added, Genre Picks): the whole title row opens it; the chevron sits after the title, no "See All" text. Search's capped groups keep "See All" and expand in place.
+- [ ] Android and iOS: Recent Releases lists this year's albums before last year's, and is hidden when the library has none.

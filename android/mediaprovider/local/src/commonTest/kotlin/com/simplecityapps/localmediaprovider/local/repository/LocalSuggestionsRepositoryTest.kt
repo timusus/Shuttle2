@@ -137,18 +137,20 @@ class LocalSuggestionsRepositoryTest : InMemoryDatabaseTest() {
     }
 
     @Test
-    fun `recent releases are this year's albums newest added first without last year's or undated ones`() = runTest {
+    fun `recent releases are albums from this year or last with this year's first and no older or undated ones`() = runTest {
         insert(
             createSongData(album = "Earlier", track = 1).copy(year = 2026, dateAdded = now - 40.days),
             createSongData(album = "Last Year", track = 1).copy(year = 2025, dateAdded = now - 1.days),
+            createSongData(album = "Two Years Ago", track = 1).copy(year = 2024, dateAdded = now - 1.days),
             createSongData(album = "Undated", track = 1).copy(year = null, dateAdded = now - 2.days),
             createSongData(album = "Latest", track = 1).copy(year = 2026, dateAdded = now - 5.days),
             createSongData(album = "Latest", track = 2).copy(year = 2026, dateAdded = now - 6.days)
         )
 
-        repository.recentReleaseAlbums(year = 2026, limit = 10) shouldBe listOf(key("latest"), key("earlier"))
-        repository.recentReleaseAlbums(year = 2026, limit = 1) shouldBe listOf(key("latest"))
-        repository.recentReleaseAlbums(year = 2024, limit = 10).shouldBeEmpty()
+        repository.recentReleaseAlbums(sinceYear = 2025, limit = 10) shouldBe listOf(key("latest"), key("earlier"), key("last year"))
+        repository.recentReleaseAlbums(sinceYear = 2025, limit = 2) shouldBe listOf(key("latest"), key("earlier"))
+        repository.recentReleaseAlbums(sinceYear = 2026, limit = 10) shouldBe listOf(key("latest"), key("earlier"))
+        repository.recentReleaseAlbums(sinceYear = 2027, limit = 10).shouldBeEmpty()
     }
 
     @Test
