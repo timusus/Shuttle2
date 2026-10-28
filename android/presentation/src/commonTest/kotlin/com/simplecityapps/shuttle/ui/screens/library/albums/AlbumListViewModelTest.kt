@@ -217,6 +217,7 @@ class AlbumListViewModelTest {
             saveSetting = SaveLibraryViewSetting(preferences),
             mediaImportObserver = fakeImportState,
             random = random,
+            ioDispatcher = mainDispatcher,
         )
     }
 }

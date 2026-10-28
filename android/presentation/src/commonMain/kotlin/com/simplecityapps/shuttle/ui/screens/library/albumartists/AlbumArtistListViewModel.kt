@@ -7,6 +7,7 @@ import com.simplecityapps.mediaprovider.SongImportState
 import com.simplecityapps.mediaprovider.SongImportStateProvider
 import com.simplecityapps.mediaprovider.repository.artists.AlbumArtistQuery
 import com.simplecityapps.mediaprovider.repository.artists.comparator
+import com.simplecityapps.shuttle.di.IoDispatcher
 import com.simplecityapps.shuttle.model.AlbumArtist
 import com.simplecityapps.shuttle.settings.ArtistSettings
 import com.simplecityapps.shuttle.settings.ObserveSetting
@@ -24,6 +25,7 @@ import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.ContributesIntoMap
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metrox.viewmodel.ViewModelKey
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -31,6 +33,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
 
 data class AlbumArtistListUiState(
@@ -57,6 +60,7 @@ class AlbumArtistListViewModel @Inject constructor(
     readSetting: ReadLibraryViewSetting,
     private val saveSetting: SaveLibraryViewSetting,
     mediaImportObserver: SongImportStateProvider,
+    @IoDispatcher ioDispatcher: CoroutineDispatcher,
 ) : ViewModel() {
 
     private val selectionState = SelectionState<AlbumArtist>()
@@ -74,7 +78,7 @@ class AlbumArtistListViewModel @Inject constructor(
     private val sortedArtists = combine(artists, _sortOrder) { albumArtists, sortOrder ->
         val sorted = albumArtists.sortedWith(sortOrder.comparator)
         IndexedList(sorted, sortOrder, albumArtistLetterIndex(sorted, sortOrder))
-    }
+    }.flowOn(ioDispatcher)
 
     val uiState: StateFlow<AlbumArtistListUiState> = combine(
         sortedArtists,

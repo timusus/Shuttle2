@@ -27,6 +27,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -63,18 +64,24 @@ class SongListViewModel @Inject constructor(
 
     private val _sortOrder = MutableStateFlow(readSetting(LibraryViewSetting.SongSort))
 
+    // The repository only sorts by the order it was queried with at construction, so a later sort
+    // change must be re-sorted here; one sort, off the main thread (localized compares are slow on iOS).
     private val sortedSongs = combine(observeSongs(SongQuery.All(sortOrder = _sortOrder.value)), _sortOrder) { songs, sortOrder ->
         val sorted = songs.sortedWith(sortOrder.comparator)
         IndexedList(sorted, sortOrder, songLetterIndex(sorted, sortOrder))
+    }.flowOn(ioDispatcher)
+
+    // Filtered only when the list or selection changes, not on every import progress tick.
+    private val selectedSongs = combine(sortedSongs, selectionState.selectedItems) { sorted, selectedSongIds ->
+        if (selectedSongIds.isEmpty()) emptySet() else sorted.items.filter { it.id in selectedSongIds }.toSet()
     }
 
     val uiState: StateFlow<SongListUiState> = combine(
         sortedSongs,
+        selectedSongs,
         mediaImportObserver.songImportState,
-        selectionState.selectedItems,
-    ) { sorted, songImportState, selectedSongIds ->
+    ) { sorted, selectedSongs, songImportState ->
         val sortedSongs = sorted.items
-        val selectedSongs = sortedSongs.filter { it.id in selectedSongIds }.toSet()
         SongListUiState(
             songs = sortedSongs,
             selectedSongs = selectedSongs,

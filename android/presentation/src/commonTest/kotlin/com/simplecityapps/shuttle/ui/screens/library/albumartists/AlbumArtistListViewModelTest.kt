@@ -58,6 +58,7 @@ class AlbumArtistListViewModelTest {
         readSetting = ReadLibraryViewSetting(preferences),
         saveSetting = SaveLibraryViewSetting(preferences),
         mediaImportObserver = importState,
+        ioDispatcher = UnconfinedTestDispatcher(),
     )
 
     @Test

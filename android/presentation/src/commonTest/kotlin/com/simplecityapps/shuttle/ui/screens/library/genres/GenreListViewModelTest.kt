@@ -14,6 +14,7 @@ import com.simplecityapps.shuttle.ui.actions.ObserveGenres
 import com.simplecityapps.shuttle.ui.screens.library.ReadLibraryViewSetting
 import com.simplecityapps.shuttle.ui.screens.library.SaveLibraryViewSetting
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.types.shouldBeSameInstanceAs
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -49,6 +50,7 @@ class GenreListViewModelTest {
         readSetting = ReadLibraryViewSetting(preferences),
         saveSetting = SaveLibraryViewSetting(preferences),
         mediaImportObserver = importState,
+        ioDispatcher = UnconfinedTestDispatcher(),
     )
 
     @Test
@@ -74,5 +76,21 @@ class GenreListViewModelTest {
         viewModel.uiState.value.loadingState shouldBe GenreListUiState.LoadingState.Scanning
         viewModel.uiState.value.scanProgress shouldBe Progress(1, 4)
         viewModel.uiState.value.genres.map { it.name } shouldBe listOf("Kept")
+    }
+
+    @Test
+    fun `a progress tick reuses the sorted genres`() = runTest {
+        genreRepository.setGenres(listOf(createGenre(name = "Rock"), createGenre(name = "Jazz")))
+        importState.setState(SongImportState.ImportProgress(MediaProviderType.Jellyfin, null, Progress(1, 4)))
+        val viewModel = viewModel()
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        advanceUntilIdle()
+        val before = viewModel.uiState.value
+
+        importState.setState(SongImportState.ImportProgress(MediaProviderType.Jellyfin, null, Progress(2, 4)))
+        advanceUntilIdle()
+
+        viewModel.uiState.value.scanProgress shouldBe Progress(2, 4)
+        viewModel.uiState.value.genres shouldBeSameInstanceAs before.genres
     }
 }

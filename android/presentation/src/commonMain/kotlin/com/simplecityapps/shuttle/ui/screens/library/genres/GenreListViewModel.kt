@@ -6,6 +6,7 @@ import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.mediaprovider.SongImportState
 import com.simplecityapps.mediaprovider.SongImportStateProvider
 import com.simplecityapps.mediaprovider.repository.genres.comparator
+import com.simplecityapps.shuttle.di.IoDispatcher
 import com.simplecityapps.shuttle.model.Genre
 import com.simplecityapps.shuttle.sorting.GenreSortOrder
 import com.simplecityapps.shuttle.sorting.LetterSection
@@ -19,10 +20,12 @@ import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.ContributesIntoMap
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metrox.viewmodel.ViewModelKey
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
 
 data class GenreListUiState(
@@ -43,7 +46,8 @@ class GenreListViewModel @Inject constructor(
     observeGenres: ObserveGenres,
     readSetting: ReadLibraryViewSetting,
     private val saveSetting: SaveLibraryViewSetting,
-    mediaImportObserver: SongImportStateProvider
+    mediaImportObserver: SongImportStateProvider,
+    @IoDispatcher ioDispatcher: CoroutineDispatcher,
 ) : ViewModel() {
 
     private val _sortOrder = MutableStateFlow(readSetting(LibraryViewSetting.GenreSort))
@@ -51,7 +55,7 @@ class GenreListViewModel @Inject constructor(
     private val sortedGenres = combine(observeGenres(), _sortOrder) { genres, sortOrder ->
         val sorted = genres.sortedWith(sortOrder.comparator)
         IndexedList(sorted, sortOrder, genreLetterIndex(sorted, sortOrder))
-    }
+    }.flowOn(ioDispatcher)
 
     val uiState: StateFlow<GenreListUiState> = combine(
         sortedGenres,

@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.simplecityapps.mediaprovider.SongImportState
 import com.simplecityapps.mediaprovider.SongImportStateProvider
 import com.simplecityapps.mediaprovider.repository.albums.comparator
+import com.simplecityapps.shuttle.di.IoDispatcher
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.sorting.AlbumSortOrder
 import com.simplecityapps.shuttle.sorting.albumLetterIndex
@@ -23,11 +24,13 @@ import dev.zacsweers.metro.ContributesIntoMap
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metrox.viewmodel.ViewModelKey
 import kotlin.random.Random
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -41,6 +44,7 @@ class AlbumListViewModel @Inject constructor(
     private val saveSetting: SaveLibraryViewSetting,
     mediaImportObserver: SongImportStateProvider,
     private val random: Random,
+    @IoDispatcher ioDispatcher: CoroutineDispatcher,
 ) : ViewModel() {
 
     private val selectionState = SelectionState<Album>()
@@ -57,7 +61,7 @@ class AlbumListViewModel @Inject constructor(
     private val sortedAlbums = combine(observeAlbums(), _sortOrder, _randomSeed) { albums, sortOrder, randomSeed ->
         val sorted = albums.sortedWith(sortOrder.comparator(randomSeed))
         IndexedList(sorted, sortOrder, albumLetterIndex(sorted, sortOrder))
-    }
+    }.flowOn(ioDispatcher)
 
     val uiState: StateFlow<AlbumListUiState> = combine(
         sortedAlbums,

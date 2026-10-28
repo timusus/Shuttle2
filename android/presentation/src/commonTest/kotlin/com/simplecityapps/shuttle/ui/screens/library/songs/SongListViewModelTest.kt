@@ -106,6 +106,25 @@ class SongListViewModelTest {
     }
 
     @Test
+    fun `a selection survives a progress tick and keeps the same selected set`() = runTest {
+        val first = createSong(id = 1, name = "alpha")
+        fakeSongRepository.setSongs(listOf(first, createSong(id = 2, name = "beta")))
+        fakeImportState.setState(SongImportState.ImportProgress(MediaProviderType.Jellyfin, null, Progress(1, 4)))
+        val viewModel = createViewModel()
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        advanceUntilIdle()
+        viewModel.onSongLongClick(first)
+        advanceUntilIdle()
+        val before = viewModel.uiState.value
+
+        fakeImportState.setState(SongImportState.ImportProgress(MediaProviderType.Jellyfin, null, Progress(2, 4)))
+        advanceUntilIdle()
+
+        before.selectedSongs.map { it.id } shouldBe listOf(1L)
+        viewModel.uiState.value.selectedSongs shouldBeSameInstanceAs before.selectedSongs
+    }
+
+    @Test
     fun `a sort that isn't by name like Recently Added has no letter index`() = runTest {
         fakeSortPreferences.sortOrderSongList = SongSortOrder.DateAdded
         fakeSongRepository.setSongs(listOf(createSong(id = 1, name = "beta")))
