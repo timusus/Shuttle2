@@ -53,17 +53,19 @@ interface IosAppGraph :
             @Provides audioPlayer: IosAudioPlayer,
             @Provides storage: IosStorage,
             @Provides localFiles: IosLocalFiles,
-            @Provides telemetry: IosTelemetry
+            @Provides telemetry: IosTelemetry,
+            @Provides build: IosBuild
         ): IosAppGraph
     }
 }
 
-/** Builds the graph: `IosAppGraphKt.createIosAppGraph(audioPlayer:localFiles:telemetry:)` from Swift, once per process. */
+/** Builds the graph: `IosAppGraphKt.createIosAppGraph(audioPlayer:localFiles:telemetry:isDebug:)` from Swift, once per process. */
 fun createIosAppGraph(
     audioPlayer: IosAudioPlayer,
     localFiles: IosLocalFiles,
-    telemetry: IosTelemetry
-): IosAppGraph = createGraphFactory<IosAppGraph.Factory>().create(audioPlayer, IosStorage(null), localFiles, telemetry)
+    telemetry: IosTelemetry,
+    isDebug: Boolean
+): IosAppGraph = createGraphFactory<IosAppGraph.Factory>().create(audioPlayer, IosStorage(null), localFiles, telemetry, IosBuild(isDebug))
 
 /**
  * A graph with storage of its own, for tests: preferences in the NSUserDefaults suite [isolatedStorage] rather than the
@@ -75,7 +77,15 @@ fun createIosAppGraph(
     audioPlayer: IosAudioPlayer,
     isolatedStorage: String,
     localFiles: IosLocalFiles = IosLocalFiles.None
-): IosAppGraph = createGraphFactory<IosAppGraph.Factory>().create(audioPlayer, IosStorage(isolatedStorage), localFiles, IosTelemetry.None)
+): IosAppGraph = createGraphFactory<IosAppGraph.Factory>().create(audioPlayer, IosStorage(isolatedStorage), localFiles, IosTelemetry.None, IosBuild(isDebug = true))
+
+/**
+ * The app's build type, from Swift's `#if DEBUG`: the linked framework is always Release on a device, so
+ * `Platform.isDebugBinary` can't say whether the app is a debug build.
+ */
+class IosBuild(
+    val isDebug: Boolean
+)
 
 /**
  * Where the graph keeps its preferences and library. [isolatedName] null: the standard defaults and the app's

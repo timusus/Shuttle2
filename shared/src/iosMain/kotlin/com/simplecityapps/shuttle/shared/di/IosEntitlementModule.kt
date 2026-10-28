@@ -1,5 +1,3 @@
-@file:OptIn(ExperimentalNativeApi::class)
-
 package com.simplecityapps.shuttle.shared.di
 
 import com.simplecityapps.shuttle.di.AppCoroutineScope
@@ -11,6 +9,7 @@ import com.simplecityapps.shuttle.entitlement.ServerAccessGate
 import com.simplecityapps.shuttle.entitlement.TryAddServer
 import com.simplecityapps.shuttle.entitlement.TryDownloadFromServer
 import com.simplecityapps.shuttle.entitlement.TryUseProFeature
+import com.simplecityapps.shuttle.shared.IosBuild
 import com.simplecityapps.shuttle.shared.entitlement.CarPlayAccess
 import com.simplecityapps.shuttle.shared.entitlement.GatedServerStreams
 import com.simplecityapps.shuttle.shared.entitlement.StoreEntitlements
@@ -20,8 +19,6 @@ import dev.zacsweers.metro.BindingContainer
 import dev.zacsweers.metro.ContributesTo
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.SingleIn
-import kotlin.experimental.ExperimentalNativeApi
-import kotlin.native.Platform
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineScope
@@ -43,8 +40,9 @@ class IosEntitlementModule {
     @Provides
     @SingleIn(AppScope::class)
     fun provideStoreEntitlements(
-        @AppCoroutineScope appCoroutineScope: CoroutineScope
-    ): StoreEntitlements = StoreEntitlements(Clock.System, appCoroutineScope, isDebug = Platform.isDebugBinary)
+        @AppCoroutineScope appCoroutineScope: CoroutineScope,
+        build: IosBuild
+    ): StoreEntitlements = StoreEntitlements(Clock.System, appCoroutineScope, isDebug = build.isDebug)
 
     @Provides
     @SingleIn(AppScope::class)

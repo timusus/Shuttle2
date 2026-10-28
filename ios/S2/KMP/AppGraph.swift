@@ -115,8 +115,13 @@ final class IosAppDependencies {
             crashReporter: SentryCrashReporter(config: telemetryConfig),
             analytics: PostHogProductAnalytics(config: telemetryConfig)
         )
+        #if DEBUG
+        let isDebug = true
+        #else
+        let isDebug = false
+        #endif
         let graph = StartupTrace.step("createIosAppGraph") {
-            IosAppGraphKt.createIosAppGraph(audioPlayer: audioPlayer, localFiles: localLibrary, telemetry: telemetry)
+            IosAppGraphKt.createIosAppGraph(audioPlayer: audioPlayer, localFiles: localLibrary, telemetry: telemetry, isDebug: isDebug)
         }
         self.graph = graph
         builtGraph = graph

@@ -36,7 +36,7 @@ import kotlin.test.Test
 class IosAppGraphTest {
     private val player = FakeIosAudioPlayer()
 
-    private val graph = createIosAppGraph(player, IosLocalFiles.None, IosTelemetry.None)
+    private val graph = createIosAppGraph(player, IosLocalFiles.None, IosTelemetry.None, isDebug = true)
 
     @AfterTest
     fun removeTheSettingsWritten() {
