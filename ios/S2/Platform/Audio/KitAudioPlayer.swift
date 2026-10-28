@@ -29,7 +29,7 @@ final class KitAudioPlayer: NSObject, IosAudioPlayer {
     private var listener: IosAudioPlayerListener?
     private var sampleRateListener: ((KotlinInt?) -> Void)?
     private var lastReport: (uid: Int64, state: IosAudioPlayerState)?
-    private var ticker: Timer?
+    private var positionObserver: TimeObserverToken?
     private var lastLoggedStatus: String?
     private var routeObserver: NSObjectProtocol?
     private let log = Logger(subsystem: "com.simplecityapps.shuttle2", category: "playback")
@@ -63,13 +63,12 @@ final class KitAudioPlayer: NSObject, IosAudioPlayer {
             }
         }
         // Ticks for the progress bar; Kotlin's elapsed time between them is its own.
-        ticker = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in
-            MainActor.assumeIsolated { self?.tick() }
+        positionObserver = player.addPeriodicObserver(interval: 0.5) { [weak self] in
+            self?.tick()
         }
     }
 
     deinit {
-        ticker?.invalidate()
         if let routeObserver { NotificationCenter.default.removeObserver(routeObserver) }
     }
 
