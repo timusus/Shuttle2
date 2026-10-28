@@ -263,3 +263,37 @@ section (5 cold launches per start tab, `syslog live`, launch arguments only). M
   path. `AppGraph.initialize` now reads `albumIndexProvider` (step `albumIndex`), so the build starts at launch and
   first content awaits the in-flight build. Not yet re-measured: the simulator library is too small to show the build,
   so the 8,196-song numbers need an iPhone run (compare Library first content against 719 ms).
+
+## Release cold start before and after the load fixes (2026-10-28, 10,254 songs)
+
+Before = `6284b8fb9`, after = `3e822ac17` (Library list VMs sort off main; Home's genre shelf and covers read narrow rows).
+
+- **Environment:** iPhone 16 simulator, iOS 18.5 (one leased simulator for every run), Release framework
+  (`build-framework.sh --release`) and Release app (`xcodebuild -configuration Release -sdk iphonesimulator ARCHS=arm64`,
+  bundle `com.simplecityapps.shuttle`). Host load average (1 min) was 13.5 for the before-Home run, 9.4 before-Library,
+  8.4 after-Home and 8.1 after-Library: the before set ran under heavier load than the after set.
+- **Fixture:** a `sqlite3 .backup` of a 10,254-song library (Room user_version 60), copied in with the app terminated,
+  one discarded launch, then `startup-bench.sh -n 5`. The fixture was reinstalled before the after build. Home runs use
+  `-pref_show_home_on_launch '<true/>'`, Library runs `'<false/>'`. No play history, so Home takes its cold-start path.
+
+Median (min–max) ms, n = 5 for every row. Milestones are ms since process start; the Home, genre and search rows are durations.
+
+| Milestone | Before | After |
+|---|---|---|
+| Home content (Home start tab) | 679 (675–700) | 719 (707–766) |
+| Library content (Library start tab) | 2564 (2522–2572) | 1407 (1394–1437) |
+| Songs content (Library start tab) | 1460 (1435–1469) | 1464 (1424–1470) |
+| Home: Genre picks loaded | 742 (714–756) | 59 (56–72) |
+| Home: sections loaded | 743 (715–757) | 61 (57–74) |
+| Home: first sections | 42 (30–44) | 49 (29–56) |
+| All-songs query, Search index: songs loaded (Home start) | 536 (525–563) | 607 (601–649) |
+| All-songs query, Search index: songs loaded (Library start) | 27.5 (27.1–30.6) | 27.4 (27.0–55.9) |
+| Search index: ready (Library start) | 257 (241–319) | 138 (133–229) |
+
+- Library first content drops ~1.15 s (2564 to 1407 ms), the sorts leaving the main thread. Songs content is unchanged
+  at ~1460 ms.
+- Home's genre shelf load falls from ~740 ms to ~60 ms. It was competing with the all-songs query, which is why the
+  search index's songs query took 536 ms on the Home start tab before.
+- Home first content did not improve (679 vs 719 ms, within host-load noise): it gates on the first sections, not the
+  genre shelf. Under the heavier before load, the real change is probably a little larger.
+- Not measured: a physical iPhone; the simulator Mac is faster, and one 10k library snapshot with no play history.
