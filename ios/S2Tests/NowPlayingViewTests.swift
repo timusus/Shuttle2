@@ -276,7 +276,7 @@ struct NowPlayingViewTests {
     @Test func theQueueHeadsNowPlayingUpNextAndPlayedAlike() throws {
         let withHistory = [NowPlayingQueueRow(id: 0, title: "Airbag", artist: "Radiohead", isCurrent: false)] + queue
         let sut = NowPlayingQueueList(queue: withHistory, isPlaying: true)
-        let headers = try sut.inspect().findAll(SectionHeader.self).map { try $0.find(ViewType.Text.self).string() }
+        let headers = try sut.inspect().findAll(SectionHeader.self).map { try $0.actualView().title }
         #expect(headers == ["Played", "Now Playing", "Up Next"])
         // The playing song is a row like the rest, carrying the playing indicator.
         let current = try sut.inspect().find(viewWithAccessibilityIdentifier: "queue.nowPlaying")
