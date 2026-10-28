@@ -33,7 +33,7 @@ class LocalSuggestionsRepositoryTest : InMemoryDatabaseTest() {
     private fun TestScope.repositories(): Pair<LocalSuggestionsRepository, LocalGenreRepository> {
         val albumIndex = freshAlbumIndex(database)
         val songs = LocalSongRepository(backgroundScope, UnconfinedTestDispatcher(testScheduler), songDao, database.libraryAlbumIndex(), minimum)
-        val genres = LocalGenreRepository(backgroundScope, UnconfinedTestDispatcher(testScheduler), songs, database.libraryAlbumIndex())
+        val genres = LocalGenreRepository(backgroundScope, UnconfinedTestDispatcher(testScheduler), songDao, songs, database.libraryAlbumIndex(), minimum)
         return LocalSuggestionsRepository(database.suggestionsDao(), albumIndex, songs, genres) to genres
     }
 

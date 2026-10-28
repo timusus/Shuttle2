@@ -29,6 +29,14 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.LocalDate
 
+/** One row of [SongDataDao.genreRows]. */
+data class SongGenreRow(
+    val id: Long,
+    val genres: List<String>,
+    val duration: Int,
+    val mediaProvider: MediaProviderType
+)
+
 /** One row of [SongDataDao.countVisibleByProvider]. */
 data class ProviderSongCount(
     val mediaProvider: MediaProviderType,
@@ -61,6 +69,10 @@ abstract class SongDataDao {
     /** [countVisible] per media provider; a provider with no visible songs has no row. */
     @Query("SELECT mediaProvider, COUNT(*) AS count FROM songs WHERE blacklisted = 0 AND (duration <= 0 OR duration >= :minDurationMs) GROUP BY mediaProvider")
     abstract fun countVisibleByProvider(minDurationMs: Int): Flow<List<ProviderSongCount>>
+
+    /** What the genre totals and membership need of each visible song, without reading the song whole. */
+    @Query("SELECT id, genres, duration, mediaProvider FROM songs WHERE blacklisted = 0 AND genres != '' AND (duration <= 0 OR duration >= :minDurationMs)")
+    abstract fun genreRows(minDurationMs: Int): Flow<List<SongGenreRow>>
 
     /** The whole library, each song holding its album identity among the others. */
     fun getAll(): Flow<List<Song>> = getAllSongData().map { list -> list.map { songData -> songData.toSong() }.withAlbumIdentities() }

@@ -3,10 +3,15 @@ package com.simplecityapps.localmediaprovider.local.repository
 import com.simplecityapps.localmediaprovider.local.data.room.database.InMemoryDatabaseTest
 import com.simplecityapps.localmediaprovider.local.data.room.database.inMemoryMediaDatabaseBuilder
 import com.simplecityapps.localmediaprovider.local.data.room.database.trackingIdentityChanges
+import com.simplecityapps.mediaprovider.repository.genres.GenreQuery
+import com.simplecityapps.shuttle.model.MinTrackLength
+import com.simplecityapps.shuttle.query.SongQuery
 import io.kotest.matchers.shouldBe
 import kotlin.test.AfterTest
 import kotlin.test.Test
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 
@@ -25,6 +30,47 @@ class LocalGenreRepositoryTest : InMemoryDatabaseTest() {
         )
     }
 
+    private val minimum = MutableStateFlow(MinTrackLength.Off)
+
+    private fun TestScope.genreRepository(): LocalGenreRepository = database.libraryAlbumIndex().let { index ->
+        val songs = LocalSongRepository(backgroundScope, UnconfinedTestDispatcher(testScheduler), database.songDataDao(), index, minimum)
+        LocalGenreRepository(backgroundScope, UnconfinedTestDispatcher(testScheduler), database.songDataDao(), songs, index, minimum)
+    }
+
+    @Test
+    fun `genres total each song once per genre and leave out excluded and too short songs`() = runTest {
+        database.songDataDao().insert(
+            listOf(
+                createSongData("A", track = 1).copy(genres = listOf("Jazz", "Spiritual", "Jazz")),
+                createSongData("B", track = 2).copy(genres = listOf("Jazz")),
+                createSongData("C", track = 3).copy(genres = listOf("Jazz"), duration = 5_000),
+                createSongData("D", track = 4).copy(genres = listOf("Jazz")),
+                createSongData("E", track = 5).copy(genres = emptyList()),
+            ),
+        )
+        val repository = genreRepository()
+        database.songDataDao().setExcluded(listOf(database.songDataDao().get().first { it.album == "D" }.id), true)
+
+        repository.getGenres(GenreQuery.All()).first().map { Triple(it.name, it.songCount, it.duration) }.sortedBy { it.first } shouldBe
+            listOf(Triple("Jazz", 3, 365_000), Triple("Spiritual", 1, 180_000))
+
+        minimum.value = MinTrackLength.TenSeconds
+        // The relay re-reads on a change, so wait for the new total rather than the cached one
+        repository.getGenres(GenreQuery.All()).first { genres -> genres.first { it.name == "Jazz" }.songCount == 2 }.map { it.name }.sorted() shouldBe listOf("Jazz", "Spiritual")
+    }
+
+    @Test
+    fun `songs for genres list a song once per genre it is in`() = runTest {
+        insert(
+            Triple("A", "X", listOf("Jazz", "Spiritual")),
+            Triple("B", "X", listOf("Jazz")),
+            Triple("C", "X", listOf("Rock")),
+        )
+        val repository = genreRepository()
+
+        repository.getSongsForGenres(listOf("Jazz", "Spiritual"), SongQuery.All()).first().mapNotNull { it.album }.sorted() shouldBe listOf("A", "A", "B")
+    }
+
     @Test
     fun `genre cover songs are one per album of the genre by artist then album up to the limit`() = runTest {
         insert(
@@ -37,7 +83,7 @@ class LocalGenreRepositoryTest : InMemoryDatabaseTest() {
             Triple("OK Computer", "Radiohead", listOf("Rock")),
             Triple("Jazz Odyssey", "Spinal Tap", listOf("Jazz Fusion")),
         )
-        val repository = database.libraryAlbumIndex().let { index -> LocalGenreRepository(backgroundScope, UnconfinedTestDispatcher(testScheduler), LocalSongRepository(backgroundScope, UnconfinedTestDispatcher(testScheduler), database.songDataDao(), index), index) }
+        val repository = genreRepository()
 
         repository.getGenreCoverSongs("Jazz", limit = 4).first().map { it.album } shouldBe
             listOf("Mingus Ah Um", "Time Out", "A Love Supreme", "Blue Train")
@@ -54,7 +100,7 @@ class LocalGenreRepositoryTest : InMemoryDatabaseTest() {
                 createSongData("Head Hunters", "Herbie Hancock", track = 1).copy(genres = listOf("Jazz")),
             ),
         )
-        val repository = database.libraryAlbumIndex().let { index -> LocalGenreRepository(backgroundScope, UnconfinedTestDispatcher(testScheduler), LocalSongRepository(backgroundScope, UnconfinedTestDispatcher(testScheduler), database.songDataDao(), index), index) }
+        val repository = genreRepository()
 
         repository.getGenreCoverSongs("Jazz", limit = 4).first().map { it.album } shouldBe listOf("Head Hunters", "Bitches Brew")
     }
@@ -69,7 +115,7 @@ class LocalGenreRepositoryTest : InMemoryDatabaseTest() {
                 createSongData("Other Covered", "Artist C", track = 1).copy(genres = listOf("Dance"), artworkVersion = "v2"),
             ),
         )
-        val repository = database.libraryAlbumIndex().let { index -> LocalGenreRepository(backgroundScope, UnconfinedTestDispatcher(testScheduler), LocalSongRepository(backgroundScope, UnconfinedTestDispatcher(testScheduler), database.songDataDao(), index), index) }
+        val repository = genreRepository()
 
         val covers = repository.getGenreCoverSongs("Dance", limit = 2).first()
 
@@ -83,7 +129,7 @@ class LocalGenreRepositoryTest : InMemoryDatabaseTest() {
         insert(Triple("Kid A", "Radiohead", listOf("Electronic")), Triple("Amnesiac", "Radiohead", listOf("Electronic")))
         val kidA = database.songDataDao().get().first { it.album == "Kid A" }
         database.songDataDao().setExcluded(listOf(kidA.id), true)
-        val repository = database.libraryAlbumIndex().let { index -> LocalGenreRepository(backgroundScope, UnconfinedTestDispatcher(testScheduler), LocalSongRepository(backgroundScope, UnconfinedTestDispatcher(testScheduler), database.songDataDao(), index), index) }
+        val repository = genreRepository()
 
         repository.getGenreCoverSongs("Electronic", limit = 4).first().map { it.album } shouldBe listOf("Amnesiac")
         repository.getGenreCoverSongs("Electro", limit = 4).first() shouldBe emptyList()
