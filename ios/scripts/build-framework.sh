@@ -4,9 +4,9 @@
 # It also writes the telemetry and Last.fm keys' xcconfigs (ios/scripts/generate-telemetry-config.sh, generate-lastfm-config.sh).
 #
 #   ios/scripts/build-framework.sh              # Debug, simulator (the default dev loop)
-#   ios/scripts/build-framework.sh --device     # Debug, device (iosArm64)
-#   ios/scripts/build-framework.sh --all        # Debug, simulator and device
-#   ios/scripts/build-framework.sh --release    # Release instead of Debug (combines with the above)
+#   ios/scripts/build-framework.sh --device     # Release, device (iosArm64): Debug device builds link it too
+#   ios/scripts/build-framework.sh --all        # Debug simulator, Release device
+#   ios/scripts/build-framework.sh --release    # Release simulator instead of Debug (device is always Release)
 #
 # Any other argument goes to Gradle (-q, --offline, ...).
 set -euo pipefail
@@ -28,7 +28,10 @@ done
 
 tasks=()
 for target in "${targets[@]}"; do
-  tasks+=(":shared:link${config}Framework${target}")
+  # Unoptimised Kotlin/Native is ~13x slower on a phone (docs/performance/ios-startup.md)
+  target_config="$config"
+  [[ "$target" == IosArm64 ]] && target_config=Release
+  tasks+=(":shared:link${target_config}Framework${target}")
 done
 
 cd "$repo_root"

@@ -26,6 +26,7 @@ render in both `log stream` and `log show`. The measurements below were taken by
 - **Environment:** iPhone 16 simulator, iOS 18.5 (shared lease pool), on the M-series dev Mac. Release configuration
   (`build-framework.sh --release`, `xcodebuild -configuration Release`, bundle `com.simplecityapps.shuttle`). No
   physical iPhone was attached, so there are no device numbers yet; expect a device to be slower in absolute terms.
+  Debug-configuration device builds now link the Release Kotlin framework, so Swift stays debuggable and Kotlin optimised.
 - **Library:** the leased simulator's own library was empty (0 songs), measured once as a floor. The main numbers use
   an 8,196-song library (the Jellyfin test server's, Room schema 53, migrated to 55 on the discarded warm-up launch),
   copied into the Release app's Application Support with `sqlite3 ".backup"`. It has no play history, so Home takes

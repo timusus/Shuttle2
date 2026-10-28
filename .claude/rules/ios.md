@@ -49,7 +49,7 @@ From the repo root.
 
 ```bash
 # 1. Link the framework (after EVERY Kotlin change; Xcode never rebuilds it)
-ios/scripts/build-framework.sh                 # Debug, simulator; --device, --all, --release; other args go to Gradle
+ios/scripts/build-framework.sh                 # Debug, simulator; --device (always Release), --all, --release; other args go to Gradle
 
 # 2. Regenerate the Xcode project (after editing project.yml or adding/removing Swift files)
 cd ios && xcodegen generate
@@ -164,7 +164,7 @@ on compact and a form sheet otherwise, presented from `ContentView`.
 - **Relink before building.** Xcode links whatever `Shared.framework` is on disk; a Kotlin change without
   `build-framework.sh` gives a stale binary or "has no member" errors.
 - **Framework slices are chosen by SDK**, not configuration (`FRAMEWORK_SEARCH_PATHS[sdk=...]`); a device build needs
-  `--device` first. There is no x86_64 simulator slice.
+  `--device` first, which links the Release framework even for the Debug configuration (Debug Kotlin is ~13x slower on a phone). There is no x86_64 simulator slice.
 - **Generic-simulator builds pass `ARCHS=arm64`** (`build-app.sh`, which full-verify and land-verify go through): FFmpeg's
   xcframework has no x86_64 simulator slice, and package targets ignore the project's `EXCLUDED_ARCHS`.
 - **The test bundle does not link Shared.** It only has the search path for `import Shared`; Kotlin resolves from the

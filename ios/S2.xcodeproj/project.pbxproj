@@ -1652,7 +1652,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"FRAMEWORK_SEARCH_PATHS[sdk=iphoneos*]" = (
 					"$(inherited)",
-					"$(SRCROOT)/../shared/build/bin/iosArm64/debugFramework",
+					"$(SRCROOT)/../shared/build/bin/iosArm64/releaseFramework",
 				);
 				"FRAMEWORK_SEARCH_PATHS[sdk=iphonesimulator*]" = (
 					"$(inherited)",

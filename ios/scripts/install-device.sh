@@ -54,10 +54,8 @@ fi
 OUT="${S2_DEVICE_BUILD_DIR:-$HOME/Library/Caches/s2-device/$(printf %s "$IOS_DIR" | shasum | cut -c1-12)}"
 mkdir -p "$OUT"
 
-echo "==> Building the shared framework (device, $CONFIGURATION)"
-CONFIG_FLAG=(--device)
-[[ "$CONFIGURATION" == "Release" ]] && CONFIG_FLAG+=(--release)
-"$IOS_DIR/scripts/build-framework.sh" "${CONFIG_FLAG[@]}" -q
+echo "==> Building the shared framework (device, Release Kotlin for any configuration)"
+"$IOS_DIR/scripts/build-framework.sh" --device -q
 
 # Keyed by the package pins, as in build-app.sh.
 spm_cache="$HOME/Library/Caches/s2-spm/$(shasum "$IOS_DIR/S2.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved" | cut -c1-12)"

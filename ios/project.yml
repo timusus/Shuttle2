@@ -177,7 +177,8 @@ targets:
             - "$(SRCROOT)/../shared/build/bin/iosSimulatorArm64/debugFramework"
           "FRAMEWORK_SEARCH_PATHS[sdk=iphoneos*]":
             - "$(inherited)"
-            - "$(SRCROOT)/../shared/build/bin/iosArm64/debugFramework"
+            # Release Kotlin on a phone: the unoptimised framework loads the library ~13x slower.
+            - "$(SRCROOT)/../shared/build/bin/iosArm64/releaseFramework"
           OTHER_LDFLAGS:
             - "$(inherited)"
             - "-framework"
