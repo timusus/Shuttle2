@@ -71,16 +71,16 @@ class SongListViewModel @Inject constructor(
         IndexedList(sorted, sortOrder, songLetterIndex(sorted, sortOrder))
     }.flowOn(ioDispatcher)
 
-    // Filtered only when the list or selection changes, not on every import progress tick.
-    private val selectedSongs = combine(sortedSongs, selectionState.selectedItems) { sorted, selectedSongIds ->
-        if (selectedSongIds.isEmpty()) emptySet() else sorted.items.filter { it.id in selectedSongIds }.toSet()
+    // Selection is filtered only when the list or selection changes, not on every import progress tick.
+    // One combine over sortedSongs: a second collector of the cold flow would sort the library twice.
+    private val sortedWithSelection = combine(sortedSongs, selectionState.selectedItems) { sorted, selectedSongIds ->
+        sorted to if (selectedSongIds.isEmpty()) emptySet() else sorted.items.filter { it.id in selectedSongIds }.toSet()
     }
 
     val uiState: StateFlow<SongListUiState> = combine(
-        sortedSongs,
-        selectedSongs,
+        sortedWithSelection,
         mediaImportObserver.songImportState,
-    ) { sorted, selectedSongs, songImportState ->
+    ) { (sorted, selectedSongs), songImportState ->
         val sortedSongs = sorted.items
         SongListUiState(
             songs = sortedSongs,
