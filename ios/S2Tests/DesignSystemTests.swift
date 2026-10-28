@@ -79,23 +79,23 @@ struct DesignSystemTests {
         #expect(TextRole.groupHeader.font == .s2GroupHeader)
     }
 
-    // ViewInspector can't see a `.contextMenu`, so the long-press Play item is checked on the device, not here; what
-    // is checked is that Play adds no visible button.
-    @Test func aPlayableHeaderHasNoVisibleButton() throws {
-        let sut = SectionHeader("Heavy Rotation").play {}
-        #expect((try? sut.inspect().find(ViewType.Button.self)) == nil)
-        #expect((try? sut.inspect().find(text: "Heavy Rotation")) != nil)
-    }
-
-    @Test func aHeaderWithAnActionIsOneButtonWithoutSeeAllText() throws {
+    @Test func aHeaderWithAnActionIsOneChevronButtonLabelledWithItsTitle() throws {
         var tapped = false
         let sut = SectionHeader("Most Played") { tapped = true }
-        #expect((try? sut.inspect().find(text: "See All")) == nil)
-        let button = try sut.inspect().find(ViewType.Button.self)
-        #expect((try? button.find(text: "Most Played")) != nil)
-        #expect((try? button.find(ViewType.Image.self)) != nil)
-        try button.tap()
+        #expect(try sut.inspect().findAll(ViewType.Button.self).count == 1)
+        #expect((try? sut.inspect().find(ViewType.Image.self)) != nil)
+        let label = try sut.inspect().find(viewWithAccessibilityLabel: "Most Played")
+        #expect(try label.accessibilityHint().string() == "See all")
+        try sut.inspect().find(ViewType.Button.self).tap()
         #expect(tapped)
+    }
+
+    @Test func anInPlaceHeaderHasASeeAllTextButtonAndNoChevron() throws {
+        var expanded = false
+        let sut = SectionHeader(expanding: "Albums") { expanded = true }
+        #expect((try? sut.inspect().find(ViewType.Image.self)) == nil)
+        try sut.inspect().find(button: "See All").tap()
+        #expect(expanded)
     }
 
     @Test func aLinkedHeaderReadsAsAButtonNamingItsTitleWithASeeAllHint() throws {

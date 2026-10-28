@@ -21,6 +21,7 @@ struct SectionHeader: View {
     private enum Destination {
         case route(Route)
         case action(() -> Void)
+        case expand(() -> Void)
     }
 
     /// `.disc` is the small uppercase label over a run of rows (an album's "Disc 2"); it takes no subtitle or actions.
@@ -58,6 +59,14 @@ struct SectionHeader: View {
         destination = .action(action)
     }
 
+    /// A plain title with a trailing "See All" text button that reveals more rows in place. A chevron would promise a
+    /// push, so this variant has none. The distinct first label keeps `SectionHeader("X") { ... }` bound to `action:`.
+    init(expanding title: String, expandAction: @escaping () -> Void) {
+        self.title = title
+        subtitle = nil
+        destination = .expand(expandAction)
+    }
+
     /// Adds "Play <title>" to the header's long-press menu and as a VoiceOver action. There is no visible button.
     func play(_ action: @escaping () -> Void) -> SectionHeader {
         var copy = self
@@ -80,7 +89,7 @@ struct SectionHeader: View {
     @ViewBuilder private var standardBody: some View {
         let header = destinationView
         if let playAction {
-            let name = "Play \(title)"
+            let name = String(localized: "Play \(title)")
             header
                 .contextMenu {
                     Button(action: playAction) { Label(name, systemImage: "play.fill") }
@@ -99,6 +108,12 @@ struct SectionHeader: View {
         case .action(let action):
             Button(action: action) { titles(chevron: true) }
                 .buttonStyle(.plain)
+        case .expand(let expand):
+            HStack(alignment: .firstTextBaseline) {
+                titles(chevron: false)
+                Button(String(localized: "See All"), action: expand)
+                    .font(.subheadline)
+            }
         case nil:
             titles(chevron: false)
         }
@@ -141,7 +156,7 @@ private struct HeaderAccessibility: ViewModifier {
             content
                 .accessibilityElement(children: .ignore)
                 .accessibilityLabel([title, subtitle].compactMap { $0 }.joined(separator: ", "))
-                .accessibilityHint("See all")
+                .accessibilityHint(String(localized: "See all"))
                 .accessibilityAddTraits([.isButton, .isHeader])
         } else {
             content.accessibilityElement(children: .contain)

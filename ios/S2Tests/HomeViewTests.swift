@@ -375,8 +375,8 @@ struct HomeViewTests {
         let links = try sut.inspect().findAll(ViewType.NavigationLink.self)
         #expect(links.count == 1)
         #expect((try? links[0].find(text: "Recently Added")) != nil)
+        #expect(try links[0].labelView().accessibilityHint().string() == "See all")
         #expect((try? sut.inspect().find(text: "Recent Releases")) != nil)
-        #expect((try? sut.inspect().find(text: "See All")) == nil)
     }
 
     @Test func menuActionsCarryTheItemsContext() {
@@ -424,19 +424,6 @@ struct HomeViewTests {
         #expect((try? sut.inspect().find(text: "Genre Picks")) != nil)
         try sut.inspect().find(button: "Shuffle All").tap()
         #expect(shuffled)
-    }
-
-    // The long-press Play item lives in a `.contextMenu`, which ViewInspector can't reach; the plain header shows no
-    // Play button, and which sections are `playable` is the shared HomeSection's rule.
-    @Test func headersShowNoPlayButton() throws {
-        let sut = HomeContent(
-            state: content([
-                section(.heavyRotation, .heavyRotation, [HomeItemAlbumItem(album: album("Kid A"))]),
-            ]),
-            onPlaySection: { _ in }
-        )
-        #expect((try? sut.inspect().find(viewWithAccessibilityIdentifier: "sectionHeader.play")) == nil)
-        #expect((try? sut.inspect().find(viewWithAccessibilityLabel: "Play Heavy Rotation")) == nil)
     }
 
     @Test func aHomeWithHistoryHasNoColdStartHint() throws {

@@ -348,7 +348,7 @@ struct SearchResultList: View {
     @ViewBuilder
     private func header(_ section: SearchSection) -> some View {
         if section.hasMore {
-            SectionHeader(section.category.title) { expanded = section.category }
+            SectionHeader(expanding: section.category.title) { expanded = section.category }
         } else {
             SectionHeader(section.category.title)
         }
