@@ -11,11 +11,14 @@ import androidx.room.Update
 import com.simplecityapps.localmediaprovider.local.data.room.entity.PendingFavouriteData
 import com.simplecityapps.localmediaprovider.local.data.room.entity.SONG_COLUMNS
 import com.simplecityapps.localmediaprovider.local.data.room.entity.SONG_IDENTITY_QUERY
+import com.simplecityapps.localmediaprovider.local.data.room.entity.SONG_STATS_QUERY
 import com.simplecityapps.localmediaprovider.local.data.room.entity.SongData
 import com.simplecityapps.localmediaprovider.local.data.room.entity.SongDataUpdate
 import com.simplecityapps.localmediaprovider.local.data.room.entity.SongIdentityData
+import com.simplecityapps.localmediaprovider.local.data.room.entity.SongStatsData
 import com.simplecityapps.localmediaprovider.local.data.room.entity.toPerformers
 import com.simplecityapps.localmediaprovider.local.data.room.entity.toSongDataUpdate
+import com.simplecityapps.localmediaprovider.local.data.room.entity.withStats
 import com.simplecityapps.mediaprovider.SongPathRemap
 import com.simplecityapps.mediaprovider.repository.songs.SongStatsRestore
 import com.simplecityapps.shuttle.model.MediaProviderType
@@ -23,8 +26,12 @@ import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.model.withAlbumIdentities
 import kotlin.time.Clock
 import kotlin.time.Instant
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.LocalDate
@@ -74,8 +81,30 @@ abstract class SongDataDao {
     @Query("SELECT id, genres, duration, mediaProvider FROM songs WHERE blacklisted = 0 AND genres != '' AND (duration <= 0 OR duration >= :minDurationMs)")
     abstract fun genreRows(minDurationMs: Int): Flow<List<SongGenreRow>>
 
-    /** The whole library, each song holding its album identity among the others. */
-    fun getAll(): Flow<List<Song>> = getAllSongData().map { list -> list.map { songData -> songData.toSong() }.withAlbumIdentities() }
+    @Transaction
+    @Query("SELECT $SONG_COLUMNS FROM songs ORDER BY albumArtist, album, track")
+    abstract suspend fun loadAllSongData(): List<SongData>
+
+    /** The library's generation, or null in a database opened without its triggers (see `IdentityGenerationTriggers`). */
+    @Query("SELECT generation FROM library_generation WHERE id = 0")
+    abstract fun libraryGeneration(): Flow<Long?>
+
+    /** The play stats and favourite of every song that has any; a play or a favourite re-emits this, not [getLibrary]. */
+    @Query(SONG_STATS_QUERY)
+    abstract fun songStats(): Flow<List<SongStatsData>>
+
+    /**
+     * The whole library, each song holding its album identity among the others, read again only when a song is added,
+     * removed or changes in more than its play stats and favourite: the stats it holds are as they were then.
+     */
+    @OptIn(ExperimentalCoroutinesApi::class)
+    fun getLibrary(): Flow<List<Song>> = libraryGeneration()
+        .distinctUntilChanged()
+        .flatMapLatest { generation -> if (generation == null) getAllSongData() else flow { emit(loadAllSongData()) } }
+        .map { list -> list.map { songData -> songData.toSong() }.withAlbumIdentities() }
+
+    /** The whole library with each song's current play stats and favourite, which are laid over [getLibrary] rather than re-read with it. */
+    fun getAll(): Flow<List<Song>> = combine(getLibrary(), songStats().distinctUntilChanged()) { songs, stats -> songs.withStats(stats) }
 
     /** Every song's album identity columns, for resolving the library's album identities without reading every song whole. */
     @Query(SONG_IDENTITY_QUERY)

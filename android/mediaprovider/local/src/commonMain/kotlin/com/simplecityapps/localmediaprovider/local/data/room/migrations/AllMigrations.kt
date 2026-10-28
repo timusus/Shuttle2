@@ -40,5 +40,6 @@ internal val ALL_MIGRATIONS: Array<Migration> =
         MIGRATION_56_57,
         MIGRATION_57_58,
         MIGRATION_58_59,
-        MIGRATION_59_60
+        MIGRATION_59_60,
+        MIGRATION_60_61
     )
