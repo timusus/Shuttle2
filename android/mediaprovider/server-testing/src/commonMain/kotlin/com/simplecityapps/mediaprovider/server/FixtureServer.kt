@@ -12,6 +12,7 @@ import io.ktor.http.headersOf
 import kotlin.concurrent.atomics.AtomicReference
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlin.concurrent.atomics.update
+import kotlinx.coroutines.delay
 
 /**
  * A fake media server on Ktor's [MockEngine], which answers each endpoint with a JSON fixture read by [loadFixture]
@@ -25,6 +26,7 @@ class FixtureServer(private val loadFixture: (name: String) -> String) : AutoClo
         val query: Map<String, String>,
         val code: Int,
         val fixture: String?,
+        val delayMs: Long,
         val where: (HttpRequestData) -> Boolean
     )
 
@@ -42,6 +44,7 @@ class FixtureServer(private val loadFixture: (name: String) -> String) : AutoClo
                         route.query.all { (name, value) -> request.url.parameters[name] == value } &&
                         route.where(request)
                 } ?: return@MockEngine respond("", HttpStatusCode.NotFound)
+            delay(route.delayMs)
             respond(
                 content = route.fixture?.let(loadFixture).orEmpty(),
                 status = HttpStatusCode.fromValue(route.code),
@@ -57,7 +60,7 @@ class FixtureServer(private val loadFixture: (name: String) -> String) : AutoClo
 
     /**
      * Answers GET [path] (with at least the given [query] parameters, and only the requests [where] accepts: those made
-     * with a given token, say) with [fixture], or an empty body with [code].
+     * with a given token, say) with [fixture], or an empty body with [code], after [delayMs] (a stalled server).
      */
     fun respond(
         path: String,
@@ -65,9 +68,10 @@ class FixtureServer(private val loadFixture: (name: String) -> String) : AutoClo
         code: Int = 200,
         method: String = "GET",
         query: Map<String, String> = emptyMap(),
+        delayMs: Long = 0,
         where: (HttpRequestData) -> Boolean = { true }
     ) {
-        routes.update { routes -> routes + Route(HttpMethod.parse(method), path, query, code, fixture, where) }
+        routes.update { routes -> routes + Route(HttpMethod.parse(method), path, query, code, fixture, delayMs, where) }
     }
 
     /** The requests made to [path], in order. */

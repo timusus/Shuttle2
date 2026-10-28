@@ -8,16 +8,22 @@ import com.simplecityapps.mediaprovider.server.AuthenticatedCredentials
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.settings.TranscodeFormat
 import com.simplecityapps.shuttle.streaming.DeliveredFormat
+import kotlin.concurrent.atomics.AtomicReference
+import kotlin.concurrent.atomics.ExperimentalAtomicApi
+import kotlin.concurrent.atomics.update
+import kotlinx.coroutines.withTimeoutOrNull
 
 /**
  * A song's authenticated stream URL, direct play where the player decodes the file, else a capped transcode in the
  * chosen codec, and its download URL: the original, or a transcode at the download cap when the song is over it.
  */
+@OptIn(ExperimentalAtomicApi::class)
 open class MediaBrowserStreamUrlProvider(
     private val authenticationManager: MediaBrowserAuthenticationManager,
     private val streamingPolicy: StreamingPolicy
 ) : StreamUrlProvider {
     private val scheme = authenticationManager.server.songPathPrefix.substringBefore("://")
+    private val transcodeAnswers = AtomicReference(emptyMap<String, Boolean>())
 
     override fun handles(scheme: String?): Boolean = scheme == this.scheme
 
@@ -35,7 +41,8 @@ open class MediaBrowserStreamUrlProvider(
 
     /**
      * The universal stream is a transcode, which starts at `StartTimeTicks`, wherever the server's `PlaybackInfo` says
-     * it doesn't send the original; [delivered]'s guess stands in when the server can't say.
+     * it doesn't send the original; [delivered]'s guess stands in when the server can't say in [PLAYBACK_INFO_TIMEOUT_MS].
+     * The server's answer is kept per song, so a seek's reopen neither asks again nor flips the answer mid-song.
      */
     override suspend fun openStream(
         song: Song,
@@ -46,7 +53,14 @@ open class MediaBrowserStreamUrlProvider(
         val maxBitrateKbps = streamingPolicy.maxBitrateKbps()
         val format = streamingPolicy.transcodeFormat()
         val url = universalPath(song, authenticatedCredentials, maxBitrateKbps, startPositionMs, format, playId)
-        val delivered = when (authenticationManager.transcodes(song.itemId(), authenticatedCredentials, maxBitrateKbps, format)) {
+        val itemId = song.itemId()
+        val transcodes = transcodeAnswers.load()[itemId]
+            ?: withTimeoutOrNull(PLAYBACK_INFO_TIMEOUT_MS) {
+                authenticationManager.transcodes(itemId, authenticatedCredentials, maxBitrateKbps, format)
+            }?.also { answer ->
+                transcodeAnswers.update { answers -> (if (answers.size >= MAX_REMEMBERED_ANSWERS) emptyMap() else answers) + (itemId to answer) }
+            }
+        val delivered = when (transcodes) {
             true -> authenticationManager.streamTarget(format).codec.delivered(maxBitrateKbps)
             false -> null
             null -> delivered(song, maxBitrateKbps, format)
@@ -136,4 +150,9 @@ open class MediaBrowserStreamUrlProvider(
     }
 
     private fun Song.itemId(): String = path.substringAfterLast('/')
+
+    private companion object {
+        const val PLAYBACK_INFO_TIMEOUT_MS = 3_000L
+        const val MAX_REMEMBERED_ANSWERS = 256
+    }
 }

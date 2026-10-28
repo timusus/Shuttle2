@@ -19,7 +19,9 @@ import com.simplecityapps.shuttle.streaming.DeliveredFormats
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import kotlin.test.Test
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.withContext
 
 /** Whether a stream is a transcode is the server's PlaybackInfo decision, not the client's guess from the song's bitrate. */
 class MediaBrowserStreamUrlProviderTest {
@@ -56,7 +58,11 @@ class MediaBrowserStreamUrlProviderTest {
         )
     }
 
-    private fun eachServer(block: suspend Rig.() -> Unit) = runTest { MediaBrowserServer.entries.forEach { Rig(it).block() } }
+    // The mock engine answers off the test scheduler, so virtual time would fire the provider's timeout before any reply:
+    // real time here, virtual only for the stall.
+    private fun eachServer(block: suspend Rig.() -> Unit) = runTest {
+        withContext(Dispatchers.Default) { MediaBrowserServer.entries.forEach { Rig(it).block() } }
+    }
 
     @Test
     fun `a song over the cap the server direct-plays is opened as the original file`() = eachServer {
@@ -96,8 +102,54 @@ class MediaBrowserStreamUrlProviderTest {
         provider.openStream(song).transcoded shouldBe true
     }
 
+    @Test
+    fun `a file the server direct-plays but won't direct-stream is a transcode`() = eachServer {
+        server.respond(path, fixture = "directPlayOnly", method = "POST")
+
+        provider.openStream(song).transcoded shouldBe true
+    }
+
+    @Test
+    fun `a file the server direct-streams but won't direct-play is the original`() = eachServer {
+        server.respond(path, fixture = "directStreamOnly", method = "POST")
+
+        provider.openStream(song).transcoded shouldBe false
+    }
+
+    @Test
+    fun `a server that names no source leaves the client's guess`() = eachServer {
+        server.respond(path, fixture = "noSources", method = "POST")
+
+        provider.openStream(song).transcoded shouldBe true
+    }
+
+    @Test
+    fun `a server that stalls leaves the client's guess`() = runTest {
+        MediaBrowserServer.entries.forEach { mediaBrowserServer ->
+            with(Rig(mediaBrowserServer)) {
+                server.respond(path, fixture = "direct", method = "POST", delayMs = 60_000)
+
+                provider.openStream(song).transcoded shouldBe true
+            }
+        }
+    }
+
+    @Test
+    fun `a song reopened on a seek keeps the server's answer without asking again`() = eachServer {
+        server.respond(path, fixture = "direct", method = "POST")
+        provider.openStream(song).transcoded shouldBe false
+
+        server.respond(path, code = 500, method = "POST")
+        provider.openStream(song, startPositionMs = 205_000).transcoded shouldBe false
+
+        server.requestsTo(path).size shouldBe 1
+    }
+
     private companion object {
         val FIXTURES = mapOf(
+            "noSources" to """{"MediaSources":[]}""",
+            "directPlayOnly" to """{"MediaSources":[{"SupportsDirectPlay":true,"SupportsDirectStream":false,"SupportsTranscoding":true}]}""",
+            "directStreamOnly" to """{"MediaSources":[{"SupportsDirectPlay":false,"SupportsDirectStream":true,"SupportsTranscoding":true}]}""",
             "direct" to """{"MediaSources":[{"SupportsDirectPlay":true,"SupportsDirectStream":true,"SupportsTranscoding":true}]}""",
             "transcode" to """{"MediaSources":[{"SupportsDirectPlay":false,"SupportsDirectStream":false,"SupportsTranscoding":true,""" +
                 """"TranscodingUrl":"/Audio/item789/universal?AudioCodec=mp3"}]}"""

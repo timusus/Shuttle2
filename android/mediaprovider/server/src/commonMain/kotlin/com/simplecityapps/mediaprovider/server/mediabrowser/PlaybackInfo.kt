@@ -42,11 +42,15 @@ data class PlaybackInfo(
     @SerialName("MediaSources") val mediaSources: List<MediaSource> = emptyList()
 )
 
-/** How the server will send a source: the original file (direct play or a static direct stream), else a transcode. */
+/**
+ * How the server will send a source. The universal endpoint serves the original only when `SupportsDirectStream` is
+ * set (`isStatic = mediaSource.SupportsDirectStream`, UniversalAudioController.cs); `SupportsDirectPlay` alone only
+ * allows a redirect for remote HTTP sources, so it doesn't make the stream a file.
+ */
 @Serializable
 data class MediaSource(
     @SerialName("SupportsDirectPlay") val supportsDirectPlay: Boolean = false,
     @SerialName("SupportsDirectStream") val supportsDirectStream: Boolean = false
 ) {
-    val transcodes: Boolean get() = !supportsDirectPlay && !supportsDirectStream
+    val transcodes: Boolean get() = !supportsDirectStream
 }
