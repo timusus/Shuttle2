@@ -50,6 +50,7 @@ object HomeScenarios {
         HomeSectionId.HeavyRotation -> HomeString.HOME_HEAVY_ROTATION_SUBTITLE
         HomeSectionId.Rediscover -> HomeString.HOME_REDISCOVER_SUBTITLE
         HomeSectionId.RecentlyAdded -> HomeString.HOME_RECENTLY_ADDED_SUBTITLE
+        HomeSectionId.RecentReleases -> HomeString.HOME_RECENT_RELEASES_SUBTITLE
         HomeSectionId.GenrePicks -> HomeString.HOME_GENRE_PICKS_SUBTITLE
         HomeSectionId.ShuffleAll -> null
     }

@@ -32,6 +32,15 @@ interface SuggestionsRepository {
     suspend fun recentlyAddedAlbums(limit: Int): List<AlbumGroupKey>
 
     /**
+     * The albums with a song released in [year], the most recently added first; at most [limit]. Songs carry only a
+     * release year, so a song without one never qualifies.
+     */
+    suspend fun recentReleaseAlbums(
+        year: Int,
+        limit: Int
+    ): List<AlbumGroupKey>
+
+    /**
      * The albums played through at least [minPlays] times all together or holding a favourite, none of whose songs has
      * played since [playedBefore]; most played first, at most [limit].
      */

@@ -179,6 +179,54 @@
 			<string>%1$d downloads removed</string>
 		</dict>
 	</dict>
+	<key>work_movements</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@count@</string>
+		<key>count</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>one</key>
+			<string>%1$d movement</string>
+			<key>other</key>
+			<string>%1$d movements</string>
+		</dict>
+	</dict>
+	<key>work_parts</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@count@</string>
+		<key>count</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>one</key>
+			<string>%1$d part</string>
+			<key>other</key>
+			<string>%1$d parts</string>
+		</dict>
+	</dict>
+	<key>work_songs</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@count@</string>
+		<key>count</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>one</key>
+			<string>%1$d song</string>
+			<key>other</key>
+			<string>%1$d songs</string>
+		</dict>
+	</dict>
 	<key>songsPlural</key>
 	<dict>
 		<key>NSStringLocalizedFormatKey</key>

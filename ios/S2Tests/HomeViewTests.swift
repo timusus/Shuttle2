@@ -366,13 +366,17 @@ struct HomeViewTests {
         #expect((shuffle.context as? PlayContextGenre)?.name == "Trip Hop")
     }
 
-    @Test func onlySectionsWithADestinationHaveSeeAll() throws {
+    @Test func onlySectionsWithADestinationHaveATappableHeader() throws {
         let sut = HomeContent(state: content([
             section(.heavyRotation, .heavyRotation, [HomeItemAlbumItem(album: album("Kid A"))]),
             section(.recentlyAdded, .recentlyAdded, [HomeItemAlbumItem(album: album("Amnesiac"))]),
+            section(.recentReleases, .recentReleases, [HomeItemAlbumItem(album: album("Hail to the Thief"))]),
         ]))
-        #expect((try? sut.inspect().find(viewWithAccessibilityLabel: "See All Recently Added")) != nil)
-        #expect((try? sut.inspect().find(viewWithAccessibilityLabel: "See All Heavy Rotation")) == nil)
+        let links = try sut.inspect().findAll(ViewType.NavigationLink.self)
+        #expect(links.count == 1)
+        #expect((try? links[0].find(text: "Recently Added")) != nil)
+        #expect((try? sut.inspect().find(text: "Recent Releases")) != nil)
+        #expect((try? sut.inspect().find(text: "See All")) == nil)
     }
 
     @Test func menuActionsCarryTheItemsContext() {
@@ -422,20 +426,17 @@ struct HomeViewTests {
         #expect(shuffled)
     }
 
-    @Test func playableShelvesOfferAHeaderPlayAndTheRestDoNot() throws {
-        var played: [HomeSectionId] = []
+    // The long-press Play item lives in a `.contextMenu`, which ViewInspector can't reach; the plain header shows no
+    // Play button, and which sections are `playable` is the shared HomeSection's rule.
+    @Test func headersShowNoPlayButton() throws {
         let sut = HomeContent(
             state: content([
-                section(.jumpBackIn, .jumpBackIn, [HomeItemAlbumItem(album: album("OK Computer"))]),
                 section(.heavyRotation, .heavyRotation, [HomeItemAlbumItem(album: album("Kid A"))]),
-                section(.genrePicks, .genrePicks, [HomeItemGenreItem(genre: genre("Trip Hop"))]),
             ]),
-            onPlaySection: { played.append($0) }
+            onPlaySection: { _ in }
         )
-        let buttons = try sut.inspect().findAll(where: { view in (try? view.accessibilityIdentifier()) == "sectionHeader.play" })
-        #expect(buttons.count == 1)
-        try sut.inspect().find(viewWithAccessibilityLabel: "Play Heavy Rotation").button().tap()
-        #expect(played == [.heavyRotation])
+        #expect((try? sut.inspect().find(viewWithAccessibilityIdentifier: "sectionHeader.play")) == nil)
+        #expect((try? sut.inspect().find(viewWithAccessibilityLabel: "Play Heavy Rotation")) == nil)
     }
 
     @Test func aHomeWithHistoryHasNoColdStartHint() throws {

@@ -37,6 +37,7 @@
 "playlist_title_recently_added" = "Récemment ajouté";
 "playlist_title_most_played" = "Le plus joué";
 "playlist_title_history" = "Historique";
+"playlist_title_downloaded" = "Downloaded";
 "dialog_delete_message" = "\"%1$@\" sera supprimé définitivement";
 "error_unknown" = "Une erreur inconnue s'est produite";
 "pref_category_title_display" = "Apparence";
@@ -73,6 +74,8 @@
 "pref_theme_accent_dynamic_colour_hint" = "Dynamic colour uses your wallpaper instead";
 "pref_colour_from_artwork_title" = "Colour from artwork";
 "pref_colour_from_artwork_summary" = "Tint the player with colours from the album art";
+"pref_classical_display_title" = "Classical display";
+"pref_classical_display_summary" = "Group movements under their work and show composers";
 "pref_pure_black_title" = "Pure black";
 "pref_pure_black_summary" = "Black backgrounds in dark theme, for AMOLED screens";
 "pref_category_title_widgets" = "Widgets";
@@ -83,6 +86,8 @@
 "pref_disable_shuffle_on_queue_subtitle" = "Quand une nouvelle file est sélectionnée, le mode aléatoire ne sera pas désactivé";
 "pref_bit_perfect_usb_title" = "USB DAC direct output";
 "pref_bit_perfect_usb_subtitle" = "Send songs to a USB DAC at their own sample rate, as 16-bit audio, without resampling or mixing in other sounds. The equaliser and ReplayGain are skipped, and your phone's volume and audio effects no longer apply, so set the volume on the DAC";
+"pref_fetch_lyrics_online_title" = "Fetch lyrics online";
+"pref_fetch_lyrics_online_subtitle" = "Look up lyrics for songs without any on LRCLIB. This sends the song's artist, title, album and length to lrclib.net";
 "dsp_equalizer_title" = "Égaliseur";
 "dsp_replay_gain_title" = "Replay Gain";
 "dsp_replay_gain_track" = "Gain de piste";
@@ -95,6 +100,8 @@
 "pref_report_playback_title" = "Report playback to server";
 "settings_scrobbling_title" = "Scrobbling";
 "pref_report_playback_summary" = "Show what you're playing on your Jellyfin, Emby, Plex or Navidrome server, and count plays in its history";
+"pref_offline_mode_title" = "Offline mode";
+"pref_offline_mode_summary" = "Only show songs that are on this device or downloaded";
 "pref_download_wifi_only_title" = "Download on Wi-Fi only";
 "pref_download_wifi_only_summary" = "Offline downloads wait for Wi-Fi";
 "pref_streaming_quality_unmetered_title" = "On Wi-Fi";
@@ -114,6 +121,8 @@
 "pref_rescan_frequency_weekly" = "Weekly";
 "pref_exclude_title" = "Exclus";
 "pref_exclude_summary" = "Afficher/modifier exclus";
+"pref_downloads_title" = "Downloads";
+"pref_downloads_summary" = "Manage music saved for offline playback";
 "pref_min_track_length_title" = "Minimum song length";
 "pref_min_track_length_summary" = "Hide shorter songs, like ringtones and voice notes, from your library. Playlists still show them";
 "pref_min_track_length_off" = "Off";
@@ -182,5 +191,6 @@
 "home_heavy_rotation_subtitle" = "What you've played most in the last 4 weeks";
 "home_rediscover_subtitle" = "Albums you haven't played in a while";
 "home_recently_added_subtitle" = "The newest additions to your library";
+"home_recent_releases_subtitle" = "New albums in your library";
 "home_genre_picks_subtitle" = "Genres you've been playing";
 "home_genre_picks_largest_subtitle" = "The biggest genres in your library";

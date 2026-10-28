@@ -223,6 +223,24 @@ class RecentlyAdded @Inject constructor(
     }
 }
 
+/** The library's albums released this year, the most recently added first. */
+class RecentReleases @Inject constructor(
+    private val suggestionsRepository: SuggestionsRepository,
+    private val resolveHomeItems: ResolveHomeItems,
+) {
+    suspend operator fun invoke(
+        year: Int,
+        reads: HomeReads = HomeReads(),
+    ): List<HomeItem> {
+        val contexts = suggestionsRepository.recentReleaseAlbums(year, CANDIDATES).map { PlayContext.Album(it) }
+        return contexts.resolvedIn(resolveHomeItems(contexts, reads))
+    }
+
+    private companion object {
+        const val CANDIDATES = 30
+    }
+}
+
 /** The genres played in the window, most by age-weighed plays first, and the library's largest genres to fill in. */
 data class GenrePickCandidates(
     val played: List<HomeItem>,

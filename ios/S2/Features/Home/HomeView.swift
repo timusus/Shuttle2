@@ -190,14 +190,15 @@ struct HomeContent: View {
         }
     }
 
-    /// The Podcasts-style header, with See All only where a screen holds the whole of what the section samples.
+    /// The Podcasts-style header, tappable only where a screen holds the whole of what the section samples. Recent
+    /// Releases has none: no existing screen lists exactly this year's albums.
     @ViewBuilder
     private func header(_ section: HomeSection) -> some View {
         let title = Self.title(section.title)
         let subtitle = section.subtitle?.localized()
         let header = switch section.id {
-        case .recentlyAdded: SectionHeader(title, subtitle: subtitle, seeAll: .smartPlaylist(id: "recently-added"))
-        case .genrePicks: SectionHeader(title, subtitle: subtitle, seeAll: .libraryCategory(.genres))
+        case .recentlyAdded: SectionHeader(title, subtitle: subtitle, opens: .smartPlaylist(id: "recently-added"))
+        case .genrePicks: SectionHeader(title, subtitle: subtitle, opens: .libraryCategory(.genres))
         default: SectionHeader(title, subtitle: subtitle)
         }
         if section.playable {
@@ -242,6 +243,7 @@ struct HomeContent: View {
         case .heavyRotation: "Heavy Rotation"
         case .rediscover: "Rediscover"
         case .recentlyAdded: "Recently Added"
+        case .recentReleases: "Recent Releases"
         case .genrePicks: "Genre Picks"
         case .shuffleAll: "Shuffle All"
         }

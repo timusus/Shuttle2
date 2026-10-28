@@ -62,6 +62,8 @@
     <string name="home_rediscover">Rediscover</string>
     <!-- Home: section of albums most recently added to the library -->
     <string name="home_recently_added">Recently added</string>
+    <!-- Home: section of albums released this year -->
+    <string name="home_recent_releases">Recent releases</string>
     <!-- Home: section of genre tiles; tapping one opens that genre, its shuffle button plays it -->
     <string name="home_genre_picks">Genre picks</string>
     <!-- Home: long-press action on a Jump back in item, playing it from its first song rather than where the user left off -->
@@ -92,6 +94,8 @@
     <string name="home_rediscover_subtitle">Albums you haven\'t played in a while</string>
     <!-- Home: one line under the Recently added header -->
     <string name="home_recently_added_subtitle">The newest additions to your library</string>
+    <!-- Home: one line under the Recent releases header -->
+    <string name="home_recent_releases_subtitle">New albums in your library</string>
     <!-- Home: one line under the Genre picks header when it shows genres the user has played -->
     <string name="home_genre_picks_subtitle">Genres you\'ve been playing</string>
     <!-- Home: one line under the Genre picks header when it shows the library's largest genres (nothing played yet) -->

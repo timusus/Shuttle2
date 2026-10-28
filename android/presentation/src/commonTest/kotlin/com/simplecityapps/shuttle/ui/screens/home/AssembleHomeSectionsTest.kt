@@ -33,6 +33,7 @@ class AssembleHomeSectionsTest {
         heavyRotation = emptyList(),
         rediscover = emptyList(),
         recentlyAdded = emptyList(),
+        recentReleases = emptyList(),
         genrePicks = GenrePickCandidates(emptyList(), emptyList()),
     )
 
@@ -268,6 +269,16 @@ class AssembleHomeSectionsTest {
 
         assemble(empty.copy(recentlyAdded = items)).section(HomeSectionId.RecentlyAdded).items shouldBe items
         assemble(empty.copy(hasHistory = false, recentlyAdded = items)).map { it.id } shouldBe listOf(HomeSectionId.RecentlyAdded, HomeSectionId.ShuffleAll)
+    }
+
+    @Test
+    fun `recent releases follow recently added and hide when empty`() {
+        val sections = assemble(empty.copy(recentlyAdded = albums.take(3), recentReleases = albums.subList(10, 13)))
+
+        sections.map { it.id } shouldBe listOf(HomeSectionId.RecentlyAdded, HomeSectionId.RecentReleases)
+        sections.section(HomeSectionId.RecentReleases).items shouldBe albums.subList(10, 13)
+        sections.section(HomeSectionId.RecentReleases).subtitle shouldBe HomeString.HOME_RECENT_RELEASES_SUBTITLE
+        assemble(empty.copy(recentlyAdded = albums.take(3))).map { it.id } shouldBe listOf(HomeSectionId.RecentlyAdded)
     }
 
     @Test

@@ -26,6 +26,7 @@ import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.currentTime
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 
 class LoadHomeSectionsTest {
     private val suggestions = FakeSuggestionsRepository()
@@ -48,8 +49,9 @@ class LoadHomeSectionsTest {
     private val heavyRotation = HeavyRotation(playHistory, resolve)
     private val rediscover = Rediscover(suggestions, resolve)
     private val recentlyAdded = RecentlyAdded(suggestions, resolve)
+    private val recentReleases = RecentReleases(suggestions, resolve)
     private val genrePicks = GenrePicks(playHistory, suggestions)
-    private val load = LoadHomeSections(jumpBackIn, aroundThisTime, heavyRotation, rediscover, recentlyAdded, genrePicks, playHistory, homeTime)
+    private val load = LoadHomeSections(jumpBackIn, aroundThisTime, heavyRotation, rediscover, recentlyAdded, recentReleases, genrePicks, playHistory, homeTime)
 
     init {
         suggestions.albums = albums
@@ -77,9 +79,10 @@ class LoadHomeSectionsTest {
         val (heavyRotation, heavyRotationTime) = timed { heavyRotation(now) }
         val (rediscover, rediscoverTime) = timed { rediscover(now) }
         val (recentlyAdded, recentlyAddedTime) = timed { recentlyAdded() }
+        val (recentReleases, recentReleasesTime) = timed { recentReleases(now.toLocalDateTime(TimeZone.UTC).year) }
         val (genrePicks, genrePicksTime) = timed { genrePicks(now) }
         val oneAfterAnother = assembleHomeSections(
-            HomeCandidates(true, jumpBackIn, aroundThisTime, heavyRotation, rediscover, recentlyAdded, genrePicks),
+            HomeCandidates(true, jumpBackIn, aroundThisTime, heavyRotation, rediscover, recentlyAdded, recentReleases, genrePicks),
             now,
             TimeZone.UTC,
         )
@@ -95,7 +98,7 @@ class LoadHomeSectionsTest {
             HomeSectionId.RecentlyAdded,
             HomeSectionId.GenrePicks,
         )
-        loadTime shouldBe listOf(jumpBackInTime, aroundThisTimeTime, heavyRotationTime, rediscoverTime, recentlyAddedTime, genrePicksTime).max()
+        loadTime shouldBe listOf(jumpBackInTime, aroundThisTimeTime, heavyRotationTime, rediscoverTime, recentlyAddedTime, recentReleasesTime, genrePicksTime).max()
     }
 
     @Test

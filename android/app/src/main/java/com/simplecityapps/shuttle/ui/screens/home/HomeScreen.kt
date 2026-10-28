@@ -313,6 +313,7 @@ private val HomeSectionTitle.stringRes: Int
         HomeSectionTitle.HeavyRotation -> R.string.home_heavy_rotation
         HomeSectionTitle.Rediscover -> R.string.home_rediscover
         HomeSectionTitle.RecentlyAdded -> R.string.home_recently_added
+        HomeSectionTitle.RecentReleases -> R.string.home_recent_releases
         HomeSectionTitle.GenrePicks -> R.string.home_genre_picks
         HomeSectionTitle.ShuffleAll -> R.string.home_shuffle_all
     }

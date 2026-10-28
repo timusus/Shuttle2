@@ -24,6 +24,17 @@ interface SuggestionsDao {
         offset: Int
     ): List<Long>
 
+    /** The ids of the songs released in [year], by when they were added, newest first: a [limit] rows' page from [offset]. */
+    @Query(
+        "SELECT id FROM songs WHERE blacklisted = 0 AND year = :year " +
+            "ORDER BY COALESCE(dateAdded, lastModified) DESC, id LIMIT :limit OFFSET :offset"
+    )
+    suspend fun releasedSongIds(
+        year: Int,
+        limit: Int,
+        offset: Int
+    ): List<Long>
+
     /** The songs played or favourited, with what an album to rediscover is judged by. */
     @Query("SELECT id, playCount, lastPlayed, favouritedAt FROM songs WHERE blacklisted = 0 AND (playCount > 0 OR lastPlayed IS NOT NULL OR favouritedAt IS NOT NULL)")
     suspend fun playedSongs(): List<SongPlaysRow>

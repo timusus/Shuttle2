@@ -79,30 +79,31 @@ struct DesignSystemTests {
         #expect(TextRole.groupHeader.font == .s2GroupHeader)
     }
 
-    @Test func aHeaderPlayButtonIsLabelledWithItsTitleAndRunsItsAction() throws {
-        var played = false
-        let sut = SectionHeader("Heavy Rotation").play { played = true }
-        let button = try sut.inspect().find(ViewType.Button.self)
-        #expect(try button.accessibilityLabel().string() == "Play Heavy Rotation")
-        try button.tap()
-        #expect(played)
+    // ViewInspector can't see a `.contextMenu`, so the long-press Play item is checked on the device, not here; what
+    // is checked is that Play adds no visible button.
+    @Test func aPlayableHeaderHasNoVisibleButton() throws {
+        let sut = SectionHeader("Heavy Rotation").play {}
+        #expect((try? sut.inspect().find(ViewType.Button.self)) == nil)
+        #expect((try? sut.inspect().find(text: "Heavy Rotation")) != nil)
     }
 
-    @Test func aHeaderWithoutPlayHasNoButton() throws {
-        #expect((try? SectionHeader("Heavy Rotation").inspect().find(ViewType.Button.self)) == nil)
-    }
-
-    @Test func seeAllRunsItsAction() throws {
+    @Test func aHeaderWithAnActionIsOneButtonWithoutSeeAllText() throws {
         var tapped = false
         let sut = SectionHeader("Most Played") { tapped = true }
-        #expect((try? sut.inspect().find(text: "See All")) != nil)
-        try sut.inspect().find(ViewType.Button.self).tap()
+        #expect((try? sut.inspect().find(text: "See All")) == nil)
+        let button = try sut.inspect().find(ViewType.Button.self)
+        #expect((try? button.find(text: "Most Played")) != nil)
+        #expect((try? button.find(ViewType.Image.self)) != nil)
+        try button.tap()
         #expect(tapped)
     }
 
-    @Test func seeAllCanPushARoute() throws {
-        let sut = SectionHeader("Albums", seeAll: .libraryCategory(.albums))
-        #expect((try? sut.inspect().find(ViewType.NavigationLink.self)) != nil)
+    @Test func aLinkedHeaderReadsAsAButtonNamingItsTitleWithASeeAllHint() throws {
+        let sut = SectionHeader("Albums", subtitle: "Your albums", opens: .libraryCategory(.albums))
+        let link = try sut.inspect().find(ViewType.NavigationLink.self)
+        let label = try link.labelView().accessibilityLabel().string()
+        #expect(label == "Albums, Your albums")
+        #expect(try link.labelView().accessibilityHint().string() == "See all")
     }
 
     // MARK: Placeholder, marquee

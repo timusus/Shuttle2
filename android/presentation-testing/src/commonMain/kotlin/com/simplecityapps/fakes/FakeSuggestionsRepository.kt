@@ -23,6 +23,7 @@ class FakeSuggestionsRepository : SuggestionsRepository {
     var genres: List<Genre> = emptyList()
     var recentlyCompleted: List<AlbumGroupKey> = emptyList()
     var recentlyAdded: List<AlbumGroupKey> = emptyList()
+    var recentReleases: List<AlbumGroupKey> = emptyList()
     var toRediscover: List<AlbumGroupKey> = emptyList()
     var latency: Duration = Duration.ZERO
 
@@ -43,6 +44,11 @@ class FakeSuggestionsRepository : SuggestionsRepository {
     override suspend fun recentlyCompletedAlbums(limit: Int): List<AlbumGroupKey> = afterLatency("recentlyCompletedAlbums") { recentlyCompleted.take(limit) }
 
     override suspend fun recentlyAddedAlbums(limit: Int): List<AlbumGroupKey> = afterLatency("recentlyAddedAlbums") { recentlyAdded.take(limit).also { calls += "recentlyAddedAlbums($limit)" } }
+
+    override suspend fun recentReleaseAlbums(
+        year: Int,
+        limit: Int
+    ): List<AlbumGroupKey> = afterLatency("recentReleaseAlbums") { recentReleases.take(limit).also { calls += "recentReleaseAlbums($year, $limit)" } }
 
     override suspend fun albumsToRediscover(
         minPlays: Int,

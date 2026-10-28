@@ -137,6 +137,21 @@ class LocalSuggestionsRepositoryTest : InMemoryDatabaseTest() {
     }
 
     @Test
+    fun `recent releases are this year's albums newest added first without last year's or undated ones`() = runTest {
+        insert(
+            createSongData(album = "Earlier", track = 1).copy(year = 2026, dateAdded = now - 40.days),
+            createSongData(album = "Last Year", track = 1).copy(year = 2025, dateAdded = now - 1.days),
+            createSongData(album = "Undated", track = 1).copy(year = null, dateAdded = now - 2.days),
+            createSongData(album = "Latest", track = 1).copy(year = 2026, dateAdded = now - 5.days),
+            createSongData(album = "Latest", track = 2).copy(year = 2026, dateAdded = now - 6.days)
+        )
+
+        repository.recentReleaseAlbums(year = 2026, limit = 10) shouldBe listOf(key("latest"), key("earlier"))
+        repository.recentReleaseAlbums(year = 2026, limit = 1) shouldBe listOf(key("latest"))
+        repository.recentReleaseAlbums(year = 2024, limit = 10).shouldBeEmpty()
+    }
+
+    @Test
     fun `a Jellyfin library imported at once has its newest albums 649`() = runTest {
         // As the Jellyfin mapper stores a song: DateCreated, the server's own scan time, as both dateAdded and
         // lastModified. The test server scanned every song on the same day, fractions of a second apart.

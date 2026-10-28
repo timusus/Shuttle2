@@ -1,22 +1,24 @@
 import SwiftUI
 
-/// An in-content section header: a rounded bold title (`.s2SectionTitle`), optionally a one-line subtitle under it
-/// saying what the section is, and, when the section has more than it shows, a trailing "See All" with a chevron. For Home's shelves, a detail screen's "Albums", the queue's
+/// An in-content section header: a rounded bold title (`.s2SectionTitle`) and optionally a one-line subtitle under it
+/// saying what the section is. When the section has a destination the whole title block is the tap target, with a small
+/// chevron after the title, as in Apple Music and Podcasts. For Home's shelves, a detail screen's "Albums", the queue's
 /// "Up Next". Outside a `List`, give it the screen's horizontal inset; inside one it takes the row's.
 ///
 /// ```swift
-/// SectionHeader("Albums", seeAll: .libraryCategory(.albums))  // pushes a route
-/// SectionHeader("Up Next")                                  // title only
+/// SectionHeader("Albums", opens: .libraryCategory(.albums))  // pushes a route
+/// SectionHeader("Up Next")                                   // title only
 /// SectionHeader("Rediscover", subtitle: "Albums you haven't played in a while")
-/// SectionHeader("Most Played") { showAll() }                // an action
+/// SectionHeader("Most Played") { showAll() }                 // an action
+/// SectionHeader("Heavy Rotation").play { playAll() }         // long-press menu: Play Heavy Rotation
 /// ```
 struct SectionHeader: View {
     let title: String
     let subtitle: String?
-    private let seeAll: SeeAll?
+    private let destination: Destination?
     private var playAction: (() -> Void)?
 
-    private enum SeeAll {
+    private enum Destination {
         case route(Route)
         case action(() -> Void)
     }
@@ -32,38 +34,36 @@ struct SectionHeader: View {
     init(_ title: String, subtitle: String? = nil) {
         self.title = title
         self.subtitle = subtitle
-        seeAll = nil
+        destination = nil
     }
 
     init(_ title: String, style: Style) {
         self.title = title
         subtitle = nil
-        seeAll = nil
+        destination = nil
         self.style = style
     }
 
-    /// See All pushes `route` onto the enclosing `NavigationStack`.
-    init(_ title: String, subtitle: String? = nil, seeAll route: Route) {
+    /// Tapping the header pushes `route` onto the enclosing `NavigationStack`.
+    init(_ title: String, subtitle: String? = nil, opens route: Route) {
         self.title = title
         self.subtitle = subtitle
-        seeAll = .route(route)
+        destination = .route(route)
     }
 
-    /// See All runs `action`.
-    init(_ title: String, subtitle: String? = nil, seeAllAction action: @escaping () -> Void) {
+    /// Tapping the header runs `action`.
+    init(_ title: String, subtitle: String? = nil, action: @escaping () -> Void) {
         self.title = title
         self.subtitle = subtitle
-        seeAll = .action(action)
+        destination = .action(action)
     }
 
-    /// Adds a trailing Play button (44pt, "Play <title>") that runs `action`, after See All when there is one.
+    /// Adds "Play <title>" to the header's long-press menu and as a VoiceOver action. There is no visible button.
     func play(_ action: @escaping () -> Void) -> SectionHeader {
         var copy = self
         copy.playAction = action
         return copy
     }
-
-    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     var body: some View {
         switch style {
@@ -78,64 +78,74 @@ struct SectionHeader: View {
     }
 
     @ViewBuilder private var standardBody: some View {
-        // At the accessibility sizes See All goes under the title, as in Podcasts: side by side, a long title
-        // hyphenates into fragments beside it.
-        let stacked = dynamicTypeSize.isAccessibilitySize && seeAll != nil
-        let layout = stacked
-            ? AnyLayout(VStackLayout(alignment: .leading, spacing: Spacing.xsmall))
-            : AnyLayout(HStackLayout(alignment: .firstTextBaseline, spacing: Spacing.small))
-        layout {
-            VStack(alignment: .leading, spacing: Spacing.tiny) {
-                Text(title)
-                    .textRole(.sectionHeader)
-                    .foregroundStyle(.primary)
-                    .accessibilityAddTraits(.isHeader)
-                if let subtitle {
-                    Text(subtitle)
-                        .textRole(.rowSubtitle)
-                        .foregroundStyle(.s2TextSecondary)
-                        .lineLimit(1)
+        let header = destinationView
+        if let playAction {
+            let name = "Play \(title)"
+            header
+                .contextMenu {
+                    Button(action: playAction) { Label(name, systemImage: "play.fill") }
                 }
-            }
-            if !stacked {
-                Spacer(minLength: Spacing.small)
-            }
-            switch seeAll {
-            case .route(let route):
-                NavigationLink(value: route) { seeAllLabel }
-                    .buttonStyle(.plain)
-            case .action(let action):
-                Button(action: action) { seeAllLabel }
-                    .buttonStyle(.plain)
-            case nil:
-                EmptyView()
-            }
-            if let playAction {
-                Button(action: playAction) {
-                    Image(systemName: "play.fill")
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(.tint)
-                        .frame(minWidth: 44, minHeight: 44)
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Play \(title)")
-                .accessibilityIdentifier("sectionHeader.play")
-            }
+                .accessibilityAction(named: name, playAction)
+        } else {
+            header
         }
     }
 
-    private var seeAllLabel: some View {
-        HStack(spacing: Spacing.xsmall) {
-            Text("See All")
-            Image(systemName: "chevron.right")
-                .font(.footnote.weight(.semibold))
-                .imageScale(.small)
+    @ViewBuilder private var destinationView: some View {
+        switch destination {
+        case .route(let route):
+            NavigationLink(value: route) { titles(chevron: true) }
+                .buttonStyle(.plain)
+        case .action(let action):
+            Button(action: action) { titles(chevron: true) }
+                .buttonStyle(.plain)
+        case nil:
+            titles(chevron: false)
         }
-        .font(.subheadline.weight(.medium))
-        .foregroundStyle(.tint)
+    }
+
+    private func titles(chevron: Bool) -> some View {
+        VStack(alignment: .leading, spacing: Spacing.tiny) {
+            HStack(spacing: Spacing.xsmall) {
+                Text(title)
+                    .textRole(.sectionHeader)
+                    .foregroundStyle(.primary)
+                if chevron {
+                    Image(systemName: "chevron.right")
+                        .font(.footnote.weight(.semibold))
+                        .imageScale(.small)
+                        .foregroundStyle(.s2TextSecondary)
+                }
+            }
+            if let subtitle {
+                Text(subtitle)
+                    .textRole(.rowSubtitle)
+                    .foregroundStyle(.s2TextSecondary)
+                    .lineLimit(1)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .contentShape(Rectangle())
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("See All \(title)")
+        .modifier(HeaderAccessibility(title: title, subtitle: subtitle, linked: chevron))
+    }
+}
+
+/// A linked header reads as one button naming the section; an unlinked one stays a plain heading.
+private struct HeaderAccessibility: ViewModifier {
+    let title: String
+    let subtitle: String?
+    let linked: Bool
+
+    func body(content: Content) -> some View {
+        if linked {
+            content
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel([title, subtitle].compactMap { $0 }.joined(separator: ", "))
+                .accessibilityHint("See all")
+                .accessibilityAddTraits([.isButton, .isHeader])
+        } else {
+            content.accessibilityElement(children: .contain)
+                .accessibilityAddTraits(.isHeader)
+        }
     }
 }

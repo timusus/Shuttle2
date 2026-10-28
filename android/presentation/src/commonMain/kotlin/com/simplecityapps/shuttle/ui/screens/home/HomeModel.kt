@@ -20,6 +20,7 @@ enum class HomeSectionId {
     HeavyRotation,
     Rediscover,
     RecentlyAdded,
+    RecentReleases,
     GenrePicks,
 
     /** The cold-start prompt to shuffle the whole library; it holds no items. */
@@ -35,6 +36,7 @@ enum class HomeSectionTitle {
     HeavyRotation,
     Rediscover,
     RecentlyAdded,
+    RecentReleases,
     GenrePicks,
     ShuffleAll,
 }

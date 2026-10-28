@@ -51,11 +51,12 @@ data class HomeCandidates(
     val heavyRotation: List<HeavyRotationCandidate>? = null,
     val rediscover: List<HomeItem>? = null,
     val recentlyAdded: List<HomeItem>? = null,
+    val recentReleases: List<HomeItem>? = null,
     val genrePicks: GenrePickCandidates? = null,
 ) {
     /** Whether every section's candidates have loaded. */
     val complete: Boolean
-        get() = jumpBackIn != null && aroundThisTime != null && heavyRotation != null && rediscover != null && recentlyAdded != null && genrePicks != null
+        get() = jumpBackIn != null && aroundThisTime != null && heavyRotation != null && rediscover != null && recentlyAdded != null && recentReleases != null && genrePicks != null
 }
 
 /** Stops at the first section still waiting on a loading candidate, so a shown section never changes. */
@@ -111,6 +112,8 @@ fun assembleHomeSections(
     builder.add(HomeSectionId.Rediscover, HomeSectionTitle.Rediscover, HomeString.HOME_REDISCOVER_SUBTITLE, rediscover, SECTION_SIZE)
 
     builder.add(HomeSectionId.RecentlyAdded, HomeSectionTitle.RecentlyAdded, HomeString.HOME_RECENTLY_ADDED_SUBTITLE, candidates.recentlyAdded ?: return builder.sections, SECTION_SIZE)
+
+    builder.add(HomeSectionId.RecentReleases, HomeSectionTitle.RecentReleases, HomeString.HOME_RECENT_RELEASES_SUBTITLE, candidates.recentReleases ?: return builder.sections, SECTION_SIZE)
 
     val genrePickCandidates = candidates.genrePicks ?: return builder.sections
     val played = genrePickCandidates.played.map { it.key }.toSet()
@@ -192,6 +195,7 @@ class LoadHomeSections @Inject constructor(
     private val heavyRotation: HeavyRotation,
     private val rediscover: Rediscover,
     private val recentlyAdded: RecentlyAdded,
+    private val recentReleases: RecentReleases,
     private val genrePicks: GenrePicks,
     private val playHistoryRepository: PlayHistoryRepository,
     private val homeTime: HomeTime,
@@ -217,6 +221,7 @@ class LoadHomeSections @Inject constructor(
         load("Heavy rotation", { if (hasHistory) heavyRotation(now, reads) else emptyList() }) { copy(heavyRotation = it) }
         load("Rediscover", { rediscover(now, reads) }) { copy(rediscover = it) }
         load("Recently added", { recentlyAdded(reads) }) { copy(recentlyAdded = it) }
+        load("Recent releases", { recentReleases(now.toLocalDateTime(timeZone).year, reads) }) { copy(recentReleases = it) }
         load("Genre picks", { genrePicks(now, reads) }) { copy(genrePicks = it) }
 
         var jumpBackInProgress: Map<String, HomeItemProgress>? = null

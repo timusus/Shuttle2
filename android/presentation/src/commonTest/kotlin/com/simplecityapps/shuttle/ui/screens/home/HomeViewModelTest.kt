@@ -111,6 +111,7 @@ class HomeViewModelTest {
             HeavyRotation(playHistory, resolve),
             Rediscover(suggestions, resolve),
             RecentlyAdded(suggestions, resolve),
+            RecentReleases(suggestions, resolve),
             GenrePicks(playHistory, suggestions),
             playHistory,
             homeTime,
