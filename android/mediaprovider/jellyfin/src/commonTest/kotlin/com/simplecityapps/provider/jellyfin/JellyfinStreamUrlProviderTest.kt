@@ -23,6 +23,7 @@ import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldEndWith
 import io.kotest.matchers.string.shouldNotContain
 import kotlin.test.Test
+import kotlinx.coroutines.test.runTest
 
 /** A Jellyfin song's stream URL: direct play at original quality, else capped by the active network's quality (#504). */
 class JellyfinStreamUrlProviderTest {
@@ -152,7 +153,7 @@ class JellyfinStreamUrlProviderTest {
     }
 
     @Test
-    fun `a stream is opened as a transcode only when the song isn't direct-played`() {
+    fun `a server without playback info leaves a stream opened as a transcode only when the song isn't direct-played`() = runTest {
         credentialStore.authenticatedCredentials = downloadableCredentials
         streamingSettings.unmeteredQuality.value = StreamingQuality.Kbps320
 

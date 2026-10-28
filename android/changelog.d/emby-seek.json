@@ -1,0 +1,1 @@
+{ "type": "fixes", "text": "iOS: Seeking in a Jellyfin or Emby song no longer restarts it", "commits": [] }

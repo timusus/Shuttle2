@@ -32,7 +32,7 @@ interface StreamUrlProvider {
      * [streamUrl]'s stream, and whether it's a transcode that starts at [startPositionMs]. A provider that can't tell
      * says it isn't, so nothing relies on a start the stream may ignore.
      */
-    fun openStream(
+    suspend fun openStream(
         song: Song,
         startPositionMs: Long = 0,
         playId: String? = null

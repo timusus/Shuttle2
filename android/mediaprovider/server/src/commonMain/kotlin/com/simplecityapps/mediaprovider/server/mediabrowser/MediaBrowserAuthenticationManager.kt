@@ -148,6 +148,30 @@ open class MediaBrowserAuthenticationManager(
         return DownloadSource(path, target.mimeType)
     }
 
+    /**
+     * Whether the server transcodes [buildUniversalPath]'s stream of [itemId], as its `PlaybackInfo` decides for the
+     * same profile and cap; null when it can't say (an error, or no source).
+     */
+    suspend fun transcodes(
+        itemId: String,
+        authenticatedCredentials: AuthenticatedCredentials,
+        maxBitrateKbps: Int?,
+        format: TranscodeFormat
+    ): Boolean? {
+        val address = credentialStore.address ?: return null
+        val target = streamProfile.streamTarget(format)
+        val profile = DeviceProfile(
+            maxStreamingBitrate = maxBitrateKbps?.let { it * 1000 },
+            directPlayProfiles = streamProfile.directPlayContainers.split(',').map { entry ->
+                DirectPlayProfile(container = entry.substringBefore('|'), audioCodec = entry.substringAfter('|', "").ifEmpty { null })
+            },
+            transcodingProfiles = listOf(TranscodingProfile(container = target.container, audioCodec = target.codec.codec, protocol = target.protocol))
+        )
+        val result = userService.playbackInfo(address, authenticatedCredentials, itemId, profile.maxStreamingBitrate, PlaybackInfoRequest(profile))
+        if (result is NetworkResult.Failure) logger.warn(result.error) { "Failed to get $itemId's playback info" }
+        return (result as? NetworkResult.Success)?.body?.mediaSources?.firstOrNull()?.transcodes
+    }
+
     /** What the [StreamProfile] transcodes a stream to in [format]. */
     fun streamTarget(format: TranscodeFormat): TranscodeTarget = streamProfile.streamTarget(format)
 

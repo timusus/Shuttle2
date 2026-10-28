@@ -25,30 +25,54 @@ open class MediaBrowserStreamUrlProvider(
         song: Song,
         startPositionMs: Long,
         playId: String?
-    ): String = openStream(song, startPositionMs, playId).url
+    ): String {
+        val maxBitrateKbps = streamingPolicy.maxBitrateKbps()
+        val format = streamingPolicy.transcodeFormat()
+        val url = universalPath(song, credentials(), maxBitrateKbps, startPositionMs, format, playId)
+        streamingPolicy.streamOpened(song.path, delivered(song, maxBitrateKbps, format))
+        return url
+    }
 
-    /** The universal stream is a transcode, which starts at `StartTimeTicks`, wherever the song isn't direct-played. */
-    override fun openStream(
+    /**
+     * The universal stream is a transcode, which starts at `StartTimeTicks`, wherever the server's `PlaybackInfo` says
+     * it doesn't send the original; [delivered]'s guess stands in when the server can't say.
+     */
+    override suspend fun openStream(
         song: Song,
         startPositionMs: Long,
         playId: String?
     ): OpenedStream {
-        val authenticatedCredentials = authenticationManager.getAuthenticatedCredentials()
-            ?: throw IllegalStateException("Failed to authenticate")
+        val authenticatedCredentials = credentials()
         val maxBitrateKbps = streamingPolicy.maxBitrateKbps()
         val format = streamingPolicy.transcodeFormat()
-        val url = authenticationManager.buildUniversalPath(
-            itemId = song.itemId(),
-            authenticatedCredentials = authenticatedCredentials,
-            maxBitrateKbps = maxBitrateKbps,
-            startPositionMs = startPositionMs,
-            format = format,
-            playId = playId
-        ) ?: throw IllegalStateException("Failed to build $scheme path")
-        val delivered = delivered(song, maxBitrateKbps, format)
+        val url = universalPath(song, authenticatedCredentials, maxBitrateKbps, startPositionMs, format, playId)
+        val delivered = when (authenticationManager.transcodes(song.itemId(), authenticatedCredentials, maxBitrateKbps, format)) {
+            true -> authenticationManager.streamTarget(format).codec.delivered(maxBitrateKbps)
+            false -> null
+            null -> delivered(song, maxBitrateKbps, format)
+        }
         streamingPolicy.streamOpened(song.path, delivered)
         return OpenedStream(url, transcoded = delivered != null)
     }
+
+    private fun credentials(): AuthenticatedCredentials = authenticationManager.getAuthenticatedCredentials()
+        ?: throw IllegalStateException("Failed to authenticate")
+
+    private fun universalPath(
+        song: Song,
+        authenticatedCredentials: AuthenticatedCredentials,
+        maxBitrateKbps: Int?,
+        startPositionMs: Long,
+        format: TranscodeFormat,
+        playId: String?
+    ): String = authenticationManager.buildUniversalPath(
+        itemId = song.itemId(),
+        authenticatedCredentials = authenticatedCredentials,
+        maxBitrateKbps = maxBitrateKbps,
+        startPositionMs = startPositionMs,
+        format = format,
+        playId = playId
+    ) ?: throw IllegalStateException("Failed to build $scheme path")
 
     /**
      * The original file ([MediaBrowserAuthenticationManager.buildDownloadPath]), recorded as the song's own type, unless the

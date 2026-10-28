@@ -303,7 +303,7 @@ class SubsonicStreamUrlProvider(private val streams: SubsonicStreams) : StreamUr
     ): String = streams.immediateStream(song, startPositionMs).url
 
     /** Only a transcode the server can start part way in ([SubsonicStream.timeSeek]) starts at the position. */
-    override fun openStream(
+    override suspend fun openStream(
         song: Song,
         startPositionMs: Long,
         playId: String?

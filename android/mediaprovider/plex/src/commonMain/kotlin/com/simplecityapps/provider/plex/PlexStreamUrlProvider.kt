@@ -81,7 +81,7 @@ class PlexStreamUrlProvider(
         playId: String?
     ): String = stream(song, startPositionMs, playId).path
 
-    override fun openStream(
+    override suspend fun openStream(
         song: Song,
         startPositionMs: Long,
         playId: String?

@@ -1,19 +1,21 @@
 package com.simplecityapps.mediaprovider.server.mediabrowser
 
 import com.simplecityapps.mediaprovider.ClientIdentity
+import com.simplecityapps.mediaprovider.server.AuthenticatedCredentials
 import com.simplecityapps.mediaprovider.server.mediaBrowserAuthorization
 import com.simplecityapps.networking.networkResult
 import com.simplecityapps.networking.retrofit.NetworkResult
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
 import io.ktor.client.request.header
+import io.ktor.client.request.parameter
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.contentType
 
-/** A [server]'s password sign-in and the signed-in user. */
+/** A [server]'s password sign-in, the signed-in user, and how it would send them an item. */
 class UserService(
     private val client: HttpClient,
     private val server: MediaBrowserServer,
@@ -38,6 +40,23 @@ class UserService(
     ): NetworkResult<User> = client.networkResult {
         get("$url${server.apiPrefix}/Users/Me") {
             server.authorize(this, token, clientIdentity)
+        }
+    }
+
+    /** How the server would send item [itemId] to a player with [request]'s profile, capped at [maxBitrateBps]. */
+    suspend fun playbackInfo(
+        url: String,
+        credentials: AuthenticatedCredentials,
+        itemId: String,
+        maxBitrateBps: Int?,
+        request: PlaybackInfoRequest
+    ): NetworkResult<PlaybackInfo> = client.networkResult {
+        post("$url${server.apiPrefix}/Items/$itemId/PlaybackInfo") {
+            server.authorize(this, credentials.accessToken, clientIdentity)
+            parameter("UserId", credentials.userId)
+            maxBitrateBps?.let { parameter("MaxStreamingBitrate", it) }
+            contentType(ContentType.Application.Json)
+            setBody(request)
         }
     }
 }
