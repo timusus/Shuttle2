@@ -54,7 +54,7 @@ class MediaActionsHostTest {
             }
         }
         val available = mockk<AvailableMediaActions>()
-        every { available(any()) } returns flowOf(MediaActionType.entries - MediaActionType.PlayAfterWork)
+        every { available(any()) } returns flowOf(MediaActionType.entries - MediaActionType.PlayAfterWork - MediaActionType.PlayFrom)
         val playlistRepository = mockk<PlaylistRepository>()
         every { playlistRepository.getPlaylists(any()) } returns flowOf(listOf(roadTrip))
         val viewModel = MediaActionsViewModel(handler, available, playlistRepository)

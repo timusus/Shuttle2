@@ -29,6 +29,7 @@ class MediaActionHandler @Inject constructor(
     private val startRadio: StartRadio,
     private val enqueueSongs: EnqueueSongs,
     private val playAfterWork: PlayAfterWork,
+    private val playFromCopy: PlayFromCopy,
     private val addToPlaylist: AddToPlaylist,
     private val createPlaylist: CreatePlaylist,
     private val favouriteSongs: FavouriteSongs,
@@ -61,6 +62,8 @@ class MediaActionHandler @Inject constructor(
         is MediaAction.PlayAfterWork -> playAfterWork(action.selection).let { songs ->
             Message(if (songs.isEmpty()) MediaActionMessage.NoSongs else MediaActionMessage.AddedToQueue(songs.size))
         }
+
+        is MediaAction.PlayFromCopy -> playFromCopy(action)
 
         is MediaAction.AddToQueue -> enqueue(action.selection, EnqueueSongs.Position.End)
 
@@ -105,6 +108,14 @@ class MediaActionHandler @Inject constructor(
         is MediaAction.Download -> download(action.selection)
 
         is MediaAction.RemoveDownload -> removeDownload(action.selection)
+    }
+
+    private suspend fun playFromCopy(action: MediaAction.PlayFromCopy): MediaActionResult {
+        val song = (action.selection as? MediaSelection.Songs)?.songs?.singleOrNull() ?: return Message(MediaActionMessage.NoSongs)
+        return when (val result = playFromCopy(song, action.copy)) {
+            is PlaySongs.Result.Success -> MediaActionResult.None
+            is PlaySongs.Result.Failure -> Message(MediaActionMessage.PlaybackFailed(result.message))
+        }
     }
 
     private suspend fun play(action: MediaAction.Play, songs: List<Song>): MediaActionResult {

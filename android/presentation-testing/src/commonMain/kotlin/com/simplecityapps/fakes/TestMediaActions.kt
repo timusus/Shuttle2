@@ -33,6 +33,7 @@ import com.simplecityapps.shuttle.ui.actions.ObserveArtists
 import com.simplecityapps.shuttle.ui.actions.ObserveGenres
 import com.simplecityapps.shuttle.ui.actions.ObserveSongs
 import com.simplecityapps.shuttle.ui.actions.PlayAfterWork
+import com.simplecityapps.shuttle.ui.actions.PlayFromCopy
 import com.simplecityapps.shuttle.ui.actions.PlaySongs
 import com.simplecityapps.shuttle.ui.actions.ResolveSongs
 import com.simplecityapps.shuttle.ui.actions.RestorePlaylistSongs
@@ -77,6 +78,7 @@ class TestMediaActions(
     val resumeContext = ResumeContext(queueOperations, playbackOperations, playHistoryRepository, resolveSongs, filterPlayableSongs, Random(0))
     val enqueueSongs = EnqueueSongs(playbackOperations, resolveSongs, filterPlayableSongs)
     val playAfterWork = PlayAfterWork(queueOperations, playbackOperations, resolveSongs, filterPlayableSongs)
+    val playFromCopy = PlayFromCopy(queueOperations, playbackOperations, playSongs)
     val addToPlaylist = AddToPlaylist(playlistRepository, resolveSongs)
     val createPlaylist = CreatePlaylist(playlistRepository, resolveSongs)
     val excludeSongs = ExcludeSongs(songRepository, queueOperations, resolveSongs)
@@ -117,6 +119,7 @@ class TestMediaActions(
         startRadio = startRadio,
         enqueueSongs = enqueueSongs,
         playAfterWork = playAfterWork,
+        playFromCopy = playFromCopy,
         addToPlaylist = addToPlaylist,
         favouriteSongs = favouriteSongs,
         createPlaylist = createPlaylist,

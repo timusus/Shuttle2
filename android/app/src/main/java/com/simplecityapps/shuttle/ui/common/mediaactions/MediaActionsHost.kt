@@ -25,6 +25,7 @@ import androidx.compose.material.icons.rounded.Radio
 import androidx.compose.material.icons.rounded.Share
 import androidx.compose.material.icons.rounded.Shuffle
 import androidx.compose.material.icons.rounded.SkipNext
+import androidx.compose.material.icons.rounded.SwapHoriz
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SnackbarResult
@@ -57,6 +58,7 @@ import com.simplecityapps.shuttle.designsystem.component.S2DialogContent
 import com.simplecityapps.shuttle.di.appGraph
 import com.simplecityapps.shuttle.model.PlayContext
 import com.simplecityapps.shuttle.model.Playlist
+import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.settings.DownloadSettings
 import com.simplecityapps.shuttle.ui.actions.MediaAction
 import com.simplecityapps.shuttle.ui.actions.MediaActionMessage
@@ -107,6 +109,10 @@ class MediaActionsState internal constructor(
         internal set
     var playlistPicker: MediaSelection? by mutableStateOf(null)
         internal set
+
+    /** The merged song whose copy Play from is choosing; the copy picker shows it and sends [MediaAction.PlayFromCopy]. */
+    var copyPicker: Song? by mutableStateOf(null)
+        internal set
     internal var createPlaylist: MediaSelection? by mutableStateOf(null)
     internal var confirmation: MediaActionResult.ConfirmationRequired? by mutableStateOf(null)
 
@@ -118,7 +124,7 @@ class MediaActionsState internal constructor(
 
     /**
      * Runs [type] on [selection], playing or shuffling from [playContext] when given. Add to playlist has no action
-     * until a playlist is picked, so it opens the picker.
+     * until a playlist is picked, so it opens the picker. Play from likewise opens the copy picker.
      */
     fun perform(
         type: MediaActionType,
@@ -134,6 +140,8 @@ class MediaActionsState internal constructor(
             onDispatch(action)
         } else if (type == MediaActionType.AddToPlaylist) {
             playlistPicker = selection
+        } else if (type == MediaActionType.PlayFrom) {
+            copyPicker = (selection as? MediaSelection.Songs)?.songs?.singleOrNull()
         }
     }
 }
@@ -360,6 +368,7 @@ fun MediaActionType.label(): String = stringResource(
         MediaActionType.Shuffle -> R.string.menu_title_shuffle
         MediaActionType.PlayNext -> R.string.menu_title_play_next
         MediaActionType.PlayAfterWork -> R.string.menu_title_play_after_work
+        MediaActionType.PlayFrom -> R.string.menu_title_play_from
         MediaActionType.AddToQueue -> R.string.menu_title_add_to_queue
         MediaActionType.AddToPlaylist -> R.string.menu_title_add_to_playlist
         MediaActionType.StartRadio -> R.string.media_action_start_radio
@@ -381,6 +390,7 @@ val MediaActionType.icon: ImageVector
         MediaActionType.Shuffle -> Icons.Rounded.Shuffle
         MediaActionType.PlayNext -> Icons.Rounded.SkipNext
         MediaActionType.PlayAfterWork -> Icons.Rounded.QueuePlayNext
+        MediaActionType.PlayFrom -> Icons.Rounded.SwapHoriz
         MediaActionType.AddToQueue -> Icons.AutoMirrored.Rounded.QueueMusic
         MediaActionType.AddToPlaylist -> Icons.AutoMirrored.Rounded.PlaylistAdd
         MediaActionType.StartRadio -> Icons.Rounded.Radio

@@ -8,6 +8,9 @@ import com.simplecityapps.shuttle.model.Song
 /** The kinds of action the shared actions sheet offers; [AvailableMediaActions] lists the ones a selection allows. */
 enum class MediaActionType {
     Play,
+
+    /** Opens the copy picker for a merged song, which then sends [MediaAction.PlayFromCopy]. */
+    PlayFrom,
     Shuffle,
     PlayNext,
 
@@ -31,9 +34,10 @@ enum class MediaActionType {
     RemoveDownload,
     ;
 
-    /** The action this entry sends when tapped; null for [AddToPlaylist], which needs a playlist picked first. */
+    /** The action this entry sends when tapped; null for [AddToPlaylist] and [PlayFrom], which need a pick first. */
     fun actionFor(selection: MediaSelection): MediaAction? = when (this) {
         Play -> MediaAction.Play(selection)
+        PlayFrom -> null
         Shuffle -> MediaAction.Shuffle(selection)
         PlayNext -> MediaAction.PlayNext(selection)
         PlayAfterWork -> MediaAction.PlayAfterWork(selection)
@@ -89,6 +93,9 @@ sealed interface MediaAction {
     ) : MediaAction {
         override val selection: MediaSelection get() = fromStart.selection
     }
+
+    /** Plays [copy] of the selection's single song now, keeping the queue. */
+    data class PlayFromCopy(override val selection: MediaSelection, val copy: Song) : MediaAction
 
     data class PlayNext(override val selection: MediaSelection) : MediaAction
 
