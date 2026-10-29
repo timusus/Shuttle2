@@ -1,5 +1,6 @@
 package com.simplecityapps.shuttle.shared.settings
 
+import com.simplecityapps.mediaprovider.settings.LibrarySettings
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainMode
 import com.simplecityapps.playback.settings.PlaybackSettings
 import com.simplecityapps.shuttle.settings.AppearanceSettings
@@ -50,6 +51,8 @@ class IosSettingsCatalogTest {
             StreamingSettings.Format.key,
             StreamingSettings.DownloadQuality.key,
             DownloadSettings.WifiOnly.key,
+            LibrarySettings.MergeCopies.key,
+            LibrarySettings.PreferredCopy.key,
             ArtistSettings.ShowCreditedArtists.key,
             ArtworkSettings.LocalOnly.key,
             AppearanceSettings.ColourFromArtwork.key,
