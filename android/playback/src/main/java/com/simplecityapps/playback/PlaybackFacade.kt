@@ -17,6 +17,7 @@ import com.simplecityapps.playback.queue.ShuffleMode
 import com.simplecityapps.playback.queue.queueEntryOrNull
 import com.simplecityapps.shuttle.model.PlayContext
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.persistence.SourceStateStore
 import com.simplecityapps.shuttle.settings.Preference
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -66,14 +67,18 @@ class PlaybackFacade(
     /** Whether an item's URI streams a transcode the server drops when another starts (see [ItemLoader]). */
     isReplaceableTranscode: (Uri) -> Boolean = { false },
     /** Keeps the playback service in the foreground while a play is held for a call (see [CallHold]). */
-    foregroundHold: ForegroundHold = ForegroundHold {}
+    foregroundHold: ForegroundHold = ForegroundHold {},
+    /** Where songs that fail to play are marked missing, so another copy ranks first (see [ItemLoader]). */
+    sourceState: SourceStateStore? = null,
+    /** Plays another copy of an entry's song in its place (see [ItemLoader]). */
+    replaceSong: (uid: Long, song: Song) -> Unit = { _, _ -> }
 ) : PlaybackOperations,
     PlaybackStateSource {
     private val playerThread = PlayerThread(player)
 
     private val handover: CastHandover = CastHandover(player, castDeviceName) { remote -> if (!remote) queueStore.saveHandedBack() }
 
-    private val loader = ItemLoader(player, localPlayer, giveUp = ::pause, isReplaceableTranscode = isReplaceableTranscode)
+    private val loader = ItemLoader(player, localPlayer, giveUp = ::pause, isReplaceableTranscode = isReplaceableTranscode, sourceState = sourceState, replaceSong = replaceSong)
 
     private val speedStore = PlaybackSpeedStore(player, playbackSpeed)
 

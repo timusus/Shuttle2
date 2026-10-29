@@ -14,11 +14,13 @@ import com.simplecityapps.playback.chromecast.CastQueue
 import com.simplecityapps.playback.chromecast.CastSessionManager
 import com.simplecityapps.playback.engine.SongUriResolver
 import com.simplecityapps.playback.persistence.QueueStore
+import com.simplecityapps.playback.queue.QueueFacade
 import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.playback.settings.PlaybackSettings
 import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.shuttle.di.ApplicationContext
 import com.simplecityapps.shuttle.di.MainImmediateDispatcher
+import com.simplecityapps.shuttle.persistence.SourceStateStore
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer
 import dev.zacsweers.metro.ContributesTo
@@ -50,7 +52,9 @@ class PlaybackOperationsModule {
         @MainImmediateDispatcher mainImmediateDispatcher: CoroutineDispatcher,
         castQueue: CastQueue,
         songUriResolver: SongUriResolver,
-        foregroundHold: ForegroundHold
+        foregroundHold: ForegroundHold,
+        sourceState: SourceStateStore,
+        queueFacade: QueueFacade
     ): PlaybackFacade = PlaybackFacade(
         queueOperations,
         player,
@@ -63,7 +67,9 @@ class PlaybackOperationsModule {
         castQueue,
         castDeviceName = { CastSessionManager.deviceName(context) },
         isReplaceableTranscode = songUriResolver::isReplaceableTranscode,
-        foregroundHold = foregroundHold
+        foregroundHold = foregroundHold,
+        sourceState = sourceState,
+        replaceSong = queueFacade::replaceSong
     )
 
     @Provides

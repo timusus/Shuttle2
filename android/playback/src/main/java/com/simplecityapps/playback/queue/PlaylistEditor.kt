@@ -131,6 +131,16 @@ internal class PlaylistEditor(
         }
     }
 
+    /** Gives the item with [uid] [song]'s data, keeping its uid and place. */
+    fun replaceSong(
+        uid: Long,
+        song: Song
+    ) {
+        publisher.batch {
+            replaceChanged(player.queueEntries().map { entry -> if (entry.uid == uid) song else entry.song })
+        }
+    }
+
     /**
      * Gives each playlist item the song at its index in [songs], where that differs, keeping its uid and its place in
      * both orders.

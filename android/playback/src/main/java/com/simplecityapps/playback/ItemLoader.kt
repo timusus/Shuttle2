@@ -9,10 +9,13 @@ import androidx.media3.common.Timeline
 import androidx.media3.datasource.HttpDataSource
 import androidx.media3.exoplayer.ExoPlaybackException
 import androidx.media3.exoplayer.ExoPlayer
+import com.simplecityapps.playback.chromecast.isRemote
 import com.simplecityapps.playback.engine.isResolutionFailure
 import com.simplecityapps.playback.engine.notFound
+import com.simplecityapps.playback.queue.QueueEntry
 import com.simplecityapps.playback.queue.queueEntryOrNull
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.persistence.SourceStateStore
 import java.net.ConnectException
 import java.net.NoRouteToHostException
 import java.net.SocketTimeoutException
@@ -44,7 +47,11 @@ class ItemLoader(
      * Whether an item's URI (a song's own) streams a transcode the server drops when another starts, which a 404 on it
      * re-opens (see [com.simplecityapps.playback.engine.SongUriResolver.isReplaceableTranscode]).
      */
-    private val isReplaceableTranscode: (Uri) -> Boolean = { false }
+    private val isReplaceableTranscode: (Uri) -> Boolean = { false },
+    /** Where a copy that fails for something in itself is marked missing, and unmarked once it plays. */
+    private val sourceState: SourceStateStore? = null,
+    /** Plays another copy in place of an entry's song, keeping the entry's uid and place (see [com.simplecityapps.playback.queue.QueueFacade.replaceSong]). */
+    private val replaceSong: (uid: Long, song: Song) -> Unit = { _, _ -> }
 ) : Player.Listener {
     /**
      * The uid of the entry that last became ready to play, or that playback moved on to by playing out the one
@@ -60,6 +67,9 @@ class ItemLoader(
 
     /** The last replaced transcode [reopensReplacedTranscode] opened again, and where. */
     private var lastReopen: Reopen? = null
+
+    /** The uid of the entry whose copies [fallsBackToCopy] has tried, and the song ids it tried. */
+    private var triedCopies: Pair<Long, Set<Long>>? = null
 
     /** Buffered, so a collector on the main thread misses no failure even when two arrive before it resumes. */
     private val _failureFlow = MutableSharedFlow<Song>(extraBufferCapacity = EVENT_BUFFER, onBufferOverflow = BufferOverflow.DROP_OLDEST)
@@ -100,6 +110,7 @@ class ItemLoader(
         readyUid = null
         loadFailures = 0
         lastReopen = null
+        triedCopies = null
         player.seekTo(player.currentMediaItemIndex, positionMs.toLong())
         if (player.playbackState == Player.STATE_IDLE) {
             player.prepare()
@@ -112,7 +123,9 @@ class ItemLoader(
     override fun onPlaybackStateChanged(playbackState: Int) {
         when (playbackState) {
             Player.STATE_READY -> {
-                readyUid = player.currentMediaItem?.queueEntryOrNull?.uid
+                val entry = player.currentMediaItem?.queueEntryOrNull
+                if (entry != null && entry.uid != readyUid) sourceState?.setSongMissing(entry.song.mediaProvider.name, entry.song.id, missing = false)
+                readyUid = entry?.uid
                 if (_loadFailure.value?.uid == readyUid) clearLoadFailure()
                 loadFailures = 0
                 complete(Result.success(pendingLoad?.attempt == 1))
@@ -166,13 +179,14 @@ class ItemLoader(
      * the queue, whether it was loaded directly or reached by playing on. A load that doesn't skip (a restore) leaves
      * it current, paused, unless it's played meanwhile: playing it tries it again, and skips it then. An item that
      * fails once it's playing stops playback. A transcode the server replaced is opened again rather than either (see
-     * [reopensReplacedTranscode]).
+     * [reopensReplacedTranscode]), and a song with another copy plays that copy instead (see [fallsBackToCopy]).
      */
     override fun onPlayerError(error: PlaybackException) {
         val failedIndex = error.failedIndex() ?: player.currentMediaItemIndex
         val failedEntry = player.currentTimeline.takeIf { failedIndex < it.windowCount }?.let { player.getMediaItemAt(failedIndex).queueEntryOrNull }
         if (failedEntry != null && reopensReplacedTranscode(error, failedIndex, failedEntry.uid)) return
         Timber.e(error, "Playback failed for ${failedEntry?.song?.name}")
+        if (failedEntry != null && fallsBackToCopy(error, failedIndex, failedEntry)) return
 
         if (!error.isResolutionFailure()) {
             failedEntry?.song?.let(_failureFlow::tryEmit)
@@ -218,6 +232,32 @@ class ItemLoader(
         return true
     }
 
+    /**
+     * Marks the failed copy missing when it failed for something in itself, then plays the entry's next copy not yet
+     * tried for it nor marked, at the position it failed at. Silent, and not a load failure: those are for when every
+     * copy has failed. Local playback only: a Cast receiver's window follows the local queue later.
+     */
+    private fun fallsBackToCopy(
+        error: PlaybackException,
+        failedIndex: Int,
+        failedEntry: QueueEntry
+    ): Boolean {
+        val song = failedEntry.song
+        if (error.isCopyMissing()) sourceState?.setSongMissing(song.mediaProvider.name, song.id, missing = true)
+        if (player.isRemote) return false
+        val tried = triedCopies?.takeIf { it.first == failedEntry.uid }?.second.orEmpty() + song.id
+        triedCopies = failedEntry.uid to tried
+        val next = song.copies.firstOrNull { copy ->
+            copy.id !in tried && sourceState?.missingSongs(copy.mediaProvider.name)?.contains(copy.id) != true
+        } ?: return false
+        val positionMs = if (failedIndex == player.currentMediaItemIndex) player.currentPosition else 0
+        Timber.w("Playing ${song.name} from ${next.mediaProvider} instead")
+        replaceSong(failedEntry.uid, next.copy(copies = song.copies))
+        player.seekTo(failedIndex, positionMs)
+        player.prepare()
+        return true
+    }
+
     /** The playlist index of the item [this] failed on, if it says: only the local player does. */
     private fun PlaybackException.failedIndex(): Int? {
         val periodUid = (this as? ExoPlaybackException)?.mediaPeriodId?.periodUid ?: return null
@@ -246,6 +286,23 @@ class ItemLoader(
 
 /** Whether this failed for want of a connection to the server (or to resolve its stream), not for anything in the song. */
 private fun Throwable.isConnectionFailure(): Boolean = generateSequence(this) { it.cause }.any { it is ConnectException || it is UnknownHostException || it is SocketTimeoutException || it is NoRouteToHostException }
+
+/** Whether this failed for something in the copy itself: its file gone, its format unplayable, or its server no longer holding it. */
+private fun PlaybackException.isCopyMissing(): Boolean = !isConnectionFailure() &&
+    (
+        errorCode in COPY_MISSING_ERRORS ||
+            generateSequence<Throwable>(this) { it.cause }.filterIsInstance<HttpDataSource.InvalidResponseCodeException>().any { it.responseCode == 404 || it.responseCode == 410 }
+        )
+
+private val COPY_MISSING_ERRORS = setOf(
+    PlaybackException.ERROR_CODE_IO_FILE_NOT_FOUND,
+    PlaybackException.ERROR_CODE_PARSING_CONTAINER_MALFORMED,
+    PlaybackException.ERROR_CODE_PARSING_CONTAINER_UNSUPPORTED,
+    PlaybackException.ERROR_CODE_DECODER_INIT_FAILED,
+    PlaybackException.ERROR_CODE_DECODING_FAILED,
+    PlaybackException.ERROR_CODE_DECODING_FORMAT_EXCEEDS_CAPABILITIES,
+    PlaybackException.ERROR_CODE_DECODING_FORMAT_UNSUPPORTED
+)
 
 /** How many events a flow of them buffers for a collector that hasn't caught up. */
 internal const val EVENT_BUFFER = 64

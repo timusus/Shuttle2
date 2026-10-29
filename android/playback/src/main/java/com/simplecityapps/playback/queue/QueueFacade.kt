@@ -190,6 +190,12 @@ class QueueFacade(
         playerThread.run { editor.updateSongs(songsById) }
     }
 
+    /** Plays [song] in place of the entry [uid]'s, keeping its uid and place: another copy of the same song. Main thread only. */
+    internal fun replaceSong(
+        uid: Long,
+        song: Song
+    ) = editor.replaceSong(uid, song)
+
     override fun move(
         from: Int,
         to: Int

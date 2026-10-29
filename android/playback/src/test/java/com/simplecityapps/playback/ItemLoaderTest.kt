@@ -12,6 +12,7 @@ import androidx.media3.test.utils.FakeClock
 import androidx.media3.test.utils.TestExoPlayerBuilder
 import com.simplecityapps.playback.engine.MediaResolutionException
 import com.simplecityapps.playback.fakes.testSong
+import com.simplecityapps.playback.queue.QueueEntry
 import com.simplecityapps.playback.queue.queueEntryOrNull
 import com.simplecityapps.playback.queue.toMediaItem
 import com.simplecityapps.playback.queue.toQueueEntry
@@ -19,6 +20,8 @@ import com.simplecityapps.playback.queue.uri
 import com.simplecityapps.playback.spec.ClockDriver
 import com.simplecityapps.playback.spec.PlaybackHarness
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
+import com.simplecityapps.shuttle.persistence.SourceStateStore
 import io.kotest.matchers.longs.shouldBeGreaterThanOrEqual
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
@@ -49,7 +52,20 @@ class ItemLoaderTest {
     /** A song streamed from a transcode the server drops when another starts (as Plex does): its own file, as that's what tells it apart. */
     private val transcode = PlaybackHarness.song(3, file = PlaybackHarness.TONE_3S)
 
-    private val loader = ItemLoader(player, player, giveUp = { gaveUp++ }, isReplaceableTranscode = { uri -> uri == transcode.uri() }).also(player::addListener)
+    private val sourceState = SourceStateStore(InMemoryKeyValueStore())
+
+    private val loader =
+        ItemLoader(
+            player,
+            player,
+            giveUp = { gaveUp++ },
+            isReplaceableTranscode = { uri -> uri == transcode.uri() },
+            sourceState = sourceState,
+            replaceSong = { uid, song ->
+                val index = (0 until player.mediaItemCount).first { uidAt(it) == uid }
+                player.replaceMediaItem(index, QueueEntry(uid, song).toMediaItem())
+            }
+        ).also(player::addListener)
 
     private val scope = CoroutineScope(Dispatchers.Unconfined)
 
@@ -385,6 +401,89 @@ class ItemLoaderTest {
 
         uidAt(0) shouldNotBe uidAt(1)
         loader.loadFailure.value shouldBe SongLoadFailure(uidAt(1), playable, serverUnreachable = false)
+    }
+
+    /** [first] with [others] as its other copies, ranked in that order. */
+    private fun withCopies(
+        first: Song,
+        vararg others: Song
+    ): Song = first.copy(copies = listOf(first, *others))
+
+    private val currentSongId get() = player.currentMediaItem?.queueEntryOrNull?.song?.id
+
+    @Test
+    fun `a copy whose file is missing is marked - and its next copy plays in its place without a failure`() {
+        val song = withCopies(missing, playable)
+        queue(song, PlaybackHarness.song(4))
+        val uid = uidAt(0)
+
+        load(skipUnloadable = true) shouldBe Result.success(true)
+
+        player.currentMediaItemIndex shouldBe 0
+        uidAt(0) shouldBe uid
+        currentSongId shouldBe 2L
+        failures shouldBe emptyList()
+        loader.loadFailure.value shouldBe null
+        gaveUp shouldBe 0
+        sourceState.missingSongs("Shuttle") shouldBe setOf(1L)
+    }
+
+    @Test
+    fun `a song whose every copy fails is reported and skipped as before`() {
+        val otherMissing = testSong(5, path = "file:///nonexistent/other.wav", mimeType = "audio/wav")
+        queue(withCopies(missing, otherMissing), playable)
+
+        load(skipUnloadable = true) shouldBe Result.success(false)
+
+        player.currentMediaItemIndex shouldBe 1
+        failures.map { it.id } shouldBe listOf(5L)
+        sourceState.missingSongs("Shuttle") shouldBe setOf(1L, 5L)
+    }
+
+    @Test
+    fun `a copy already marked missing is passed over for the next`() {
+        sourceState.setSongMissing("Shuttle", 2, missing = true)
+        queue(withCopies(missing, playable, PlaybackHarness.song(4)))
+
+        load(skipUnloadable = true) shouldBe Result.success(true)
+
+        currentSongId shouldBe 4L
+    }
+
+    @Test
+    fun `a connection failure plays the next copy without marking the failed one`() {
+        playingFailure(openFailure(java.net.ConnectException("refused")), withCopies(playable, PlaybackHarness.song(4)))
+
+        driver.runUntil { player.isPlaying }
+        currentSongId shouldBe 4L
+        loader.loadFailure.value shouldBe null
+        sourceState.missingSongs("Shuttle") shouldBe emptySet()
+    }
+
+    @Test
+    fun `a copy failing mid-song resumes on the next copy at the same position`() {
+        queue(withCopies(playable, PlaybackHarness.song(4, file = PlaybackHarness.TONE_3S)))
+        load(skipUnloadable = true)
+        player.play()
+        driver.runUntil { player.currentPosition >= 500 }
+        val position = player.currentPosition
+
+        failWith(java.io.IOException("broken"))
+
+        driver.runUntil { player.isPlaying }
+        currentSongId shouldBe 4L
+        player.currentPosition shouldBeGreaterThanOrEqual position
+        gaveUp shouldBe 0
+    }
+
+    @Test
+    fun `a copy marked missing that plays again is unmarked`() {
+        sourceState.setSongMissing("Shuttle", 2, missing = true)
+        queue(playable)
+
+        load(skipUnloadable = true) shouldBe Result.success(true)
+
+        sourceState.missingSongs("Shuttle") shouldBe emptySet()
     }
 
     @Test
