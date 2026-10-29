@@ -29,6 +29,7 @@ import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 import org.junit.After
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -442,6 +443,30 @@ class QueueStoreTest {
 
         harness.restore()
 
+        val copies = { harness.queueOperations.queueStateFlow.value.items.map { item -> item.song.copies.map { it.id } } }
+        harness.runUntil { copies() != listOf(emptyList<Long>(), emptyList()) }
+        copies() shouldBe listOf(listOf(1L, 4L), listOf(2L, 4L))
+    }
+
+    @Test
+    fun `a restore does not wait for the library to find copies - the songs get them once it has`() {
+        saved(queueIds = "1,2", queuePosition = 0, playbackPosition = 0, repeatMode = RepeatMode.Off)
+        val libraryLoaded = CompletableDeferred<Unit>()
+        val fake = FakeSongRepository(library)
+        val slowCopies = object : SongRepository by fake {
+            override fun getSongs(query: SongQuery) = if (query is SongQuery.SongIds && query.withCopies) {
+                fake.getSongs(query).onStart { libraryLoaded.await() }.map { songs -> songs?.map { song -> song.copy(copies = listOf(song, library.last())) } }
+            } else {
+                fake.getSongs(query)
+            }
+        }
+        val harness = harness(songRepository = slowCopies)
+
+        harness.restore()
+        harness.currentIds() shouldBe listOf(1L, 2L)
+
+        libraryLoaded.complete(Unit)
+        harness.runUntil { harness.queueOperations.queueStateFlow.value.items.first().song.copies.isNotEmpty() }
         harness.queueOperations.queueStateFlow.value.items.map { item -> item.song.copies.map { it.id } } shouldBe listOf(listOf(1L, 4L), listOf(2L, 4L))
     }
 
@@ -646,7 +671,7 @@ class QueueStoreTest {
 
         harness.restore()
 
-        repository.readThreads.single() shouldNotBe Thread.currentThread()
+        repository.readThreads.first() shouldNotBe Thread.currentThread()
         atRestored shouldBe (listOf(1L, 2L, 3L) to 30_000L)
     }
 

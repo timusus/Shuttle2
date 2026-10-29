@@ -18,6 +18,7 @@ import com.simplecityapps.shuttle.model.PlayContext
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.query.SongQuery
 import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.TimeSource
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -208,7 +209,7 @@ class QueueStore(
      * Restores the saved shuffle and repeat modes straight away, so a request to play something before the queue is
      * restored finds them (a new queue can keep the shuffle mode). Then reads the saved queue and builds it off the main
      * thread, and sets it, loads it with [load] at the position to resume from, and marks the queue restored, in one
-     * main thread step. Leaves the queue and playback alone if the queue changes other than by this restore before
+     * main thread step; the songs' copies to fall back to follow once the library has loaded. Leaves the queue and playback alone if the queue changes other than by this restore before
      * then: a request to play something waits for the restore only so long (see PlayRequests), then sets its own queue.
      */
     fun restore(load: (positionMs: Int) -> Unit) {
@@ -254,7 +255,7 @@ class QueueStore(
         val restoredSeekPosition = if (savedQueue?.fromStart == true) 0 else seekPosition
 
         val mainWait = TimeSource.Monotonic.markNow()
-        withContext(mainDispatcher) {
+        val restored = withContext(mainDispatcher) {
             timings.add("main wait", mainWait)
             try {
                 applyRestoredQueue(savedQueue, shuffleMode, context, initialContentVersion, seekPosition, restoredSeekPosition, load, timings)
@@ -264,6 +265,30 @@ class QueueStore(
         }
 
         Timber.v("Queue restored in ${timings.total}ms (${timings.stages})")
+        if (restored) fillCopies()
+    }
+
+    /**
+     * Gives the restored queue's songs the copies each can fall back to, once the library can say which they are.
+     * [QueueFacade.updateSongs] keeps every item's place and the current one playing.
+     */
+    private suspend fun fillCopies() {
+        val songIds = withContext(mainDispatcher) { queue.queueStateFlow.value.items.map { item -> item.song.id }.distinct() }
+        if (songIds.isEmpty()) return
+        val withCopies = try {
+            songRepository.getSongs(SongQuery.SongIds(songIds, withCopies = true))
+                .filterNotNull()
+                .firstOrNull()
+                .orEmpty()
+                .filter { song -> song.copies.size > 1 }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            // The queue plays on as restored, each song without copies to fall back to.
+            Timber.e(e, "Failed to read the restored queue's copies")
+            return
+        }
+        if (withCopies.isNotEmpty()) withContext(mainDispatcher) { queue.updateSongs(withCopies) }
     }
 
     /** The saved queue, built ready to set, or null if there's none or none of its songs are left. */
@@ -274,7 +299,8 @@ class QueueStore(
     ): SavedQueue? {
         val saved = playbackPreferenceManager.readSavedQueue(shuffleMode, queuePosition) { songIds ->
             timings.measureSuspending("DB") {
-                songRepository.getSongs(SongQuery.SongIds(songIds, withCopies = true))
+                // Without copies: finding them waits for the whole library to load (fillCopies adds them after).
+                songRepository.getSongs(SongQuery.SongIds(songIds))
                     .filterNotNull()
                     .firstOrNull()
                     .orEmpty()
@@ -294,7 +320,8 @@ class QueueStore(
 
     /**
      * Sets [savedQueue] with the [shuffleMode] its position is in, and loads the current song, on the main thread, where
-     * nothing that sets the queue can come between the check and the set, or the set and the load.
+     * nothing that sets the queue can come between the check and the set, or the set and the load. False if the queue
+     * was set by something else meanwhile.
      */
     private fun applyRestoredQueue(
         savedQueue: SavedQueue?,
@@ -305,7 +332,7 @@ class QueueStore(
         restoredSeekPosition: Int,
         load: (positionMs: Int) -> Unit,
         timings: RestoreTimings
-    ) {
+    ): Boolean {
         val changed = if (savedQueue != null) {
             timings.measure("setQueue") { queue.setQueueIfContentVersion(initialContentVersion, savedQueue.queue, shuffleMode, context) } == null
         } else {
@@ -313,7 +340,7 @@ class QueueStore(
         }
         if (changed) {
             Timber.w("The queue was set while it was being restored; the saved queue is dropped")
-            return
+            return false
         }
 
         if (queue.queueStateFlow.value.items.isEmpty()) {
@@ -325,6 +352,7 @@ class QueueStore(
             playbackPreferenceManager.playbackPosition = restoredSeekPosition
         }
         timings.measure("load") { load(restoredSeekPosition) }
+        return true
     }
 
     companion object {

@@ -254,6 +254,32 @@ class IosPlaybackStoreTest {
     }
 
     @Test
+    fun `a restore does not wait for the library to find copies - and a restored song falls back to its copy once it has`() = runTest {
+        val first = launch()
+        first.play(listOf(a, b))
+        val libraryLoaded = CompletableDeferred<Unit>()
+        val slowCopies = object : SongRepository by songRepository {
+            override suspend fun loadSongs(query: SongQuery): List<Song> {
+                if (query !is SongQuery.SongIds || !query.withCopies) return songRepository.loadSongs(query)
+                libraryLoaded.await()
+                return songRepository.loadSongs(query).map { song -> song.copy(copies = listOf(song, d)) }
+            }
+        }
+
+        val second = launch(songs = slowCopies)
+        val queue = second.controller.queueOperations
+        queue.hasRestoredQueue shouldBe true
+        queue.queueStateFlow.value.items.map { it.song.id } shouldBe listOf(a.id, b.id)
+
+        libraryLoaded.complete(Unit)
+        second.engine.settle()
+        second.engine.failCurrent(IosFailureKind.Missing)
+        second.engine.settle()
+
+        queue.getCurrentItem()?.song?.id shouldBe d.id
+    }
+
+    @Test
     fun `a saved queue that fails to read still counts as restored`() = runTest {
         val first = launch()
         first.play(listOf(a, b))

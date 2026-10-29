@@ -50,17 +50,19 @@ class IosPlaybackStore(
     /**
      * Puts the saved speed back straight away, starts saving, and restores the saved modes and queue: the queue is read
      * off the main thread, then set and loaded paused at the position to resume from, unless something set the queue
-     * meanwhile. The queue is marked restored once that's done, or failed, so `hasQueue` settles either way.
+     * meanwhile. The queue is marked restored once that's done, or failed, so `hasQueue` settles either way. The songs'
+     * copies to fall back to follow once the library has loaded.
      */
     fun start() {
         restoreSpeed()
         startSaving()
         scope.launch(start = CoroutineStart.UNDISPATCHED) {
-            try {
+            val restored = try {
                 restore()
             } finally {
                 queueOperations.hasRestoredQueue = true
             }
+            if (restored) fillCopies()
         }
     }
 
@@ -71,7 +73,8 @@ class IosPlaybackStore(
         playbackSpeed.value.takeIf { it > 0f && it != 1f }?.let(controller::setPlaybackSpeed)
     }
 
-    private suspend fun restore() {
+    /** Whether the saved queue was set; false if there was none, or something set the queue meanwhile. */
+    private suspend fun restore(): Boolean {
         val shuffleMode = playbackPreferenceManager.shuffleMode
         val seekPosition = playbackPreferenceManager.playbackPosition ?: 0
         val queuePosition = playbackPreferenceManager.queuePosition
@@ -82,14 +85,14 @@ class IosPlaybackStore(
         val saved = queuePosition?.let { position -> readSavedQueue(shuffleMode, position) }
 
         if (saved != null) {
-            if (!controller.restoreQueue(initialContentVersion, saved.songs, saved.shuffleSongs, saved.position, shuffleMode, playbackPreferenceManager.playContext)) return
+            if (!controller.restoreQueue(initialContentVersion, saved.songs, saved.shuffleSongs, saved.position, shuffleMode, playbackPreferenceManager.playContext)) return false
         } else if (queueOperations.queueStateFlow.value.contentVersion != initialContentVersion) {
-            return
+            return false
         }
         if (queueOperations.queueStateFlow.value.items.isEmpty()) {
             // Nothing to show for a queue that's gone.
             playbackPreferenceManager.nowPlaying = null
-            return
+            return false
         }
         val restoredSeekPosition = if (saved?.fromStart == true) 0 else seekPosition
         if (restoredSeekPosition != seekPosition) {
@@ -98,6 +101,17 @@ class IosPlaybackStore(
         }
         // A saved song that can't load (a server out of reach) stays where it was left, as on Android.
         controller.load(restoredSeekPosition, skipUnloadable = false) {}
+        return true
+    }
+
+    /**
+     * Gives the restored queue's songs the copies each can fall back to, read off the main thread. `updateSongs` keeps
+     * every item's place and the current one playing. A failed read goes to the scope's exception handler.
+     */
+    private suspend fun fillCopies() {
+        val songIds = queueOperations.queueStateFlow.value.items.map { item -> item.song.id }.distinct()
+        val withCopies = withContext(readContext) { songRepository.loadSongs(SongQuery.SongIds(songIds, withCopies = true)) }
+        queueOperations.updateSongs(withCopies.filter { song -> song.copies.size > 1 })
     }
 
     /**
@@ -109,7 +123,8 @@ class IosPlaybackStore(
         queuePosition: Int
     ): SavedQueueSongs? = withContext(readContext) {
         playbackPreferenceManager.readSavedQueue(shuffleMode, queuePosition) { songIds ->
-            songRepository.loadSongs(SongQuery.SongIds(songIds, withCopies = true)).associateBy { song -> song.id }
+            // Without copies: finding them waits for the whole library to load (fillCopies adds them after).
+            songRepository.loadSongs(SongQuery.SongIds(songIds)).associateBy { song -> song.id }
         }
     }
 
