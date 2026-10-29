@@ -57,6 +57,7 @@ class SettingKeysTest {
             "ArtworkSettings.MediaSessionArtwork: media_session_artwork = true",
             "ArtworkSettings.NowPlayingArtworkSource: pref_now_playing_artwork = AlbumArt",
             "DebugSettings.FileLogging: pref_file_logging = false",
+            "DebugSettings.CopyRecordingIds: pref_copy_recording_ids = true",
             "PrivacySettings.CrashReporting: pref_crash_reporting = true",
             "PrivacySettings.Analytics: pref_firebase_analytics = true",
             "StreamingSettings.UnmeteredQuality: pref_streaming_quality_unmetered = Original",

@@ -39,8 +39,10 @@ import com.simplecityapps.mediaprovider.settings.LibrarySettings
 import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.shuttle.di.IoDispatcher
 import com.simplecityapps.shuttle.model.AlbumIndexProvider
+import com.simplecityapps.shuttle.model.SongCopyGrouping
 import com.simplecityapps.shuttle.model.SongCopyPreferences
 import com.simplecityapps.shuttle.persistence.SourceStateStore
+import com.simplecityapps.shuttle.settings.DebugSettings
 import com.simplecityapps.shuttle.settings.StreamingSettings
 import com.simplecityapps.shuttle.ui.actions.DownloadStatusSource
 import com.simplecityapps.shuttle.ui.actions.OfflineModeSource
@@ -53,6 +55,7 @@ import dev.zacsweers.metro.SingleIn
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.plus
 
@@ -94,7 +97,8 @@ abstract class LibraryModule {
             downloads: DownloadStatusSource,
             sourceState: SourceStateStore,
             streamingSettings: StreamingSettings,
-            meteredNetwork: MeteredNetwork
+            meteredNetwork: MeteredNetwork,
+            debugSettings: DebugSettings
         ): LibraryCopies {
             // The network is read when the quality changes, so a switch to mobile data re-ranks with the next change.
             val streamingCap = combine(streamingSettings.meteredQuality.flow, streamingSettings.unmeteredQuality.flow) { metered, unmetered ->
@@ -107,7 +111,8 @@ abstract class LibraryModule {
                 database.songDataDao().getAll(),
                 librarySettings.mergeCopies.flow,
                 copyAvailability(offlineMode, downloads, sourceState, streamingCap),
-                preferences
+                preferences,
+                debugSettings.copyRecordingIds.flow.map { useRecordingIds -> SongCopyGrouping(useRecordingIds = useRecordingIds) }
             )
         }
 

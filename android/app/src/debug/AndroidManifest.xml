@@ -7,6 +7,14 @@
              MediaStore tracks without walking through onboarding's Scanner page. DUMP is held by adb shell but not by third-party apps,
              so only adb can trigger it. -->
         <receiver
+            android:name=".debug.DebugSongCopiesReceiver"
+            android:exported="true"
+            android:permission="android.permission.DUMP">
+            <intent-filter>
+                <action android:name="com.simplecityapps.shuttle.debug.ACTION_SONG_COPIES" />
+            </intent-filter>
+        </receiver>
+        <receiver
             android:name=".debug.DebugMediaImportReceiver"
             android:exported="true"
             android:permission="android.permission.DUMP">
