@@ -39,14 +39,17 @@ class SongCopyGrouping(
     private val matcher: SongCopyMatcher = SongCopyMatcher(),
     private val useRecordingIds: Boolean = true
 ) {
-    /** Each song's copies, the groups in the order of their first song and each group's songs in [songs]' order. */
+    /**
+     * Each song's copies, the groups in the order of their first song and each group's songs in [songs]' order. Every
+     * two songs of a group are linked themselves, so A matching B and B matching C never joins A and C on its own.
+     */
     fun group(songs: List<Song>): List<List<Song>> {
-        val groups = DisjointSources(songs)
+        val links = CopyLinks(songs)
         if (useRecordingIds) {
             songs.indices
                 .filter { !songs[it].mbTrackId.isNullOrBlank() }
                 .groupBy { songs[it].albumGroupKey to songs[it].mbTrackId!!.trim().lowercase() }
-                .values.forEach { bucket -> bucket.forEach { groups.union(bucket.first(), it) } }
+                .values.forEach { bucket -> bucket.forEachIndexed { i, a -> bucket.drop(i + 1).forEach { b -> links.link(a, b, Double.POSITIVE_INFINITY) } } }
         }
         songs.indices
             .mapNotNull { index -> blockingHash(songs[index])?.let { hash -> (songs[index].albumGroupKey to hash) to index } }
@@ -56,12 +59,13 @@ class SongCopyGrouping(
             .forEach { bucket ->
                 val prepared = bucket.associateWith { matcher.prepare(songs[it].copyTags) }
                 bucket.forEachIndexed { i, a ->
-                    bucket.drop(i + 1).forEach { b ->
-                        if (songs[a].mediaProvider != songs[b].mediaProvider && matcher.match(prepared.getValue(a), prepared.getValue(b)).isCopy) groups.union(a, b)
+                    bucket.drop(i + 1).filter { b -> songs[a].mediaProvider != songs[b].mediaProvider }.forEach { b ->
+                        val match = matcher.match(prepared.getValue(a), prepared.getValue(b))
+                        if (match.isCopy) links.link(a, b, match.score)
                     }
                 }
             }
-        return songs.indices.groupBy(groups::find).values.map { group -> group.map(songs::get) }
+        return links.groups().map { group -> group.map(songs::get) }
     }
 
     /** Each group of [songs] as [merged] lists it, in the order of each group's first song. */
@@ -99,27 +103,42 @@ class SongCopyGrouping(
     private fun blockingHash(song: Song): Long? = song.copyBlockingHash ?: matcher.blockingHash(song.album, song.disc, song.track)
 }
 
-/** Union-find over songs that joins two sets only when no source has a song in both. */
-private class DisjointSources(private val songs: List<Song>) {
-    private val parent = IntArray(songs.size) { it }
-    private val sources = Array(songs.size) { setOf(songs[it].mediaProvider) }
+/**
+ * Complete-linkage clustering of songs over pairwise copy links: strongest link first, two groups join only when every
+ * song of one is linked to every song of the other and no source has a song in both.
+ */
+private class CopyLinks(private val songs: List<Song>) {
+    private class Link(val a: Int, val b: Int, val strength: Double)
 
-    fun find(index: Int): Int {
-        var root = index
-        while (parent[root] != root) root = parent[root]
-        parent[index] = root
-        return root
+    private val links = ArrayList<Link>()
+    private val linked = HashSet<Long>()
+
+    fun link(
+        a: Int,
+        b: Int,
+        strength: Double
+    ) {
+        if (songs[a].mediaProvider == songs[b].mediaProvider || !linked.add(key(a, b))) return
+        links += Link(a, b, strength)
     }
 
-    fun union(
+    fun groups(): List<List<Int>> {
+        val groupOf = IntArray(songs.size) { it }
+        val members = Array(songs.size) { mutableListOf(it) }
+        links.sortedByDescending { it.strength }.forEach { link ->
+            val (into, from) = listOf(groupOf[link.a], groupOf[link.b]).sorted()
+            if (into == from) return@forEach
+            val joinable = members[into].all { a -> members[from].all { b -> songs[a].mediaProvider != songs[b].mediaProvider && key(a, b) in linked } }
+            if (!joinable) return@forEach
+            members[from].forEach { groupOf[it] = into }
+            members[into] += members[from]
+            members[from].clear()
+        }
+        return songs.indices.groupBy { groupOf[it] }.values.toList()
+    }
+
+    private fun key(
         a: Int,
         b: Int
-    ) {
-        val rootA = find(a)
-        val rootB = find(b)
-        if (rootA == rootB || sources[rootA].any { it in sources[rootB] }) return
-        val (root, child) = if (rootA < rootB) rootA to rootB else rootB to rootA
-        parent[child] = root
-        sources[root] = sources[rootA] + sources[rootB]
-    }
+    ): Long = minOf(a, b).toLong() * songs.size + maxOf(a, b)
 }

@@ -120,6 +120,16 @@ class SongCopiesTest {
     }
 
     @Test
+    fun `copies join only when every copy matches every other so a chain of matches doesn't merge its ends`() {
+        val local = song(id = 1, track = 1, mbTrackId = "rec-1")
+        val emby = song(id = 101, track = 1, provider = MediaProviderType.Emby, name = "Atlas (Live)", mbTrackId = "rec-1")
+        val jellyfin = song(id = 201, track = 1, provider = MediaProviderType.Jellyfin, name = "Atlas (Live)")
+
+        merge(onOneRelease(listOf(local, emby, jellyfin))).map { song -> song.id to song.copies.map { it.id } } shouldBe
+            listOf(1L to listOf(1L, 101L), 201L to emptyList())
+    }
+
+    @Test
     fun `the default copy is a local file over a server stream`() {
         merge(emby(1..1) + local(1..1)).single().copies.map { it.id } shouldBe listOf(1L, 101L)
     }
