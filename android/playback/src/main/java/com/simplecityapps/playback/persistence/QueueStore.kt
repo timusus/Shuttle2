@@ -274,7 +274,7 @@ class QueueStore(
     ): SavedQueue? {
         val saved = playbackPreferenceManager.readSavedQueue(shuffleMode, queuePosition) { songIds ->
             timings.measureSuspending("DB") {
-                songRepository.getSongs(SongQuery.SongIds(songIds))
+                songRepository.getSongs(SongQuery.SongIds(songIds, withCopies = true))
                     .filterNotNull()
                     .firstOrNull()
                     .orEmpty()

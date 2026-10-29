@@ -58,9 +58,13 @@ sealed class SongQuery(
         sortOrder = SongSortOrder.Track
     )
 
-    /** The songs with these ids, in no particular order. */
+    /**
+     * The songs with these ids, in no particular order. Each is the exact copy asked for; [withCopies] also gives it the
+     * other copies it can fall back to (a restored queue's), which waits for the library to load.
+     */
     data class SongIds(
-        val songIds: List<Long>
+        val songIds: List<Long>,
+        val withCopies: Boolean = false
     ) : SongQuery(
         predicate = { song -> songIds.contains(song.id) }
     )

@@ -239,6 +239,21 @@ class IosPlaybackStoreTest {
     }
 
     @Test
+    fun `a restored song comes back with the copies it can fall back to`() = runTest {
+        val first = launch()
+        first.play(listOf(a, b))
+        val withCopies = object : SongRepository by songRepository {
+            override suspend fun loadSongs(query: SongQuery): List<Song> = songRepository.loadSongs(query).map { song ->
+                if (query is SongQuery.SongIds && query.withCopies) song.copy(copies = listOf(song, d)) else song
+            }
+        }
+
+        val second = launch(songs = withCopies)
+
+        second.controller.queueOperations.queueStateFlow.value.items.map { it.song.copies } shouldBe listOf(listOf(a, d), listOf(b, d))
+    }
+
+    @Test
     fun `a saved queue that fails to read still counts as restored`() = runTest {
         val first = launch()
         first.play(listOf(a, b))

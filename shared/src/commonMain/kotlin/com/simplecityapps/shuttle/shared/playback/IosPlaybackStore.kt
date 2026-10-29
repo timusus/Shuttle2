@@ -109,7 +109,7 @@ class IosPlaybackStore(
         queuePosition: Int
     ): SavedQueueSongs? = withContext(readContext) {
         playbackPreferenceManager.readSavedQueue(shuffleMode, queuePosition) { songIds ->
-            songRepository.loadSongs(SongQuery.SongIds(songIds)).associateBy { song -> song.id }
+            songRepository.loadSongs(SongQuery.SongIds(songIds, withCopies = true)).associateBy { song -> song.id }
         }
     }
 

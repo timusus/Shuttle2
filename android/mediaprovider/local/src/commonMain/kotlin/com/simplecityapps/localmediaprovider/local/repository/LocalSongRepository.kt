@@ -59,7 +59,9 @@ class LocalSongRepository(
     override fun getSongs(query: SongQuery): Flow<List<Song>?> {
         if (query is SongQuery.SongIds && query.songIds.isEmpty()) return flowOf(emptyList())
         if (query is SongQuery.SongIds) {
-            return combine(songDataDao.getByIds(query.songIds), albumIndex.updates) { found, index -> found.withAlbumIdentities(index.identities).matching(query) }.flowOn(ioDispatcher)
+            return combine(songDataDao.getByIds(query.songIds), albumIndex.updates) { found, index ->
+                found.withAlbumIdentities(index.identities).matching(query).let { songs -> if (query.withCopies) copies.withCopies(songs) else songs }
+            }.flowOn(ioDispatcher)
         }
         return combine(copies.library, minTrackLength) { library, min ->
             library?.let { if (query.providerType == null) it.songs else it.raw }?.listed(query, min)
@@ -107,6 +109,7 @@ class LocalSongRepository(
         songs
             .withAlbumIdentities(index.identities)
             .let { found -> if (exact) found else copies.merge(found) }
+            .let { found -> if (query is SongQuery.SongIds && query.withCopies) copies.withCopies(found) else found }
             .listed(query, min)
     }
 

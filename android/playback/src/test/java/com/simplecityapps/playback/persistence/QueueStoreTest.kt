@@ -28,6 +28,7 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 import org.junit.After
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -426,6 +427,22 @@ class QueueStoreTest {
         harness.queueOperations.repeatModeFlow.value shouldBe RepeatMode.All
         harness.runUntil { harness.playbackOperations.playbackStateFlow.value == PlaybackState.Paused }
         harness.playbackOperations.getProgress() shouldBe 30_000
+    }
+
+    @Test
+    fun `a restored song comes back with the copies it can fall back to`() {
+        saved(queueIds = "1,2", queuePosition = 0, playbackPosition = 0, repeatMode = RepeatMode.Off)
+        val fake = FakeSongRepository(library)
+        val withCopies = object : SongRepository by fake {
+            override fun getSongs(query: SongQuery) = fake.getSongs(query).map { songs ->
+                songs?.map { song -> if (query is SongQuery.SongIds && query.withCopies) song.copy(copies = listOf(song, library.last())) else song }
+            }
+        }
+        val harness = harness(songRepository = withCopies)
+
+        harness.restore()
+
+        harness.queueOperations.queueStateFlow.value.items.map { item -> item.song.copies.map { it.id } } shouldBe listOf(listOf(1L, 4L), listOf(2L, 4L))
     }
 
     @Test

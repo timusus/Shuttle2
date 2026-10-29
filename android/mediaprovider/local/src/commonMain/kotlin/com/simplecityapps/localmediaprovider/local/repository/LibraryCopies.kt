@@ -57,6 +57,17 @@ class LibraryCopies(
 
     private fun ranking(): Flow<Comparator<Song>> = combine(availability, preferences) { availability, preferences -> availability.ranking(preferences.comparator(availability)) }
 
+    /** Each of [songs], still the exact copy it is, carrying the ranked copies of its group to fall back to. */
+    suspend fun withCopies(songs: List<Song>): List<Song> {
+        if (!enabled.first()) return songs
+        val library = library.filterNotNull().first()
+        val ranking = ranking().first()
+        return songs.map { song ->
+            val group = library.groups[song.id]?.filterNot { it.blacklisted }
+            if (group == null || group.size < 2) song else song.copy(copies = group.sortedWith(ranking))
+        }
+    }
+
     /**
      * Every copy of [song], found by id, so a song held as one exact copy (a playlist's, the queue's) reaches its whole
      * group; the song alone while copies aren't merged.

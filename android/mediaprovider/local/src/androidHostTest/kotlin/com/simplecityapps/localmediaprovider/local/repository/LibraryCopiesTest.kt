@@ -245,6 +245,22 @@ class LibraryCopiesTest {
         repository.loadSongs(SongQuery.SongIds(listOf(emby.id))).single().id shouldBe emby.id
     }
 
+    @Test
+    fun `a restored queue's copy keeps its id and carries its whole group`() = runTest {
+        insert(local(1..1) + emby(1..1))
+        val repository = songRepository()
+        val emby = repository.loadSongs(SongQuery.All()).single().copies.single { it.mediaProvider == MediaProviderType.Emby }
+        val query = SongQuery.SongIds(listOf(emby.id), withCopies = true)
+
+        val observed = repository.getSongs(query).filterNotNull().first().single()
+        val loaded = repository.loadSongs(query).single()
+
+        listOf(observed, loaded).forEach { held ->
+            held.id shouldBe emby.id
+            held.copies.map { it.mediaProvider } shouldContainExactlyInAnyOrder listOf(MediaProviderType.Shuttle, MediaProviderType.Emby)
+        }
+    }
+
     private fun TestScope.copies(library: Flow<List<Song>> = database.songDataDao().getAll()) = LibraryCopies(backgroundScope, UnconfinedTestDispatcher(testScheduler), library, merge)
 
     private fun TestScope.songRepository(copies: LibraryCopies = copies()) = LocalSongRepository(backgroundScope, UnconfinedTestDispatcher(testScheduler), database.songDataDao(), database.libraryAlbumIndex(), copies = copies)
