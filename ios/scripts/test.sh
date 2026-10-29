@@ -81,6 +81,17 @@ fi
 
 cd "$ios_dir"
 echo "==> xcodebuild test-without-building -xctestrun ${xctestrun##*/} -destination id=$udid ${args[*]+"${args[*]}"}"
+# -quiet drops Swift Testing issue lines, so the reasons are read back from a result bundle (a fresh path:
+# xcodebuild refuses an existing one).
+bundle="${LAND_ARTIFACT_DIR:-$PWD/build}/ios-tests-$(date +%Y%m%d-%H%M%S)-$$.xcresult"
+mkdir -p "$(dirname "$bundle")"
+test_rc=0
 xcodebuild test-without-building -xctestrun "$xctestrun" -destination "id=$udid" \
-  -derivedDataPath build/DerivedData -collect-test-diagnostics never -quiet ${args[@]+"${args[@]}"}
+  -derivedDataPath build/DerivedData -collect-test-diagnostics never -resultBundlePath "$bundle" -quiet \
+  ${args[@]+"${args[@]}"} || test_rc=$?
+if [ "$test_rc" -ne 0 ]; then
+  echo "==> result bundle: $bundle" >&2
+  python3 "$ios_dir/scripts/xcresult-failures.py" "$bundle" >&2 || true
+  exit "$test_rc"
+fi
 echo "==> S2 tests passed"

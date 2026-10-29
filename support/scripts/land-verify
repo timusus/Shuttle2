@@ -37,7 +37,9 @@ if [ "${LAND_RETRY:-0}" = 1 ] && [ -z "${S2_LAND_IC_OFF:-}" ]; then
     exec env S2_LAND_IC_OFF=1 'ORG_GRADLE_PROJECT_kotlin.incremental=false' "$0" "$@"
 fi
 
+# Outside land there is no dir to find afterwards, so a made one is kept and its path printed at the end.
 artifacts="${LAND_ARTIFACT_DIR:-$(mktemp -d)}"
+artifacts=$(cd "$artifacts" 2>/dev/null && pwd -P || echo "$artifacts")
 mkdir -p "$artifacts" || exit 2
 paths_file="$artifacts/changed-paths"
 if [ -t 0 ]; then : >"$paths_file"; else grep -v '^$' >"$paths_file"; fi
@@ -81,6 +83,9 @@ failures() {
             ift = 0
         }
         /^Failing tests:/ { ift = 1; next }
+        # ios/scripts/xcresult-failures.py lines and Swift Testing issues: the reason with its file:line, kept unstripped.
+        /^FAILED / { print "ios-fail: " unroot($0); next }
+        /recorded an issue at / { s = $0; sub(/^.*✘ /, "", s); print "ios-issue: " unroot(s); next }
         /✘ Test .* failed/ && !/✘ Test run / { s = $0; sub(/^.*✘ /, "✘ ", s); sub(/ after [0-9.]+ seconds.*/, "", s); sub(/ with [0-9]+ test cases?$/, "", s); add(s); next }
         /^\* What went wrong:/ { wwr = 1; next }
         /^Failed tests:/ { inb = 1; next }
@@ -162,7 +167,7 @@ run_phase() {
             mark "!! $phase: more than 20 test failures"
         fi
     fi
-    mark "-- $phase failed: exit $rc, see $phase.log in the artifact dir"
+    mark "-- $phase failed: exit $rc, see $log"
 }
 
 skip_phase() {  # skip_phase PHASE WHY: a phase that cannot run on what an earlier phase left behind
