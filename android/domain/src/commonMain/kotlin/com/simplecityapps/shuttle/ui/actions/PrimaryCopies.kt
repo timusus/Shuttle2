@@ -9,11 +9,14 @@ import dev.zacsweers.metro.Inject
 /** A song's copies, itself included, whether or not the library merged them. */
 internal val Song.allCopies: List<Song> get() = copies.ifEmpty { listOf(this) }
 
-/** Makes [copy] the one that stands for its song, replacing any other copy made primary. */
+/**
+ * Makes [copy] the one that stands for [song], replacing any other copy made primary. The siblings come from the merged
+ * [song]: a copy is a leaf member and knows no others.
+ */
 @Inject
 class SetPrimaryCopy(private val store: CopyPreferencesStore) {
-    operator fun invoke(copy: Song) {
-        val others = copy.allCopies.map { it.copyKey } - copy.copyKey
+    operator fun invoke(song: Song, copy: Song) {
+        val others = song.allCopies.map { it.copyKey } - copy.copyKey
         store.update { it.copy(primaryCopies = it.primaryCopies - others.toSet() + copy.copyKey) }
     }
 }

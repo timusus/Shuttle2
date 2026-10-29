@@ -33,7 +33,7 @@ class PrimaryCopiesTest {
     fun `making a copy primary adds its key and drops its siblings'`() {
         val store = FakeCopyPreferencesStore(SongCopyPreferences(primaryCopies = setOf(emby.copyKey, "Jellyfin:other")))
 
-        SetPrimaryCopy(store)(plex.copy(copies = listOf(local, emby, plex)))
+        SetPrimaryCopy(store)(merged(local, emby, plex), plex)
 
         store.state.value.primaryCopies shouldBe setOf(plex.copyKey, "Jellyfin:other")
     }
