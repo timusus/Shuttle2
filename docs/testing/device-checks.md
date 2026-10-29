@@ -687,3 +687,15 @@ Same setup (songs held locally and on Emby). Fallback is silent; the load-failur
 - [ ] Android and iOS: kill the network mid-song on an Emby copy: playback resumes on the local copy at the same position.
 - [ ] Android: switch between Wi-Fi and mobile data with different streaming quality caps: copy ranking follows the switch for the next song.
 - [ ] iOS: a truncated or non-audio file marks its copy missing; a captive-portal page or full disk does not.
+
+## Song copies UI (#1069 step 3, Oct 2026)
+
+Same setup (albums held locally and on Emby), merging on.
+- [ ] Android and iOS: a merged album's header reads "2 sources"; song rows carry no badge. Turn "Merge copies across sources" off: the count goes and "Preferred copy" greys out.
+- [ ] Android and iOS: Song Info on a merged song lists both copies with format, bitrate and sample rate, the playing copy marked Playing, and a footnote on how it was chosen. Stop Emby: its row greys to Unreachable but stays listed.
+- [ ] Android and iOS: the song menu's "Play from…" lists only copies that can play now and ticks the current one; picking the other plays it in place, keeping the queue (also with shuffle on). With Emby stopped, "Play from…" is gone.
+- [ ] Android and iOS: "Make primary" on the Emby copy: it plays from Emby next time and Song Info marks it Primary; "Use automatic choice" restores the local copy.
+- [ ] Android and iOS: album menu "Primary source" lists Automatic, then each source with "n of m songs"; choose Emby: the album's songs play from Emby; Automatic undoes it.
+- [ ] Android and iOS: "Preferred copy: Best quality" picks the higher-bitrate copy when the Emby one is better.
+- [ ] Now Playing's "Play From" (iOS) and the song menu from the queue (Android) offer the copies for a queued merged song.
+- [ ] iOS: screenshots of Song Info with copies and the Play From menu for the docs (not taken by the worker; needs this library).
