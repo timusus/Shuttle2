@@ -471,6 +471,23 @@ class QueueStoreTest {
     }
 
     @Test
+    fun `a queued song keeps its copies when a tag edit refreshes it`() {
+        val fake = FakeSongRepository(library)
+        val withCopies = object : SongRepository by fake {
+            override fun getSongs(query: SongQuery) = fake.getSongs(query).map { songs ->
+                songs?.map { song -> if (query is SongQuery.SongIds && query.withCopies) song.copy(copies = listOf(song, library.last())) else song }
+            }
+        }
+        val harness = harness(songRepository = withCopies)
+        harness.run { harness.queueOperations.setQueue(listOf(library[0].copy(copies = listOf(library[0], library.last())))) }
+
+        harness.run { withCopies.update(listOf(library[0].copy(name = "Renamed"))) }
+        harness.runUntil { harness.queueOperations.queueStateFlow.value.items.single().song.name == "Renamed" }
+
+        harness.queueOperations.queueStateFlow.value.items.single().song.copies.map { it.id } shouldBe listOf(1L, 4L)
+    }
+
+    @Test
     fun `what the queue was started from is saved with it, and cleared with it`() {
         val harness = harness()
         val genre = PlayContext.Genre("Jazz")

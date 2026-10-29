@@ -32,7 +32,7 @@ class QueueSongRefresher(
         val queued = queue.queueStateFlow.value.items.mapNotNullTo(mutableSetOf()) { item -> item.song.id.takeIf { it in songIds } }
         if (queued.isEmpty()) return
         try {
-            queue.updateSongs(songRepository.getSongs(SongQuery.SongIds(queued.toList())).filterNotNull().first())
+            queue.updateSongs(songRepository.getSongs(SongQuery.SongIds(queued.toList(), withCopies = true)).filterNotNull().first())
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
