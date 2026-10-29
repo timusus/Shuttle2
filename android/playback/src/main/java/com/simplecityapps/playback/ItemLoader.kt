@@ -124,7 +124,7 @@ class ItemLoader(
         when (playbackState) {
             Player.STATE_READY -> {
                 val entry = player.currentMediaItem?.queueEntryOrNull
-                if (entry != null && entry.uid != readyUid) sourceState?.setSongMissing(entry.song.mediaProvider.name, entry.song.id, missing = false)
+                if (entry != null) playedWell(entry)
                 readyUid = entry?.uid
                 if (_loadFailure.value?.uid == readyUid) clearLoadFailure()
                 loadFailures = 0
@@ -155,8 +155,16 @@ class ItemLoader(
         if (_loadFailure.value?.uid != mediaItem?.queueEntryOrNull?.uid) clearLoadFailure()
         val playsOn = reason == Player.MEDIA_ITEM_TRANSITION_REASON_AUTO || reason == Player.MEDIA_ITEM_TRANSITION_REASON_REPEAT
         if (playsOn && player.playerError == null) {
-            readyUid = mediaItem?.queueEntryOrNull?.uid
+            val entry = mediaItem?.queueEntryOrNull
+            if (entry != null) playedWell(entry)
+            readyUid = entry?.uid
         }
+    }
+
+    /** [entry]'s copy plays: it's no longer missing, and a later failure may try the entry's other copies again. */
+    private fun playedWell(entry: QueueEntry) {
+        sourceState?.setSongMissing(entry.song.mediaProvider.name, entry.song.id, missing = false)
+        triedCopies = null
     }
 
     /**
@@ -184,9 +192,10 @@ class ItemLoader(
     override fun onPlayerError(error: PlaybackException) {
         val failedIndex = error.failedIndex() ?: player.currentMediaItemIndex
         val failedEntry = player.currentTimeline.takeIf { failedIndex < it.windowCount }?.let { player.getMediaItemAt(failedIndex).queueEntryOrNull }
+        val followsReopen = failedEntry != null && lastReopen?.uid == failedEntry.uid && error.notFound() != null
         if (failedEntry != null && reopensReplacedTranscode(error, failedIndex, failedEntry.uid)) return
         Timber.e(error, "Playback failed for ${failedEntry?.song?.name}")
-        if (failedEntry != null && fallsBackToCopy(error, failedIndex, failedEntry)) return
+        if (failedEntry != null && fallsBackToCopy(error, failedIndex, failedEntry, marksMissing = !followsReopen)) return
 
         if (!error.isResolutionFailure()) {
             failedEntry?.song?.let(_failureFlow::tryEmit)
@@ -233,17 +242,19 @@ class ItemLoader(
     }
 
     /**
-     * Marks the failed copy missing when it failed for something in itself, then plays the entry's next copy not yet
+     * Marks the failed copy missing when it failed for something in itself ([marksMissing]: not a 404 on a transcode the
+     * server dropped and that was just opened again, which says nothing of the copy), then plays the entry's next copy not yet
      * tried for it nor marked, at the position it failed at. Silent, and not a load failure: those are for when every
      * copy has failed. Local playback only: a Cast receiver's window follows the local queue later.
      */
     private fun fallsBackToCopy(
         error: PlaybackException,
         failedIndex: Int,
-        failedEntry: QueueEntry
+        failedEntry: QueueEntry,
+        marksMissing: Boolean
     ): Boolean {
         val song = failedEntry.song
-        if (error.isCopyMissing()) sourceState?.setSongMissing(song.mediaProvider.name, song.id, missing = true)
+        if (marksMissing && error.isCopyMissing()) sourceState?.setSongMissing(song.mediaProvider.name, song.id, missing = true)
         if (player.isRemote) return false
         val tried = triedCopies?.takeIf { it.first == failedEntry.uid }?.second.orEmpty() + song.id
         triedCopies = failedEntry.uid to tried

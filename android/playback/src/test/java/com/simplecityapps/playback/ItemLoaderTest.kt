@@ -10,18 +10,27 @@ import androidx.media3.exoplayer.ExoPlaybackException
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.test.utils.FakeClock
 import androidx.media3.test.utils.TestExoPlayerBuilder
+import com.simplecityapps.playback.PlaybackPolicy
 import com.simplecityapps.playback.engine.MediaResolutionException
+import com.simplecityapps.playback.engine.S2ShuffleOrder
+import com.simplecityapps.playback.engine.SongUriResolver
+import com.simplecityapps.playback.exoplayer.MediaResolver
+import com.simplecityapps.playback.exoplayer.ResolvedMedia
 import com.simplecityapps.playback.fakes.testSong
-import com.simplecityapps.playback.queue.QueueEntry
+import com.simplecityapps.playback.queue.QueueFacade
+import com.simplecityapps.playback.queue.ShuffleOrder
 import com.simplecityapps.playback.queue.queueEntryOrNull
+import com.simplecityapps.playback.queue.shuffledIndices
 import com.simplecityapps.playback.queue.toMediaItem
 import com.simplecityapps.playback.queue.toQueueEntry
 import com.simplecityapps.playback.queue.uri
+import com.simplecityapps.playback.settings.PlaybackSettings
 import com.simplecityapps.playback.spec.ClockDriver
 import com.simplecityapps.playback.spec.PlaybackHarness
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import com.simplecityapps.shuttle.persistence.SourceStateStore
+import com.simplecityapps.shuttle.settings.SettingsStore
 import io.kotest.matchers.longs.shouldBeGreaterThanOrEqual
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
@@ -54,6 +63,15 @@ class ItemLoaderTest {
 
     private val sourceState = SourceStateStore(InMemoryKeyValueStore())
 
+    private val queueFacade =
+        QueueFacade(
+            player,
+            PlaybackSettings(SettingsStore(InMemoryKeyValueStore())),
+            SongUriResolver(MediaResolver { song, _ -> ResolvedMedia(uri = song.path, mimeType = song.mimeType, isRemote = false) }, Dispatchers.IO),
+            buildContext = Dispatchers.Unconfined,
+            mainImmediateDispatcher = Dispatchers.Main.immediate
+        )
+
     private val loader =
         ItemLoader(
             player,
@@ -61,10 +79,7 @@ class ItemLoaderTest {
             giveUp = { gaveUp++ },
             isReplaceableTranscode = { uri -> uri == transcode.uri() },
             sourceState = sourceState,
-            replaceSong = { uid, song ->
-                val index = (0 until player.mediaItemCount).first { uidAt(it) == uid }
-                player.replaceMediaItem(index, QueueEntry(uid, song).toMediaItem())
-            }
+            replaceSong = queueFacade::replaceSong
         ).also(player::addListener)
 
     private val scope = CoroutineScope(Dispatchers.Unconfined)
@@ -180,6 +195,7 @@ class ItemLoaderTest {
         player.playbackState shouldBe Player.STATE_IDLE
         failures shouldBe listOf(transcode)
         gaveUp shouldBe 1
+        sourceState.missingSongs("Shuttle") shouldBe emptySet()
     }
 
     @Test
@@ -484,6 +500,85 @@ class ItemLoaderTest {
         load(skipUnloadable = true) shouldBe Result.success(true)
 
         sourceState.missingSongs("Shuttle") shouldBe emptySet()
+    }
+
+    @Test
+    fun `a marked copy that starts playing by playing on from the one before is unmarked`() {
+        sourceState.setSongMissing("Shuttle", 4, missing = true)
+        queue(playable, PlaybackHarness.song(4))
+        load(skipUnloadable = true)
+
+        player.play()
+        driver.runUntil { player.currentMediaItemIndex == 1 }
+
+        sourceState.missingSongs("Shuttle") shouldBe emptySet()
+    }
+
+    @Test
+    fun `a marked copy that plays again on repeat is unmarked`() {
+        queue(playable)
+        player.repeatMode = Player.REPEAT_MODE_ONE
+        load(skipUnloadable = true)
+        sourceState.setSongMissing("Shuttle", 2, missing = true)
+
+        player.play()
+        driver.runUntil { sourceState.missingSongs("Shuttle").isEmpty() }
+    }
+
+    @Test
+    fun `earlier copies are tried again once a copy has played`() {
+        val other = PlaybackHarness.song(4)
+        queue(withCopies(playable, other))
+        load(skipUnloadable = true)
+        player.play()
+        driver.runUntil { player.isPlaying }
+
+        failWith(java.io.IOException("broken"))
+        driver.runUntil { player.isPlaying && currentSongId == 4L }
+        failWith(java.io.IOException("broken"))
+
+        driver.runUntil { player.isPlaying && currentSongId == 2L }
+        gaveUp shouldBe 0
+    }
+
+    @Test
+    fun `a replaced copy keeps the entry's place in the shuffled order`() {
+        val other = PlaybackHarness.song(4)
+        queue(playable, PlaybackHarness.song(5), PlaybackHarness.song(6))
+        player.setShuffleOrder(S2ShuffleOrder(ShuffleOrder(listOf(2, 0, 1))))
+        player.shuffleModeEnabled = true
+
+        queueFacade.replaceSong(uidAt(0), other)
+
+        player.getMediaItemAt(0).queueEntryOrNull?.song?.id shouldBe 4L
+        player.shuffledIndices() shouldBe listOf(2, 0, 1)
+    }
+
+    @Test
+    fun `copies tried do not count towards the songs skipped in a row`() {
+        queue(*failingSongs(PlaybackPolicy.MAX_LOAD_ATTEMPTS - 1), playable)
+
+        load(skipUnloadable = true) shouldBe Result.success(false)
+
+        currentSongId shouldBe 2L
+    }
+
+    @Test
+    fun `the songs skipped in a row stop at the most attempts however many copies each has`() {
+        queue(*failingSongs(PlaybackPolicy.MAX_LOAD_ATTEMPTS), playable)
+
+        load(skipUnloadable = true).isFailure shouldBe true
+
+        gaveUp shouldBe 1
+        currentSongId shouldNotBe 2L
+    }
+
+    /** [count] songs, each with a second copy, that all fail to load. */
+    private fun failingSongs(count: Int) = Array(count) { index ->
+        withCopies(
+            testSong(100L + 2 * index, path = PlaybackHarness.MISSING_FILE_URI, mimeType = "audio/wav"),
+            testSong(101L + 2 * index, path = PlaybackHarness.MISSING_FILE_URI, mimeType = "audio/wav")
+        )
     }
 
     @Test
