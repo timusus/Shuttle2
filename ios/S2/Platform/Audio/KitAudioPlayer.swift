@@ -24,6 +24,7 @@ final class KitAudioPlayer: NSObject, IosAudioPlayer {
 
     let player: Player<QueueKey>
     private let replayGain: ReplayGainProcessor
+    private let readerFaults: ReaderFaults
     private let equalizer = EqualizerProcessor()
     /// Held strongly: Kotlin's listener is an object only the player refers to.
     private var listener: IosAudioPlayerListener?
@@ -45,9 +46,10 @@ final class KitAudioPlayer: NSObject, IosAudioPlayer {
     private let times = OSAllocatedUnfairLock(initialState: Times())
 
     @MainActor
-    init(player: Player<QueueKey>, replayGain: ReplayGainProcessor = ReplayGainProcessor()) {
+    init(player: Player<QueueKey>, replayGain: ReplayGainProcessor = ReplayGainProcessor(), readerFaults: ReaderFaults = ReaderFaults()) {
         self.player = player
         self.replayGain = replayGain
+        self.readerFaults = readerFaults
         super.init()
         // Always active; the kit queues up to 30 s ahead, so a live parameter change calls `processorsChanged()` to be
         // heard now. ReplayGain levels each item before the EQ's preamp and filters, as on Android; the limiter catches
@@ -77,9 +79,10 @@ final class KitAudioPlayer: NSObject, IosAudioPlayer {
     @MainActor
     static func live(resolve: @escaping ResolvingByteReader.Resolve) -> KitAudioPlayer {
         let replayGain = ReplayGainProcessor()
+        let readerFaults = ReaderFaults()
         let player = Player<QueueKey>(makeSource: { key in
             TimeOffsetItemSource { startMs in
-                ResolvingByteReader(uid: key.uid, startMs: startMs) { uid, startMs, completion in
+                ResolvingByteReader(uid: key.uid, startMs: startMs, faults: readerFaults) { uid, startMs, completion in
                     resolve(uid, startMs) { stream, error in
                         if let stream {
                             replayGain.setTags(track: stream.replayGainTrackDb?.floatValue,
@@ -90,7 +93,7 @@ final class KitAudioPlayer: NSObject, IosAudioPlayer {
                 }
             }
         })
-        return KitAudioPlayer(player: player, replayGain: replayGain)
+        return KitAudioPlayer(player: player, replayGain: replayGain, readerFaults: readerFaults)
     }
 
     // MARK: - Player to Kotlin
@@ -190,7 +193,7 @@ final class KitAudioPlayer: NSObject, IosAudioPlayer {
             reportState()
         case let .itemFailed(ref, error):
             lastReport = nil
-            listener?.onFailed(trackId: "\(ref.item.uid)", kind: IosFailureKind.of(error.category), message: "\(error.underlying)")
+            listener?.onFailed(trackId: "\(ref.item.uid)", kind: IosFailureKind.of(error.category, readerFault: readerFaults.take(ref.item.uid)), message: "\(error.underlying)")
         case let .seekLanded(ref, position), let .seekAdjusted(ref, _, position):
             // An adjusted or refused seek moves Kotlin's optimistic progress back to where the player is.
             listener?.onPosition(trackId: "\(ref.item.uid)", positionMs: Int64(position * 1000))
@@ -403,10 +406,15 @@ final class ResolvingByteReader: TimeOffsetByteReader, @unchecked Sendable {
     private var interrupted = false
     private var answer: (stream: IosStream?, error: String?)?
 
-    init(uid: Int64, startMs: Int64, resolve: @escaping Resolve) {
+    private let faults: ReaderFaults
+
+    init(uid: Int64, startMs: Int64, faults: ReaderFaults, resolve: @escaping Resolve) {
         self.uid = uid
         self.startMs = startMs
+        self.faults = faults
         self.resolve = resolve
+        // A fresh open of the item, a copy fallback's included: an earlier reader's fault is no longer this one's.
+        faults.take(uid)
     }
 
     var transcodeDurationMs: Int64? {
@@ -421,11 +429,30 @@ final class ResolvingByteReader: TimeOffsetByteReader, @unchecked Sendable {
     var position: Int64 { (try? opened().position) ?? 0 }
 
     func read(into buffer: UnsafeMutableRawPointer, maxLength: Int) throws -> Int {
-        try opened().read(into: buffer, maxLength: maxLength)
+        try notingFault { try opened().read(into: buffer, maxLength: maxLength) }
     }
 
     func seek(to offset: Int64) throws {
-        try opened().seek(to: offset)
+        try notingFault { try opened().seek(to: offset) }
+    }
+
+    /// The decoder hands a reader's failure on as its own, so the reader notes it for the item's failure report.
+    private func notingFault<T>(_ body: () throws -> T) throws -> T {
+        do {
+            return try body()
+        } catch {
+            switch error {
+            // A seek or skip, not a fault of the source.
+            case StreamByteReaderError.interrupted, StreamByteReaderError.cancelled: break
+            default: faults.note(fileGone() ? .fileGone : .other, for: uid)
+            }
+            throw error
+        }
+    }
+
+    private func fileGone() -> Bool {
+        guard let url = condition.withLock({ answer?.stream.flatMap { URL(string: $0.url) } }), url.isFileURL else { return false }
+        return !FileManager.default.fileExists(atPath: url.path)
     }
 
     func cancel() {
@@ -491,12 +518,35 @@ final class ResolvingByteReader: TimeOffsetByteReader, @unchecked Sendable {
     }
 }
 
+/// What an item's byte reader itself failed with: a decode failure without one is the bytes' own.
+enum ReaderFault: Sendable {
+    /// The local file the stream named isn't there.
+    case fileGone
+    case other
+}
+
+/// Each item's last reader fault, by uid: noted on the decode thread, taken on the main actor as its failure arrives.
+final class ReaderFaults: Sendable {
+    private let faults = OSAllocatedUnfairLock(initialState: [Int64: ReaderFault]())
+
+    func note(_ fault: ReaderFault, for uid: Int64) {
+        faults.withLock { $0[uid] = fault }
+    }
+
+    @discardableResult
+    func take(_ uid: Int64) -> ReaderFault? {
+        faults.withLock { $0.removeValue(forKey: uid) }
+    }
+}
+
 extension IosFailureKind {
-    /// What Kotlin does about a failure: a gone file, damaged bytes or a 404/410 mark the copy missing; a lost connection doesn't.
-    static func of(_ category: PlaybackErrorCategory) -> IosFailureKind {
+    /// What Kotlin does about a failure, as Android's `ItemLoader` decides: only a gone file, bytes the decoder
+    /// can't read and a 404/410 mark the copy missing. A reader's own `.malformed` is a stream cut short and its
+    /// `.unsupported` a page served for audio; a disk full or unreadable file is `.io` too: none of them is the copy's.
+    static func of(_ category: PlaybackErrorCategory, readerFault: ReaderFault?) -> IosFailureKind {
         switch category {
-        case .io: .missing
-        case .malformed, .unsupported: .undecodable
+        case .io: readerFault == .fileGone ? .missing : .other
+        case .malformed, .unsupported: readerFault == nil ? .undecodable : .other
         case let .http(status): status == 404 || status == 410 ? .httpNotFound : .other
         case .network: .connection
         case .cancelled, .internal: .other

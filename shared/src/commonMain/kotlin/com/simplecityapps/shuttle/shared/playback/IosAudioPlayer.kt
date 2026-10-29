@@ -98,7 +98,7 @@ interface IosAudioPlayer {
 
 /** Why an item failed, as the engine's error category maps to what the app does about it. */
 enum class IosFailureKind {
-    /** The file isn't there or can't be read. */
+    /** The file isn't there. */
     Missing,
 
     /** The bytes are damaged, or in a format this build doesn't play. */

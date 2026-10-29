@@ -356,15 +356,25 @@ struct KitAudioPlayerTests {
 /// The decode thread's open while Kotlin is still resolving the stream: a seek or skip interrupts it there.
 struct IosFailureKindTests {
     @Test func `each engine category maps to the kind Kotlin acts on`() {
-        #expect(IosFailureKind.of(.io) == .missing)
-        #expect(IosFailureKind.of(.malformed) == .undecodable)
-        #expect(IosFailureKind.of(.unsupported) == .undecodable)
-        #expect(IosFailureKind.of(.http(status: 404)) == .httpNotFound)
-        #expect(IosFailureKind.of(.http(status: 410)) == .httpNotFound)
-        #expect(IosFailureKind.of(.http(status: 500)) == .other)
-        #expect(IosFailureKind.of(.network) == .connection)
-        #expect(IosFailureKind.of(.cancelled) == .other)
-        #expect(IosFailureKind.of(.internal) == .other)
+        #expect(IosFailureKind.of(.malformed, readerFault: nil) == .undecodable)
+        #expect(IosFailureKind.of(.unsupported, readerFault: nil) == .undecodable)
+        #expect(IosFailureKind.of(.http(status: 404), readerFault: .other) == .httpNotFound)
+        #expect(IosFailureKind.of(.http(status: 410), readerFault: .other) == .httpNotFound)
+        #expect(IosFailureKind.of(.http(status: 500), readerFault: .other) == .other)
+        #expect(IosFailureKind.of(.network, readerFault: .other) == .connection)
+        #expect(IosFailureKind.of(.cancelled, readerFault: nil) == .other)
+        #expect(IosFailureKind.of(.internal, readerFault: nil) == .other)
+    }
+
+    @Test func `only a file that is gone marks the copy missing`() {
+        #expect(IosFailureKind.of(.io, readerFault: .fileGone) == .missing)
+        #expect(IosFailureKind.of(.io, readerFault: .other) == .other)
+        #expect(IosFailureKind.of(.io, readerFault: nil) == .other)
+    }
+
+    @Test func `a stream cut short or a page served for audio does not mark the copy`() {
+        #expect(IosFailureKind.of(.malformed, readerFault: .other) == .other)
+        #expect(IosFailureKind.of(.unsupported, readerFault: .other) == .other)
     }
 }
 
@@ -379,9 +389,10 @@ struct ResolvingByteReaderTests {
     }
 
     private let box = Box()
+    private let faults = ReaderFaults()
 
     private func reader(startMs: Int64 = 0) -> ResolvingByteReader {
-        ResolvingByteReader(uid: 7, startMs: startMs) { [box] _, startMs, completion in
+        ResolvingByteReader(uid: 7, startMs: startMs, faults: faults) { [box] _, startMs, completion in
             box.asked += 1
             box.askedAtMs = startMs
             box.answer = completion
@@ -414,7 +425,36 @@ struct ResolvingByteReaderTests {
 
         #expect(await waitUntil { box.done })
         #expect(box.error as? StreamByteReaderError == .interrupted)
+        #expect(faults.take(7) == nil)
         sut.cancel()
+    }
+
+    @Test func aLocalFileThatIsGoneIsNotedAsGone() async {
+        let sut = reader()
+        readOnDecodeThread(sut)
+        #expect(await waitUntil { box.asked == 1 })
+
+        box.answer?(stream(url: "file:///nonexistent/s2-gone.flac"), nil)
+
+        #expect(await waitUntil { box.done })
+        #expect(box.error != nil)
+        #expect(faults.take(7) == .fileGone)
+    }
+
+    @Test func aLocalFileThatIsThereButFailsIsNotNotedAsGone() async throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let sut = reader()
+        readOnDecodeThread(sut)
+        #expect(await waitUntil { box.asked == 1 })
+
+        // A directory opens but cannot be read: an I/O fault of a path that is there.
+        box.answer?(stream(url: directory.absoluteString), nil)
+
+        #expect(await waitUntil { box.done })
+        #expect(box.error != nil)
+        #expect(faults.take(7) == .other)
     }
 
     @Test func anOpenAfterTheInterruptIsClearedWaitsOnTheSameResolve() async {
@@ -478,9 +518,11 @@ struct ResolvingByteReaderTests {
         #expect(ResolvingByteReader.readAhead(stream(bitrateKbps: -1, sizeBytes: -1, durationMs: -1)) == GrowingFileReadAhead(bytes: 2_400_000))
     }
 
-    private func stream(bitrateKbps: Int32, sizeBytes: Int64, durationMs: Int64, transcoded: Bool = false) -> IosStream {
+    private func stream(
+        url: String = "https://example.com/a.flac", bitrateKbps: Int32 = 0, sizeBytes: Int64 = -1, durationMs: Int64 = -1, transcoded: Bool = false
+    ) -> IosStream {
         IosStream(
-            url: "https://example.com/a.flac", headers: [:], replayGainTrackDb: nil, replayGainAlbumDb: nil, opensAtPosition: true, transcoded: transcoded,
+            url: url, headers: [:], replayGainTrackDb: nil, replayGainAlbumDb: nil, opensAtPosition: true, transcoded: transcoded,
             bitrateKbps: bitrateKbps, sizeBytes: sizeBytes, durationMs: durationMs
         )
     }
