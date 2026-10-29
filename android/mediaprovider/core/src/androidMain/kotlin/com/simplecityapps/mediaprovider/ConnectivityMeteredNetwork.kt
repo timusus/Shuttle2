@@ -33,6 +33,8 @@ class ConnectivityMeteredNetwork @Inject constructor(
             awaitClose {}
             return@callbackFlow
         }
+        // With no default network no callback ever fires, so the current value goes first.
+        trySend(isMetered())
         val callback = object : ConnectivityManager.NetworkCallback() {
             override fun onCapabilitiesChanged(network: Network, capabilities: NetworkCapabilities) {
                 trySend(isMetered(capabilities))

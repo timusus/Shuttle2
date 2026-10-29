@@ -54,8 +54,10 @@ import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.SingleIn
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.plus
 
@@ -107,13 +109,16 @@ abstract class LibraryModule {
             ) { metered, unmetered, onMetered ->
                 (if (onMetered) metered else unmetered).maxBitrateKbps
             }
+            // Shared so each merge() and withCopies() reads the latest availability instead of registering a network callback.
+            val availability = copyAvailability(offlineMode, downloads, sourceState, streamingCap)
+                .shareIn(appCoroutineScope, SharingStarted.WhileSubscribed(), replay = 1)
             val preferences = combine(librarySettings.primaryCopies.flow, librarySettings.primaryAlbums.flow, librarySettings.preferredCopy.flow, ::SongCopyPreferences)
             return LibraryCopies(
                 appCoroutineScope,
                 ioDispatcher,
                 database.songDataDao().getAll(),
                 librarySettings.mergeCopies.flow,
-                copyAvailability(offlineMode, downloads, sourceState, streamingCap),
+                availability,
                 preferences,
                 debugSettings.copyRecordingIds.flow.map { useRecordingIds -> SongCopyGrouping(useRecordingIds = useRecordingIds) }
             )
