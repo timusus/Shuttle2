@@ -39,7 +39,9 @@ class IosPlayerController(
     private val retainShuffleOnNewQueue: () -> Boolean = { false },
     private val random: Random = Random.Default,
     /** Where a play of an item that isn't loaded starts it: the saved position, else the song's own start. */
-    private val resumePosition: (Song) -> Int = PlaybackPolicy::startOf
+    private val resumePosition: (Song) -> Int = PlaybackPolicy::startOf,
+    /** Whether Classical display is on: in Track mode work movements then play at album gain. */
+    private val classicalDisplay: () -> Boolean = { false }
 ) : PlaybackOperations,
     PlaybackStateSource {
     private val queue = QueueModel(random)
@@ -55,7 +57,7 @@ class IosPlayerController(
     /** Opens the play order's streams for the [player]. */
     val itemResolver = IosItemResolver(resolver, scope)
 
-    private val feeder = IosEngineFeeder(player, itemResolver, queue, flows, loads)
+    private val feeder = IosEngineFeeder(player, itemResolver, queue, flows, loads, classicalDisplay)
 
     private val events: IosEngineEvents = IosEngineEvents(feeder, queue, flows, loads)
 
@@ -330,6 +332,9 @@ class IosPlayerController(
         private set(value) {
             queue.playContext = value
         }
+
+    /** Classical display changed: the items not yet started take the new work album gain choice. */
+    fun refreshWorkGain() = main.run { feeder.sendWorkGain() }
 
     /** [QueueOperations] over the same queue: changes made through it are handed on to the engine. */
     val queueOperations: QueueOperations = IosQueueOperations(

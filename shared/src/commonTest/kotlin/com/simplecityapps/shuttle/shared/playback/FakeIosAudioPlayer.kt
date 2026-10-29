@@ -245,6 +245,13 @@ class FakeIosAudioPlayer : IosAudioPlayer {
     /** Every [setReplayGain] as mode and preamp, in order; kept apart from [calls] too. */
     val replayGains = mutableListOf<Pair<ReplayGainMode, Float>>()
 
+    /** Every [setWorkAlbumGain], in order. */
+    val workAlbumGains = mutableListOf<List<IosQueueEntry>>()
+
+    override fun setWorkAlbumGain(entries: List<IosQueueEntry>) {
+        workAlbumGains += entries
+    }
+
     override fun setReplayGain(
         mode: ReplayGainMode,
         preampDb: Float

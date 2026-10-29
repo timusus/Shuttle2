@@ -376,6 +376,10 @@ final class KitAudioPlayer: NSObject, IosAudioPlayer {
         MainActor.assumeIsolated { player.processorsChanged() }
     }
 
+    func setWorkAlbumGain(entries: [IosQueueEntry]) {
+        replayGain.setWorkItems(entries.map(Self.key))
+    }
+
     private static func key(_ entry: IosQueueEntry) -> QueueKey {
         QueueKey(uid: entry.uid, songId: entry.songId)
     }

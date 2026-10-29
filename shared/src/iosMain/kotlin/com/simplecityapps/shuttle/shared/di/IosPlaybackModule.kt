@@ -20,6 +20,7 @@ import com.simplecityapps.shuttle.di.AppSupervisorJob
 import com.simplecityapps.shuttle.di.DefaultDispatcher
 import com.simplecityapps.shuttle.di.MainImmediateDispatcher
 import com.simplecityapps.shuttle.persistence.KeyValueStore
+import com.simplecityapps.shuttle.settings.AppearanceSettings
 import com.simplecityapps.shuttle.settings.EqualizerSettings
 import com.simplecityapps.shuttle.shared.downloads.OfflineDownloads
 import com.simplecityapps.shuttle.shared.entitlement.GatedServerStreams
@@ -112,6 +113,7 @@ class IosPlaybackModule {
         resolver: IosStreamResolver,
         @AppSupervisorJob job: Job,
         exceptionHandler: CoroutineExceptionHandler,
+        appearanceSettings: AppearanceSettings,
         playbackSettings: PlaybackSettings,
         playbackPreferenceManager: PlaybackPreferenceManager,
         songRepository: SongRepository,
@@ -130,8 +132,10 @@ class IosPlaybackModule {
             scope = scope,
             retainShuffleOnNewQueue = { retainShuffle.value },
             random = random,
-            resumePosition = playbackPreferenceManager::resumePosition
+            resumePosition = playbackPreferenceManager::resumePosition,
+            classicalDisplay = { appearanceSettings.classicalDisplay.value }
         )
+        scope.launch { appearanceSettings.classicalDisplay.flow.collect { controller.refreshWorkGain() } }
         IosPlaybackStore(controller, playbackPreferenceManager, playbackSettings.playbackSpeed, songRepository, scope, defaultDispatcher).start()
         // Plex transcodes a killed run left open: stopped in the background, never holding up launch
         scope.launch { plex.stopLeftoverSessions() }

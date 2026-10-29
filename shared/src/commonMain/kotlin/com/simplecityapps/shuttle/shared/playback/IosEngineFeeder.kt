@@ -18,7 +18,9 @@ internal class IosEngineFeeder(
     private val items: IosItemResolver,
     private val queue: QueueModel,
     private val flows: IosPlaybackFlows,
-    private val loads: IosPendingLoads
+    private val loads: IosPendingLoads,
+    /** Whether Classical display is on: work movements play at album gain only then. */
+    private val classicalDisplay: () -> Boolean = { false }
 ) {
     /** Logs under the unified log's `playback` category, keyed by song id. */
     private val log = Logger.tagged("playback")
@@ -48,6 +50,16 @@ internal class IosEngineFeeder(
     /** The order last handed to the player. */
     private var sentOrder: List<IosQueueEntry>? = null
 
+    private var sentWorkGain: List<IosQueueEntry>? = null
+
+    /** Hands the player which entries of the queue's play order are work movements, ahead of any order it opens. */
+    fun sendWorkGain() {
+        val entries = workAlbumGainEntries(queue.queueStateFlow.value.items, classicalDisplay())
+        if (entries == sentWorkGain) return
+        sentWorkGain = entries
+        player.setWorkAlbumGain(entries)
+    }
+
     /** [item] as the player reports it: its id is its uid, its play the one [items] resolves it for. */
     fun feed(
         item: QueueItem,
@@ -73,6 +85,7 @@ internal class IosEngineFeeder(
         }
         becomeCurrent(item, startMs)
         val (order, index) = playOrder() ?: return
+        sendWorkGain()
         player.setRepeatMode(queue.repeatMode)
         if (order == sentOrder) {
             player.skipTo(index, startMs.toLong(), flows.playWhenReady)
@@ -136,6 +149,7 @@ internal class IosEngineFeeder(
             else -> {
                 currentFeed.item = want
                 playOrder()?.let { (order, index) ->
+                    sendWorkGain()
                     player.setRepeatMode(queue.repeatMode)
                     player.replaceItems(order, index)
                     sentOrder = order

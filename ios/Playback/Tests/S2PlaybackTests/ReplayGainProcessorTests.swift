@@ -51,6 +51,31 @@ final class ReplayGainProcessorTests: XCTestCase {
         XCTAssertEqual(processed([0.25], through: processor), [0.49882], accuracy: 0.0001)
     }
 
+    /// A movement of a work plays at album gain in track mode only; the choice is taken at the item's flush.
+    func testAWorkItemUsesAlbumGainInTrackModeFromItsFlush() throws {
+        let processor = try configured(ReplayGainProcessor())
+        processor.setMode(.track, preampDb: 0)
+        processor.setTags(track: -6, album: 6, for: 1)
+        processor.setTags(track: -6, album: 6, for: 2)
+        processor.setWorkItems([1])
+
+        processor.flush(StreamMetadata(item: 1, mediaStartFrame: 0))
+        XCTAssertEqual(processed([0.25], through: processor), [0.49882], accuracy: 0.0001)
+        processor.flush(StreamMetadata(item: 2, mediaStartFrame: 0))
+        XCTAssertEqual(processed([0.5], through: processor), [0.25059], accuracy: 0.0001)
+
+        // An edit that drops item 1 from the work doesn't move it while it plays, but item 2 joining applies at its flush.
+        processor.flush(StreamMetadata(item: 1, mediaStartFrame: 0))
+        processor.setWorkItems([2])
+        XCTAssertEqual(processed([0.25], through: processor), [0.49882], accuracy: 0.0001)
+        processor.flush(StreamMetadata(item: 2, mediaStartFrame: 0))
+        XCTAssertEqual(processed([0.25], through: processor), [0.49882], accuracy: 0.0001)
+
+        processor.setMode(.off, preampDb: 0)
+        processor.flush(StreamMetadata(item: 2, mediaStartFrame: 0))
+        XCTAssertEqual(processed([0.25], through: processor), [0.25], accuracy: 0.0001)
+    }
+
     func testOffOrUnknownPassesTheAudioThroughBitForBit() throws {
         let input: [Float] = [0.123456789, -0.987654321, 0.5, 1e-7]
         let processor = try configured(ReplayGainProcessor())

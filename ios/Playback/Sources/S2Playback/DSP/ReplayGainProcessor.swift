@@ -19,8 +19,12 @@ public final class ReplayGainProcessor: AudioProcessor, @unchecked Sendable {
 
     private let setting = OSAllocatedUnfairLock(initialState: Setting())
 
+    /// Items Kotlin decided are movements of a work, replaced whole on each change of the play order.
+    private let workItems = OSAllocatedUnfairLock(initialState: Set<AnyHashable>())
+
     // Transport queue only.
     private var itemTags = Tags()
+    private var itemInWork = false
     private var channelCount = 1
     private var rampFrames = 1
     private var gain: Float = 1
@@ -37,6 +41,13 @@ public final class ReplayGainProcessor: AudioProcessor, @unchecked Sendable {
             tags.append((item, Tags(track: track, album: album)))
             if tags.count > Self.kept { tags.removeFirst(tags.count - Self.kept) }
         }
+    }
+
+    /// The items that are movements of a work: in track mode they play at album gain. Taken at an item's flush, as
+    /// Android's `streamInWork` is, so an edit applies to items not yet started and never moves the one playing.
+    public func setWorkItems(_ items: some Collection<some Hashable & Sendable>) {
+        let set = Set(items.map { AnyHashable($0) })
+        workItems.withLock { $0 = set }
     }
 
     /// From the next buffer, on any thread.
@@ -77,12 +88,14 @@ public final class ReplayGainProcessor: AudioProcessor, @unchecked Sendable {
     public func flush(_ metadata: StreamMetadata) {
         let item = AnyHashable(metadata.item)
         itemTags = tags.withLock { tags in tags.last { $0.item == item }?.tags } ?? Tags()
+        itemInWork = workItems.withLock { $0.contains(item) }
         target = currentFactor()
         gain = target
     }
 
     public func reset() {
         itemTags = Tags()
+        itemInWork = false
         gain = 1
         target = 1
     }
@@ -92,6 +105,7 @@ public final class ReplayGainProcessor: AudioProcessor, @unchecked Sendable {
         let setting = setting.withLock { $0 }
         let tagDb: Float = switch setting.mode {
         case .off: 0
+        case .track where itemInWork: itemTags.album ?? itemTags.track ?? 0
         case .track: itemTags.track ?? itemTags.album ?? 0
         case .album: itemTags.album ?? itemTags.track ?? 0
         }

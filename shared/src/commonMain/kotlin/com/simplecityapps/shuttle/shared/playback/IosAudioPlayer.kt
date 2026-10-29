@@ -87,6 +87,13 @@ interface IosAudioPlayer {
         mode: ReplayGainMode,
         preampDb: Float
     )
+
+    /**
+     * The [entries] of the order that are movements of a work, replaced whole: in Track mode each plays at its album
+     * gain (`replayGainModeAt`). An item takes its choice as it starts, so an edit reaches the items not yet started
+     * and never moves the one playing.
+     */
+    fun setWorkAlbumGain(entries: List<IosQueueEntry>)
 }
 
 /** What the player reports. Swift calls these on the main thread. */
