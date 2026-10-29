@@ -75,6 +75,16 @@ abstract class LibraryModule {
             @IoDispatcher ioDispatcher: CoroutineDispatcher
         ): LibraryAlbumIndex = database.libraryAlbumIndex().also { index -> appCoroutineScope.launch(ioDispatcher) { index.albumIndex() } }
 
+        /** The library merged once for every repository that lists songs. */
+        @Provides
+        @SingleIn(AppScope::class)
+        fun provideLibraryCopies(
+            database: MediaDatabase,
+            @AppCoroutineScope appCoroutineScope: CoroutineScope,
+            @IoDispatcher ioDispatcher: CoroutineDispatcher,
+            librarySettings: LibrarySettings
+        ): LibraryCopies = LibraryCopies(appCoroutineScope, ioDispatcher, database.songDataDao().getAll(), librarySettings.mergeCopies.flow)
+
         @Provides
         @SingleIn(AppScope::class)
         fun provideSongRepository(
@@ -82,8 +92,9 @@ abstract class LibraryModule {
             @AppCoroutineScope appCoroutineScope: CoroutineScope,
             @IoDispatcher ioDispatcher: CoroutineDispatcher,
             albumIndex: LibraryAlbumIndex,
-            librarySettings: LibrarySettings
-        ): SongRepository = LocalSongRepository(appCoroutineScope, ioDispatcher, database.songDataDao(), albumIndex, librarySettings.minTrackLength.flow, LibraryCopies(librarySettings.mergeCopies.flow))
+            librarySettings: LibrarySettings,
+            copies: LibraryCopies
+        ): SongRepository = LocalSongRepository(appCoroutineScope, ioDispatcher, database.songDataDao(), albumIndex, librarySettings.minTrackLength.flow, copies)
 
         @Provides
         @SingleIn(AppScope::class)
@@ -136,20 +147,20 @@ abstract class LibraryModule {
         @Provides
         @SingleIn(AppScope::class)
         fun provideAlbumRepository(
-            database: MediaDatabase,
             @AppCoroutineScope appCoroutineScope: CoroutineScope,
             @IoDispatcher ioDispatcher: CoroutineDispatcher,
-            librarySettings: LibrarySettings
-        ): AlbumRepository = LocalAlbumRepository(appCoroutineScope, ioDispatcher, LibraryCopies(librarySettings.mergeCopies.flow).merged(database.songDataDao().getAll()), librarySettings.minTrackLength.flow)
+            librarySettings: LibrarySettings,
+            copies: LibraryCopies
+        ): AlbumRepository = LocalAlbumRepository(appCoroutineScope, ioDispatcher, copies.listedSongs, librarySettings.minTrackLength.flow)
 
         @Provides
         @SingleIn(AppScope::class)
         fun provideAlbumArtistRepository(
-            database: MediaDatabase,
             @AppCoroutineScope appCoroutineScope: CoroutineScope,
             @IoDispatcher ioDispatcher: CoroutineDispatcher,
-            librarySettings: LibrarySettings
-        ): AlbumArtistRepository = LocalAlbumArtistRepository(appCoroutineScope, ioDispatcher, LibraryCopies(librarySettings.mergeCopies.flow).merged(database.songDataDao().getAll()), librarySettings.minTrackLength.flow)
+            librarySettings: LibrarySettings,
+            copies: LibraryCopies
+        ): AlbumArtistRepository = LocalAlbumArtistRepository(appCoroutineScope, ioDispatcher, copies.listedSongs, librarySettings.minTrackLength.flow)
 
         @Provides
         @SingleIn(AppScope::class)

@@ -64,26 +64,36 @@ class SongCopyGrouping(
         return songs.indices.groupBy(groups::find).values.map { group -> group.map(songs::get) }
     }
 
-    /**
-     * One song per group, in the order of each group's first song: a lone song as it is, otherwise the best copy by
-     * [ranking] carrying the group's history and its [Song.copies], best first. Each copy keeps its own row, so the
-     * history folded here splits back into each copy's own once copies stop being merged.
-     */
+    /** Each group of [songs] as [merged] lists it, in the order of each group's first song. */
     fun merge(
         songs: List<Song>,
         ranking: Comparator<Song> = SongCopyAvailability().ranking()
-    ): List<Song> = group(songs).map { group ->
-        if (group.size == 1) return@map group.single()
-        val copies = group.sortedWith(ranking)
-        copies.first().copy(
-            playCount = copies.sumOf { it.playCount },
-            lastPlayed = copies.mapNotNull { it.lastPlayed }.maxOrNull(),
-            lastCompleted = copies.mapNotNull { it.lastCompleted }.maxOrNull(),
-            playbackPosition = copies.filter { it.lastPlayed != null }.maxByOrNull { it.lastPlayed!! }?.playbackPosition ?: copies.first().playbackPosition,
-            favouritedAt = copies.mapNotNull { it.favouritedAt }.minOrNull(),
-            dateAdded = copies.mapNotNull { it.dateAdded }.minOrNull(),
-            copies = copies
-        )
+    ): List<Song> = group(songs).flatMap { group -> merged(group, ranking) }
+
+    /**
+     * One group's songs as a library lists them: its excluded copies apart, so excluding one copy leaves the others
+     * showing, and the rest as one song, the best copy by [ranking] carrying their history and its [Song.copies], best
+     * first. Each copy keeps its own row, so the history folded here splits back into each copy's own once copies stop
+     * being merged.
+     */
+    fun merged(
+        group: List<Song>,
+        ranking: Comparator<Song>
+    ): List<Song> {
+        val (excluded, shown) = group.partition { it.blacklisted }
+        if (shown.size <= 1) return shown + excluded
+        val copies = shown.sortedWith(ranking)
+        return listOf(
+            copies.first().copy(
+                playCount = copies.sumOf { it.playCount },
+                lastPlayed = copies.mapNotNull { it.lastPlayed }.maxOrNull(),
+                lastCompleted = copies.mapNotNull { it.lastCompleted }.maxOrNull(),
+                playbackPosition = copies.filter { it.lastPlayed != null }.maxByOrNull { it.lastPlayed!! }?.playbackPosition ?: copies.first().playbackPosition,
+                favouritedAt = copies.mapNotNull { it.favouritedAt }.minOrNull(),
+                dateAdded = copies.mapNotNull { it.dateAdded }.minOrNull(),
+                copies = copies
+            )
+        ) + excluded
     }
 
     private fun blockingHash(song: Song): Long? = song.copyBlockingHash ?: matcher.blockingHash(song.album, song.disc, song.track)

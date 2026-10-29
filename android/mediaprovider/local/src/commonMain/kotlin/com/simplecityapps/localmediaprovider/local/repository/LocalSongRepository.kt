@@ -20,18 +20,14 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -42,16 +38,12 @@ class LocalSongRepository(
     private val albumIndex: LibraryAlbumIndex,
     /** Songs shorter than this are left out of every query but a lookup by id; a change re-emits [getSongs]. */
     private val minTrackLength: Flow<MinTrackLength> = flowOf(MinTrackLength.Off),
-    /** Merges each song's copies in every query but a lookup by id, which names the exact copy a playlist or the queue holds. */
-    private val copies: LibraryCopies = LibraryCopies()
+    /**
+     * Merges each song's copies in every query but a lookup by id, which names the exact copy a playlist or the queue
+     * holds, and one source's, which never holds two copies of a song.
+     */
+    private val copies: LibraryCopies = LibraryCopies(scope, ioDispatcher, songDataDao.getAll())
 ) : SongRepository {
-    private val songsRelay: StateFlow<List<Song>?> by lazy {
-        songDataDao
-            .getAll()
-            .flowOn(ioDispatcher)
-            .stateIn(scope, SharingStarted.Lazily, null)
-    }
-
     /** Buffered, so a write waits for a slow collector only once several writes are pending. */
     private val _updatedSongIds = MutableSharedFlow<Set<Long>>(extraBufferCapacity = UPDATE_BUFFER)
 
@@ -68,10 +60,16 @@ class LocalSongRepository(
         if (query is SongQuery.SongIds) {
             return combine(songDataDao.getByIds(query.songIds), albumIndex.updates) { found, index -> found.withAlbumIdentities(index.identities).matching(query) }.flowOn(ioDispatcher)
         }
-        return combine(songsRelay, minTrackLength, copies.merging) { songs, min, merge ->
-            songs?.filter(min::keeps)?.filter(query.predicate)?.matching(query)?.let(merge)?.sortedWith(query.sortOrder.comparator)
-        }
+        return combine(copies.library, minTrackLength) { library, min ->
+            library?.let { if (query.providerType == null) it.songs else it.raw }?.listed(query, min)
+        }.flowOn(ioDispatcher)
     }
+
+    /** Filtered after merging, so a merged song matches on the history of all its copies and keeps the id [LibraryCopies.standIns] names. */
+    private fun List<Song>.listed(
+        query: SongQuery,
+        min: MinTrackLength
+    ): List<Song> = filter(min::keeps).filter(query.predicate).matching(query).sortedWith(query.sortOrder.comparator)
 
     override fun countSongs(): Flow<Int> = minTrackLength
         .flatMapLatest { min -> songDataDao.countVisible(min.seconds * 1000) }
@@ -96,15 +94,12 @@ class LocalSongRepository(
         } else {
             index.songIdsFor(query)?.let { ids -> songDataDao.loadByIds(ids) } ?: songDataDao.get().map { songData -> songData.toSong() }
         }
-        val exact = query is SongQuery.SongIds || query is SongQuery.ExternalIds
+        val exact = query is SongQuery.SongIds || query is SongQuery.ExternalIds || query.providerType != null
         val min = if (query is SongQuery.SongIds) MinTrackLength.Off else minTrackLength.first()
         songs
             .withAlbumIdentities(index.identities)
-            .filter(min::keeps)
-            .filter(query.predicate)
-            .matching(query)
-            .let { matched -> if (exact) matched else copies.merge(matched) }
-            .sortedWith(query.sortOrder.comparator)
+            .let { found -> if (exact) found else copies.merge(found) }
+            .listed(query, min)
     }
 
     override suspend fun loadLyrics(songId: Long): String? = withContext(ioDispatcher) { songDataDao.lyrics(songId) }
@@ -196,8 +191,8 @@ class LocalSongRepository(
         songs: List<Song>,
         favourite: Boolean
     ) {
-        // A merged song shows as a favourite while any copy is one, so unfavouriting it clears them all.
-        val targets = if (favourite) songs else songs.flatMap { song -> song.copies.ifEmpty { listOf(song) } }
+        // A merged song shows as a favourite while any copy is one, so a toggle on any copy applies to them all, at its time.
+        val targets = songs.flatMap { song -> copies.copiesOf(song).map { copy -> copy.copy(favouritedAt = song.favouritedAt) } }
         val count = songDataDao.setFavourite(targets, favourite)
         logger.debug { "$count song(s) ${if (favourite) "favourited" else "unfavourited"}" }
     }
@@ -207,20 +202,11 @@ class LocalSongRepository(
      * requery. A favourite copy also marks the merged song that stands for it, while the copy keeps its own id for a
      * playlist that holds it.
      */
-    override fun getFavouriteSongIds(): Flow<Set<Long>> = combine(songDataDao.getFavouriteIds(), mergedIds) { ids, merged ->
-        ids.toSet().let { favourites -> favourites + favourites.mapNotNull(merged::get) }
+    override fun getFavouriteSongIds(): Flow<Set<Long>> = combine(songDataDao.getFavouriteIds(), copies.standIns) { ids, standIns ->
+        ids.toSet().let { favourites -> favourites + favourites.mapNotNull(standIns::get) }
     }
         .distinctUntilChanged()
         .flowOn(ioDispatcher)
-
-    /** Each merged copy's id to the id of the song standing for it, once the library has loaded; empty while copies aren't merged. */
-    private val mergedIds: Flow<Map<Long, Long>> by lazy {
-        combine(songsRelay.filterNotNull(), copies.merging) { songs, merge ->
-            merge(songs.matching(SongQuery.All()))
-                .flatMap { song -> song.copies.map { copy -> copy.id to song.id } }
-                .toMap()
-        }.distinctUntilChanged()
-    }
 
     override suspend fun clearExcludeList() {
         logger.debug { "Clearing excluded" }
