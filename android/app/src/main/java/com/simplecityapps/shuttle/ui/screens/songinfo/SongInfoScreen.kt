@@ -79,6 +79,12 @@ fun SongInfoDestination(
             // Android 13 and up confirms a copy itself.
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) scope.launch { snackbarHostState.showSnackbar(copied) }
         },
+        copyActions = SongCopyActions(
+            onPlay = viewModel::playCopy,
+            onMakePrimary = viewModel::makePrimary,
+            onMakePrimaryForAlbum = viewModel::makePrimaryForAlbum,
+            onUseAutomatic = viewModel::useAutomaticChoice,
+        ),
     )
 }
 
@@ -92,6 +98,7 @@ fun SongInfoScreen(
     uiState: SongInfoUiState,
     onNavigateUp: () -> Unit,
     onCopyPath: (String) -> Unit,
+    copyActions: SongCopyActions,
     modifier: Modifier = Modifier,
 ) {
     val song = uiState.song
@@ -112,7 +119,7 @@ fun SongInfoScreen(
         },
     ) { padding ->
         when {
-            song != null -> SongInfoContent(song, uiState.lyrics, Modifier.padding(padding))
+            song != null -> SongInfoContent(song, uiState.lyrics, uiState.copies, copyActions, Modifier.padding(padding))
             uiState.loading -> LoadingState(Modifier.padding(padding).padding(vertical = StateVerticalPadding))
             else -> EmptyState(title = stringResource(R.string.song_info_not_found), modifier = Modifier.padding(padding).padding(vertical = StateVerticalPadding))
         }
@@ -123,6 +130,8 @@ fun SongInfoScreen(
 private fun SongInfoContent(
     song: Song,
     lyrics: String?,
+    copies: SongCopyRows?,
+    copyActions: SongCopyActions,
     modifier: Modifier = Modifier,
 ) {
     val unknown = stringResource(R.string.song_info_unknown)
@@ -134,6 +143,7 @@ private fun SongInfoContent(
             verticalArrangement = Arrangement.spacedBy(S2Spacing.medium),
         ) {
             item(key = "header") { SongInfoHero(song, unknown) }
+            if (copies != null) item(key = "copies") { SongCopiesSection(copies, copyActions) }
             items(sections, key = { it.title.key }) { section ->
                 SettingsGroup(
                     title = stringResource(section.title),

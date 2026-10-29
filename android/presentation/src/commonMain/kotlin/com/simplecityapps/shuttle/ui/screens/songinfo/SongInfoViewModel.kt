@@ -6,9 +6,13 @@ import com.simplecityapps.shuttle.format.formatDuration
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.query.SongQuery
+import com.simplecityapps.shuttle.ui.actions.ClearPrimaryCopy
 import com.simplecityapps.shuttle.ui.actions.LoadLyrics
 import com.simplecityapps.shuttle.ui.actions.ObserveCopyContext
 import com.simplecityapps.shuttle.ui.actions.ObserveSongs
+import com.simplecityapps.shuttle.ui.actions.PlayFromCopy
+import com.simplecityapps.shuttle.ui.actions.SetAlbumPrimarySource
+import com.simplecityapps.shuttle.ui.actions.SetPrimaryCopy
 import com.simplecityapps.shuttle.ui.text.SongInfoString
 import com.simplecityapps.shuttle.ui.text.StringKey
 import dev.zacsweers.metro.AppScope
@@ -24,7 +28,9 @@ import kotlin.math.round
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 
 data class SongInfoUiState(
     // The copy that plays when the song has several, so the chips and File section describe it.
@@ -39,9 +45,13 @@ data class SongInfoUiState(
 /** One song's details, kept current with the library (a tag edit shows up straight away). */
 class SongInfoViewModel @AssistedInject constructor(
     @Assisted songId: Long,
-    observeSongs: ObserveSongs,
+    private val observeSongs: ObserveSongs,
     loadLyrics: LoadLyrics,
     observeCopyContext: ObserveCopyContext,
+    private val playFromCopy: PlayFromCopy,
+    private val setPrimaryCopy: SetPrimaryCopy,
+    private val clearPrimaryCopy: ClearPrimaryCopy,
+    private val setAlbumPrimarySource: SetAlbumPrimarySource,
 ) : ViewModel() {
     @AssistedFactory
     @ManualViewModelAssistedFactoryKey(Factory::class)
@@ -59,6 +69,32 @@ class SongInfoViewModel @AssistedInject constructor(
             SongInfoUiState(song = song, copies = rows, lyrics = song?.let { loadLyrics(it) }, loading = false)
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SongInfoUiState())
+
+    // The song as merged, so the setters see every sibling copy.
+    private val merged: Song? get() = uiState.value.song
+
+    fun playCopy(copy: Song) {
+        val song = merged ?: return
+        viewModelScope.launch { playFromCopy(song, copy) }
+    }
+
+    fun makePrimary(copy: Song) {
+        val song = merged ?: return
+        viewModelScope.launch { setPrimaryCopy(song, copy) }
+    }
+
+    fun useAutomaticChoice() {
+        val song = merged ?: return
+        viewModelScope.launch { clearPrimaryCopy(song) }
+    }
+
+    fun makePrimaryForAlbum(copy: Song) {
+        val song = merged ?: return
+        viewModelScope.launch {
+            val albumSongs = observeSongs(SongQuery.AlbumGroupKey(song.albumGroupKey), includeUnavailable = true).first()
+            setAlbumPrimarySource(albumSongs, copy.mediaProvider)
+        }
+    }
 }
 
 /**

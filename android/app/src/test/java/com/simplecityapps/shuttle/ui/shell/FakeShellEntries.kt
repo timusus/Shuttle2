@@ -36,6 +36,7 @@ import com.simplecityapps.shuttle.ui.screens.settings.SettingsScenarios
 import com.simplecityapps.shuttle.ui.screens.settings.ThisDeviceRoute
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsDestination
 import com.simplecityapps.shuttle.ui.screens.settings.settingsListPane
+import com.simplecityapps.shuttle.ui.screens.songinfo.SongCopyActions
 import com.simplecityapps.shuttle.ui.screens.songinfo.SongInfoScreen
 import com.simplecityapps.shuttle.ui.screens.songinfo.songInfoReady
 import com.simplecityapps.shuttle.ui.screens.tageditor.SongInfoMetadata
@@ -80,7 +81,7 @@ fun fakeShellEntryProvider(
         FakeList(artist?.name ?: route.albumArtistKey.orEmpty(), artist?.albums.orEmpty(), openAlbum)
     }
     // The real screen, so a sheet shows what a phone would; its ViewModel needs the Metro graph.
-    entry<SongInfoRoute>(metadata = SongInfoMetadata) { SongInfoScreen(uiState = songInfoReady(), onNavigateUp = { navigator.back() }, onCopyPath = {}) }
+    entry<SongInfoRoute>(metadata = SongInfoMetadata) { SongInfoScreen(uiState = songInfoReady(), onNavigateUp = { navigator.back() }, onCopyPath = {}, copyActions = SongCopyActions({}, {}, {}, {})) }
     // The real Settings list and its pane metadata, over scenario state rather than its ViewModels; the stand-in and the
     // pages are fakes. Sources opens This device, a page under a page.
     entry<SettingsRoute>(metadata = settingsListPane { FakeList("Settings: Appearance", emptyList(), openAlbum) }) {

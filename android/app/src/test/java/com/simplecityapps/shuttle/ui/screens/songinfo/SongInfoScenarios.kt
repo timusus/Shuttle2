@@ -1,5 +1,7 @@
 package com.simplecityapps.shuttle.ui.screens.songinfo
 
+import com.simplecityapps.shuttle.model.MediaProviderType
+import com.simplecityapps.shuttle.model.PreferredCopy
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.ui.preview.sampleSongs
 
@@ -25,3 +27,26 @@ fun sampleSongWithFileDetails(): Song {
 fun songInfoReady(song: Song = sampleSongWithFileDetails()) = SongInfoUiState(song = song, loading = false)
 
 val songInfoNotFound = SongInfoUiState(song = null, loading = false)
+
+private fun copyRow(song: Song, provider: MediaProviderType, state: SongCopyState, primary: Boolean = false, playable: Boolean = true) = SongCopyRow(
+    song = song.copy(mediaProvider = provider),
+    provider = provider,
+    format = "FLAC",
+    bitRate = "1024 kb/s",
+    bitDepth = "24-bit",
+    sampleRate = "96 kHz",
+    state = state,
+    primary = primary,
+    playable = playable,
+)
+
+/** A song held by this device (playing), Plex (made primary) and Jellyfin (unreachable). */
+fun songInfoWithCopies(chosenBy: CopyChoice = CopyChoice.Automatic(PreferredCopy.Local)): SongInfoUiState {
+    val song = sampleSongWithFileDetails()
+    val rows = listOf(
+        copyRow(song, MediaProviderType.MediaStore, SongCopyState.Playing),
+        copyRow(song, MediaProviderType.Plex, SongCopyState.Primary, primary = true),
+        copyRow(song, MediaProviderType.Jellyfin, SongCopyState.Unreachable, playable = false),
+    )
+    return SongInfoUiState(song = song, copies = SongCopyRows(rows, chosenBy, sourceCount = 3), loading = false)
+}

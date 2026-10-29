@@ -1,6 +1,8 @@
 package com.simplecityapps.shuttle.ui.screens.songinfo
 
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import io.kotest.matchers.shouldBe
 import org.junit.Rule
 import org.junit.Test
@@ -28,6 +30,67 @@ class SongInfoScreenTest {
         robot.assertTextDisplayed("96 kHz")
         robot.assertTextDisplayed("24-bit")
         robot.assertTextDisplayed("-7.25 dB")
+    }
+
+    @Test
+    fun `a merged song lists its copies with their states and why the first plays`() {
+        robot.setState(songInfoWithCopies())
+
+        robot.assertTextDisplayed("Copies")
+        robot.assertTextDisplayed("Playing")
+        robot.assertTextDisplayed("Primary")
+        robot.assertTextDisplayed("Unreachable")
+        robot.assertTextDisplayed("Chosen automatically: a copy on this device first, then the best quality.")
+    }
+
+    @Test
+    fun `a song with one copy has no copies section`() {
+        robot.setState(songInfoReady())
+
+        composeTestRule.onAllNodesWithText("Copies").assertCountEquals(0)
+    }
+
+    @Test
+    fun `a copy that can play offers play and make primary`() {
+        val state = songInfoWithCopies()
+        robot.setState(state)
+
+        robot.openCopyMenu(0)
+        robot.clickText("Play this copy")
+
+        robot.playedCopy shouldBe state.copies!!.rows[0].song
+    }
+
+    @Test
+    fun `an unreachable copy offers no play`() {
+        robot.setState(songInfoWithCopies())
+
+        robot.openCopyMenu(2)
+
+        composeTestRule.onAllNodesWithText("Play this copy").assertCountEquals(0)
+        composeTestRule.onAllNodesWithText("Make primary").assertCountEquals(1)
+    }
+
+    @Test
+    fun `a primary copy offers automatic choice instead of make primary`() {
+        robot.setState(songInfoWithCopies())
+
+        robot.openCopyMenu(1)
+        composeTestRule.onAllNodesWithText("Make primary").assertCountEquals(0)
+        robot.clickText("Use automatic choice")
+
+        robot.usedAutomatic shouldBe true
+    }
+
+    @Test
+    fun `make primary for the album reports the copy`() {
+        val state = songInfoWithCopies()
+        robot.setState(state)
+
+        robot.openCopyMenu(2)
+        robot.clickText("Make primary for this album")
+
+        robot.albumPrimaryCopy shouldBe state.copies!!.rows[2].song
     }
 
     @Test

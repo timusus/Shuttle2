@@ -226,7 +226,7 @@ fun SliderSetting(
     ) { Text(title) }
 }
 
-/** A read-only setting, such as the version number. */
+/** A read-only setting, such as the version number. [leading] replaces [icon], and [trailing] sits at the row's end. */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun InfoSetting(
@@ -235,12 +235,15 @@ fun InfoSetting(
     modifier: Modifier = Modifier,
     icon: ImageVector? = null,
     shapes: ListItemShapes = ListItemDefaults.shapes(),
+    leading: (@Composable () -> Unit)? = null,
+    trailing: (@Composable () -> Unit)? = null,
 ) {
     SegmentedListItem(
         shapes = shapes,
         modifier = modifier,
         colors = settingColors(),
-        leadingContent = icon?.let { { SettingIcon(it, SettingIconStyle.Tonal, enabled = true) } },
+        leadingContent = leading ?: icon?.let { { SettingIcon(it, SettingIconStyle.Tonal, enabled = true) } },
+        trailingContent = trailing,
         supportingContent = { Text(summary) },
     ) { Text(title) }
 }

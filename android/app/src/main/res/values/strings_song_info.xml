@@ -60,4 +60,24 @@
     <string name="song_info_section_file">File</string>
     <!-- Heading over the song's playback details in song info (play count, ReplayGain) -->
     <string name="song_info_section_playback">Playback</string>
+    <!-- Heading over the song's copies in song info; a copy is the same song held by one source -->
+    <string name="song_info_section_copies">Copies</string>
+    <!-- State pills on a copy -->
+    <string name="song_info_copy_playing">Playing</string>
+    <string name="song_info_copy_primary">Primary</string>
+    <string name="song_info_copy_downloaded">Downloaded</string>
+    <string name="song_info_copy_unreachable">Unreachable</string>
+    <string name="song_info_copy_missing">Missing</string>
+    <string name="song_info_copy_offline">Offline</string>
+    <!-- Footnote under the copies: why the playing copy was chosen -->
+    <string name="song_info_copies_chosen_primary">You made this copy primary.</string>
+    <string name="song_info_copies_chosen_album">You chose this source for the album.</string>
+    <string name="song_info_copies_chosen_local">Chosen automatically: a copy on this device first, then the best quality.</string>
+    <string name="song_info_copies_chosen_quality">Chosen automatically: the best quality that plays now.</string>
+    <!-- Overflow menu on a copy -->
+    <string name="song_info_copy_actions">Copy options</string>
+    <string name="song_info_copy_play">Play this copy</string>
+    <string name="song_info_copy_make_primary">Make primary</string>
+    <string name="song_info_copy_make_album_primary">Make primary for this album</string>
+    <string name="song_info_copy_use_automatic">Use automatic choice</string>
 </resources>

@@ -4,11 +4,13 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasScrollToNodeAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
+import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
 import com.simplecityapps.shuttle.designsystem.theme.S2Theme
+import com.simplecityapps.shuttle.model.Song
 
 /** Test robot for [SongInfoScreen]. */
 class SongInfoRobot(private val rule: ComposeContentTestRule) {
@@ -17,12 +19,44 @@ class SongInfoRobot(private val rule: ComposeContentTestRule) {
     var copiedPath: String? = null
         private set
 
+    var playedCopy: Song? = null
+        private set
+    var primaryCopy: Song? = null
+        private set
+    var albumPrimaryCopy: Song? = null
+        private set
+    var usedAutomatic = false
+        private set
+
     fun setState(uiState: SongInfoUiState) {
         rule.setContent {
             S2Theme {
-                SongInfoScreen(uiState = uiState, onNavigateUp = { navigatedUp = true }, onCopyPath = { copiedPath = it })
+                SongInfoScreen(
+                    uiState = uiState,
+                    onNavigateUp = { navigatedUp = true },
+                    onCopyPath = { copiedPath = it },
+                    copyActions = SongCopyActions(
+                        onPlay = { playedCopy = it },
+                        onMakePrimary = { primaryCopy = it },
+                        onMakePrimaryForAlbum = { albumPrimaryCopy = it },
+                        onUseAutomatic = { usedAutomatic = true },
+                    ),
+                )
             }
         }
+        rule.waitForIdle()
+    }
+
+    /** Clicks an open menu's item; the menu is a popup, so there is nothing to scroll. */
+    fun clickText(text: String) {
+        rule.onAllNodesWithText(text)[0].performClick()
+        rule.waitForIdle()
+    }
+
+    /** Opens the overflow menu of the [index]th copy. */
+    fun openCopyMenu(index: Int) {
+        rule.onNode(hasScrollToNodeAction()).performScrollToNode(hasText("Copies"))
+        rule.onAllNodesWithContentDescription("Copy options")[index].performClick()
         rule.waitForIdle()
     }
 

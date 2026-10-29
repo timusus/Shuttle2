@@ -45,7 +45,7 @@ class SongInfoScreenshotTest {
     private fun shot(name: String, uiState: SongInfoUiState, theme: ThemeMode = ThemeMode.Light) {
         composeTestRule.setContent {
             S2AppTheme(AppThemeState(theme = theme)) {
-                SongInfoScreen(uiState = uiState, onNavigateUp = {}, onCopyPath = {})
+                SongInfoScreen(uiState = uiState, onNavigateUp = {}, onCopyPath = {}, copyActions = SongCopyActions({}, {}, {}, {}))
             }
         }
         composeTestRule.waitForIdle()
@@ -57,6 +57,9 @@ class SongInfoScreenshotTest {
 
     @Test
     fun info() = shot("info", songInfoReady())
+
+    @Test
+    fun infoCopies() = shot("info-copies", songInfoWithCopies())
 
     @Test
     fun infoDark() = shot("info-dark", songInfoReady(), ThemeMode.Dark)

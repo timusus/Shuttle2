@@ -1,12 +1,22 @@
 package com.simplecityapps.shuttle.ui.screens.songinfo
 
 import com.simplecityapps.createSong
+import com.simplecityapps.fakes.FakeCopyPreferencesStore
 import com.simplecityapps.fakes.FakeOfflineSongs
+import com.simplecityapps.fakes.FakePlaybackOperations
+import com.simplecityapps.fakes.FakeQueueOperations
 import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.shuttle.model.MediaProviderType
+import com.simplecityapps.shuttle.model.copyAlbumKey
+import com.simplecityapps.shuttle.model.copyKey
+import com.simplecityapps.shuttle.ui.actions.ClearPrimaryCopy
 import com.simplecityapps.shuttle.ui.actions.LoadLyrics
 import com.simplecityapps.shuttle.ui.actions.NoOnlineLyrics
 import com.simplecityapps.shuttle.ui.actions.ObserveSongs
+import com.simplecityapps.shuttle.ui.actions.PlayFromCopy
+import com.simplecityapps.shuttle.ui.actions.PlaySongs
+import com.simplecityapps.shuttle.ui.actions.SetAlbumPrimarySource
+import com.simplecityapps.shuttle.ui.actions.SetPrimaryCopy
 import com.simplecityapps.shuttle.ui.text.SongInfoString
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.shouldBe
@@ -16,6 +26,7 @@ import kotlin.test.Test
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
@@ -36,12 +47,79 @@ class SongInfoViewModelTest {
 
     private val songRepository = FakeSongRepository().apply { applyQueryPredicates = true }
 
+    private val store = FakeCopyPreferencesStore()
+    private val queue = FakeQueueOperations()
+    private val playback = FakePlaybackOperations()
+
+    private fun viewModel(songId: Long) = SongInfoViewModel(
+        songId,
+        ObserveSongs(songRepository, FakeOfflineSongs().filter),
+        LoadLyrics(songRepository, NoOnlineLyrics),
+        fixedCopyContext(),
+        PlayFromCopy(queue, playback, PlaySongs(queue, playback)),
+        SetPrimaryCopy(store),
+        ClearPrimaryCopy(store),
+        SetAlbumPrimarySource(store),
+    )
+
+    private val local = createSong(id = 1, path = "/music/1.flac", album = "Album")
+    private val emby = createSong(id = 2, path = "emby://2", mediaProvider = MediaProviderType.Emby, album = "Album").copy(externalId = "e2")
+    private val plex = createSong(id = 3, path = "plex://3", mediaProvider = MediaProviderType.Plex, album = "Album").copy(externalId = "p3")
+
+    private fun TestScope.loadedMergedViewModel(): SongInfoViewModel {
+        songRepository.setSongs(listOf(local.copy(copies = listOf(local, emby, plex))))
+        return viewModel(1).also {
+            backgroundScope.launch { it.uiState.collect {} }
+            advanceUntilIdle()
+        }
+    }
+
+    @Test
+    fun `playing a copy queues that copy`() = runTest {
+        loadedMergedViewModel().playCopy(plex)
+        advanceUntilIdle()
+
+        queue.lastSetQueue!!.single().id shouldBe 3
+    }
+
+    @Test
+    fun `making a copy primary stores its key and a later one replaces it`() = runTest {
+        val viewModel = loadedMergedViewModel()
+
+        viewModel.makePrimary(emby)
+        viewModel.makePrimary(plex)
+        advanceUntilIdle()
+
+        store.preferences.value.primaryCopies shouldBe setOf(plex.copyKey)
+    }
+
+    @Test
+    fun `automatic choice clears the primary copy`() = runTest {
+        val viewModel = loadedMergedViewModel()
+        viewModel.makePrimary(emby)
+
+        viewModel.useAutomaticChoice()
+        advanceUntilIdle()
+
+        store.preferences.value.primaryCopies shouldBe emptySet()
+    }
+
+    @Test
+    fun `making a copy primary for the album stores its source for the whole album`() = runTest {
+        val viewModel = loadedMergedViewModel()
+
+        viewModel.makePrimaryForAlbum(plex)
+        advanceUntilIdle()
+
+        store.preferences.value.primaryAlbums shouldBe setOf(plex.copyAlbumKey)
+    }
+
     @Test
     fun `loads the song by id`() = runTest {
         val song = createSong(id = 2, name = "Two")
         songRepository.setSongs(listOf(createSong(id = 1), song))
 
-        val viewModel = SongInfoViewModel(2, ObserveSongs(songRepository, FakeOfflineSongs().filter), LoadLyrics(songRepository, NoOnlineLyrics), fixedCopyContext())
+        val viewModel = viewModel(2)
         backgroundScope.launch { viewModel.uiState.collect {} }
         advanceUntilIdle()
 
@@ -54,7 +132,7 @@ class SongInfoViewModelTest {
         val emby = createSong(id = 2, path = "emby://2", mediaProvider = MediaProviderType.Emby)
         songRepository.setSongs(listOf(local.copy(copies = listOf(emby, local))))
 
-        val viewModel = SongInfoViewModel(1, ObserveSongs(songRepository, FakeOfflineSongs().filter), LoadLyrics(songRepository, NoOnlineLyrics), fixedCopyContext())
+        val viewModel = viewModel(1)
         backgroundScope.launch { viewModel.uiState.collect {} }
         advanceUntilIdle()
 
@@ -67,7 +145,7 @@ class SongInfoViewModelTest {
         songRepository.setSongs(listOf(createSong(id = 2)))
         songRepository.lyrics[2] = "la la la"
 
-        val viewModel = SongInfoViewModel(2, ObserveSongs(songRepository, FakeOfflineSongs().filter), LoadLyrics(songRepository, NoOnlineLyrics), fixedCopyContext())
+        val viewModel = viewModel(2)
         backgroundScope.launch { viewModel.uiState.collect {} }
         advanceUntilIdle()
 
@@ -85,7 +163,7 @@ class SongInfoViewModelTest {
     fun `a song no longer in the library is not found`() = runTest {
         songRepository.setSongs(emptyList())
 
-        val viewModel = SongInfoViewModel(2, ObserveSongs(songRepository, FakeOfflineSongs().filter), LoadLyrics(songRepository, NoOnlineLyrics), fixedCopyContext())
+        val viewModel = viewModel(2)
         backgroundScope.launch { viewModel.uiState.collect {} }
         advanceUntilIdle()
 
