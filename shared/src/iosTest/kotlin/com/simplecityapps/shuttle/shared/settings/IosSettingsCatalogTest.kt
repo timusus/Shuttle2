@@ -53,6 +53,7 @@ class IosSettingsCatalogTest {
             ArtistSettings.ShowCreditedArtists.key,
             ArtworkSettings.LocalOnly.key,
             AppearanceSettings.ColourFromArtwork.key,
+            AppearanceSettings.ClassicalDisplay.key,
             AppearanceSettings.ShowHomeOnLaunch.key,
             PrivacySettings.CrashReporting.key,
             PrivacySettings.Analytics.key
