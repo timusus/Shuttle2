@@ -5,6 +5,7 @@ import com.simplecityapps.playback.TrackEnd
 import com.simplecityapps.playback.queue.QueueModel
 import com.simplecityapps.playback.queue.RepeatMode
 import com.simplecityapps.shuttle.logging.Logger
+import com.simplecityapps.shuttle.persistence.SourceStateStore
 
 /**
  * The player's reports, applied to [feeder]'s feeds and the [queue]: an item ready, played out, moved on to or failed.
@@ -14,9 +15,13 @@ internal class IosEngineEvents(
     private val feeder: IosEngineFeeder,
     private val queue: QueueModel,
     private val flows: IosPlaybackFlows,
-    private val loads: IosPendingLoads
+    private val loads: IosPendingLoads,
+    private val sourceState: SourceStateStore? = null
 ) : IosAudioPlayerListener {
     private val log = Logger.tagged("playback")
+
+    /** The uid of the item whose copies [fallsBackToCopy] has tried, and the song ids it tried. */
+    private var triedCopies: Pair<Long, Set<Long>>? = null
 
     override fun onStateChanged(
         trackId: String,
@@ -55,6 +60,8 @@ internal class IosEngineEvents(
         if (feed.failed || feed.ready) return
         feed.ready = true
         loads.failures = 0
+        val song = feed.item.song
+        sourceState?.setSongMissing(song.mediaProvider.name, song.id, missing = false)
         loads.complete(Result.success(loads.pending?.attempt == 1))
     }
 
@@ -110,7 +117,31 @@ internal class IosEngineEvents(
         val unresolved = feeder.unresolved(currentFeed) ?: ahead
         // A stream that couldn't be resolved isn't reported, and a refusal stops there.
         if (unresolved != null) currentFeed.reportFailure = false
-        onCurrentFailed(currentFeed, skip = unresolved !is ServerStreamNotAllowedException)
+        val refusal = unresolved is ServerStreamNotAllowedException
+        if (!refusal && fallsBackToCopy(currentFeed)) return
+        onCurrentFailed(currentFeed, skip = !refusal)
+    }
+
+    /**
+     * [feed]'s song has another copy, not yet tried for this item nor marked missing: the item plays that copy instead,
+     * at the position it failed at, without reporting a failure. A local copy that failed is marked missing; the engine
+     * reports only a message, so a server copy's 404 can't be told from a lost connection and isn't marked.
+     */
+    private fun fallsBackToCopy(feed: IosFeed): Boolean {
+        val song = feed.item.song
+        if (!song.mediaProvider.remote) sourceState?.setSongMissing(song.mediaProvider.name, song.id, missing = true)
+        val uid = feed.item.uid
+        val tried = triedCopies?.takeIf { it.first == uid }?.second.orEmpty() + song.id
+        triedCopies = uid to tried
+        val next = song.copies.firstOrNull { copy ->
+            copy.id !in tried && sourceState?.missingSongs(copy.mediaProvider.name)?.contains(copy.id) != true
+        } ?: return false
+        val positionMs = if (feed.ready) feeder.progress() ?: 0 else feed.loadingFrom ?: 0
+        log.warn { "song ${song.id} failed; playing its copy ${next.id} from ${next.mediaProvider} at $positionMs ms" }
+        feed.failed = true
+        queue.replaceSong(uid, next.copy(copies = song.copies))
+        feeder.startLoad(queue.currentItem ?: return false, positionMs)
+        return true
     }
 
     /**

@@ -18,6 +18,7 @@ import com.simplecityapps.playback.queue.ShuffleMode
 import com.simplecityapps.shuttle.logging.Logger
 import com.simplecityapps.shuttle.model.PlayContext
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.persistence.SourceStateStore
 import kotlin.random.Random
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.NonCancellable
@@ -41,7 +42,9 @@ class IosPlayerController(
     /** Where a play of an item that isn't loaded starts it: the saved position, else the song's own start. */
     private val resumePosition: (Song) -> Int = PlaybackPolicy::startOf,
     /** Whether Classical display is on: in Track mode work movements then play at album gain. */
-    private val classicalDisplay: () -> Boolean = { false }
+    private val classicalDisplay: () -> Boolean = { false },
+    /** Where failed copies are marked missing, so a song plays its next copy. */
+    private val sourceState: SourceStateStore? = null
 ) : PlaybackOperations,
     PlaybackStateSource {
     private val queue = QueueModel(random)
@@ -59,7 +62,7 @@ class IosPlayerController(
 
     private val feeder = IosEngineFeeder(player, itemResolver, queue, flows, loads, classicalDisplay)
 
-    private val events: IosEngineEvents = IosEngineEvents(feeder, queue, flows, loads)
+    private val events: IosEngineEvents = IosEngineEvents(feeder, queue, flows, loads, sourceState)
 
     /** [IosPlaybackFlows.playWhenReady], for system surfaces. Collectors read this flow; they don't keep their own copy. */
     val playWhenReadyFlow: StateFlow<Boolean> = flows.playWhenReadyFlow.asStateFlow()

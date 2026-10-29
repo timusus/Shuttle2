@@ -2,6 +2,8 @@ package com.simplecityapps.shuttle.shared.playback
 
 import com.simplecityapps.shuttle.entitlement.ServerAccess
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
+import com.simplecityapps.shuttle.persistence.SourceStateStore
 import kotlin.random.Random
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -59,6 +61,9 @@ abstract class IosPlayerControllerTestBase {
     /** While set, every stream resolution waits for it: a slow server answer. */
     protected var resolveGate: CompletableDeferred<Unit>? = null
 
+    /** Where the controller marks failed copies missing. */
+    protected val sourceState = SourceStateStore(InMemoryKeyValueStore())
+
     /**
      * Runs [block] over a controller on an unconfined test dispatcher; or, if not [unconfined], on a queued one, which
      * doesn't hold back the coroutines resumed while the controller works on main, as main doesn't.
@@ -104,7 +109,8 @@ abstract class IosPlayerControllerTestBase {
             },
             scope = CoroutineScope(dispatcher),
             random = Random(1),
-            classicalDisplay = { classicalDisplay }
+            classicalDisplay = { classicalDisplay },
+            sourceState = sourceState
         )
         engine.open = controller.itemResolver::resolve
         block(controller)

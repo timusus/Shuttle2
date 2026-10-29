@@ -20,6 +20,7 @@ import com.simplecityapps.shuttle.di.AppSupervisorJob
 import com.simplecityapps.shuttle.di.DefaultDispatcher
 import com.simplecityapps.shuttle.di.MainImmediateDispatcher
 import com.simplecityapps.shuttle.persistence.KeyValueStore
+import com.simplecityapps.shuttle.persistence.SourceStateStore
 import com.simplecityapps.shuttle.settings.AppearanceSettings
 import com.simplecityapps.shuttle.settings.EqualizerSettings
 import com.simplecityapps.shuttle.shared.downloads.OfflineDownloads
@@ -120,7 +121,8 @@ class IosPlaybackModule {
         random: Random,
         plex: PlexStreamUrlProvider,
         @MainImmediateDispatcher mainImmediateDispatcher: CoroutineDispatcher,
-        @DefaultDispatcher defaultDispatcher: CoroutineDispatcher
+        @DefaultDispatcher defaultDispatcher: CoroutineDispatcher,
+        sourceState: SourceStateStore
     ): IosPlayerController {
         // The saved ReplayGain reaches the engine before anything plays; IosSettingsEffects sends each change
         player.setReplayGain(playbackSettings.replayGainMode.value, playbackSettings.preAmpGain.value)
@@ -133,7 +135,8 @@ class IosPlaybackModule {
             retainShuffleOnNewQueue = { retainShuffle.value },
             random = random,
             resumePosition = playbackPreferenceManager::resumePosition,
-            classicalDisplay = { appearanceSettings.classicalDisplay.value }
+            classicalDisplay = { appearanceSettings.classicalDisplay.value },
+            sourceState = sourceState
         )
         scope.launch { appearanceSettings.classicalDisplay.flow.collect { controller.refreshWorkGain() } }
         IosPlaybackStore(controller, playbackPreferenceManager, playbackSettings.playbackSpeed, songRepository, scope, defaultDispatcher).start()

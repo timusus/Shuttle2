@@ -166,6 +166,15 @@ class QueueModel(
         publish()
     }
 
+    /** Gives the item with [uid] [song], another copy of the same song, keeping its uid and place. */
+    fun replaceSong(
+        uid: Long,
+        song: Song
+    ) {
+        entries = entries.map { entry -> if (entry.uid == uid) Entry(uid, song) else entry }
+        publish()
+    }
+
     /**
      * Moves an item within the queue as the shuffle mode presents it, leaving the other order as it is. Queue order
      * follows Media3's `moveMediaItem`: [to] past the end moves to the end, and the shuffled order keeps every item's
