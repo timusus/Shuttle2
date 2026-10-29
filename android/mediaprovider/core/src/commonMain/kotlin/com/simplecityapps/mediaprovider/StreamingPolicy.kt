@@ -6,13 +6,14 @@ import com.simplecityapps.shuttle.streaming.DeliveredFormat
 import com.simplecityapps.shuttle.streaming.DeliveredFormats
 import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 
 /** Whether the active network costs the user money per byte (mobile data, a metered hotspot). */
-interface MeteredNetwork {
+fun interface MeteredNetwork {
     fun isMetered(): Boolean
 
     /** The current value, then each change, so a cap built from it follows a switch between wifi and mobile data. */
-    val meteredFlow: Flow<Boolean>
+    val meteredFlow: Flow<Boolean> get() = flowOf(isMetered())
 }
 
 /**
