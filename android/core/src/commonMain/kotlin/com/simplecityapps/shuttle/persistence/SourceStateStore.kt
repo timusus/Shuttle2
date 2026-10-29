@@ -4,6 +4,8 @@ import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.SingleIn
 import kotlin.time.Instant
+import kotlinx.atomicfu.locks.SynchronizedObject
+import kotlinx.atomicfu.locks.synchronized
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
@@ -100,12 +102,15 @@ class SourceStateStore @Inject constructor(
         source: String,
         songId: Long,
         missing: Boolean
-    ) {
+    ) = synchronized(missingLock) {
         val songs = missingSongs(source)
         if ((songId in songs) != missing) putIdSet(missingSongsKey(source), if (missing) songs + songId else songs - songId)
     }
 
-    fun clearMissingSongs(source: String) = store.edit { remove(missingSongsKey(source)) }
+    // Under the lock so a mark racing the import's clear can't write the old set back
+    fun clearMissingSongs(source: String) = synchronized(missingLock) { store.edit { remove(missingSongsKey(source)) } }
+
+    private val missingLock = SynchronizedObject()
 
     /** [missingSongs] now and each time it changes. */
     fun observeMissingSongs(source: String): Flow<Set<Long>> = store.changes(missingSongsKey(source)).map { missingSongs(source) }.distinctUntilChanged()

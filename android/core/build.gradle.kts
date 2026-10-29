@@ -33,6 +33,8 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             api(libs.kotlinx.coroutinesCore)
+            // SynchronizedObject: a common lock (SourceStateStore)
+            implementation(libs.kotlinx.atomicfu)
         }
 
         androidMain.dependencies {
