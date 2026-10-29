@@ -14,6 +14,7 @@ import com.simplecityapps.localmediaprovider.local.repository.LocalSmartPlaylist
 import com.simplecityapps.localmediaprovider.local.repository.LocalSongRepository
 import com.simplecityapps.localmediaprovider.local.repository.LocalSuggestionsRepository
 import com.simplecityapps.localmediaprovider.local.repository.PlaylistFileSync
+import com.simplecityapps.localmediaprovider.local.repository.copyAvailability
 import com.simplecityapps.localmediaprovider.local.repository.libraryAlbumIndex
 import com.simplecityapps.mediaprovider.AggregateFavouriteWriter
 import com.simplecityapps.mediaprovider.AggregateSimilarSongsProvider
@@ -38,6 +39,8 @@ import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.shuttle.di.IoDispatcher
 import com.simplecityapps.shuttle.model.AlbumIndexProvider
 import com.simplecityapps.shuttle.persistence.SourceStateStore
+import com.simplecityapps.shuttle.ui.actions.DownloadStatusSource
+import com.simplecityapps.shuttle.ui.actions.OfflineModeSource
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer
 import dev.zacsweers.metro.Binds
@@ -82,8 +85,17 @@ abstract class LibraryModule {
             database: MediaDatabase,
             @AppCoroutineScope appCoroutineScope: CoroutineScope,
             @IoDispatcher ioDispatcher: CoroutineDispatcher,
-            librarySettings: LibrarySettings
-        ): LibraryCopies = LibraryCopies(appCoroutineScope, ioDispatcher, database.songDataDao().getAll(), librarySettings.mergeCopies.flow)
+            librarySettings: LibrarySettings,
+            offlineMode: OfflineModeSource,
+            downloads: DownloadStatusSource,
+            sourceState: SourceStateStore
+        ): LibraryCopies = LibraryCopies(
+            appCoroutineScope,
+            ioDispatcher,
+            database.songDataDao().getAll(),
+            librarySettings.mergeCopies.flow,
+            copyAvailability(offlineMode, downloads, sourceState)
+        )
 
         @Provides
         @SingleIn(AppScope::class)

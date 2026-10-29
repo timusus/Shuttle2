@@ -16,11 +16,15 @@ interface OfflineModeSource {
     fun set(enabled: Boolean)
 }
 
-/** A local song always plays; a server song plays offline only once its download has completed. */
-fun Song.isAvailableOffline(downloadedPaths: Set<String>): Boolean = !mediaProvider.remote || path in downloadedPaths
+/**
+ * A local song always plays; a server song plays offline only once its download has completed. A merged song plays
+ * while any of its copies does, as its best copy then ranks first.
+ */
+fun Song.isAvailableOffline(downloadedPaths: Set<String>): Boolean = !mediaProvider.remote || path in downloadedPaths ||
+    copies.any { copy -> !copy.mediaProvider.remote || copy.path in downloadedPaths }
 
 /** The paths of the completed downloads; progress ticks don't re-emit it. */
-internal fun DownloadStatusSource.observeDownloadedPaths(): Flow<Set<String>> = observe()
+fun DownloadStatusSource.observeDownloadedPaths(): Flow<Set<String>> = observe()
     .map { statuses -> statuses.states.filterValues { it == SongDownloadStatus.Downloaded }.keys }
     .distinctUntilChanged()
 

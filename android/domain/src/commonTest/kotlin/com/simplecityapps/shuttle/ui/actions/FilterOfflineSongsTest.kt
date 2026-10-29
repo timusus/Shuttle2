@@ -69,4 +69,25 @@ class FilterOfflineSongsTest {
 
         visible() shouldBe listOf("Local", "Saved", "Partial", "Streamed")
     }
+
+    @Test
+    fun `offline a merged song stays listed and playable while any of its copies is downloaded`() = runTest {
+        mode.value = true
+        statuses.value = DownloadStatuses(mapOf("remote://2" to SongDownloadStatus.Downloaded))
+        val merged = streamed.copy(copies = listOf(streamed, saved))
+        val modeSource = object : OfflineModeSource {
+            override fun observe(): Flow<Boolean> = mode
+
+            override fun set(enabled: Boolean) {}
+        }
+        val playable = FilterPlayableSongs(
+            modeSource,
+            object : DownloadStatusSource {
+                override fun observe(): Flow<DownloadStatuses> = statuses
+            }
+        )
+
+        filter(flowOf(listOf(merged))).first() shouldBe listOf(merged)
+        playable(listOf(merged)) shouldBe listOf(merged)
+    }
 }
