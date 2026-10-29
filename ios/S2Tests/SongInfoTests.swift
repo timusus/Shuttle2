@@ -24,7 +24,8 @@ struct SongInfoTests {
             albumArtists: nil, artistsTag: nil, artistDisplay: nil, albumArtistDisplay: nil, compilation: nil, mbTrackId: nil, mbAlbumId: nil,
             mbReleaseGroupId: nil, mbArtistIds: nil, mbAlbumArtistIds: nil, serverAlbumId: nil, serverArtistIds: nil,
             serverAlbumArtistIds: nil, albumIdentity: nil, composer: nil, composerSort: nil, conductor: nil, arranger: nil,
-            work: nil, movementName: nil, movementNumber: nil, movementTotal: nil, showMovement: nil, performers: []
+            work: nil, movementName: nil, movementNumber: nil, movementTotal: nil, showMovement: nil, performers: [],
+            copyBlockingHash: nil, copies: []
         )
     }
 

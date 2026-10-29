@@ -20,7 +20,8 @@ struct AlbumDetailTests {
             artistDisplay: nil, albumArtistDisplay: nil, compilation: nil, mbTrackId: nil, mbAlbumId: nil, mbReleaseGroupId: nil,
             mbArtistIds: nil, mbAlbumArtistIds: nil, serverAlbumId: nil, serverArtistIds: nil,
             serverAlbumArtistIds: nil, albumIdentity: nil, composer: composer, composerSort: nil, conductor: nil, arranger: nil,
-            work: work, movementName: movement, movementNumber: movementNumber.map { KotlinInt(int: $0) }, movementTotal: movementTotal.map { KotlinInt(int: $0) }, showMovement: nil, performers: []
+            work: work, movementName: movement, movementNumber: movementNumber.map { KotlinInt(int: $0) }, movementTotal: movementTotal.map { KotlinInt(int: $0) }, showMovement: nil, performers: [],
+            copyBlockingHash: nil, copies: []
         )
     }
 

@@ -17,6 +17,7 @@ class LibrarySettings @Inject constructor(
     val rescanFrequencyMigrated = store.preference(RescanFrequencyMigrated)
     val reportPlaybackToServer = store.preference(ReportPlaybackToServer)
     val minTrackLength = store.preference(MinTrackLength)
+    val mergeCopies = store.preference(MergeCopies)
 
     /** One-time move off the old default of never, run at launch before the background sync is scheduled. */
     fun migrateRescanFrequency() {
@@ -47,5 +48,8 @@ class LibrarySettings @Inject constructor(
 
         /** Report what's playing to Jellyfin, Emby and Plex, all three. */
         val ReportPlaybackToServer = Setting.boolean("pref_report_playback", true)
+
+        /** Show a song held by several sources once, its best copy standing for the rest. */
+        val MergeCopies = Setting.boolean("pref_merge_copies", true)
     }
 }

@@ -25,6 +25,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
@@ -40,7 +41,9 @@ class LocalSongRepository(
     private val songDataDao: SongDataDao,
     private val albumIndex: LibraryAlbumIndex,
     /** Songs shorter than this are left out of every query but a lookup by id; a change re-emits [getSongs]. */
-    private val minTrackLength: Flow<MinTrackLength> = flowOf(MinTrackLength.Off)
+    private val minTrackLength: Flow<MinTrackLength> = flowOf(MinTrackLength.Off),
+    /** Merges each song's copies in every query but a lookup by id, which names the exact copy a playlist or the queue holds. */
+    private val copies: LibraryCopies = LibraryCopies()
 ) : SongRepository {
     private val songsRelay: StateFlow<List<Song>?> by lazy {
         songDataDao
@@ -61,15 +64,13 @@ class LocalSongRepository(
      * [minTrackLength] (a lookup by id is for songs something already holds, a playlist's or the queue's, so it keeps them).
      */
     override fun getSongs(query: SongQuery): Flow<List<Song>?> {
-        val songs: Flow<List<Song>?> =
-            if (query is SongQuery.SongIds && query.songIds.isEmpty()) {
-                flowOf(emptyList())
-            } else if (query is SongQuery.SongIds) {
-                combine(songDataDao.getByIds(query.songIds), albumIndex.updates) { found, index -> found.withAlbumIdentities(index.identities) }.flowOn(ioDispatcher)
-            } else {
-                combine(songsRelay, minTrackLength) { songs, min -> songs?.filter(min::keeps)?.filter(query.predicate)?.sortedWith(query.sortOrder.comparator) }
-            }
-        return songs.map { result -> result?.matching(query) }
+        if (query is SongQuery.SongIds && query.songIds.isEmpty()) return flowOf(emptyList())
+        if (query is SongQuery.SongIds) {
+            return combine(songDataDao.getByIds(query.songIds), albumIndex.updates) { found, index -> found.withAlbumIdentities(index.identities).matching(query) }.flowOn(ioDispatcher)
+        }
+        return combine(songsRelay, minTrackLength, copies.merging) { songs, min, merge ->
+            songs?.filter(min::keeps)?.filter(query.predicate)?.matching(query)?.let(merge)?.sortedWith(query.sortOrder.comparator)
+        }
     }
 
     override fun countSongs(): Flow<Int> = minTrackLength
@@ -95,13 +96,15 @@ class LocalSongRepository(
         } else {
             index.songIdsFor(query)?.let { ids -> songDataDao.loadByIds(ids) } ?: songDataDao.get().map { songData -> songData.toSong() }
         }
+        val exact = query is SongQuery.SongIds || query is SongQuery.ExternalIds
         val min = if (query is SongQuery.SongIds) MinTrackLength.Off else minTrackLength.first()
         songs
             .withAlbumIdentities(index.identities)
             .filter(min::keeps)
             .filter(query.predicate)
-            .sortedWith(query.sortOrder.comparator)
             .matching(query)
+            .let { matched -> if (exact) matched else copies.merge(matched) }
+            .sortedWith(query.sortOrder.comparator)
     }
 
     override suspend fun loadLyrics(songId: Long): String? = withContext(ioDispatcher) { songDataDao.lyrics(songId) }
@@ -193,15 +196,31 @@ class LocalSongRepository(
         songs: List<Song>,
         favourite: Boolean
     ) {
-        val count = songDataDao.setFavourite(songs, favourite)
+        // A merged song shows as a favourite while any copy is one, so unfavouriting it clears them all.
+        val targets = if (favourite) songs else songs.flatMap { song -> song.copies.ifEmpty { listOf(song) } }
+        val count = songDataDao.setFavourite(targets, favourite)
         logger.debug { "$count song(s) ${if (favourite) "favourited" else "unfavourited"}" }
     }
 
-    /** Read on its own rather than from the shared song list, so the heart follows a toggle without a whole-library requery. */
-    override fun getFavouriteSongIds(): Flow<Set<Long>> = songDataDao.getFavouriteIds()
-        .map { ids -> ids.toSet() }
+    /**
+     * Read on its own rather than from the shared song list, so the heart follows a toggle without a whole-library
+     * requery. A favourite copy also marks the merged song that stands for it, while the copy keeps its own id for a
+     * playlist that holds it.
+     */
+    override fun getFavouriteSongIds(): Flow<Set<Long>> = combine(songDataDao.getFavouriteIds(), mergedIds) { ids, merged ->
+        ids.toSet().let { favourites -> favourites + favourites.mapNotNull(merged::get) }
+    }
         .distinctUntilChanged()
         .flowOn(ioDispatcher)
+
+    /** Each merged copy's id to the id of the song standing for it, once the library has loaded; empty while copies aren't merged. */
+    private val mergedIds: Flow<Map<Long, Long>> by lazy {
+        combine(songsRelay.filterNotNull(), copies.merging) { songs, merge ->
+            merge(songs.matching(SongQuery.All()))
+                .flatMap { song -> song.copies.map { copy -> copy.id to song.id } }
+                .toMap()
+        }.distinctUntilChanged()
+    }
 
     override suspend fun clearExcludeList() {
         logger.debug { "Clearing excluded" }

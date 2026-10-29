@@ -4,6 +4,7 @@ import com.simplecityapps.localmediaprovider.local.data.room.database.MediaDatab
 import com.simplecityapps.localmediaprovider.local.favourites.FavouriteSender
 import com.simplecityapps.localmediaprovider.local.repository.AlbumKeyMigration
 import com.simplecityapps.localmediaprovider.local.repository.LibraryAlbumIndex
+import com.simplecityapps.localmediaprovider.local.repository.LibraryCopies
 import com.simplecityapps.localmediaprovider.local.repository.LocalAlbumArtistRepository
 import com.simplecityapps.localmediaprovider.local.repository.LocalAlbumRepository
 import com.simplecityapps.localmediaprovider.local.repository.LocalGenreRepository
@@ -82,7 +83,7 @@ abstract class LibraryModule {
             @IoDispatcher ioDispatcher: CoroutineDispatcher,
             albumIndex: LibraryAlbumIndex,
             librarySettings: LibrarySettings
-        ): SongRepository = LocalSongRepository(appCoroutineScope, ioDispatcher, database.songDataDao(), albumIndex, librarySettings.minTrackLength.flow)
+        ): SongRepository = LocalSongRepository(appCoroutineScope, ioDispatcher, database.songDataDao(), albumIndex, librarySettings.minTrackLength.flow, LibraryCopies(librarySettings.mergeCopies.flow))
 
         @Provides
         @SingleIn(AppScope::class)
@@ -139,7 +140,7 @@ abstract class LibraryModule {
             @AppCoroutineScope appCoroutineScope: CoroutineScope,
             @IoDispatcher ioDispatcher: CoroutineDispatcher,
             librarySettings: LibrarySettings
-        ): AlbumRepository = LocalAlbumRepository(appCoroutineScope, ioDispatcher, database.songDataDao().getAll(), librarySettings.minTrackLength.flow)
+        ): AlbumRepository = LocalAlbumRepository(appCoroutineScope, ioDispatcher, LibraryCopies(librarySettings.mergeCopies.flow).merged(database.songDataDao().getAll()), librarySettings.minTrackLength.flow)
 
         @Provides
         @SingleIn(AppScope::class)
@@ -148,7 +149,7 @@ abstract class LibraryModule {
             @AppCoroutineScope appCoroutineScope: CoroutineScope,
             @IoDispatcher ioDispatcher: CoroutineDispatcher,
             librarySettings: LibrarySettings
-        ): AlbumArtistRepository = LocalAlbumArtistRepository(appCoroutineScope, ioDispatcher, database.songDataDao().getAll(), librarySettings.minTrackLength.flow)
+        ): AlbumArtistRepository = LocalAlbumArtistRepository(appCoroutineScope, ioDispatcher, LibraryCopies(librarySettings.mergeCopies.flow).merged(database.songDataDao().getAll()), librarySettings.minTrackLength.flow)
 
         @Provides
         @SingleIn(AppScope::class)

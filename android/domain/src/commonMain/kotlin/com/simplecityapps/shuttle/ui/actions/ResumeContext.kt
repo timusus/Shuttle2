@@ -40,7 +40,8 @@ class ResumeContext(
         }
         if (point == null) return Result.StartOver()
         val songs = filterPlayableSongs(resolveSongs(selection))
-        val song = songs.find { it.mediaProvider == point.mediaProvider && it.path == point.songPath } ?: return Result.StartOver(songs)
+        // The point names the copy that was playing, which may be another of a merged song's copies.
+        val song = songs.find { song -> song.copies.ifEmpty { listOf(song) }.any { it.mediaProvider == point.mediaProvider && it.path == point.songPath } } ?: return Result.StartOver(songs)
 
         // The shuffle mode goes first, as the queue's position is into the order it picks; a queue that fails puts it back.
         val shuffleMode = queueOperations.getShuffleMode()

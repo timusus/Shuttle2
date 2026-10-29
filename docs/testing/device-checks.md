@@ -671,3 +671,10 @@ Automated: `support/scripts/emu-verify.sh --check legacy-purchaser-offline` seed
 - [ ] iOS: long-press a playable Home shelf header (Recently Added, Recent Releases): the menu shows "Play <title>" and plays it. VoiceOver: the header's actions rotor offers the same Play action.
 - [ ] iOS: tap a Home header with a destination (Recently Added, Genre Picks): the whole title row opens it; the chevron sits after the title, no "See All" text. Search's capped groups keep "See All" and expand in place.
 - [ ] Android and iOS: Recent Releases lists this year's albums before last year's, and is hidden when the library has none.
+
+## Song copies merged across sources (#1069, Oct 2026)
+
+On the owner's device, with the same albums both as local files and on Emby:
+- [ ] Android: each such album lists each song once, with the album's song count, the artist's album count and the Songs list counting it once. Albums held by only one source are unchanged.
+- [ ] Android: play a merged song, then the same song from the other source's playlist: its play count goes up by one each time, and a playlist still plays the copy it was given.
+- [ ] Android, debug build with MusicBrainz recording ids ignored (`SongCopyGrouping(useRecordingIds = false)`, no switch wired yet): the plain-tag rule still pairs the local and Emby copies. Note any song it misses: the server changing a length, track number or artist joining is what this exposes.

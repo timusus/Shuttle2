@@ -88,7 +88,7 @@ data class SongData(
     // Each entry is "name", or "name" + [PERFORMER_ROLE_SEPARATOR] + "role": the list column's ';' separator can't split a name.
     @ColumnInfo(name = "performers") var performers: List<String>? = null,
     // Derived from album, disc and track on every write, so a tag edit moves the song to its new block.
-    @ColumnInfo(name = "copyBlockingHash") var copyBlockingHash: Long? = null
+    @ColumnInfo(name = "copyBlockingHash") var copyBlockingHash: Long? = copyBlockingHash(album, disc, track)
 ) {
     @PrimaryKey(autoGenerate = true)
     var id: Long = 0
@@ -150,8 +150,7 @@ fun Song.toSongData(mediaProviderType: MediaProviderType): SongData = SongData(
     movementNumber = movementNumber,
     movementTotal = movementTotal,
     showMovement = showMovement,
-    performers = performers?.map { performer -> performer.role?.let { role -> "${performer.name}$PERFORMER_ROLE_SEPARATOR$role" } ?: performer.name },
-    copyBlockingHash = copyBlockingHash(album, disc, track)
+    performers = performers?.map { performer -> performer.role?.let { role -> "${performer.name}$PERFORMER_ROLE_SEPARATOR$role" } ?: performer.name }
 ).apply {
     id = this@toSongData.id
 }
@@ -203,4 +202,4 @@ const val SONG_COLUMNS_QUALIFIED =
         "songs.compilation, songs.mbTrackId, songs.mbAlbumId, songs.mbReleaseGroupId, songs.mbArtistIds, " +
         "songs.mbAlbumArtistIds, songs.serverAlbumId, songs.serverArtistIds, songs.serverAlbumArtistIds, songs.artworkItemId, " +
         "songs.composer, songs.composerSort, songs.conductor, songs.arranger, songs.work, songs.movementName, " +
-        "songs.movementNumber, songs.movementTotal, songs.showMovement, songs.performers, songs.albumArtistDisplay"
+        "songs.movementNumber, songs.movementTotal, songs.showMovement, songs.performers, songs.albumArtistDisplay, songs.copyBlockingHash"
