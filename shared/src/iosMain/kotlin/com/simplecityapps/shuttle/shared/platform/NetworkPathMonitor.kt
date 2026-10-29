@@ -6,6 +6,8 @@ import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.SingleIn
 import kotlin.concurrent.Volatile
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import platform.Network.nw_path_get_status
 import platform.Network.nw_path_is_constrained
 import platform.Network.nw_path_is_expensive
@@ -28,15 +30,14 @@ class NetworkPathMonitor @Inject constructor() :
     @Volatile
     private var connected = true
 
-    @Volatile
-    private var metered = false
+    private val metered = MutableStateFlow(false)
 
     private val monitor = nw_path_monitor_create()
 
     init {
         nw_path_monitor_set_update_handler(monitor) { path ->
             connected = nw_path_get_status(path) == nw_path_status_satisfied
-            metered = nw_path_is_expensive(path) || nw_path_is_constrained(path)
+            metered.value = nw_path_is_expensive(path) || nw_path_is_constrained(path)
         }
         nw_path_monitor_set_queue(monitor, dispatch_queue_create("com.simplecityapps.shuttle.network-path", null))
         nw_path_monitor_start(monitor)
@@ -44,5 +45,7 @@ class NetworkPathMonitor @Inject constructor() :
 
     override fun isConnected(): Boolean = connected
 
-    override fun isMetered(): Boolean = metered
+    override fun isMetered(): Boolean = metered.value
+
+    override val meteredFlow: Flow<Boolean> = metered
 }

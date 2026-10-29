@@ -9,12 +9,17 @@ import com.simplecityapps.shuttle.settings.TranscodeFormat
 import com.simplecityapps.shuttle.streaming.DeliveredFormats
 import io.kotest.matchers.shouldBe
 import kotlin.test.Test
+import kotlinx.coroutines.flow.flowOf
 
 class StreamingPolicyTest {
     private val store = InMemoryKeyValueStore()
     private val streamingSettings = StreamingSettings(SettingsStore(store))
     private var metered = false
-    private val cap = StreamingPolicy(streamingSettings, DeliveredFormats()) { metered }
+    private val network = object : MeteredNetwork {
+        override fun isMetered() = metered
+        override val meteredFlow = flowOf(false)
+    }
+    private val cap = StreamingPolicy(streamingSettings, DeliveredFormats(), network)
 
     @Test
     fun `streams the original by default unmetered and 320 kbps metered`() {

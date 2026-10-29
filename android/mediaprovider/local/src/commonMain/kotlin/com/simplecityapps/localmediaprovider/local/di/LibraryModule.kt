@@ -100,9 +100,12 @@ abstract class LibraryModule {
             meteredNetwork: MeteredNetwork,
             debugSettings: DebugSettings
         ): LibraryCopies {
-            // The network is read when the quality changes, so a switch to mobile data re-ranks with the next change.
-            val streamingCap = combine(streamingSettings.meteredQuality.flow, streamingSettings.unmeteredQuality.flow) { metered, unmetered ->
-                (if (meteredNetwork.isMetered()) metered else unmetered).maxBitrateKbps
+            val streamingCap = combine(
+                streamingSettings.meteredQuality.flow,
+                streamingSettings.unmeteredQuality.flow,
+                meteredNetwork.meteredFlow
+            ) { metered, unmetered, onMetered ->
+                (if (onMetered) metered else unmetered).maxBitrateKbps
             }
             val preferences = combine(librarySettings.primaryCopies.flow, librarySettings.primaryAlbums.flow, librarySettings.preferredCopy.flow, ::SongCopyPreferences)
             return LibraryCopies(
