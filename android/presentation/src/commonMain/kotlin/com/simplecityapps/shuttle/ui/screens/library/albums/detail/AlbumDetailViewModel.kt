@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.simplecityapps.mediaprovider.repository.albums.AlbumQuery
 import com.simplecityapps.shuttle.di.IoDispatcher
+import com.simplecityapps.shuttle.logging.Logger
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumGroupKey
 import com.simplecityapps.shuttle.model.AlbumSources
@@ -19,12 +20,16 @@ import com.simplecityapps.shuttle.model.playContext
 import com.simplecityapps.shuttle.query.SongQuery
 import com.simplecityapps.shuttle.settings.AppearanceSettings
 import com.simplecityapps.shuttle.settings.ObserveSetting
+import com.simplecityapps.shuttle.ui.actions.MediaActionMessage
 import com.simplecityapps.shuttle.ui.actions.ObserveAlbums
 import com.simplecityapps.shuttle.ui.actions.ObserveArtists
 import com.simplecityapps.shuttle.ui.actions.ObserveCopyContext
 import com.simplecityapps.shuttle.ui.actions.ObserveCurrentSong
 import com.simplecityapps.shuttle.ui.actions.ObserveSongs
 import com.simplecityapps.shuttle.ui.actions.SetAlbumPrimarySource
+import com.simplecityapps.shuttle.ui.actions.postSourceChoiceFailure
+import com.simplecityapps.shuttle.ui.common.PendingEvent
+import com.simplecityapps.shuttle.ui.common.PendingEvents
 import com.simplecityapps.shuttle.ui.theme.ArtworkSeed
 import com.simplecityapps.shuttle.ui.theme.ObserveArtworkSeed
 import dev.zacsweers.metro.AppScope
@@ -66,6 +71,8 @@ data class AlbumDetailUiState(
     val sources: AlbumSources? = null,
     /** The Primary source picker is open; only while [sources] offers a choice. */
     val choosingSource: Boolean = false,
+    /** Failures to show once, as a snackbar. */
+    val events: List<PendingEvent<MediaActionMessage>> = emptyList(),
 ) {
     // Swift sees no default arguments.
     constructor(
@@ -77,10 +84,13 @@ data class AlbumDetailUiState(
         moreByArtist: List<Album>,
         moreByArtistNames: List<String>,
         classical: Boolean,
-    ) : this(album, songs, currentSong, loadingState, seed, moreByArtist, moreByArtistNames, classical, null, emptyMap(), null, false)
+    ) : this(album, songs, currentSong, loadingState, seed, moreByArtist, moreByArtistNames, classical, null, emptyMap(), null, false, emptyList())
 
     /** The first conductor or performer credit among the songs, for the subtitle; null when classical display is off, the songs aren't a classical block or none is tagged. */
     val performers: String? get() = if (classical && songs.isClassicalBlock()) songs.firstNotNullOfOrNull { it.performersLine() } else null
+
+    /** How many sources the subtitle shows; null unless [sources] offers a choice (two or more, merging on). */
+    val sourceCount: Int? get() = sources?.sourceCount
 
     val playContext: PlayContext get() = album?.playContext ?: PlayContext.None
 
@@ -147,17 +157,30 @@ class AlbumDetailViewModel @AssistedInject constructor(
     /** Makes [provider] the album's primary source; null is Automatic. */
     fun onSetPrimarySource(provider: MediaProviderType?) {
         choosingSource.value = false
-        viewModelScope.launch { setAlbumPrimarySource(songs.first(), provider) }
+        viewModelScope.launch { events.postSourceChoiceFailure(logger) { setAlbumPrimarySource(songs.first(), provider) } }
     }
 
-    private class Extras(val moreBy: MoreBy, val classical: Boolean, val grouped: Grouped, val sources: AlbumSources?, val choosingSource: Boolean)
+    private val events = PendingEvents<MediaActionMessage>()
+
+    fun onEventHandled(id: Long) = events.consume(id)
+
+    private class Extras(
+        val moreBy: MoreBy,
+        val classical: Boolean,
+        val grouped: Grouped,
+        val sources: AlbumSources?,
+        val choosingSource: Boolean,
+        val events: List<PendingEvent<MediaActionMessage>>,
+    )
 
     val uiState: StateFlow<AlbumDetailUiState> = combine(
         songs,
         album,
         observeCurrentSong(),
         observeArtworkSeed(songs.map { it.firstOrNull() }),
-        combine(moreBy, classicalDisplay, classicalRows.grouped, sources, choosingSource, ::Extras),
+        combine(moreBy, classicalDisplay, classicalRows.grouped, combine(sources, choosingSource, events.flow, ::Triple)) { moreBy, classical, grouped, (sources, choosing, events) ->
+            Extras(moreBy, classical, grouped, sources, choosing, events)
+        },
     ) { _, album, currentSong, seed, extras ->
         val songs = extras.grouped.songs
         AlbumDetailUiState(
@@ -178,6 +201,7 @@ class AlbumDetailViewModel @AssistedInject constructor(
             otherRecordings = extras.grouped.otherRecordings,
             sources = extras.sources,
             choosingSource = extras.choosingSource && extras.sources != null,
+            events = extras.events,
         )
     }.stateIn(
         scope = viewModelScope,
@@ -185,3 +209,5 @@ class AlbumDetailViewModel @AssistedInject constructor(
         initialValue = AlbumDetailUiState(),
     )
 }
+
+private val logger = Logger.tagged("AlbumDetailViewModel")

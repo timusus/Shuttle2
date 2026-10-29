@@ -48,10 +48,13 @@ import com.simplecityapps.shuttle.designsystem.component.S2TopBar
 import com.simplecityapps.shuttle.designsystem.component.SettingsGroup
 import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.ui.actions.text
+import com.simplecityapps.shuttle.ui.common.ConsumeEvents
 import com.simplecityapps.shuttle.ui.screens.library.LibraryArtwork
 import com.simplecityapps.shuttle.ui.screens.tageditor.SongInfoRoute
 import com.simplecityapps.shuttle.ui.shell.LocalInShellSheet
 import com.simplecityapps.shuttle.ui.shell.LocalShellSnackbarHostState
+import com.simplecityapps.shuttle.ui.text.getString
 import com.simplecityapps.shuttle.ui.text.stringResource
 import dev.zacsweers.metrox.viewmodel.assistedMetroViewModel
 import kotlinx.coroutines.launch
@@ -70,6 +73,10 @@ fun SongInfoDestination(
     val snackbarHostState = LocalShellSnackbarHostState.current
     val scope = rememberCoroutineScope()
     val copied = stringResource(R.string.song_info_path_copied)
+    val resources = context.resources
+    ConsumeEvents(uiState.events, viewModel::onEventHandled) { message ->
+        snackbarHostState.showSnackbar(resources.getString(message.text()))
+    }
     SongInfoScreen(
         uiState = uiState,
         onNavigateUp = onNavigateUp,

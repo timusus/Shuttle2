@@ -17,12 +17,16 @@ import com.simplecityapps.shuttle.designsystem.component.S2Action
 import com.simplecityapps.shuttle.ui.actions.MediaAction
 import com.simplecityapps.shuttle.ui.actions.MediaSelection
 import com.simplecityapps.shuttle.ui.actions.NavigationTarget
+import com.simplecityapps.shuttle.ui.actions.text
+import com.simplecityapps.shuttle.ui.common.ConsumeEvents
 import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsHost
 import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsTarget
 import com.simplecityapps.shuttle.ui.screens.library.albums.detail.AlbumDetailViewModel
 import com.simplecityapps.shuttle.ui.screens.library.albums.detail.AlbumRow
 import com.simplecityapps.shuttle.ui.shell.AlbumRoute
+import com.simplecityapps.shuttle.ui.shell.LocalShellSnackbarHostState
 import com.simplecityapps.shuttle.ui.shell.albumArtworkKey
+import com.simplecityapps.shuttle.ui.text.getString
 import dev.zacsweers.metrox.viewmodel.assistedMetroViewModel
 
 @Composable
@@ -35,6 +39,10 @@ fun AlbumDetailDestination(
     val resources = LocalResources.current
     val viewModel = assistedMetroViewModel<AlbumDetailViewModel, AlbumDetailViewModel.Factory> { create(route.groupKey) }
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val snackbarHostState = LocalShellSnackbarHostState.current
+    ConsumeEvents(uiState.events, viewModel::onEventHandled) { message ->
+        snackbarHostState.showSnackbar(resources.getString(message.text()))
+    }
     var recordingsOf by remember { mutableStateOf<Long?>(null) }
     MediaActionsHost(onNavigate = onNavigate) { actions ->
         val recordings = recordingsOf?.let { uiState.otherRecordings[it] }

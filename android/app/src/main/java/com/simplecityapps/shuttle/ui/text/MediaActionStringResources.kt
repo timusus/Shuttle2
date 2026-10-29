@@ -10,6 +10,7 @@ val MediaActionString.resId: Int
         MediaActionString.MEDIA_ACTION_NO_SONGS -> R.string.media_action_no_songs
         MediaActionString.MEDIA_ACTION_PLAYBACK_FAILED -> R.string.media_action_playback_failed
         MediaActionString.MEDIA_ACTION_NOT_FOUND -> R.string.media_action_not_found
+        MediaActionString.MEDIA_ACTION_SOURCE_CHOICE_FAILED -> R.string.media_action_source_choice_failed
         MediaActionString.MEDIA_ACTION_UNDO -> R.string.media_action_undo
         MediaActionString.MEDIA_ACTION_ADD_ANYWAY -> R.string.media_action_add_anyway
         MediaActionString.PLAYLIST_MENU_CREATE_PLAYLIST_SUCCESS -> R.string.playlist_menu_create_playlist_success

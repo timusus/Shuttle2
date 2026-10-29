@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <!-- Snackbar shown when saving which source (or copy) of a song or album is primary failed -->
+    <string name="media_action_source_choice_failed">Couldn\'t save the source choice</string>
     <!-- Snackbar shown when an action (play, add to queue, etc.) found no songs to act on -->
     <string name="media_action_no_songs">No songs</string>
     <!-- Snackbar shown when playback fails to start -->

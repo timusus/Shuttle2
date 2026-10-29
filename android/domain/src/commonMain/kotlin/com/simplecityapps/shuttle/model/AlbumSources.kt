@@ -37,3 +37,6 @@ fun albumSources(albumSongs: List<Song>, primaryAlbums: Set<String> = emptySet()
 
 /** How many sources hold a copy of this song; a song only lists several copies while the library merges them. */
 val Song.sourceCount: Int get() = copies.map { it.mediaProvider }.distinct().size
+
+/** [sourceCount] when it is worth showing (two or more), else null. */
+val Song.sourceCountToShow: Int? get() = sourceCount.takeIf { it >= 2 }

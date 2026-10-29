@@ -59,7 +59,7 @@ import com.simplecityapps.shuttle.di.appGraph
 import com.simplecityapps.shuttle.model.PlayContext
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
-import com.simplecityapps.shuttle.model.sourceCount
+import com.simplecityapps.shuttle.model.sourceCountToShow
 import com.simplecityapps.shuttle.settings.DownloadSettings
 import com.simplecityapps.shuttle.ui.actions.MediaAction
 import com.simplecityapps.shuttle.ui.actions.MediaActionMessage
@@ -223,7 +223,7 @@ fun MediaActionsHost(
         val types by remember(target.selection) { viewModel.availableActions(target.selection) }.collectAsStateWithLifecycle(emptyList())
         S2ActionsSheet(
             title = target.title,
-            subtitle = listOfNotNull(target.subtitle, (target.selection as? MediaSelection.Songs)?.songs?.singleOrNull()?.sourceCount?.takeIf { it >= 2 }?.let { resources.getQuantityString(R.plurals.library_sources_count, it, it) })
+            subtitle = listOfNotNull(target.subtitle, (target.selection as? MediaSelection.Songs)?.songs?.singleOrNull()?.sourceCountToShow?.let { resources.getQuantityString(R.plurals.library_sources_count, it, it) })
                 .joinToString(" · ").ifEmpty { null },
             artwork = target.artwork ?: { Artwork(target.placeholder, size = ArtworkSize.Small) },
             actions = target.leadingActions + types.filter { target.onlyTypes?.contains(it) ?: true }.flatMap { type ->

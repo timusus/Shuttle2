@@ -11,6 +11,7 @@ import com.simplecityapps.shuttle.model.copyAlbumKey
 import com.simplecityapps.shuttle.model.copyKey
 import com.simplecityapps.shuttle.ui.actions.ClearPrimaryCopy
 import com.simplecityapps.shuttle.ui.actions.LoadLyrics
+import com.simplecityapps.shuttle.ui.actions.MediaActionMessage
 import com.simplecityapps.shuttle.ui.actions.NoOnlineLyrics
 import com.simplecityapps.shuttle.ui.actions.ObserveSongs
 import com.simplecityapps.shuttle.ui.actions.PlayFromCopy
@@ -80,6 +81,28 @@ class SongInfoViewModelTest {
         advanceUntilIdle()
 
         queue.lastSetQueue!!.single().id shouldBe 3
+    }
+
+    @Test
+    fun `a copy that fails to play posts a playback failure`() = runTest {
+        val viewModel = loadedMergedViewModel()
+        queue.setQueueResult = false
+
+        viewModel.playCopy(plex)
+        advanceUntilIdle()
+
+        viewModel.uiState.value.events.map { it.value } shouldBe listOf(MediaActionMessage.PlaybackFailed(null))
+    }
+
+    @Test
+    fun `a failing primary copy change posts a message instead of throwing`() = runTest {
+        val viewModel = loadedMergedViewModel()
+        store.updateFailure = IllegalStateException("disk full")
+
+        viewModel.makePrimary(emby)
+        advanceUntilIdle()
+
+        viewModel.uiState.value.events.map { it.value } shouldBe listOf(MediaActionMessage.SourceChoiceFailed)
     }
 
     @Test

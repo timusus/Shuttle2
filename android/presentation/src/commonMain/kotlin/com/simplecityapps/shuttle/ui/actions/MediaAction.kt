@@ -226,4 +226,7 @@ sealed interface MediaActionMessage {
 
     /** Go to album/artist found nothing, e.g. the song's album is excluded. */
     data object NotFound : MediaActionMessage
+
+    /** Saving which copy or source is primary failed. */
+    data object SourceChoiceFailed : MediaActionMessage
 }

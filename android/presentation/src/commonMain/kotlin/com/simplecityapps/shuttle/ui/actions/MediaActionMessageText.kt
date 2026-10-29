@@ -53,6 +53,8 @@ fun MediaActionMessage.text(): UiText = when (this) {
     is MediaActionMessage.DownloadRemoved -> UiText.Plural(PluralKey.MEDIA_ACTION_DOWNLOAD_REMOVED, songCount)
 
     is MediaActionMessage.NotFound -> MediaActionString.MEDIA_ACTION_NOT_FOUND.text
+
+    is MediaActionMessage.SourceChoiceFailed -> MediaActionString.MEDIA_ACTION_SOURCE_CHOICE_FAILED.text
 }
 
 /** The snackbar button's text. */

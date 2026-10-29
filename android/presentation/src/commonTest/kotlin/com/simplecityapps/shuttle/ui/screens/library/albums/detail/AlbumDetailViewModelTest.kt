@@ -29,6 +29,7 @@ import com.simplecityapps.shuttle.settings.AppearanceSettings
 import com.simplecityapps.shuttle.settings.ObserveSetting
 import com.simplecityapps.shuttle.settings.SaveSetting
 import com.simplecityapps.shuttle.settings.SettingsStore
+import com.simplecityapps.shuttle.ui.actions.MediaActionMessage
 import com.simplecityapps.shuttle.ui.actions.ObserveCurrentSong
 import com.simplecityapps.shuttle.ui.actions.SetAlbumPrimarySource
 import com.simplecityapps.shuttle.ui.theme.ArtworkSeed
@@ -536,6 +537,35 @@ class AlbumDetailViewModelTest {
         viewModel.onSetPrimarySource(null)
         advanceUntilIdle()
         viewModel.uiState.value.sources!!.automatic shouldBe true
+    }
+
+    @Test
+    fun `a source count shows only for an album with a choice of sources`() = runTest {
+        fakeSongRepository.setSongs(mergedSongs())
+        fakeAlbumRepository.setAlbums(listOf(testAlbum))
+        val viewModel = createViewModel()
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        advanceUntilIdle()
+        viewModel.uiState.value.sourceCount shouldBe 3
+
+        copyStore.mergeCopies.value = false
+        advanceUntilIdle()
+        viewModel.uiState.value.sourceCount shouldBe null
+    }
+
+    @Test
+    fun `a failing primary source change posts a message instead of throwing`() = runTest {
+        fakeSongRepository.setSongs(mergedSongs())
+        fakeAlbumRepository.setAlbums(listOf(testAlbum))
+        val viewModel = createViewModel()
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        advanceUntilIdle()
+        copyStore.updateFailure = IllegalStateException("disk full")
+
+        viewModel.onSetPrimarySource(MediaProviderType.Emby)
+        advanceUntilIdle()
+
+        viewModel.uiState.value.events.map { it.value } shouldBe listOf(MediaActionMessage.SourceChoiceFailed)
     }
 
     @Test

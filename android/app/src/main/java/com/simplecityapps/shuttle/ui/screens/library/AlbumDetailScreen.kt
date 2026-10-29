@@ -68,8 +68,7 @@ fun AlbumDetailScreen(
             state = state,
             title = album?.name ?: stringResource(com.simplecityapps.core.R.string.unknown),
             subtitle = album?.let {
-                val sourceCount = uiState.sources?.sourceCount ?: 0
-                if (uiState.rows != null) albumSubtitle(it, performers = null, sourceCount = sourceCount, withArtist = false) else albumSubtitle(it, uiState.performers, sourceCount)
+                if (uiState.rows != null) albumSubtitle(it, performers = null, sourceCount = uiState.sourceCount, withArtist = false) else albumSubtitle(it, uiState.performers, uiState.sourceCount)
             },
             eyebrow = uiState.rows?.eyebrow,
             onEyebrowClick = uiState.rows?.eyebrowComposer?.let { composer -> { onOpenComposer(composer) } },
@@ -143,7 +142,7 @@ internal fun albumMoreTarget(album: Album, goToAlbumLabel: String, onOpen: () ->
 private fun albumSubtitle(
     album: Album,
     performers: String?,
-    sourceCount: Int,
+    sourceCount: Int?,
     withArtist: Boolean = true,
 ): String {
     val formatMinutes = rememberMinutesFormat()
@@ -156,6 +155,6 @@ private fun albumSubtitle(
         album.year?.toString(),
         pluralString(R.plurals.album_detail_tracks, album.songCount),
         if (minutes > 0) formatMinutes(minutes) else null,
-        pluralString(R.plurals.library_sources_count, sourceCount).takeIf { sourceCount >= 2 },
+        sourceCount?.let { pluralString(R.plurals.library_sources_count, it) },
     ).filter { it.isNotBlank() }.joinToString(" · ")
 }

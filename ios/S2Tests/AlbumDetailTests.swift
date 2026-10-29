@@ -179,7 +179,7 @@ struct AlbumDetailTests {
             song(2, "Andante con moto", track: 2, disc: 1, composer: "Beethoven", work: work, movement: "Andante con moto", movementNumber: 2, movementTotal: 2),
         ]
         let rows = AlbumRowsKt.buildAlbumRows(songs: songs, albumArtist: "Radiohead", currentSongId: currentSongId.map { KotlinLong(value: $0) }, toggled: [], otherRecordings: [:])
-        return AlbumDetailUiState(album: album(songCount: 2), songs: songs, currentSong: nil, loadingState: .ready, seed: ArtworkSeedNone.shared, moreByArtist: [], moreByArtistNames: [], classical: true, rows: rows, otherRecordings: [:], sources: nil, choosingSource: false)
+        return AlbumDetailUiState(album: album(songCount: 2), songs: songs, currentSong: nil, loadingState: .ready, seed: ArtworkSeedNone.shared, moreByArtist: [], moreByArtistNames: [], classical: true, rows: rows, otherRecordings: [:], sources: nil, choosingSource: false, events: [])
     }
 
     @Test func classicalAlbumShowsWorkHeaderMovementsAndNoDiscDivider() throws {
@@ -234,7 +234,7 @@ struct AlbumDetailTests {
         songs.append(song(22, "Aria", track: 22, disc: 1, composer: "Bach", work: "Aria da capo", movement: "Aria", movementNumber: 1, movementTotal: 2))
         songs.append(song(23, "Da capo", track: 23, disc: 1, composer: "Bach", work: "Aria da capo", movement: "Da capo", movementNumber: 2, movementTotal: 2))
         let rows = AlbumRowsKt.buildAlbumRows(songs: songs, albumArtist: "Bach", currentSongId: nil, toggled: Set(toggled.map { KotlinLong(value: $0) }), otherRecordings: [:])
-        return AlbumDetailUiState(album: album(songCount: 23), songs: songs, currentSong: nil, loadingState: .ready, seed: ArtworkSeedNone.shared, moreByArtist: [], moreByArtistNames: [], classical: true, rows: rows, otherRecordings: [:], sources: nil, choosingSource: false)
+        return AlbumDetailUiState(album: album(songCount: 23), songs: songs, currentSong: nil, loadingState: .ready, seed: ArtworkSeedNone.shared, moreByArtist: [], moreByArtistNames: [], classical: true, rows: rows, otherRecordings: [:], sources: nil, choosingSource: false, events: [])
     }
 
     @Test func longWorkStartsFoldedAndItsHeaderTapTogglesIt() throws {
@@ -271,7 +271,7 @@ struct AlbumDetailTests {
             song(4, "D", track: 4, disc: 1, composer: "Mozart", work: "Work B", movement: "D", movementNumber: 2, movementTotal: 2),
         ]
         let rows = AlbumRowsKt.buildAlbumRows(songs: songs, albumArtist: "Radiohead", currentSongId: nil, toggled: [], otherRecordings: [:])
-        let state = AlbumDetailUiState(album: album(), songs: songs, currentSong: nil, loadingState: .ready, seed: ArtworkSeedNone.shared, moreByArtist: [], moreByArtistNames: [], classical: true, rows: rows, otherRecordings: [:], sources: nil, choosingSource: false)
+        let state = AlbumDetailUiState(album: album(), songs: songs, currentSong: nil, loadingState: .ready, seed: ArtworkSeedNone.shared, moreByArtist: [], moreByArtistNames: [], classical: true, rows: rows, otherRecordings: [:], sources: nil, choosingSource: false, events: [])
         let sut = AlbumDetailContent(state: state, onGoToArtist: {})
         // "Radiohead" is the credits line; an artist eyebrow would be a second Text.
         #expect(try sut.inspect().findAll(ViewType.Text.self, where: { try $0.string() == "Radiohead" }).count <= 1)

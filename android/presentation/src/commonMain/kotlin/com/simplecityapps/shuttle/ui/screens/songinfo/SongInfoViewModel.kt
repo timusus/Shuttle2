@@ -3,16 +3,22 @@ package com.simplecityapps.shuttle.ui.screens.songinfo
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.simplecityapps.shuttle.format.formatDuration
+import com.simplecityapps.shuttle.logging.Logger
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.query.SongQuery
 import com.simplecityapps.shuttle.ui.actions.ClearPrimaryCopy
 import com.simplecityapps.shuttle.ui.actions.LoadLyrics
+import com.simplecityapps.shuttle.ui.actions.MediaActionMessage
 import com.simplecityapps.shuttle.ui.actions.ObserveCopyContext
 import com.simplecityapps.shuttle.ui.actions.ObserveSongs
 import com.simplecityapps.shuttle.ui.actions.PlayFromCopy
+import com.simplecityapps.shuttle.ui.actions.PlaySongs
 import com.simplecityapps.shuttle.ui.actions.SetAlbumPrimarySource
 import com.simplecityapps.shuttle.ui.actions.SetPrimaryCopy
+import com.simplecityapps.shuttle.ui.actions.postSourceChoiceFailure
+import com.simplecityapps.shuttle.ui.common.PendingEvent
+import com.simplecityapps.shuttle.ui.common.PendingEvents
 import com.simplecityapps.shuttle.ui.text.SongInfoString
 import com.simplecityapps.shuttle.ui.text.StringKey
 import dev.zacsweers.metro.AppScope
@@ -40,6 +46,8 @@ data class SongInfoUiState(
     // Loaded apart from the song, which doesn't carry its lyrics.
     val lyrics: String? = null,
     val loading: Boolean = true,
+    // Failures to show once, as a snackbar.
+    val events: List<PendingEvent<MediaActionMessage>> = emptyList(),
 )
 
 /** One song's details, kept current with the library (a tag edit shows up straight away). */
@@ -60,6 +68,8 @@ class SongInfoViewModel @AssistedInject constructor(
         fun create(songId: Long): SongInfoViewModel
     }
 
+    private val events = PendingEvents<MediaActionMessage>()
+
     val uiState: StateFlow<SongInfoUiState> = observeSongs(SongQuery.SongIds(listOf(songId)), includeUnavailable = true)
         .combine(observeCopyContext()) { songs, context ->
             val requested = songs.firstOrNull()
@@ -68,34 +78,44 @@ class SongInfoViewModel @AssistedInject constructor(
             val song = if (rows != null) requested.copies.first().copy(copies = requested.copies) else requested
             SongInfoUiState(song = song, copies = rows, lyrics = song?.let { loadLyrics(it) }, loading = false)
         }
+        .combine(events.flow) { state, events -> state.copy(events = events) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SongInfoUiState())
 
     // The song as merged, so the setters see every sibling copy.
     private val merged: Song? get() = uiState.value.song
 
+    fun onEventHandled(id: Long) = events.consume(id)
+
     fun playCopy(copy: Song) {
         val song = merged ?: return
-        viewModelScope.launch { playFromCopy(song, copy) }
+        viewModelScope.launch {
+            val result = playFromCopy(song, copy)
+            if (result is PlaySongs.Result.Failure) events.post(MediaActionMessage.PlaybackFailed(result.message))
+        }
     }
 
     fun makePrimary(copy: Song) {
         val song = merged ?: return
-        viewModelScope.launch { setPrimaryCopy(song, copy) }
+        viewModelScope.launch { events.postSourceChoiceFailure(logger) { setPrimaryCopy(song, copy) } }
     }
 
     fun useAutomaticChoice() {
         val song = merged ?: return
-        viewModelScope.launch { clearPrimaryCopy(song) }
+        viewModelScope.launch { events.postSourceChoiceFailure(logger) { clearPrimaryCopy(song) } }
     }
 
     fun makePrimaryForAlbum(copy: Song) {
         val song = merged ?: return
         viewModelScope.launch {
-            val albumSongs = observeSongs(SongQuery.AlbumGroupKey(song.albumGroupKey), includeUnavailable = true).first()
-            setAlbumPrimarySource(albumSongs, copy.mediaProvider)
+            events.postSourceChoiceFailure(logger) {
+                val albumSongs = observeSongs(SongQuery.AlbumGroupKey(song.albumGroupKey), includeUnavailable = true).first()
+                setAlbumPrimarySource(albumSongs, copy.mediaProvider)
+            }
         }
     }
 }
+
+private val logger = Logger.tagged("SongInfoViewModel")
 
 /**
  * One row of song info: a label and the value, or null when the song doesn't have one. The value is a string the song
