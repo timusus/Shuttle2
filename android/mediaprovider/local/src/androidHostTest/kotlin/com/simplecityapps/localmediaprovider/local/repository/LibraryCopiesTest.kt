@@ -14,6 +14,7 @@ import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.query.SongQuery
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
+import kotlin.time.Instant
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -166,6 +167,33 @@ class LibraryCopiesTest {
 
         favourites.map { it.id to it.playCount } shouldBe listOf(merged.id to 1)
         repository.loadSongs(SongQuery.Favourites).map { it.id to it.playCount } shouldBe listOf(merged.id to 1)
+    }
+
+    @Test
+    fun `excluding a merged song or the copy a playlist holds excludes every copy`() = runTest {
+        insert(local(1..2) + emby(1..2))
+        val repository = songRepository()
+        val (first, second) = repository.loadSongs(SongQuery.All())
+        val heldEmby = repository.loadSongs(SongQuery.SongIds(listOf(second.copies.single { it.mediaProvider == MediaProviderType.Emby }.id))).single()
+
+        repository.setExcluded(listOf(first, heldEmby), true)
+
+        songs() shouldBe emptyList()
+        repository.setExcluded(listOf(heldEmby), false)
+        songs().map { it.track } shouldBe listOf(2)
+    }
+
+    @Test
+    fun `editing a merged song's tags keeps each copy's own date added`() = runTest {
+        val localAdded = Instant.fromEpochSeconds(2_000)
+        val embyAdded = Instant.fromEpochSeconds(1_000)
+        insert(local(1..1).map { it.copy(dateAdded = localAdded) } + emby(1..1).map { it.apply { dateAdded = embyAdded } })
+        val repository = songRepository()
+        val merged = repository.loadSongs(SongQuery.All()).single()
+
+        repository.update(merged.copy(name = "Renamed"))
+
+        database.songDataDao().getAll().first().associate { it.mediaProvider to it.dateAdded } shouldBe mapOf(MediaProviderType.Shuttle to localAdded, MediaProviderType.Emby to embyAdded)
     }
 
     @Test

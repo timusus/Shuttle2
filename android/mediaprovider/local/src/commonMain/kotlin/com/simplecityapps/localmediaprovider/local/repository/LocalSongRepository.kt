@@ -183,7 +183,8 @@ class LocalSongRepository(
         songs: List<Song>,
         excluded: Boolean
     ) {
-        val count = songDataDao.setExcluded(songs.map { it.id }, excluded)
+        // Every copy, so excluding a merged song doesn't bring its next-best copy forward in its place.
+        val count = songDataDao.setExcluded(songs.flatMap { song -> copies.copiesOf(song) }.map { it.id }.distinct(), excluded)
         logger.debug { "$count song(s) excluded" }
     }
 

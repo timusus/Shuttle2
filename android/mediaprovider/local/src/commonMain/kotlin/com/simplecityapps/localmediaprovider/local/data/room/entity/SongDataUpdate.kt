@@ -119,6 +119,9 @@ fun SongData.toSongDataUpdate(): SongDataUpdate = SongDataUpdate(
     copyBlockingHash = copyBlockingHash
 )
 
-fun Song.toSongDataUpdate(): SongDataUpdate = toSongData(MediaProviderType.Shuttle).toSongDataUpdate()
+/** A merged song writes its own copy's date added, not the earliest of its copies it shows. */
+fun Song.toSongDataUpdate(): SongDataUpdate = (copies.firstOrNull { it.id == id }?.let { own -> copy(dateAdded = own.dateAdded) } ?: this)
+    .toSongData(MediaProviderType.Shuttle)
+    .toSongDataUpdate()
 
 fun List<Song>.toSongDataUpdate(): List<SongDataUpdate> = map { song -> song.toSongDataUpdate() }
