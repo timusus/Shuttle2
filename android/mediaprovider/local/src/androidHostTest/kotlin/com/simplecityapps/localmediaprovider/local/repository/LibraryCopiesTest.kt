@@ -30,6 +30,8 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
@@ -272,6 +274,54 @@ class LibraryCopiesTest {
         rebuilt.complete(Unit)
 
         answer.await().map { it.mediaProvider }.toSet() shouldBe setOf(MediaProviderType.Shuttle, MediaProviderType.Emby)
+    }
+
+    @Test
+    fun `a list read after merging is switched on never shows the unmerged songs`() = runTest {
+        insert(local(1..1) + emby(1..1))
+        merge.value = false
+        val rebuilt = CompletableDeferred<Unit>()
+        var collections = 0
+        val songs = flow {
+            if (collections++ > 0) rebuilt.await()
+            emitAll(database.songDataDao().getAll())
+        }
+        val repository = songRepository(copies(songs))
+        repository.getSongs(SongQuery.All()).filterNotNull().first().size shouldBe 2
+
+        merge.value = true
+        val seen = mutableListOf<List<Song>?>()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { repository.getSongs(SongQuery.All()).toList(seen) }
+        seen.none { it?.size == 2 } shouldBe true
+        rebuilt.complete(Unit)
+
+        repository.getSongs(SongQuery.All()).filterNotNull().first().size shouldBe 1
+        seen.none { it?.size == 2 } shouldBe true
+    }
+
+    @Test
+    fun `a quick off and on never answers from the merged library of before, missing a copy added meanwhile`() = runTest {
+        insert(local(1..1))
+        val rebuilt = CompletableDeferred<Unit>()
+        var collections = 0
+        val songs = flow {
+            if (collections++ > 0) rebuilt.await()
+            emitAll(database.songDataDao().getAll())
+        }
+        val copies = copies(songs)
+        val repository = songRepository(copies)
+        val local = repository.getSongs(SongQuery.All()).filterNotNull().first().single()
+
+        merge.value = false
+        insert(emby(1..1))
+        merge.value = true
+        val answer = backgroundScope.async(UnconfinedTestDispatcher(testScheduler)) { copies.copiesOf(local) }
+        answer.isCompleted shouldBe false
+        rebuilt.complete(Unit)
+
+        answer.await().map { it.mediaProvider }.toSet() shouldBe setOf(MediaProviderType.Shuttle, MediaProviderType.Emby)
+        repository.setFavourite(listOf(local), true)
+        repository.getFavouriteSongIds().first { it.isNotEmpty() }.size shouldBe 2
     }
 
     @Test

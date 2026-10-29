@@ -30,6 +30,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -64,7 +65,8 @@ class LocalSongRepository(
                 found.withAlbumIdentities(index.identities).matching(query).let { songs -> if (query.withCopies) copies.withCopies(songs) else songs }
             }.flowOn(ioDispatcher)
         }
-        return combine(copies.library, minTrackLength) { library, min ->
+        // Null first, as before the library loads; then only snapshots of the current merge setting.
+        return combine(copies.current.onStart<CopyLibrary?> { emit(null) }, minTrackLength) { library, min ->
             library?.let { if (query.providerType == null) it.songs else it.raw }?.listed(query, min)
         }.flowOn(ioDispatcher)
     }
@@ -79,7 +81,7 @@ class LocalSongRepository(
     override fun countSongs(): Flow<Int> = copies.enabled
         .flatMapLatest { merging ->
             if (merging) {
-                combine(copies.library.filterNotNull().filter { it.merging }, minTrackLength) { library, min -> library.songs.count { song -> !song.blacklisted && min.keeps(song) } }
+                combine(copies.current, minTrackLength) { library, min -> library.songs.count { song -> !song.blacklisted && min.keeps(song) } }
             } else {
                 minTrackLength.flatMapLatest { min -> songDataDao.countVisible(min.seconds * 1000) }
             }

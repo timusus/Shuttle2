@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 
 /**
@@ -42,26 +43,31 @@ class LibraryCopies(
     val library: StateFlow<CopyLibrary?> = enabled
         .flatMapLatest { enabled ->
             // Ranking and grouping are only collected while merging, so availability changes cost nothing with it off.
-            if (enabled) {
+            val built = if (enabled) {
                 combine(songs, ranking(), grouping) { songs, ranking, grouping -> CopyLibrary.merged(songs, grouping, ranking) }
             } else {
                 songs.map { songs -> CopyLibrary(songs, songs, emptyMap(), merging = false) }
             }
+            // Null first, so a snapshot from before this toggle is never replayed while the new one builds.
+            built.onStart<CopyLibrary?> { emit(null) }
         }
         .flowOn(ioDispatcher)
         .stateIn(scope, SharingStarted.Lazily, null)
 
+    /** Snapshots built under the current setting only; nothing is emitted while a switch rebuilds, so readers keep their last result. */
+    val current: Flow<CopyLibrary> = enabled.flatMapLatest { enabled -> library.filterNotNull().filter { it.merging == enabled } }
+
     /** [CopyLibrary.songs], for the albums and artists built from them. */
-    val listedSongs: Flow<List<Song>> = library.filterNotNull().map { it.songs }
+    val listedSongs: Flow<List<Song>> = current.map { it.songs }
 
     /** Each merged copy's id to the song standing for it; empty at once while copies aren't merged. */
     val standIns: Flow<Map<Long, Song>> = enabled.flatMapLatest { enabled ->
-        if (enabled) library.filterNotNull().filter { it.merging }.map { it.standIns } else flowOf(emptyMap())
+        if (enabled) current.map { it.standIns } else flowOf(emptyMap())
     }
 
-    /** The merged library, waiting out the unmerged snapshot that outlives a switch back on; null once merging is off. */
+    /** The merged library, waiting out the snapshot of another setting; null once merging is off. */
     val mergedLibrary: Flow<CopyLibrary?> = enabled.flatMapLatest { enabled ->
-        if (enabled) library.filterNotNull().filter { it.merging } else flowOf(null)
+        if (enabled) current else flowOf(null)
     }
 
     /** [songs], a whole album's or more, merged as the library is now; a group never spans two albums. */
