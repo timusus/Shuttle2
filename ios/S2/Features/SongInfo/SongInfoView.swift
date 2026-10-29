@@ -20,6 +20,7 @@ extension View {
 struct SongInfoSheet: View {
     let songID: Int64
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.playFromCopy) private var playFrom
     @Environment(\.appServices) private var appServices
     private var services: AppServices { appServices.required }
     /// Keeps the view model live while the sheet is up (`Navigator.songInfoPresented`); nil in previews.
@@ -32,7 +33,7 @@ struct SongInfoSheet: View {
         }
         NavigationStack {
             Observing(viewModel.uiState) { state in
-                SongInfoContent(song: state.song, lyrics: state.lyrics, isLoading: state.loading)
+                SongInfoContent(song: state.song, copies: state.copies, copyActions: copyActions(for: state.song), lyrics: state.lyrics, isLoading: state.loading)
             }
             .navigationTitle("Song Info")
             .navigationBarTitleDisplayMode(.inline)
@@ -53,9 +54,26 @@ struct SongInfoSheet: View {
     }
 }
 
+extension SongInfoSheet {
+    /// The merged song stands for its album in "Make Primary for This Album": the choice is by source, so the
+    /// song's own copies carry it to every album key they share.
+    fileprivate func copyActions(for song: Song?) -> SongCopyActions {
+        guard let song else { return SongCopyActions() }
+        let graph = services.graph
+        return SongCopyActions(
+            onPlay: { playFrom(song, $0) },
+            onMakePrimary: { copy in Task { try? await graph.setPrimaryCopy.invoke(song: song, copy: copy) } },
+            onMakeAlbumPrimary: { copy in Task { try? await graph.setAlbumPrimarySource.invoke(albumSongs: [song], provider: copy.mediaProvider) } },
+            onUseAutomatic: { Task { try? await graph.clearPrimaryCopy.invoke(song: song) } }
+        )
+    }
+}
+
 /// The grouped sections for a song, or a placeholder while it loads or if it's gone from the library.
 struct SongInfoContent: View {
     let song: Song?
+    var copies: SongCopyRows?
+    var copyActions = SongCopyActions()
     var lyrics: String?
     var isLoading = false
 
@@ -63,6 +81,7 @@ struct SongInfoContent: View {
         if let song {
             let sections = SongInfoSections.make(for: song, lyrics: lyrics)
             List {
+                if let copies { SongInfoCopiesSection(copies: copies, actions: copyActions) }
                 ForEach(sections) { section in
                     Section {
                         ForEach(section.rows) { row in
