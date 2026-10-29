@@ -218,6 +218,63 @@ struct AlbumDetailTests {
         #expect(playedWork.map(\.id) == [1, 2])
     }
 
+    /// A 21-movement work then a one-movement work: the first folds by default.
+    private func longWorkState(toggled: Set<Int64> = []) -> AlbumDetailUiState {
+        var songs = (1...21).map { i in
+            song(Int64(i), "Variation \(i)", track: Int32(i), disc: 1, composer: "Bach", work: "Goldberg Variations", movement: "Variation \(i)", movementNumber: Int32(i), movementTotal: 21)
+        }
+        songs.append(song(22, "Aria", track: 22, disc: 1, composer: "Bach", work: "Aria da capo", movement: "Aria", movementNumber: 1, movementTotal: 2))
+        songs.append(song(23, "Da capo", track: 23, disc: 1, composer: "Bach", work: "Aria da capo", movement: "Da capo", movementNumber: 2, movementTotal: 2))
+        let rows = AlbumRowsKt.buildAlbumRows(songs: songs, albumArtist: "Bach", currentSongId: nil, toggled: Set(toggled.map { KotlinLong(value: $0) }), otherRecordings: [:])
+        return AlbumDetailUiState(album: album(songCount: 23), songs: songs, currentSong: nil, loadingState: .ready, seed: ArtworkSeedNone.shared, moreByArtist: [], moreByArtistNames: [], classical: true, rows: rows, otherRecordings: [:])
+    }
+
+    @Test func longWorkStartsFoldedAndItsHeaderTapTogglesIt() throws {
+        var toggled: Int64?
+        let sut = AlbumDetailContent(state: longWorkState(), onToggleWork: { toggled = $0 })
+        #expect((try? sut.inspect().find(text: "Variation 3")) == nil)
+        try sut.inspect().find(ViewType.Button.self, where: { (try? $0.find(text: "Goldberg Variations")) != nil }).tap()
+        #expect(toggled == 1)
+    }
+
+    @Test func toggledLongWorkShowsItsMovements() throws {
+        let sut = AlbumDetailContent(state: longWorkState(toggled: [1]))
+        #expect((try? sut.inspect().find(text: "Variation 3")) != nil)
+    }
+
+    @Test func classicalShuffleSendsShuffleWorksAndOtherwiseShuffle() {
+        #expect(classicalState().shuffleAction is MediaActionShuffleWorks)
+        let plain = AlbumDetailUiState(album: album(), songs: [], currentSong: nil, loadingState: .ready, seed: ArtworkSeedNone.shared, moreByArtist: [], moreByArtistNames: [], classical: false)
+        #expect(plain.shuffleAction is MediaActionShuffle)
+    }
+
+    @Test func heroShuffleButtonRunsOnShuffle() throws {
+        var shuffled = false
+        let sut = AlbumDetailContent(state: classicalState(), onShuffle: { shuffled = true })
+        try sut.inspect().find(button: "Shuffle").tap()
+        #expect(shuffled)
+    }
+
+    @Test func classicalAlbumWithoutASingleComposerHasNoEyebrow() throws {
+        let songs = [
+            song(1, "A", track: 1, disc: 1, composer: "Beethoven", work: "Work A", movement: "A", movementNumber: 1, movementTotal: 2),
+            song(2, "B", track: 2, disc: 1, composer: "Beethoven", work: "Work A", movement: "B", movementNumber: 2, movementTotal: 2),
+            song(3, "C", track: 3, disc: 1, composer: "Mozart", work: "Work B", movement: "C", movementNumber: 1, movementTotal: 2),
+            song(4, "D", track: 4, disc: 1, composer: "Mozart", work: "Work B", movement: "D", movementNumber: 2, movementTotal: 2),
+        ]
+        let rows = AlbumRowsKt.buildAlbumRows(songs: songs, albumArtist: "Radiohead", currentSongId: nil, toggled: [], otherRecordings: [:])
+        let state = AlbumDetailUiState(album: album(), songs: songs, currentSong: nil, loadingState: .ready, seed: ArtworkSeedNone.shared, moreByArtist: [], moreByArtistNames: [], classical: true, rows: rows, otherRecordings: [:])
+        let sut = AlbumDetailContent(state: state, onGoToArtist: {})
+        // "Radiohead" is the credits line; an artist eyebrow would be a second Text.
+        #expect(try sut.inspect().findAll(ViewType.Text.self, where: { try $0.string() == "Radiohead" }).count <= 1)
+        #expect((try? sut.inspect().find(button: "Go to Radiohead")) == nil)
+    }
+
+    @Test func clockDurationShowsHoursFromAnHour() {
+        #expect(clockDuration(ms: 245_000) == "4:05")
+        #expect(clockDuration(ms: 3_723_000) == "1:02:03")
+    }
+
     @Test func placeholders() throws {
         let empty = AlbumDetailUiState(album: nil, songs: [], currentSong: nil, loadingState: .loading, seed: ArtworkSeedNone.shared, moreByArtist: [], moreByArtistNames: [], classical: false)
         #expect((try? AlbumDetailContent(state: empty).inspect().find(ViewType.ProgressView.self)) != nil)

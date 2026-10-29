@@ -25,11 +25,7 @@ struct AlbumDetailView: View {
                 onPlay: { index in
                     models.actions.send(MediaActionPlay(selection: MediaSelectionSongs(songs: state.songs), position: Int32(index), context: state.playContext), intent: services.playIntent)
                 },
-                onShuffle: {
-                    let selection = MediaSelectionSongs(songs: state.songs)
-                    // A classical album shuffles by work, keeping each work's movements together and in order.
-                    models.actions.send(state.rows == nil ? MediaActionShuffle(selection: selection, context: state.playContext) : MediaActionShuffleWorks(selection: selection, context: state.playContext), intent: services.playIntent)
-                },
+                onShuffle: { models.actions.send(state.shuffleAction, intent: services.playIntent) },
                 onPlayWork: { songs in
                     models.actions.send(MediaActionPlay(selection: MediaSelectionSongs(songs: songs), position: 0, context: state.playContext), intent: services.playIntent)
                 },
@@ -60,6 +56,14 @@ struct AlbumDetailView: View {
             )
             .mediaActionResults(actions.events, handled: { models.actions.onEventHandled(id: $0) })
         }
+    }
+}
+
+extension AlbumDetailUiState {
+    /// A classical album shuffles by work, keeping each work's movements together and in order.
+    var shuffleAction: any MediaAction {
+        let selection = MediaSelectionSongs(songs: songs)
+        return rows == nil ? MediaActionShuffle(selection: selection, context: playContext) : MediaActionShuffleWorks(selection: selection, context: playContext)
     }
 }
 
@@ -116,7 +120,7 @@ struct AlbumDetailContent: View {
                     DetailHero(
                         title: album.name ?? "Unknown Album",
                         subtitle: subtitle(album),
-                        artist: state.rows?.eyebrow ?? artistLink(album)?.name,
+                        artist: state.rows.map(\.eyebrow) ?? artistLink(album)?.name,
                         onArtist: heroArtistAction,
                         artistLabel: state.rows?.eyebrow.map { "Open composer \($0)" },
                         credits: state.rows?.credits,

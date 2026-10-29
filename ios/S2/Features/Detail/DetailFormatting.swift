@@ -24,6 +24,12 @@ func runtime(ms: Int64, locale: Locale = .current) -> String? {
     return Duration.milliseconds(ms).formatted(.units(allowed: [.hours, .minutes], width: .abbreviated).locale(locale))
 }
 
+/// A length as "4:05", or "1:02:03" from an hour up.
+func clockDuration(ms: Int64) -> String {
+    let pattern: Duration.TimeFormatStyle.Pattern = ms >= 3_600_000 ? .hourMinuteSecond : .minuteSecond
+    return Duration.milliseconds(ms).formatted(.time(pattern: pattern))
+}
+
 /// A song's length as VoiceOver says it: "3 minutes, 20 seconds".
 func spokenDuration(ms: Int64, locale: Locale = .current) -> String {
     Duration.milliseconds(ms).formatted(.units(allowed: [.hours, .minutes, .seconds], width: .wide).locale(locale))

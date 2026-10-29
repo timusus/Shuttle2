@@ -77,7 +77,7 @@ struct ClassicalAlbumRowsView: View {
         return WorkHeaderRow(
             title: work.title,
             detail: work.detail,
-            meta: "\(countText(work.count)) · \(Duration.milliseconds(work.durationMs).formatted(.time(pattern: .minuteSecond)))",
+            meta: "\(countText(work.count)) · \(clockDuration(ms: work.durationMs))",
             credits: work.credits,
             collapsed: work.tap == .toggleCollapse ? work.collapsed : nil,
             playing: work.playing,
