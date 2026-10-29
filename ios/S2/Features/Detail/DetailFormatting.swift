@@ -44,12 +44,6 @@ enum CountNoun: String {
 /// "1 song" / "N songs" (or albums) in the app's language, the pluralisation every subtitle repeats.
 func pluralized(_ count: Int, _ noun: CountNoun) -> String { localizedPlural(noun.rawValue, count) }
 
-/// The `Localizable.strings` entry [key] (an Android resource name) formatted with [args] (`%1$@`; pass an Int32 for `%1$d`).
-func localizedString(_ key: String, _ args: CVarArg...) -> String {
-    let format = Bundle.main.localizedString(forKey: key, value: nil, table: nil)
-    return args.isEmpty ? format : String(format: format, locale: .current, arguments: args)
-}
-
 /// The `.stringsdict` plural [key] for [count] (its first argument, `%1$d`), then [args] (`%2$@`...).
 func localizedPlural(_ key: String, _ count: Int, _ args: String...) -> String {
     let format = Bundle.main.localizedString(forKey: key, value: nil, table: nil)
