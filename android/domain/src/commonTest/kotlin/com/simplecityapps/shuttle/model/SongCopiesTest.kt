@@ -193,4 +193,49 @@ class SongCopiesTest {
         merged.favouritedAt shouldBe later
         merged.copies.map { it.playCount } shouldBe listOf(3, 2)
     }
+
+    @Test
+    fun `a copy made primary stands for its song until it can't play`() {
+        val emby = emby(1..1).single()
+        val primary = SongCopyPreferences(primaryCopies = setOf(emby.copyKey))
+
+        merge(local(1..1) + emby, SongCopyAvailability().ranking(primary.comparator(SongCopyAvailability()))).single().id shouldBe 101L
+        val offline = SongCopyAvailability(offline = true)
+        merge(local(1..1) + emby, offline.ranking(primary.comparator(offline))).single().id shouldBe 1L
+    }
+
+    @Test
+    fun `an album made primary from one source stands for every song of the album`() {
+        val primary = SongCopyPreferences(primaryAlbums = setOf(emby(1..1).single().copyAlbumKey))
+
+        merge(local(1..3) + emby(1..3), SongCopyAvailability().ranking(primary.comparator(SongCopyAvailability()))).map { it.id } shouldBe listOf(101L, 102L, 103L)
+    }
+
+    @Test
+    fun `a copy's keys survive a re-sync that renumbers its row`() {
+        val emby = song(id = 101, track = 1, provider = MediaProviderType.Emby).copy(externalId = "item-1")
+
+        emby.copy(id = 999).copyKey shouldBe emby.copyKey
+        emby.copy(id = 999).copyAlbumKey shouldBe emby.copyAlbumKey
+    }
+
+    @Test
+    fun `preferring the best quality puts a lossless stream over a lossy local file`() {
+        val localMp3 = song(id = 1, track = 1, mimeType = "audio/mpeg", bitRate = 320)
+        val embyFlac = song(id = 101, track = 1, provider = MediaProviderType.Emby, mimeType = "audio/flac", bitRate = 1000)
+        val availability = SongCopyAvailability()
+
+        merge(listOf(localMp3, embyFlac), availability.ranking(SongCopyPreferences().comparator(availability))).single().id shouldBe 1L
+        merge(listOf(localMp3, embyFlac), availability.ranking(SongCopyPreferences(preferred = PreferredCopy.BestQuality).comparator(availability))).single().id shouldBe 101L
+    }
+
+    @Test
+    fun `a stream capped by the streaming quality ranks by the rate it delivers`() {
+        val embyFlac = song(id = 101, track = 1, provider = MediaProviderType.Emby, mimeType = "audio/flac", bitRate = 1000)
+        val jellyfinMp3 = song(id = 201, track = 1, provider = MediaProviderType.Jellyfin, bitRate = 256)
+        val capped = SongCopyAvailability(streamingCapKbps = 128, downloadedPaths = setOf(jellyfinMp3.path))
+
+        merge(onOneRelease(listOf(embyFlac, jellyfinMp3))).single().id shouldBe 101L
+        merge(onOneRelease(listOf(embyFlac, jellyfinMp3)), capped.ranking(SongCopyPreferences(preferred = PreferredCopy.BestQuality).comparator(capped))).single().id shouldBe 201L
+    }
 }

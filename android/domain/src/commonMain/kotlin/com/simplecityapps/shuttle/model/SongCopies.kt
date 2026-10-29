@@ -7,9 +7,21 @@ data class SongCopyAvailability(
     val downloadedPaths: Set<String> = emptySet(),
     val unreachableProviders: Set<MediaProviderType> = emptySet(),
     /** Songs whose file has gone since the last scan. */
-    val missingSongIds: Set<Long> = emptySet()
+    val missingSongIds: Set<Long> = emptySet(),
+    /** The streaming quality's cap in kbps, or null for the original file: a stream above it plays transcoded down to it. */
+    val streamingCapKbps: Int? = null
 ) {
     fun isOnDevice(song: Song): Boolean = !song.mediaProvider.remote || song.path in downloadedPaths
+
+    /** A capped stream is a lossy transcode at the cap, so a copy ranks by what it plays as, not what its source holds. */
+    private fun isStreamCapped(song: Song): Boolean = streamingCapKbps != null && !isOnDevice(song)
+
+    private fun deliversLossless(song: Song): Boolean = song.isLossless && !isStreamCapped(song)
+
+    private fun deliveredBitRate(song: Song): Int = (song.bitRate ?: 0).let { rate -> if (isStreamCapped(song)) minOf(rate, streamingCapKbps!!) else rate }
+
+    /** The copy that plays at the higher quality first: lossless, then the higher bitrate as delivered. */
+    val quality: Comparator<Song> = compareByDescending<Song> { deliversLossless(it) }.thenByDescending { deliveredBitRate(it) }
 
     fun isPlayable(song: Song): Boolean = song.id !in missingSongIds &&
         (isOnDevice(song) || (!offline && song.mediaProvider !in unreachableProviders))
@@ -21,8 +33,7 @@ data class SongCopyAvailability(
     fun ranking(preference: Comparator<Song>? = null): Comparator<Song> = compareByDescending<Song> { isPlayable(it) }
         .then(preference ?: Comparator { _, _ -> 0 })
         .thenByDescending { isOnDevice(it) }
-        .thenByDescending { it.isLossless }
-        .thenByDescending { it.bitRate ?: 0 }
+        .then(quality)
         .thenBy { it.mediaProvider.ordinal }
         .thenBy { it.id }
 }

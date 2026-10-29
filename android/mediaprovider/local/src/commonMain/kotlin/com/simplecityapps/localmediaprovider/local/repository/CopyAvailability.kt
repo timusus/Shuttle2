@@ -9,23 +9,25 @@ import com.simplecityapps.shuttle.ui.actions.observeDownloadedPaths
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 
 /**
- * What [LibraryCopies] ranks copies by: Offline mode, the completed downloads and the servers whose last check failed.
- * A server counts as unreachable until a later import of it succeeds.
+ * What [LibraryCopies] ranks copies by: Offline mode, the completed downloads, the servers whose last check failed and
+ * the streaming quality's cap. A server counts as unreachable until a later import of it succeeds.
  */
 fun copyAvailability(
     offlineMode: OfflineModeSource,
     downloads: DownloadStatusSource,
-    sourceState: SourceStateStore
+    sourceState: SourceStateStore,
+    streamingCapKbps: Flow<Int?> = flowOf(null)
 ): Flow<SongCopyAvailability> {
     val unreachable = combine(
         MediaProviderType.entries.filter { it.remote }.map { type ->
             sourceState.observeSourceReachability(type.name).map { reachability -> type.takeIf { reachability?.error != null } }
         }
     ) { types -> types.filterNotNull().toSet() }
-    return combine(offlineMode.observe(), downloads.observeDownloadedPaths(), unreachable) { offline, paths, down ->
-        SongCopyAvailability(offline = offline, downloadedPaths = paths, unreachableProviders = down)
+    return combine(offlineMode.observe(), downloads.observeDownloadedPaths(), unreachable, streamingCapKbps) { offline, paths, down, cap ->
+        SongCopyAvailability(offline = offline, downloadedPaths = paths, unreachableProviders = down, streamingCapKbps = cap)
     }.distinctUntilChanged()
 }

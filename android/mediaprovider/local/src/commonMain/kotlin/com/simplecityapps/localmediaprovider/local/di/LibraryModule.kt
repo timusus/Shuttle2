@@ -22,6 +22,7 @@ import com.simplecityapps.mediaprovider.FavouriteWriter
 import com.simplecityapps.mediaprovider.ImportedPlaylistStore
 import com.simplecityapps.mediaprovider.MediaImportStrings
 import com.simplecityapps.mediaprovider.MediaImporter
+import com.simplecityapps.mediaprovider.MeteredNetwork
 import com.simplecityapps.mediaprovider.ServerPlaylistSync
 import com.simplecityapps.mediaprovider.ServerPlaylistWriter
 import com.simplecityapps.mediaprovider.SimilarSongsProvider
@@ -38,7 +39,9 @@ import com.simplecityapps.mediaprovider.settings.LibrarySettings
 import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.shuttle.di.IoDispatcher
 import com.simplecityapps.shuttle.model.AlbumIndexProvider
+import com.simplecityapps.shuttle.model.SongCopyPreferences
 import com.simplecityapps.shuttle.persistence.SourceStateStore
+import com.simplecityapps.shuttle.settings.StreamingSettings
 import com.simplecityapps.shuttle.ui.actions.DownloadStatusSource
 import com.simplecityapps.shuttle.ui.actions.OfflineModeSource
 import dev.zacsweers.metro.AppScope
@@ -49,6 +52,7 @@ import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.SingleIn
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.plus
 
@@ -88,14 +92,24 @@ abstract class LibraryModule {
             librarySettings: LibrarySettings,
             offlineMode: OfflineModeSource,
             downloads: DownloadStatusSource,
-            sourceState: SourceStateStore
-        ): LibraryCopies = LibraryCopies(
-            appCoroutineScope,
-            ioDispatcher,
-            database.songDataDao().getAll(),
-            librarySettings.mergeCopies.flow,
-            copyAvailability(offlineMode, downloads, sourceState)
-        )
+            sourceState: SourceStateStore,
+            streamingSettings: StreamingSettings,
+            meteredNetwork: MeteredNetwork
+        ): LibraryCopies {
+            // The network is read when the quality changes, so a switch to mobile data re-ranks with the next change.
+            val streamingCap = combine(streamingSettings.meteredQuality.flow, streamingSettings.unmeteredQuality.flow) { metered, unmetered ->
+                (if (meteredNetwork.isMetered()) metered else unmetered).maxBitrateKbps
+            }
+            val preferences = combine(librarySettings.primaryCopies.flow, librarySettings.primaryAlbums.flow, librarySettings.preferredCopy.flow, ::SongCopyPreferences)
+            return LibraryCopies(
+                appCoroutineScope,
+                ioDispatcher,
+                database.songDataDao().getAll(),
+                librarySettings.mergeCopies.flow,
+                copyAvailability(offlineMode, downloads, sourceState, streamingCap),
+                preferences
+            )
+        }
 
         @Provides
         @SingleIn(AppScope::class)

@@ -18,6 +18,9 @@ class LibrarySettings @Inject constructor(
     val reportPlaybackToServer = store.preference(ReportPlaybackToServer)
     val minTrackLength = store.preference(MinTrackLength)
     val mergeCopies = store.preference(MergeCopies)
+    val preferredCopy = store.preference(PreferredCopy)
+    val primaryCopies = store.preference(PrimaryCopies)
+    val primaryAlbums = store.preference(PrimaryAlbums)
 
     /** One-time move off the old default of never, run at launch before the background sync is scheduled. */
     fun migrateRescanFrequency() {
@@ -51,5 +54,27 @@ class LibrarySettings @Inject constructor(
 
         /** Show a song held by several sources once, its best copy standing for the rest. */
         val MergeCopies = Setting.boolean("pref_merge_copies", true)
+
+        /** Stored by name. */
+        val PreferredCopy = Setting.string(
+            key = "pref_preferred_copy",
+            default = com.simplecityapps.shuttle.model.PreferredCopy.Local,
+            decode = { value -> com.simplecityapps.shuttle.model.PreferredCopy.entries.firstOrNull { it.name == value } },
+            encode = { preferred -> preferred.name }
+        )
+
+        /** [com.simplecityapps.shuttle.model.copyKey]s of the copies made primary, one per line. */
+        val PrimaryCopies = keySet("pref_primary_copies")
+
+        /** [com.simplecityapps.shuttle.model.copyAlbumKey]s of the albums made primary from one source, one per line. */
+        val PrimaryAlbums = keySet("pref_primary_albums")
+
+        // A newline never appears in a source's name, a server id or a path's tags.
+        private fun keySet(key: String) = Setting.string<Set<String>>(
+            key = key,
+            default = emptySet(),
+            decode = { value -> value.split('\n').filter { it.isNotEmpty() }.toSet() },
+            encode = { keys -> keys.joinToString("\n") }
+        )
     }
 }
