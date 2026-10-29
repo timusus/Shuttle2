@@ -4,6 +4,7 @@ import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
 import kotlin.test.Test
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 
@@ -102,6 +103,52 @@ class IosPlayerControllerCopiesTest : IosPlayerControllerTestBase() {
         engine.failCurrent(IosFailureKind.Other)
 
         sourceState.missingSongs("Emby") shouldBe emptySet()
+    }
+
+    @Test
+    fun `a transient failure does not mark a local copy`() = test { controller ->
+        controller.start(listOf(a.withCopies(second), b))
+
+        engine.failCurrent(IosFailureKind.Connection)
+
+        controller.currentSong?.id shouldBe second.id
+        missing() shouldBe emptySet()
+    }
+
+    @Test
+    fun `a copy that played well leaves the earlier copies to try again`() = test { controller ->
+        controller.start(listOf(a.onEmby().withCopies(second), b))
+        engine.failCurrent(IosFailureKind.Connection)
+        engine.settle()
+        controller.currentSong?.id shouldBe second.id
+
+        engine.failCurrent(IosFailureKind.Connection)
+
+        controller.currentSong?.id shouldBe a.id
+    }
+
+    @Test
+    fun `starting the item again tries its copies afresh`() = test { controller ->
+        unresolvable += second.id
+        controller.start(listOf(a.onEmby().withCopies(second)))
+        engine.failCurrent(IosFailureKind.Connection)
+        controller.currentSong?.id shouldBe second.id
+
+        controller.load { }
+        engine.failCurrent(IosFailureKind.Connection)
+
+        controller.currentSong?.id shouldBe a.id
+    }
+
+    @Test
+    fun `a failure after the queue moved on does not load the new current item`() = test { controller ->
+        controller.start(listOf(a.onEmby().withCopies(second), b))
+        controller.queueOperations.setQueue(listOf(c, d), null, 0)
+        engine.clearCalls()
+
+        engine.failCurrent(IosFailureKind.Connection)
+
+        engine.current?.url shouldNotBe url(c)
     }
 
     @Test

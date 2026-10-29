@@ -20,9 +20,6 @@ internal class IosEngineEvents(
 ) : IosAudioPlayerListener {
     private val log = Logger.tagged("playback")
 
-    /** The uid of the item whose copies [fallsBackToCopy] has tried, and the song ids it tried. */
-    private var triedCopies: Pair<Long, Set<Long>>? = null
-
     override fun onStateChanged(
         trackId: String,
         state: IosAudioPlayerState
@@ -60,6 +57,7 @@ internal class IosEngineEvents(
         if (feed.failed || feed.ready) return
         feed.ready = true
         loads.failures = 0
+        loads.triedCopies = null
         val song = feed.item.song
         sourceState?.setSongMissing(song.mediaProvider.name, song.id, missing = false)
         loads.complete(Result.success(loads.pending?.attempt == 1))
@@ -137,8 +135,8 @@ internal class IosEngineEvents(
         val song = feed.item.song
         if (marksMissing) sourceState?.setSongMissing(song.mediaProvider.name, song.id, missing = true)
         val uid = feed.item.uid
-        val tried = triedCopies?.takeIf { it.first == uid }?.second.orEmpty() + song.id
-        triedCopies = uid to tried
+        val tried = loads.triedCopies?.takeIf { it.first == uid }?.second.orEmpty() + song.id
+        loads.triedCopies = uid to tried
         val next = song.copies.firstOrNull { copy ->
             copy.id !in tried && sourceState?.missingSongs(copy.mediaProvider.name)?.contains(copy.id) != true
         } ?: return false
@@ -146,7 +144,8 @@ internal class IosEngineEvents(
         log.warn { "song ${song.id} failed; playing its copy ${next.id} from ${next.mediaProvider} at $positionMs ms" }
         feed.failed = true
         queue.replaceSong(uid, next.copy(copies = song.copies))
-        feeder.startLoad(queue.currentItem ?: return false, positionMs)
+        // By uid: the queue's current item may have moved on from the one that failed
+        feeder.startLoad(queue.queueStateFlow.value.items.firstOrNull { it.uid == uid } ?: return false, positionMs)
         return true
     }
 
