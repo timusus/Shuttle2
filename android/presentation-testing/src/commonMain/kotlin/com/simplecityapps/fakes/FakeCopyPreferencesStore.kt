@@ -8,7 +8,7 @@ class FakeCopyPreferencesStore(merging: Boolean = true) : CopyPreferencesStore {
     override val mergeCopies = MutableStateFlow(merging)
     override val preferences = MutableStateFlow(SongCopyPreferences())
 
-    override fun update(change: (SongCopyPreferences) -> SongCopyPreferences) {
+    override suspend fun update(change: (SongCopyPreferences) -> SongCopyPreferences) {
         preferences.value = change(preferences.value)
     }
 }

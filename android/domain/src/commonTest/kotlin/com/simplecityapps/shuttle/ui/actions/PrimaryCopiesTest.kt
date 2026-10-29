@@ -11,13 +11,14 @@ import io.kotest.matchers.shouldBe
 import kotlin.test.Test
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.test.runTest
 
 class FakeCopyPreferencesStore(initial: SongCopyPreferences = SongCopyPreferences()) : CopyPreferencesStore {
     val state = MutableStateFlow(initial)
     override val mergeCopies: Flow<Boolean> = MutableStateFlow(true)
     override val preferences: Flow<SongCopyPreferences> = state
 
-    override fun update(change: (SongCopyPreferences) -> SongCopyPreferences) {
+    override suspend fun update(change: (SongCopyPreferences) -> SongCopyPreferences) {
         state.value = change(state.value)
     }
 }
@@ -30,7 +31,7 @@ class PrimaryCopiesTest {
     private fun merged(vararg copies: Song): Song = copies.first().copy(copies = copies.toList())
 
     @Test
-    fun `making a copy primary adds its key and drops its siblings'`() {
+    fun `making a copy primary adds its key and drops its siblings'`() = runTest {
         val store = FakeCopyPreferencesStore(SongCopyPreferences(primaryCopies = setOf(emby.copyKey, "Jellyfin:other")))
 
         SetPrimaryCopy(store)(merged(local, emby, plex), plex)
@@ -39,7 +40,7 @@ class PrimaryCopiesTest {
     }
 
     @Test
-    fun `clearing removes every copy's key and leaves other songs`() {
+    fun `clearing removes every copy's key and leaves other songs`() = runTest {
         val store = FakeCopyPreferencesStore(SongCopyPreferences(primaryCopies = setOf(emby.copyKey, "Jellyfin:other")))
 
         ClearPrimaryCopy(store)(merged(local, emby, plex))
@@ -48,7 +49,7 @@ class PrimaryCopiesTest {
     }
 
     @Test
-    fun `an album source key is set and the other sources' keys go`() {
+    fun `an album source key is set and the other sources' keys go`() = runTest {
         val store = FakeCopyPreferencesStore(SongCopyPreferences(primaryAlbums = setOf(emby.copyAlbumKey, "Jellyfin:x")))
 
         SetAlbumPrimarySource(store)(listOf(merged(local, emby, plex)), MediaProviderType.Plex)
@@ -57,7 +58,7 @@ class PrimaryCopiesTest {
     }
 
     @Test
-    fun `automatic clears every source of the album`() {
+    fun `automatic clears every source of the album`() = runTest {
         val store = FakeCopyPreferencesStore(SongCopyPreferences(primaryAlbums = setOf(emby.copyAlbumKey, plex.copyAlbumKey)))
 
         SetAlbumPrimarySource(store)(listOf(merged(local, emby, plex)), null)

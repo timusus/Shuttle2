@@ -15,7 +15,7 @@ internal val Song.allCopies: List<Song> get() = copies.ifEmpty { listOf(this) }
  */
 @Inject
 class SetPrimaryCopy(private val store: CopyPreferencesStore) {
-    operator fun invoke(song: Song, copy: Song) {
+    suspend operator fun invoke(song: Song, copy: Song) {
         val others = song.allCopies.map { it.copyKey } - copy.copyKey
         store.update { it.copy(primaryCopies = it.primaryCopies - others.toSet() + copy.copyKey) }
     }
@@ -24,7 +24,7 @@ class SetPrimaryCopy(private val store: CopyPreferencesStore) {
 /** Back to the automatic choice for [song]: no copy of it stays primary. */
 @Inject
 class ClearPrimaryCopy(private val store: CopyPreferencesStore) {
-    operator fun invoke(song: Song) {
+    suspend operator fun invoke(song: Song) {
         val keys = song.allCopies.map { it.copyKey }.toSet() + song.copyKey
         store.update { it.copy(primaryCopies = it.primaryCopies - keys) }
     }
@@ -36,7 +36,7 @@ class ClearPrimaryCopy(private val store: CopyPreferencesStore) {
  */
 @Inject
 class SetAlbumPrimarySource(private val store: CopyPreferencesStore) {
-    operator fun invoke(albumSongs: List<Song>, provider: MediaProviderType?) {
+    suspend operator fun invoke(albumSongs: List<Song>, provider: MediaProviderType?) {
         val all = albumSongs.flatMap { it.allCopies + it }
         val chosen = all.filter { it.mediaProvider == provider }.map { it.copyAlbumKey }.toSet()
         val others = all.map { it.copyAlbumKey }.toSet() - chosen

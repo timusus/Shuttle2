@@ -8,6 +8,9 @@ interface CopyPreferencesStore {
     val mergeCopies: Flow<Boolean>
     val preferences: Flow<SongCopyPreferences>
 
-    /** Stores what [change] makes of the current primary copies and albums; the preferred copy stays a setting row's. */
-    fun update(change: (SongCopyPreferences) -> SongCopyPreferences)
+    /**
+     * Stores what [change] makes of the current primary copies and albums; the preferred copy stays a setting row's.
+     * Updates are applied one at a time, so concurrent callers don't lose each other's change.
+     */
+    suspend fun update(change: (SongCopyPreferences) -> SongCopyPreferences)
 }

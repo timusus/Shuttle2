@@ -22,7 +22,7 @@ internal fun fixedCopyContext(context: CopyContext = CopyContext()) = ObserveCop
         override val mergeCopies: Flow<Boolean> = MutableStateFlow(context.mergeCopies)
         override val preferences: Flow<SongCopyPreferences> = MutableStateFlow(context.preferences)
 
-        override fun update(change: (SongCopyPreferences) -> SongCopyPreferences) = Unit
+        override suspend fun update(change: (SongCopyPreferences) -> SongCopyPreferences) = Unit
     },
     object : CopyAvailabilitySource {
         override fun observe(): Flow<SongCopyAvailability> = MutableStateFlow(context.availability)
