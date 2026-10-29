@@ -30,6 +30,10 @@ MARKER_RE = r"\b(live|re-?mix|mix|demo|acoustic|instrumental|edit|explicit|clean
 VERSION_COMMENT = r"(clean|explicit|edited|censored|radio)"
 GENERIC = ["intro", "outro", "interlude", "untitled", "skit", "prelude", "hiddentrack", "silence", "reprise", "theme",
            "introduction", "overture", "finale", "epilogue", "prologue"]
+GENERIC_ALBUM = ["greatesthits", "thebestof", "bestof", "hits", "live", "demo", "demos", "singles", "untitled", "ep",
+                 "thecollection", "collection", "theverybestof", "anthology", "essentials", "theessential", "gold",
+                 "unplugged", "acoustic", "remixes", "christmas", "selftitled", "liveinconcert", "rarities"]
+PLACEHOLDER_ALBUM = ["Unknown Album", "Unknown Album", "Unknown Album", "Unknown", "[Unknown Album]", "<unknown>"]
 
 q(f"""CREATE OR REPLACE TABLE tk AS
 WITH rel_mediums AS (SELECT release, count(*) AS discs FROM sel_medium GROUP BY 1),
@@ -170,7 +174,23 @@ categories = {
       AND NOT a.compilation AND b.compilation""", 6000),
     "neg_same_release_other_track": pairs("""SELECT a.tid a, b.tid b FROM tk a JOIN tk b ON a.rel = b.rel AND a.disc = b.disc
       AND b.track = a.track + 1""", 2000),
+    # Placeholder tags ("Unknown Album", no album artist) put unrelated files in one block, so only title and duration
+    # stand between them and a merge; these are over-represented on purpose
+    "pos_unknown_album": pairs("SELECT tid a, tid b FROM tk WHERE hash(tid) % 4 = 0", 5000),
+    "neg_unknown_album_generic_title": pairs(f"""SELECT a.tid a, b.tid b FROM tk a JOIN tk b ON a.ntitle = b.ntitle
+      AND a.track = b.track AND a.rg <> b.rg AND {hard} WHERE a.ntitle IN ({','.join(f"'{g}'" for g in GENERIC)})""", 8000),
+    "neg_unknown_album_same_title": pairs(f"""SELECT a.tid a, b.tid b FROM (SELECT * FROM tk WHERE hash(tid) % 4 = 0) a
+      JOIN tk b ON a.ntitle = b.ntitle AND a.track = b.track AND a.rg <> b.rg AND {hard}
+      AND {NORM.format('a.artist')} <> {NORM.format('b.artist')}
+      WHERE a.ntitle NOT IN ({','.join(f"'{g}'" for g in GENERIC)})""", 8000),
+    "neg_unknown_album_same_title_artist": pairs(f"""SELECT a.tid a, b.tid b FROM tk a JOIN tk b ON a.ntitle = b.ntitle
+      AND a.artist = b.artist AND a.track = b.track AND a.rg <> b.rg AND {hard}""", 6000),
+    "neg_generic_album_no_album_artist": pairs(f"""SELECT a.tid a, b.tid b FROM tk a JOIN tk b ON a.nalbum = b.nalbum
+      AND a.rg < b.rg AND a.disc = b.disc AND a.track = b.track AND {hard}
+      WHERE a.nalbum IN ({','.join(f"'{g}'" for g in GENERIC_ALBUM)})""", 6000),
 }
+UNKNOWN_ALBUM = {"pos_unknown_album", "neg_unknown_album_generic_title", "neg_unknown_album_same_title",
+                 "neg_unknown_album_same_title_artist"}
 
 tids = sorted({t for rows in categories.values() for pair in rows for t in pair})
 q("CREATE OR REPLACE TEMP TABLE wanted (tid BIGINT)")
@@ -266,6 +286,16 @@ for category, cat_pairs in categories.items():
             left, right = render(ra, rng.random() < 0.5), render(rb, False, rng.choice(lb_by_tid[b]))
         elif category == "neg_untagged_rip":
             left, right = untagged(ra, ra["track"]), untagged(rb, rb["track"])
+        elif category in UNKNOWN_ALBUM:
+            # Both sources fill the gap the same way, as one server or tagger would
+            left, right = render(ra, True), render(rb, True)
+            album = rng.choice(PLACEHOLDER_ALBUM)
+            album_artist = rng.choice([None, None, "Unknown Artist"])
+            for side in (left, right):
+                side[1], side[2], side[4], side[7] = album, album_artist, None, None
+        elif category == "neg_generic_album_no_album_artist":
+            left, right = render(ra, True), render(rb, True)
+            left[2] = right[2] = None
         else:
             left, right = render(ra, True), render(rb, True)
             if category == "neg_disc_collision":
@@ -290,11 +320,12 @@ for (category, label), count in sorted(counts.items()):
     print(f"  {category:42s} {label:9s} {count}")
 
 if FIXTURE:
-    # Stratified, about 70 a category; the noise is from ListenBrainz and MusicBrainz alone (CC0)
+    # Stratified, at most 2,000 pairs; the noise is from ListenBrainz and MusicBrainz alone (CC0)
     by_category = {}
     for rec in out:
         by_category.setdefault(rec[0], []).append(rec)
-    picked = [rec for recs in by_category.values() for rec in recs[:70]]
+    per_category = 2000 // len(by_category)
+    picked = [rec for recs in by_category.values() for rec in recs[:per_category]]
     with open(FIXTURE, "w", encoding="utf-8") as f:
         f.write("\t".join(HEADER) + "\n")
         for i, rec in enumerate(picked):

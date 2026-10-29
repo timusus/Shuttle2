@@ -35,7 +35,9 @@ support/song-match/extract.sh             # only the tables the corpus needs
 - `make_pairs.py` writes `corpus/pairs.tsv` (and `corpus/noise_model.json`). Each pair renders two MusicBrainz tracks
   as tags with noise measured from ListenBrainz (case, diacritics, featuring credits, remaster suffixes, missing disc,
   year, duration jitter). `same` means one recording on one release group; categories prefixed `ambiguous_` are pairs
-  MusicBrainz can't settle (likely unmerged duplicate recordings) and stay out of the headline rates. The optional
-  second argument writes the fixture: the first 70 pairs of each category.
+  MusicBrainz can't settle (likely unmerged duplicate recordings) and stay out of the headline rates. The
+  `*unknown_album*`, `neg_untagged_rip` and `neg_generic_*` categories render both copies with placeholder or generic
+  tags ("Unknown Album", "Greatest Hits", no album artist), where only title and duration separate songs. The optional
+  second argument writes the fixture: an equal share of each category, at most 2,000 pairs (licence note beside it).
 - The evaluation prints wrong- and missed-merge rates per matcher variant, a per-category table and m/u weights per
   field.
