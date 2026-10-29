@@ -50,4 +50,16 @@ class CopyAvailabilityTest {
 
         availability.first() shouldBe SongCopyAvailability(offline = true, downloadedPaths = setOf("emby://1"), unreachableProviders = setOf(MediaProviderType.Plex))
     }
+
+    @Test
+    fun `songs that failed to play rank as missing until their source's marks clear`() = runTest {
+        sourceState.setSongMissing("Shuttle", 7, missing = true)
+        sourceState.setSongMissing("Jellyfin", 12, missing = true)
+
+        availability.first().missingSongIds shouldBe setOf(7L, 12L)
+
+        sourceState.clearMissingSongs("Shuttle")
+
+        availability.first().missingSongIds shouldBe setOf(12L)
+    }
 }

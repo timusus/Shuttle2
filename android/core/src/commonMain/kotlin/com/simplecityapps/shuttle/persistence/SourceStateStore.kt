@@ -81,27 +81,57 @@ class SourceStateStore @Inject constructor(
      * it finds them gone too. Kept across restarts: that import
      * usually runs in another process. Stored sorted, as base-36 gaps between ids, so a large removal stays small.
      */
-    fun heldDeletes(source: String): Set<Long> {
-        val gaps = store.getString(heldDeletesKey(source), null)?.split(",")?.map { gap -> gap.toLongOrNull(36) } ?: return emptySet()
-        // Unreadable, it holds nothing: a mass removal is held one more pass rather than a wrong song deleted
-        if (gaps.any { it == null }) return emptySet()
-        return gaps.filterNotNull().runningReduce(Long::plus).toSet()
-    }
+    fun heldDeletes(source: String): Set<Long> = idSet(heldDeletesKey(source))
 
     fun setHeldDeletes(
         source: String,
         songIds: Set<Long>
+    ) = putIdSet(heldDeletesKey(source), songIds)
+
+    private fun heldDeletesKey(source: String) = "held_deletes_$source"
+
+    /**
+     * Songs of [source] that failed to play for want of their file, format or server copy (not a connection), so another
+     * copy ranks above them until one plays again or the next successful import of [source] clears them all.
+     */
+    fun missingSongs(source: String): Set<Long> = idSet(missingSongsKey(source))
+
+    fun setSongMissing(
+        source: String,
+        songId: Long,
+        missing: Boolean
+    ) {
+        val songs = missingSongs(source)
+        if ((songId in songs) != missing) putIdSet(missingSongsKey(source), if (missing) songs + songId else songs - songId)
+    }
+
+    fun clearMissingSongs(source: String) = store.edit { remove(missingSongsKey(source)) }
+
+    /** [missingSongs] now and each time it changes. */
+    fun observeMissingSongs(source: String): Flow<Set<Long>> = store.changes(missingSongsKey(source)).map { missingSongs(source) }.distinctUntilChanged()
+
+    private fun missingSongsKey(source: String) = "missing_songs_$source"
+
+    // Stored sorted, as base-36 gaps between ids, so a large set stays small
+    private fun idSet(key: String): Set<Long> {
+        val gaps = store.getString(key, null)?.split(",")?.map { gap -> gap.toLongOrNull(36) } ?: return emptySet()
+        // Unreadable, it holds nothing: a mass removal is held one more pass, a missing song is tried again
+        if (gaps.any { it == null }) return emptySet()
+        return gaps.filterNotNull().runningReduce(Long::plus).toSet()
+    }
+
+    private fun putIdSet(
+        key: String,
+        ids: Set<Long>
     ) {
         store.edit {
-            if (songIds.isEmpty()) {
-                remove(heldDeletesKey(source))
+            if (ids.isEmpty()) {
+                remove(key)
             } else {
-                putString(heldDeletesKey(source), (listOf(0L) + songIds.sorted()).zipWithNext { previous, id -> (id - previous).toString(36) }.joinToString(","))
+                putString(key, (listOf(0L) + ids.sorted()).zipWithNext { previous, id -> (id - previous).toString(36) }.joinToString(","))
             }
         }
     }
-
-    private fun heldDeletesKey(source: String) = "held_deletes_$source"
 
     /**
      * How many songs short of its own total the last full listing of [source] (a media provider type's name) came to:
@@ -185,6 +215,7 @@ class SourceStateStore @Inject constructor(
             remove("source_updated_$source")
             remove("listing_shortfall_$source")
             remove("skipped_files_$source")
+            remove(missingSongsKey(source))
         }
     }
 

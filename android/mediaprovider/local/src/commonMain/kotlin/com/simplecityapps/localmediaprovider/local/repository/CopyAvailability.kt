@@ -14,7 +14,8 @@ import kotlinx.coroutines.flow.map
 
 /**
  * What [LibraryCopies] ranks copies by: Offline mode, the completed downloads, the servers whose last check failed and
- * the streaming quality's cap. A server counts as unreachable until a later import of it succeeds.
+ * the streaming quality's cap. A server counts as unreachable, and a song that failed to play as missing, until a later
+ * import of its source succeeds.
  */
 fun copyAvailability(
     offlineMode: OfflineModeSource,
@@ -27,7 +28,8 @@ fun copyAvailability(
             sourceState.observeSourceReachability(type.name).map { reachability -> type.takeIf { reachability?.error != null } }
         }
     ) { types -> types.filterNotNull().toSet() }
-    return combine(offlineMode.observe(), downloads.observeDownloadedPaths(), unreachable, streamingCapKbps) { offline, paths, down, cap ->
-        SongCopyAvailability(offline = offline, downloadedPaths = paths, unreachableProviders = down, streamingCapKbps = cap)
+    val missing = combine(MediaProviderType.entries.map { type -> sourceState.observeMissingSongs(type.name) }) { sets -> sets.flatMap { it }.toSet() }
+    return combine(offlineMode.observe(), downloads.observeDownloadedPaths(), unreachable, missing, streamingCapKbps) { offline, paths, down, missingIds, cap ->
+        SongCopyAvailability(offline = offline, downloadedPaths = paths, unreachableProviders = down, missingSongIds = missingIds, streamingCapKbps = cap)
     }.distinctUntilChanged()
 }

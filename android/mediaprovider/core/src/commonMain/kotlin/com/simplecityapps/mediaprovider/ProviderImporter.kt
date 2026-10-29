@@ -114,6 +114,8 @@ internal class ProviderImporter(
         val completedAt = clock.now()
         sourceState.setSourceReachability(type.name, SourceReachability(error = null, checkedAt = completedAt))
         sourceState.setSourceUpdated(type.name, completedAt)
+        // The import read the source afresh, so a song that failed to play gets another try
+        sourceState.clearMissingSongs(type.name)
         val changed = result.inserts + result.updates + result.deletes > 0
         // A quiet sync that stored nothing stays silent, unless it clears an earlier failure.
         val clearsError = (states.stateOf(type) as? SongImportState.ImportComplete)?.error != null

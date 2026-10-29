@@ -101,4 +101,19 @@ class SourceStateStoreTest {
         store.edit { putString("held_deletes_Shuttle", "3,!,4") }
         sourceState.heldDeletes("Shuttle") shouldBe emptySet()
     }
+
+    @Test
+    fun `songs marked missing are kept per source until unmarked or cleared`() {
+        sourceState.setSongMissing("Shuttle", 3, missing = true)
+        sourceState.setSongMissing("Shuttle", 40, missing = true)
+        sourceState.setSongMissing("Jellyfin", 9, missing = true)
+        store.getString("missing_songs_Shuttle", null) shouldBe "3,11"
+
+        sourceState.setSongMissing("Shuttle", 3, missing = false)
+        sourceState.missingSongs("Shuttle") shouldBe setOf(40L)
+
+        sourceState.clearMissingSongs("Shuttle")
+        sourceState.missingSongs("Shuttle") shouldBe emptySet()
+        sourceState.missingSongs("Jellyfin") shouldBe setOf(9L)
+    }
 }
