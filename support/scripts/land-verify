@@ -37,7 +37,7 @@ if [ "${LAND_RETRY:-0}" = 1 ] && [ -z "${S2_LAND_IC_OFF:-}" ]; then
     exec env S2_LAND_IC_OFF=1 'ORG_GRADLE_PROJECT_kotlin.incremental=false' "$0" "$@"
 fi
 
-# Outside land there is no dir to find afterwards, so a made one is kept and its path printed at the end.
+# Outside land there is no dir to find afterwards, so a made one is kept and its path printed at the end (see the last lines).
 artifacts="${LAND_ARTIFACT_DIR:-$(mktemp -d)}"
 artifacts=$(cd "$artifacts" 2>/dev/null && pwd -P || echo "$artifacts")
 mkdir -p "$artifacts" || exit 2
@@ -83,7 +83,7 @@ failures() {
             ift = 0
         }
         /^Failing tests:/ { ift = 1; next }
-        # ios/scripts/xcresult-failures.py lines and Swift Testing issues: the reason with its file:line, kept unstripped.
+        # ios/scripts/xcresult-failures.py lines and Swift Testing issues: reasons for the log only; run_phase keeps them out of `!!`.
         /^FAILED / { print "ios-fail: " unroot($0); next }
         /recorded an issue at / { s = $0; sub(/^.*✘ /, "", s); print "ios-issue: " unroot(s); next }
         /✘ Test .* failed/ && !/✘ Test run / { s = $0; sub(/^.*✘ /, "✘ ", s); sub(/ after [0-9.]+ seconds.*/, "", s); sub(/ with [0-9]+ test cases?$/, "", s); add(s); next }
@@ -155,6 +155,10 @@ run_phase() {
         return 0
     fi
     parsed=$(failures "$log")
+    # Reasons carry line numbers and free text, so they are plain log lines (land ignores them), never `!!` signatures.
+    notes=$(printf '%s\n' "$parsed" | grep -E '^ios-(fail|issue): ' | head -20)
+    parsed=$(printf '%s\n' "$parsed" | grep -vE '^(ios-(fail|issue): |$)')
+    [ -n "$notes" ] && printf '\n%s\n' "$notes"
     if [ -z "$parsed" ]; then
         mark "!! $phase: $(last_marker "$log") (no parsed error)"
     else
@@ -389,4 +393,5 @@ if { wanted ios-framework || wanted ios-tests || wanted ios-package; } &&
 fi
 
 mark "== end"
+[ -n "${LAND_ARTIFACT_DIR:-}" ] || printf 'land-verify: logs in %s\n' "$artifacts"
 exit "$failed"
