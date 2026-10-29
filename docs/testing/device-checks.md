@@ -678,3 +678,12 @@ On the owner's device, with the same albums both as local files and on Emby:
 - [ ] Android: each such album lists each song once, with the album's song count, the artist's album count and the Songs list counting it once. Albums held by only one source are unchanged.
 - [ ] Android: play a merged song, then the same song from the other source's playlist: its play count goes up by one each time, and a playlist still plays the copy it was given.
 - [ ] Android, debug build with MusicBrainz recording ids ignored (`adb shell am broadcast -a com.simplecityapps.shuttle.debug.ACTION_SONG_COPIES -p com.simplecityapps.shuttle.dev --ez use_recording_ids false`; `true` restores them): the plain-tag rule still pairs the local and Emby copies. Note any song it misses: the server changing a length, track number or artist joining is what this exposes.
+
+## Copy fallback when a song's copy can't play (#1069 step 2, Oct 2026)
+
+Same setup (songs held locally and on Emby). Fallback is silent; the load-failure UI shows only when every copy fails.
+- [ ] Android and iOS: delete a merged song's local file (outside the app), play it: it plays from Emby without a skip, and the next play goes straight to Emby. Rescan with the file restored: the local copy is chosen again.
+- [ ] Android and iOS: stop the Emby server (or block it) with a merged song whose chosen copy is on Emby: it falls back to the local file; once Emby is back, Emby copies are chosen again with no rescan (connection failures don't mark a copy).
+- [ ] Android and iOS: kill the network mid-song on an Emby copy: playback resumes on the local copy at the same position.
+- [ ] Android: switch between Wi-Fi and mobile data with different streaming quality caps: copy ranking follows the switch for the next song.
+- [ ] iOS: a truncated or non-audio file marks its copy missing; a captive-portal page or full disk does not.
