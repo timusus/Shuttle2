@@ -15,7 +15,8 @@ enum TestSongs {
         _ id: Int64, _ name: String, artist: String, album: String, durationMs: Int32,
         artists: [String]? = nil, playCount: Int32 = 0, lastPlayed: KotlinInstant? = nil, dateAdded: KotlinInstant? = nil,
         favourite: Bool = false, provider: MediaProviderType = .shuttle, path: String? = nil,
-        mimeType: String = "audio/flac", bitRate: Int32? = nil, bitDepth: Int32? = nil, sampleRate: Int32? = nil
+        mimeType: String = "audio/flac", bitRate: Int32? = nil, bitDepth: Int32? = nil, sampleRate: Int32? = nil,
+        composer: String? = nil, work: String? = nil, movementName: String? = nil, movementNumber: Int32? = nil
     ) -> Song {
         Song(
             id: id, name: name, albumArtist: artist, artists: artists ?? [artist], album: album, track: nil, disc: nil,
@@ -26,8 +27,8 @@ enum TestSongs {
             channelCount: nil, audioCodec: nil, artworkVersion: nil, artworkItemId: nil, dateAdded: dateAdded, favouritedAt: favourite ? KotlinInstant.companion.fromEpochMilliseconds(epochMilliseconds: 1_773_000_000_000) : nil,
             albumArtists: nil, artistsTag: nil, artistDisplay: nil, albumArtistDisplay: nil, compilation: nil, mbTrackId: nil, mbAlbumId: nil,
             mbReleaseGroupId: nil, mbArtistIds: nil, mbAlbumArtistIds: nil, serverAlbumId: nil, serverArtistIds: nil,
-            serverAlbumArtistIds: nil, albumIdentity: nil, composer: nil, composerSort: nil, conductor: nil, arranger: nil,
-            work: nil, movementName: nil, movementNumber: nil, movementTotal: nil, showMovement: nil, performers: []
+            serverAlbumArtistIds: nil, albumIdentity: nil, composer: composer, composerSort: nil, conductor: nil, arranger: nil,
+            work: work, movementName: movementName, movementNumber: movementNumber.map { KotlinInt(int: $0) }, movementTotal: nil, showMovement: nil, performers: []
         )
     }
 }

@@ -483,3 +483,59 @@ struct NowPlayingViewTests {
         #expect(PlayerSubSheetStyle.resolve(for: .wide) == .popover)
     }
 }
+
+/// The classical work: its text and ribbon on Now Playing, the movement sheet, and a plain song untouched.
+@MainActor
+struct NowPlayingWorkViewTests {
+    static let work = NowPlayingWorkState(
+        composer: "Beethoven", work: "Symphony No. 5", detail: "C minor · Op. 67", movement: "II. Andante con moto",
+        performers: "Kleiber", miniTitle: "Beethoven: Symphony No. 5", miniSubtitle: "II. Andante con moto · Kleiber",
+        ordinal: "II", total: "IV",
+        segments: [
+            .init(durationMs: 400_000, ordinal: "I", queueUID: 11), .init(durationMs: 600_000, ordinal: "II", queueUID: 12),
+            .init(durationMs: 300_000, ordinal: "III", queueUID: 13), .init(durationMs: 500_000, ordinal: "IV", queueUID: 14),
+        ],
+        currentSegment: 1, currentSegmentOffsetMs: 0, remainingMs: 1_400_000, continuous: false,
+        movements: [
+            .init(numeral: "I", name: "Allegro con brio", durationMs: 400_000, queueUID: 11),
+            .init(numeral: "II", name: "Andante con moto", durationMs: 600_000, queueUID: 12),
+        ],
+        currentMovement: 1
+    )
+
+    private func state(work: NowPlayingWorkState?) -> NowPlayingState {
+        NowPlayingState(title: "Andante con moto", artist: "Kleiber", album: "Beethoven 5", isPlaying: true, positionMs: 90_000, durationMs: 600_000, work: work)
+    }
+
+    @Test func showsTheComposerWorkMovementAndPerformers() throws {
+        let sut = NowPlayingContent(state: state(work: Self.work))
+        for text in ["BEETHOVEN", "Symphony No. 5", "C minor · Op. 67", "II. Andante con moto", "Kleiber"] {
+            #expect((try? sut.inspect().find(text: text)) != nil, "missing \(text)")
+        }
+        #expect((try? sut.inspect().find(text: "Beethoven 5")) == nil)
+    }
+
+    @Test func showsTheRibbonCaption() throws {
+        let sut = NowPlayingContent(state: state(work: Self.work))
+        #expect((try? sut.inspect().find(text: "II of IV · 21:50 left in work")) != nil)
+    }
+
+    @Test func aPlainSongHasNoRibbonAndKeepsItsLines() throws {
+        let sut = NowPlayingContent(state: state(work: nil))
+        #expect((try? sut.inspect().find(text: "Beethoven 5")) != nil)
+        #expect((try? sut.inspect().find(viewWithAccessibilityIdentifier: "nowPlaying.workCaption")) == nil)
+    }
+
+    @Test func theSegmentFillsInProportionToTheMovementsPosition() {
+        #expect(Self.work.currentFill(positionMs: 300_000) == 0.5)
+    }
+
+    @Test func theMovementSheetListsMovementsAndJumpsOnTap() throws {
+        var jumped: Int64?
+        let sut = WorkMovementSheet(work: Self.work) { jumped = $0 }
+        #expect((try? sut.inspect().find(text: "Allegro con brio")) != nil)
+        #expect((try? sut.inspect().find(text: "10:00")) != nil)
+        try sut.inspect().find(viewWithAccessibilityIdentifier: "workMovement.0").button().tap()
+        #expect(jumped == 11)
+    }
+}

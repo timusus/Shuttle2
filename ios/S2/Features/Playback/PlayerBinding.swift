@@ -37,6 +37,8 @@ struct NowPlayingState: Equatable {
     var songActions: [NowPlayingSongAction] = []
     /// The playlists Add to Playlist offers.
     var playlists: [PlaylistOption] = []
+    /// The classical work the song sits in; nil for any other song, or with Classical display off.
+    var work: NowPlayingWorkState?
 
     /// The quality line, "FLAC 24/96" or "MP3 320"; nil when the format is unknown.
     var qualityBadge: String? { quality?.badge() }
@@ -290,9 +292,17 @@ final class PlayerBinding {
         let current = player.current
         let artwork = current.map { ArtworkSource.song($0.song) }
 
+        let work = player.work.map { work in
+            NowPlayingWorkState(
+                work,
+                queueUIDs: player.items.map(\.uid),
+                currentIndex: player.items.firstIndex { $0.position == .current } ?? 0
+            )
+        }
+
         let mini = MiniPlayerState(
-            title: current?.song.name,
-            artist: current?.artist,
+            title: work?.miniTitle ?? current?.song.name,
+            artist: work?.miniSubtitle ?? current?.artist,
             artwork: artwork,
             isPlaying: intent.isPlayIntended,
             isLoading: intent.isLoading
@@ -327,6 +337,7 @@ final class PlayerBinding {
             next.sleepTimerActive = player.sleepTimerActive
             next.sleepTimerPlayToEnd = player.sleepTimerPlayToEnd
             next.isFavourite = player.favourite
+            next.work = work
             if current?.song.id != songActionsFor { next.songActions = [] }
             observeSongActions(for: current?.song)
         }

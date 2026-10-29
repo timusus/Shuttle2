@@ -69,6 +69,7 @@ struct NowPlayingContent: View {
     @State private var showQueue = false
     @State private var showAudio = false
     @State private var showSleepTimer = false
+    @State private var showMovements = false
     /// VoiceOver's Add to Playlist action asks where in a dialog; the context menu has its own submenu.
     @State private var showPlaylistChoices = false
     @State private var showNewPlaylist = false
@@ -123,6 +124,14 @@ struct NowPlayingContent: View {
         // On a player surface the artwork tint is the accent.
         .tint(playerTint)
         .playerNotice(showQueue ? .constant(nil) : notice)
+        .sheet(isPresented: $showMovements) {
+            if let work = state.work {
+                WorkMovementSheet(work: work) { uid in
+                    actions.selectQueueItem(uid)
+                    showMovements = false
+                }
+            }
+        }
         .alert("New Playlist", isPresented: $showNewPlaylist) {
             TextField("Playlist Name", text: $newPlaylistName)
             Button("Cancel", role: .cancel) { newPlaylistName = "" }
@@ -189,7 +198,17 @@ struct NowPlayingContent: View {
 
     private func controls(spacing: CGFloat) -> some View {
         VStack(spacing: spacing) {
-            titleBlock
+            if let work = state.work {
+                ClassicalTitleBlock(work: work, secondaryInk: secondaryInk)
+                    .contentShape(Rectangle())
+                    .contextMenu { songMenu }
+                WorkRibbonView(
+                    work: work, positionMs: state.positionMs, secondaryInk: secondaryInk,
+                    onJump: actions.selectQueueItem, onOpenList: { showMovements = true }
+                )
+            } else {
+                titleBlock
+            }
             NowPlayingScrubber(
                 positionMs: state.positionMs, durationMs: state.durationMs, isScrubbing: $isScrubbing, timeInk: secondaryInk,
                 onSeek: actions.seek

@@ -277,3 +277,42 @@ private final class ChangeFlag: @unchecked Sendable {
 
     func set() { lock.withLock { fired = true } }
 }
+
+/// A work of two movements in the queue: Now Playing and the mini player show it as classical text.
+@MainActor
+struct PlayerBindingClassicalTests {
+    private let rig = makeTestRig()
+    private let graph: IosAppGraph
+    private let binding: PlayerBinding
+
+    init() {
+        graph = makeTestGraph(rig: rig)
+        binding = PlayerBinding(viewModel: IosAppGraphKt.createPlayerViewModel(graph), intent: PlayIntent(following: graph.playerController))
+    }
+
+    @Test func aWorkSongGetsClassicalTextAndARibbon() async throws {
+        let songs = [
+            TestSongs.song(1, "Allegro", artist: "Kleiber", album: "Beethoven 5", durationMs: 400_000, composer: "Beethoven", work: "Symphony No. 5", movementName: "Allegro", movementNumber: 1),
+            TestSongs.song(2, "Andante", artist: "Kleiber", album: "Beethoven 5", durationMs: 600_000, composer: "Beethoven", work: "Symphony No. 5", movementName: "Andante", movementNumber: 2),
+        ]
+        let controller = graph.playerController
+        _ = try await controller.queueOperations.setQueue(songs: songs, shuffleSongs: nil, position: 0, context: PlayContextNone.shared)
+        controller.load(seekPosition: nil, skipUnloadable: false, playWhenReady: false) { _ in }
+        #expect(await waitUntil { binding.nowPlaying.work != nil })
+
+        let work = try #require(binding.nowPlaying.work)
+        #expect(work.work == "Symphony No. 5")
+        #expect(work.movements.count == 2)
+        #expect(binding.miniPlayer.title == work.miniTitle)
+        #expect(binding.miniPlayer.artist == work.miniSubtitle)
+    }
+
+    @Test func aPlainSongHasNoWork() async throws {
+        let controller = graph.playerController
+        _ = try await controller.queueOperations.setQueue(songs: TestSongs.demo, shuffleSongs: nil, position: 0, context: PlayContextNone.shared)
+        controller.load(seekPosition: nil, skipUnloadable: false, playWhenReady: false) { _ in }
+        #expect(await waitUntil { binding.nowPlaying.title == "Paranoid Android" })
+        #expect(binding.nowPlaying.work == nil)
+        #expect(binding.miniPlayer.artist == "Radiohead")
+    }
+}
