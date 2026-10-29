@@ -61,10 +61,20 @@ data class SongCopyFieldWeight(
     val disagree: Double
 )
 
+/**
+ * The defaults are the rule chosen on the song-match corpus (support/song-match/README.md): block, then equal titles,
+ * lengths within 2 s and the same version markers. Dropping every title qualifier, or gating on artist, year or album
+ * artist, or scoring every field, traded more recall than it saved in wrong merges.
+ */
 data class SongCopyMatchParams(
-    val normalisation: Set<SongCopyNormalisation> = SongCopyNormalisation.entries.toSet(),
+    val normalisation: Set<SongCopyNormalisation> = SongCopyNormalisation.entries.toSet() - SongCopyNormalisation.DropAllTitleQualifiers,
     /** A copy with no disc number is on disc 1: most single-disc rips leave it out. */
     val missingDiscIsOne: Boolean = true,
+    /**
+     * Normalised album names a server or tagger writes for no album ("Unknown Album", "<unknown>"): read as untagged,
+     * since they put unrelated files of one track number in one block.
+     */
+    val placeholderAlbums: Set<String> = PLACEHOLDER_ALBUMS,
     val durationToleranceMs: Int = 2_000,
     /** Live, remix, demo, explicit and the like must be the same set in both titles. */
     val markerCheck: Boolean = true,
@@ -79,6 +89,10 @@ data class SongCopyMatchParams(
     val minScore: Double = 0.0
 ) {
     fun use(field: SongCopyField): SongCopyFieldUse = uses[field] ?: SongCopyFieldUse.Ignore
+
+    companion object {
+        val PLACEHOLDER_ALBUMS = setOf("unknown album", "unknown", "no album")
+    }
 }
 
 /** A song's tags normalised once, so a library is prepared in one pass and each comparison is cheap. */
@@ -111,7 +125,7 @@ data class SongCopyMatch(
 class SongCopyMatcher(private val params: SongCopyMatchParams = SongCopyMatchParams()) {
     fun prepare(tags: SongCopyTags): PreparedSongCopy {
         val steps = params.normalisation
-        val album = tags.album?.let { normaliseAlbum(it, steps) }?.takeIf { it.isNotEmpty() }
+        val album = tags.album?.let { normaliseAlbum(it, steps) }?.takeIf { it.isNotEmpty() && it !in params.placeholderAlbums }
         val disc = tags.disc ?: if (params.missingDiscIsOne) 1 else null
         val blockingKey = if (album != null && tags.track != null) "$album\u0000${disc ?: "?"}\u0000${tags.track}" else null
         return PreparedSongCopy(

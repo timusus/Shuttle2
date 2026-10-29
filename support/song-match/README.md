@@ -40,4 +40,13 @@ support/song-match/extract.sh             # only the tables the corpus needs
   tags ("Unknown Album", "Greatest Hits", no album artist), where only title and duration separate songs. The optional
   second argument writes the fixture: an equal share of each category, at most 2,000 pairs (licence note beside it).
 - The evaluation prints wrong- and missed-merge rates per matcher variant, a per-category table and m/u weights per
-  field.
+  field. `SongCopyFixtureTest` pins the default rule's merges per category on the fixture.
+
+## Chosen rule
+
+On the 2026-10 corpus (201,000 pairs), the default rule merged 2.97% of different-song pairs and missed 33.0% of
+same-song pairs. It blocks on album, disc and track, treats placeholder albums as untagged, and requires equal titles
+with edition qualifiers dropped, lengths within 2 s and the same version markers. Clean and explicit editions make up
+most of the wrong merges, since their tags are identical; without them the rate is 0.13%. Most missed merges are copies
+with no usable album (placeholder albums, a moved track) or a length beyond 2 s. Gating on artist cut 0.01 points of
+wrong merges and cost 1.4 points of recall, because real artist tags vary.

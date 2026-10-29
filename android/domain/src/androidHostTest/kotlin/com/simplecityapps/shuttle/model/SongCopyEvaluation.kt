@@ -10,7 +10,16 @@ import kotlin.math.log2
 fun main(args: Array<String>) {
     val path = args.firstOrNull() ?: "${System.getProperty("user.home")}/data/song-match/corpus/pairs.tsv"
     val pairs = parseSongCopyPairs(File(path).readText())
-    val draft = SongCopyMatchParams()
+    // Spelled out rather than taken from the defaults, which hold the chosen rule
+    val draft = SongCopyMatchParams(
+        normalisation = SongCopyNormalisation.entries.toSet(),
+        missingDiscIsOne = true,
+        placeholderAlbums = emptySet(),
+        durationToleranceMs = 2_000,
+        markerCheck = true,
+        titleEditDistance = 0,
+        uses = mapOf(SongCopyField.Title to SongCopyFieldUse.Gate, SongCopyField.Duration to SongCopyFieldUse.Gate)
+    )
     println("Corpus $path: ${pairs.size} pairs, ${pairs.count { it.same }} same, ${pairs.count { it.ambiguous }} ambiguous")
     println()
 
@@ -35,12 +44,19 @@ fun main(args: Array<String>) {
         "x no diacritic folding" to draft.copy(normalisation = draft.normalisation - SongCopyNormalisation.FoldDiacritics)
     ) + listOf(0.0, 5.0, 10.0, 15.0).map { threshold ->
         "f Fellegi-Sunter score >= $threshold" to draft.copy(uses = allFields, weights = weights, minScore = threshold)
-    }
+    } + placeholderVariants(draft, weights)
 
-    println("%-48s %12s %12s".format("variant", "wrong-merge", "missed"))
+    println("%-48s %12s %12s %12s".format("variant", "wrong-merge", "excl. c/e", "missed"))
     val results = variants.map { (name, params) -> Triple(name, params, evaluate(pairs, params)) }
     for ((name, _, result) in results) {
-        println("%-48s %11.4f%% %11.3f%%".format(name, result.wrongMergeRate * 100, result.missedMergeRate * 100))
+        println(
+            "%-48s %11.4f%% %11.4f%% %11.3f%%".format(
+                name,
+                result.wrongMergeRate * 100,
+                result.wrongMergeRateExcludingCleanExplicit * 100,
+                result.missedMergeRate * 100
+            )
+        )
     }
 
     for ((name, _, result) in results) {
@@ -85,6 +101,39 @@ private class Evaluation(val categories: Map<String, CategoryCounts>) {
     private val counted = categories.filterKeys { !it.startsWith("ambiguous_") }.values
     val wrongMergeRate = counted.filter { !it.same }.let { c -> c.sumOf { it.merged }.toDouble() / c.sumOf { it.pairs } }
     val missedMergeRate = counted.filter { it.same }.let { c -> 1 - c.sumOf { it.merged }.toDouble() / c.sumOf { it.pairs } }
+
+    // Clean and explicit editions usually share title, position and length: no plain-tag rule tells them apart
+    val wrongMergeRateExcludingCleanExplicit = categories.filterKeys { !it.startsWith("ambiguous_") && it != "neg_clean_explicit" }
+        .values.filter { !it.same }.let { c -> c.sumOf { it.merged }.toDouble() / c.sumOf { it.pairs } }
+}
+
+/** The draft with placeholder albums read as untagged, alone and with the gates that might cut the rest. */
+private fun placeholderVariants(
+    draft: SongCopyMatchParams,
+    weights: Map<SongCopyField, SongCopyFieldWeight>
+): List<Pair<String, SongCopyMatchParams>> {
+    val base = draft.copy(placeholderAlbums = SongCopyMatchParams.PLACEHOLDER_ALBUMS)
+    val artistGate = base.copy(uses = base.uses + (SongCopyField.Artist to SongCopyFieldUse.Gate))
+    val editionOnly = base.normalisation - SongCopyNormalisation.DropAllTitleQualifiers
+    return listOf(
+        "g placeholder albums untagged" to base,
+        "g + artist gate" to artistGate,
+        "g + duration 1 s" to base.copy(durationToleranceMs = 1_000),
+        "g + duration 3 s" to base.copy(durationToleranceMs = 3_000),
+        "g + edition qualifiers only" to base.copy(normalisation = editionOnly),
+        "g + artist gate + edition qualifiers only" to artistGate.copy(normalisation = editionOnly),
+        "g + artist gate + duration 1 s" to artistGate.copy(durationToleranceMs = 1_000),
+        "g + artist gate + duration 3 s" to artistGate.copy(durationToleranceMs = 3_000),
+        "g + artist + album artist + year gates" to artistGate.copy(
+            uses = artistGate.uses + (SongCopyField.AlbumArtist to SongCopyFieldUse.Gate) + (SongCopyField.Year to SongCopyFieldUse.Gate)
+        )
+    ) + listOf(0.0, 2.5, 5.0).map { threshold ->
+        "g + Fellegi-Sunter score >= $threshold" to base.copy(
+            uses = SongCopyField.entries.associateWith { SongCopyFieldUse.Score },
+            weights = weights,
+            minScore = threshold
+        )
+    }
 }
 
 private fun evaluate(

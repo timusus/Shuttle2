@@ -72,6 +72,16 @@ class SongCopyMatcherTest {
     }
 
     @Test
+    fun `a placeholder album reads as untagged`() {
+        merges(tags(album = "Unknown Album"), tags(album = "<unknown>")) shouldBe false
+    }
+
+    @Test
+    fun `a qualifier that names no edition keeps titles apart`() {
+        merges(tags(), tags(title = "Paranoid Android (take 8)")) shouldBe false
+    }
+
+    @Test
     fun `the blocking hash is stable across copies`() {
         matcher.prepare(tags(album = "The OK Computer")).blockingHash shouldBe matcher.prepare(tags(album = "ok computer", disc = null)).blockingHash
     }
