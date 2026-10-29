@@ -62,14 +62,31 @@ class SongCopyRowsTest {
     }
 
     @Test
-    fun `a primary copy reads Primary and says so in the footnote`() {
+    fun `the playing copy reads Playing even when primary and the footnote says so`() {
         val context = CopyContext(preferences = SongCopyPreferences(primaryCopies = setOf(local.copyKey)))
 
         merged(local, emby).copyRows(context)!!.let {
-            it.rows.map { row -> row.state } shouldBe listOf(SongCopyState.Primary, SongCopyState.Available)
+            it.rows.map { row -> row.state } shouldBe listOf(SongCopyState.Playing, SongCopyState.Available)
             it.rows.map { row -> row.primary } shouldBe listOf(true, false)
             it.chosenBy shouldBe CopyChoice.Primary
         }
+    }
+
+    @Test
+    fun `a primary copy that is not playing reads Primary`() {
+        val context = CopyContext(preferences = SongCopyPreferences(primaryCopies = setOf(emby.copyKey)))
+
+        states(context, merged(local, emby)) shouldBe listOf(SongCopyState.Playing, SongCopyState.Primary)
+    }
+
+    @Test
+    fun `a primary copy that cannot play gives way to Unreachable`() {
+        val context = CopyContext(
+            preferences = SongCopyPreferences(primaryCopies = setOf(emby.copyKey)),
+            availability = SongCopyAvailability(unreachableProviders = setOf(MediaProviderType.Emby)),
+        )
+
+        states(context, merged(local, emby)) shouldBe listOf(SongCopyState.Playing, SongCopyState.Unreachable)
     }
 
     @Test

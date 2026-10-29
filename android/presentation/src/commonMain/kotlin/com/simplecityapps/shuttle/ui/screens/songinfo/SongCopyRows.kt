@@ -62,8 +62,8 @@ fun Song.copyRows(context: CopyContext): SongCopyRows? {
             copy.id in availability.missingSongIds -> SongCopyState.Missing
             availability.offline && !availability.isOnDevice(copy) -> SongCopyState.Offline
             !availability.isPlayable(copy) -> SongCopyState.Unreachable
-            primary -> SongCopyState.Primary
             index == 0 -> SongCopyState.Playing
+            primary -> SongCopyState.Primary
             copy.mediaProvider.remote && availability.isOnDevice(copy) -> SongCopyState.Downloaded
             else -> SongCopyState.Available
         }
