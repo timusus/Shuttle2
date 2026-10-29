@@ -4,6 +4,7 @@ import SwiftUI
 /// The playing song's menu, on a long press of Now Playing's cover or title: the actions the ViewModel offers it that
 /// iOS has a screen for, in its order, with Add to Playlist as a submenu and Exclude marked destructive.
 struct NowPlayingSongMenu: View {
+    var song: Song?
     let songActions: [NowPlayingSongAction]
     let playlists: [PlaylistOption]
     let onAction: (NowPlayingSongAction) -> Void
@@ -11,6 +12,7 @@ struct NowPlayingSongMenu: View {
     let onAddToPlaylist: (PlaylistChoice) -> Void
 
     var body: some View {
+        if let song { PlayFromMenu(song: song) }
         ForEach(songActions, id: \.self) { action in
             switch action {
             case .addToPlaylist:

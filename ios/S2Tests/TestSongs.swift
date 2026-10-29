@@ -16,7 +16,8 @@ enum TestSongs {
         artists: [String]? = nil, playCount: Int32 = 0, lastPlayed: KotlinInstant? = nil, dateAdded: KotlinInstant? = nil,
         favourite: Bool = false, provider: MediaProviderType = .shuttle, path: String? = nil,
         mimeType: String = "audio/flac", bitRate: Int32? = nil, bitDepth: Int32? = nil, sampleRate: Int32? = nil,
-        composer: String? = nil, work: String? = nil, movementName: String? = nil, movementNumber: Int32? = nil
+        composer: String? = nil, work: String? = nil, movementName: String? = nil, movementNumber: Int32? = nil,
+        copies: [Song] = []
     ) -> Song {
         Song(
             id: id, name: name, albumArtist: artist, artists: artists ?? [artist], album: album, track: nil, disc: nil,
@@ -29,7 +30,7 @@ enum TestSongs {
             mbReleaseGroupId: nil, mbArtistIds: nil, mbAlbumArtistIds: nil, serverAlbumId: nil, serverArtistIds: nil,
             serverAlbumArtistIds: nil, albumIdentity: nil, composer: composer, composerSort: nil, conductor: nil, arranger: nil,
             work: work, movementName: movementName, movementNumber: movementNumber.map { KotlinInt(int: $0) }, movementTotal: nil, showMovement: nil, performers: [],
-            copyBlockingHash: nil, copies: []
+            copyBlockingHash: nil, copies: copies
         )
     }
 }

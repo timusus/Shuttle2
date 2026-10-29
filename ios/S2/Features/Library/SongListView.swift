@@ -157,6 +157,7 @@ struct SongRowMenu: View {
     var downloads = DetailDownloads()
 
     var body: some View {
+        PlayFromMenu(song: song)
         Button("Play Next", systemImage: "text.line.first.and.arrowtriangle.forward") { onPlayNext(song) }
         Button("Add to Queue", systemImage: "text.append") { onAddToQueue(song) }
         if let onSongInfo {

@@ -338,6 +338,7 @@ struct NowPlayingContent: View {
     /// The song's menu: the top bar's More button, and a long press of the cover or the title.
     private var songMenu: some View {
         NowPlayingSongMenu(
+            song: state.currentSong,
             songActions: state.songActions,
             playlists: state.playlists,
             onAction: perform,

@@ -40,6 +40,7 @@ interface IosAppGraph :
     ViewModelGraph,
     IosPlaybackAccessors,
     IosLibraryAccessors,
+    IosCopyAccessors,
     IosServerAccessors,
     IosStoreAccessors,
     IosViewModelAccessors {

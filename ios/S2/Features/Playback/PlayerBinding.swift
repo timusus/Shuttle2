@@ -9,6 +9,8 @@ import SwiftUI
 struct NowPlayingState: Equatable {
     /// The current song's id, for Song Info.
     var songID: Int64?
+    /// The current song with its copies, for the menu's Play From.
+    var currentSong: Song?
     var title: String?
     var artist: String?
     var album: String?
@@ -318,6 +320,7 @@ final class PlayerBinding {
         if player !== lastPlayer {
             lastPlayer = player
             next.songID = current?.song.id
+            next.currentSong = current?.song
             next.title = current?.song.name
             next.artist = current?.artist
             next.album = current?.album
@@ -387,6 +390,12 @@ final class PlayerBinding {
         playlistsById = Dictionary(list.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
         let options = list.map { PlaylistOption(id: $0.id, name: $0.name) }
         if options != nowPlaying.playlists { nowPlaying.playlists = options }
+    }
+
+    /// Plays `copy` of `song` now, from a song menu's Play From.
+    func playFrom(_ song: Song, copy: Song) {
+        intent.listenerPlayed()
+        viewModel.onMediaAction(action: MediaActionPlayFromCopy(selection: MediaSelectionSongs(song: song), copy: copy))
     }
 
     var actions: PlayerActions {
