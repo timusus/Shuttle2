@@ -7,6 +7,7 @@ import androidx.room.PrimaryKey
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Performer
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.model.SongCopyMatcher
 import kotlin.time.Clock
 import kotlin.time.Instant
 
@@ -16,7 +17,8 @@ import kotlin.time.Instant
         Index(value = ["path", "mediaProvider"], unique = true),
         Index(value = ["mediaProvider", "path"]),
         Index(value = ["lastCompleted"]),
-        Index(value = ["dateAdded"])
+        Index(value = ["dateAdded"]),
+        Index(value = ["copyBlockingHash"])
     ]
 )
 data class SongData(
@@ -84,7 +86,9 @@ data class SongData(
     @ColumnInfo(name = "movementTotal") var movementTotal: Int? = null,
     @ColumnInfo(name = "showMovement") var showMovement: Boolean? = null,
     // Each entry is "name", or "name" + [PERFORMER_ROLE_SEPARATOR] + "role": the list column's ';' separator can't split a name.
-    @ColumnInfo(name = "performers") var performers: List<String>? = null
+    @ColumnInfo(name = "performers") var performers: List<String>? = null,
+    // Derived from album, disc and track on every write, so a tag edit moves the song to its new block.
+    @ColumnInfo(name = "copyBlockingHash") var copyBlockingHash: Long? = null
 ) {
     @PrimaryKey(autoGenerate = true)
     var id: Long = 0
@@ -146,10 +150,20 @@ fun Song.toSongData(mediaProviderType: MediaProviderType): SongData = SongData(
     movementNumber = movementNumber,
     movementTotal = movementTotal,
     showMovement = showMovement,
-    performers = performers?.map { performer -> performer.role?.let { role -> "${performer.name}$PERFORMER_ROLE_SEPARATOR$role" } ?: performer.name }
+    performers = performers?.map { performer -> performer.role?.let { role -> "${performer.name}$PERFORMER_ROLE_SEPARATOR$role" } ?: performer.name },
+    copyBlockingHash = copyBlockingHash(album, disc, track)
 ).apply {
     id = this@toSongData.id
 }
+
+// The library groups copies with the default matcher, so the stored hash is that matcher's.
+private val copyMatcher = SongCopyMatcher()
+
+internal fun copyBlockingHash(
+    album: String?,
+    disc: Int?,
+    track: Int?
+): Long? = copyMatcher.blockingHash(album, disc, track)
 
 internal const val PERFORMER_ROLE_SEPARATOR = '\u001F'
 
@@ -176,7 +190,7 @@ const val SONG_COLUMNS =
         "artworkVersion, dateAdded, favouritedAt, albumArtists, artistsTag, artistDisplay, compilation, mbTrackId, " +
         "mbAlbumId, mbReleaseGroupId, mbArtistIds, mbAlbumArtistIds, serverAlbumId, serverArtistIds, " +
         "serverAlbumArtistIds, artworkItemId, composer, composerSort, conductor, arranger, work, movementName, " +
-        "movementNumber, movementTotal, showMovement, performers, albumArtistDisplay"
+        "movementNumber, movementTotal, showMovement, performers, albumArtistDisplay, copyBlockingHash"
 
 /** [SONG_COLUMNS], each qualified by the `songs` table, for a join. */
 const val SONG_COLUMNS_QUALIFIED =

@@ -43,7 +43,7 @@ import com.simplecityapps.localmediaprovider.local.data.room.entity.SongData
         MediaStoreFileData::class,
         MediaStoreScanStateData::class
     ],
-    version = 61,
+    version = 62,
     exportSchema = true
 )
 @TypeConverters(Converters::class)

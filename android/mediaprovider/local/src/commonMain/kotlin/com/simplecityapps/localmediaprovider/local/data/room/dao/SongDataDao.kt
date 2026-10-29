@@ -549,5 +549,6 @@ fun SongData.toSong(): Song = Song(
     movementNumber = movementNumber,
     movementTotal = movementTotal,
     showMovement = showMovement,
-    performers = performers?.toPerformers()
+    performers = performers?.toPerformers(),
+    copyBlockingHash = copyBlockingHash
 )

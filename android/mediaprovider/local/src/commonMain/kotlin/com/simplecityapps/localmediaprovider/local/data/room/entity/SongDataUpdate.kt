@@ -62,7 +62,8 @@ data class SongDataUpdate(
     @ColumnInfo(name = "movementNumber") var movementNumber: Int? = null,
     @ColumnInfo(name = "movementTotal") var movementTotal: Int? = null,
     @ColumnInfo(name = "showMovement") var showMovement: Boolean? = null,
-    @ColumnInfo(name = "performers") var performers: List<String>? = null
+    @ColumnInfo(name = "performers") var performers: List<String>? = null,
+    @ColumnInfo(name = "copyBlockingHash") var copyBlockingHash: Long? = null
 )
 
 fun SongData.toSongDataUpdate(): SongDataUpdate = SongDataUpdate(
@@ -114,7 +115,8 @@ fun SongData.toSongDataUpdate(): SongDataUpdate = SongDataUpdate(
     movementNumber = movementNumber,
     movementTotal = movementTotal,
     showMovement = showMovement,
-    performers = performers
+    performers = performers,
+    copyBlockingHash = copyBlockingHash
 )
 
 fun Song.toSongDataUpdate(): SongDataUpdate = toSongData(MediaProviderType.Shuttle).toSongDataUpdate()
