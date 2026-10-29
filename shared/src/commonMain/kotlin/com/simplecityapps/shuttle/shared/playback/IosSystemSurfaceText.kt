@@ -1,8 +1,8 @@
 package com.simplecityapps.shuttle.shared.playback
 
 import com.simplecityapps.playback.queue.QueueOperations
-import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.model.SystemSurfaceText
+import com.simplecityapps.shuttle.model.songsView
 import com.simplecityapps.shuttle.model.systemSurfaceText
 import com.simplecityapps.shuttle.settings.AppearanceSettings
 import dev.zacsweers.metro.AppScope
@@ -24,12 +24,6 @@ class IosSystemSurfaceText @Inject constructor(
         val items = queueOperations.queueStateFlow.value.items
         val index = items.indexOfFirst { it.uid == uid }
         if (index == -1) return null
-        // A view, not a copy: only the songs around [index] are read.
-        val songs = object : AbstractList<Song>() {
-            override val size get() = items.size
-
-            override fun get(index: Int) = items[index].song
-        }
-        return systemSurfaceText(songs, index, appearanceSettings.classicalDisplay.value)
+        return systemSurfaceText(items.songsView { it.song }, index, appearanceSettings.classicalDisplay.value)
     }
 }

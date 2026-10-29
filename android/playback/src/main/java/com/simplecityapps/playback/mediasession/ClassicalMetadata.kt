@@ -2,9 +2,8 @@ package com.simplecityapps.playback.mediasession
 
 import androidx.media3.common.MediaMetadata
 import com.simplecityapps.playback.queue.QueueItem
-import com.simplecityapps.shuttle.model.Song
-import com.simplecityapps.shuttle.model.lockScreenText
-import com.simplecityapps.shuttle.model.workProgress
+import com.simplecityapps.shuttle.model.classicalSurfaceText
+import com.simplecityapps.shuttle.model.songsView
 
 /** The movement as title and "Composer: Work · lead performer" as artist, for one song of a work. */
 internal class ClassicalText(val title: String, val artist: String?, val composer: String?)
@@ -17,15 +16,8 @@ internal fun classicalText(
     queue: List<QueueItem>,
     index: Int
 ): ClassicalText? {
-    // A view, not a copy: only the songs around [index] are read.
-    val songs = object : AbstractList<Song>() {
-        override val size get() = queue.size
-
-        override fun get(index: Int) = queue[index].song
-    }
-    if (workProgress(songs, index) == null) return null
-    val text = lockScreenText(songs, index) ?: return null
-    return ClassicalText(text.title, text.artist, songs[index].composer)
+    val text = classicalSurfaceText(queue.songsView { it.song }, index) ?: return null
+    return ClassicalText(text.title, text.artist, queue[index].song.composer)
 }
 
 internal fun MediaMetadata.withClassicalText(text: ClassicalText): MediaMetadata = buildUpon()
