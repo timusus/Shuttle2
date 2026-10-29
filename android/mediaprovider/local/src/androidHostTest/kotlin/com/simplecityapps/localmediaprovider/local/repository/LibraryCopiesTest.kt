@@ -11,6 +11,7 @@ import com.simplecityapps.mediaprovider.repository.albums.AlbumQuery
 import com.simplecityapps.mediaprovider.repository.artists.AlbumArtistQuery
 import com.simplecityapps.mediaprovider.repository.genres.GenreQuery
 import com.simplecityapps.shuttle.model.MediaProviderType
+import com.simplecityapps.shuttle.model.MinTrackLength
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.model.SongCopyAvailability
 import com.simplecityapps.shuttle.query.SongQuery
@@ -27,6 +28,7 @@ import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -224,6 +226,16 @@ class LibraryCopiesTest {
         repository.countSongs().first() shouldBe 12
         merge.value = false
         repository.countSongs().first() shouldBe 24
+        repository.countSongsByProvider().first() shouldBe mapOf(MediaProviderType.Shuttle to 12, MediaProviderType.Emby to 12)
+    }
+
+    @Test
+    fun `a source's song count counts each of its visible copies once, skipping excluded and short songs`() = runTest {
+        val short = local(1..1, folder = "Short").map { it.copy(duration = 5_000) }
+        val excluded = emby(13..13).map { it.copy(name = "Hidden").apply { excluded = true } }
+        insert(local(1..12) + emby(1..12) + short + excluded)
+        val repository = LocalSongRepository(backgroundScope, UnconfinedTestDispatcher(testScheduler), database.songDataDao(), database.libraryAlbumIndex(), flowOf(MinTrackLength.TenSeconds), copies())
+
         repository.countSongsByProvider().first() shouldBe mapOf(MediaProviderType.Shuttle to 12, MediaProviderType.Emby to 12)
     }
 
