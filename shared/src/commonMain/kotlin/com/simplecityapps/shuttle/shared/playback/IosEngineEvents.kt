@@ -99,6 +99,7 @@ internal class IosEngineEvents(
 
     override fun onFailed(
         trackId: String,
+        kind: IosFailureKind,
         message: String
     ) {
         log.warn { "track $trackId failed: ${message.replace(QUERY, "?…")}" }
@@ -118,18 +119,23 @@ internal class IosEngineEvents(
         // A stream that couldn't be resolved isn't reported, and a refusal stops there.
         if (unresolved != null) currentFeed.reportFailure = false
         val refusal = unresolved is ServerStreamNotAllowedException
-        if (!refusal && fallsBackToCopy(currentFeed)) return
+        // A local song whose stream couldn't be resolved has no file to open, whatever the engine called it.
+        val marks = kind.marksCopyMissing || (unresolved != null && !currentFeed.item.song.mediaProvider.remote)
+        if (!refusal && fallsBackToCopy(currentFeed, marks)) return
         onCurrentFailed(currentFeed, skip = !refusal)
     }
 
     /**
      * [feed]'s song has another copy, not yet tried for this item nor marked missing: the item plays that copy instead,
-     * at the position it failed at, without reporting a failure. A local copy that failed is marked missing; the engine
-     * reports only a message, so a server copy's 404 can't be told from a lost connection and isn't marked.
+     * at the position it failed at, without reporting a failure. The failed copy is marked missing when [marksMissing]
+     * (its file is gone or undecodable, or the server 404s), not for a lost connection.
      */
-    private fun fallsBackToCopy(feed: IosFeed): Boolean {
+    private fun fallsBackToCopy(
+        feed: IosFeed,
+        marksMissing: Boolean
+    ): Boolean {
         val song = feed.item.song
-        if (!song.mediaProvider.remote) sourceState?.setSongMissing(song.mediaProvider.name, song.id, missing = true)
+        if (marksMissing) sourceState?.setSongMissing(song.mediaProvider.name, song.id, missing = true)
         val uid = feed.item.uid
         val tried = triedCopies?.takeIf { it.first == uid }?.second.orEmpty() + song.id
         triedCopies = uid to tried

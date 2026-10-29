@@ -96,6 +96,26 @@ interface IosAudioPlayer {
     fun setWorkAlbumGain(entries: List<IosQueueEntry>)
 }
 
+/** Why an item failed, as the engine's error category maps to what the app does about it. */
+enum class IosFailureKind {
+    /** The file isn't there or can't be read. */
+    Missing,
+
+    /** The bytes are damaged, or in a format this build doesn't play. */
+    Undecodable,
+
+    /** The server answered 404 or 410: it no longer has the item. */
+    HttpNotFound,
+
+    /** The connection failed or dropped; the copy itself may be fine. */
+    Connection,
+
+    Other;
+
+    /** Whether the copy is remembered as missing; a lost connection or an unknown fault only falls back. */
+    val marksCopyMissing: Boolean get() = this == Missing || this == Undecodable || this == HttpNotFound
+}
+
 /** What the player reports. Swift calls these on the main thread. */
 interface IosAudioPlayerListener {
     /** The player's state changed, while [trackId] was its current item. Each report is the state as it stands. */
@@ -107,9 +127,10 @@ interface IosAudioPlayerListener {
     /** The player moved on to [trackId] by itself (playing out, or pausing at the end): it's current now. */
     fun onTransition(trackId: String)
 
-    /** [trackId] couldn't be opened or decoded; the player stops on it. */
+    /** [trackId] couldn't be opened or decoded, for the reason [kind] names; the player stops on it. */
     fun onFailed(
         trackId: String,
+        kind: IosFailureKind,
         message: String
     )
 

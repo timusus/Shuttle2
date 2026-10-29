@@ -317,7 +317,7 @@ class FakeIosAudioPlayer : IosAudioPlayer {
             failed = true
             phase = Phase.Idle
             stream = null
-            post { listener?.onFailed("$uid", error ?: "Can't open ${opened?.url}") }
+            post { listener?.onFailed("$uid", IosFailureKind.Other, error ?: "Can't open ${opened?.url}") }
         } else {
             stream = opened
             phase = Phase.Ready
@@ -327,11 +327,11 @@ class FakeIosAudioPlayer : IosAudioPlayer {
     }
 
     /** The current item fails while it plays, as a stream whose connection dropped. */
-    fun failCurrent() {
+    fun failCurrent(kind: IosFailureKind = IosFailureKind.Connection) {
         val uid = currentUid ?: return
         failed = true
         phase = Phase.Idle
-        post { listener?.onFailed("$uid", "Connection lost") }
+        post { listener?.onFailed("$uid", kind, "Connection lost") }
         settle()
     }
 
@@ -381,7 +381,7 @@ class FakeIosAudioPlayer : IosAudioPlayer {
             if (opened == null || opened.url in failing) {
                 failed = true
                 phase = Phase.Idle
-                post { listener?.onFailed("$uid", error ?: "Can't open ${opened?.url}") }
+                post { listener?.onFailed("$uid", IosFailureKind.Other, error ?: "Can't open ${opened?.url}") }
             } else {
                 stream = opened
                 phase = Phase.Ready

@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.shared.playback
 
 import com.simplecityapps.playback.PlaybackState
+import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import io.kotest.matchers.shouldBe
 import kotlin.test.Test
@@ -60,6 +61,47 @@ class IosPlayerControllerCopiesTest : IosPlayerControllerTestBase() {
         controller.currentSong?.id shouldBe second.id
         engine.current?.url shouldBe url(second)
         engine.positionMs() shouldBe 30_000L
+    }
+
+    private fun Song.onEmby() = copy(mediaProvider = MediaProviderType.Emby)
+
+    @Test
+    fun `a server copy the server no longer has is marked missing and the next copy plays`() = test { controller ->
+        controller.start(listOf(a.onEmby().withCopies(second), b))
+
+        engine.failCurrent(IosFailureKind.HttpNotFound)
+
+        controller.currentSong?.id shouldBe second.id
+        sourceState.missingSongs("Emby") shouldBe setOf(a.id)
+    }
+
+    @Test
+    fun `a server copy that cannot be decoded is marked missing`() = test { controller ->
+        controller.start(listOf(a.onEmby().withCopies(second), b))
+
+        engine.failCurrent(IosFailureKind.Undecodable)
+
+        controller.currentSong?.id shouldBe second.id
+        sourceState.missingSongs("Emby") shouldBe setOf(a.id)
+    }
+
+    @Test
+    fun `a lost connection plays the next copy without marking the server copy`() = test { controller ->
+        controller.start(listOf(a.onEmby().withCopies(second), b))
+
+        engine.failCurrent(IosFailureKind.Connection)
+
+        controller.currentSong?.id shouldBe second.id
+        sourceState.missingSongs("Emby") shouldBe emptySet()
+    }
+
+    @Test
+    fun `a fault of unknown kind does not mark the copy`() = test { controller ->
+        controller.start(listOf(a.onEmby().withCopies(second), b))
+
+        engine.failCurrent(IosFailureKind.Other)
+
+        sourceState.missingSongs("Emby") shouldBe emptySet()
     }
 
     @Test

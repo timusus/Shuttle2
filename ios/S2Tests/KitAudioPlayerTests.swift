@@ -354,6 +354,20 @@ struct KitAudioPlayerTests {
 }
 
 /// The decode thread's open while Kotlin is still resolving the stream: a seek or skip interrupts it there.
+struct IosFailureKindTests {
+    @Test func `each engine category maps to the kind Kotlin acts on`() {
+        #expect(IosFailureKind.of(.io) == .missing)
+        #expect(IosFailureKind.of(.malformed) == .undecodable)
+        #expect(IosFailureKind.of(.unsupported) == .undecodable)
+        #expect(IosFailureKind.of(.http(status: 404)) == .httpNotFound)
+        #expect(IosFailureKind.of(.http(status: 410)) == .httpNotFound)
+        #expect(IosFailureKind.of(.http(status: 500)) == .other)
+        #expect(IosFailureKind.of(.network) == .connection)
+        #expect(IosFailureKind.of(.cancelled) == .other)
+        #expect(IosFailureKind.of(.internal) == .other)
+    }
+}
+
 @MainActor
 struct ResolvingByteReaderTests {
     private final class Box: @unchecked Sendable {
@@ -517,7 +531,7 @@ private final class RecordingListener: NSObject, IosAudioPlayerListener {
         log.append("transition \(trackId)")
     }
 
-    func onFailed(trackId: String, message _: String) { failures.append(trackId) }
+    func onFailed(trackId: String, kind _: IosFailureKind, message _: String) { failures.append(trackId) }
     func onPosition(trackId: String, positionMs: Int64) { positions.append("\(trackId) \(positionMs)") }
     func onPausedAtEnd(trackId: String) { pausedAtEnd.append(trackId) }
 }

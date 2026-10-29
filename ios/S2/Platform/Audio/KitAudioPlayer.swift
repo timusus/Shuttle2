@@ -190,7 +190,7 @@ final class KitAudioPlayer: NSObject, IosAudioPlayer {
             reportState()
         case let .itemFailed(ref, error):
             lastReport = nil
-            listener?.onFailed(trackId: "\(ref.item.uid)", message: "\(error.underlying)")
+            listener?.onFailed(trackId: "\(ref.item.uid)", kind: IosFailureKind.of(error.category), message: "\(error.underlying)")
         case let .seekLanded(ref, position), let .seekAdjusted(ref, _, position):
             // An adjusted or refused seek moves Kotlin's optimistic progress back to where the player is.
             listener?.onPosition(trackId: "\(ref.item.uid)", positionMs: Int64(position * 1000))
@@ -488,5 +488,18 @@ final class ResolvingByteReader: TimeOffsetByteReader, @unchecked Sendable {
     /// How far `stream` downloads ahead on an expensive network: a minute at the library's rate (-1 is unknown).
     static func readAhead(_ stream: IosStream) -> GrowingFileReadAhead {
         StreamReadAhead.readAhead(bitrateKbps: Int(stream.bitrateKbps), sizeBytes: stream.sizeBytes, durationMs: stream.durationMs)
+    }
+}
+
+extension IosFailureKind {
+    /// What Kotlin does about a failure: a gone file, damaged bytes or a 404/410 mark the copy missing; a lost connection doesn't.
+    static func of(_ category: PlaybackErrorCategory) -> IosFailureKind {
+        switch category {
+        case .io: .missing
+        case .malformed, .unsupported: .undecodable
+        case let .http(status): status == 404 || status == 410 ? .httpNotFound : .other
+        case .network: .connection
+        case .cancelled, .internal: .other
+        }
     }
 }
