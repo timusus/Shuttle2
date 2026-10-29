@@ -47,7 +47,7 @@ struct NowPlayingWorkState: Equatable {
     /// "3 of 5 · 24:10 left in work"
     func caption(positionMs: Int) -> String {
         let left = NowPlayingWorkKt.formatWorkRemaining(ms: Int64(remainingMs - positionMs / 1000 * 1000))
-        return "\(ordinal) of \(total) · \(left) left in work"
+        return localizedString("player_work_caption", "\(ordinal)", "\(total)", left)
     }
 }
 

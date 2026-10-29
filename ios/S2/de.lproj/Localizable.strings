@@ -194,3 +194,12 @@
 "home_recent_releases_subtitle" = "New albums in your library";
 "home_genre_picks_subtitle" = "Genres you've been playing";
 "home_genre_picks_largest_subtitle" = "The biggest genres in your library";
+"composer_eyebrow" = "Composer";
+"composer_works_header" = "Works";
+"composer_albums_header" = "Albums";
+"composer_open" = "Open composer %1$@";
+"album_detail_disc" = "Disc %1$d";
+"library_item_not_found" = "Not in your library";
+"player_work_play_movement" = "Play movement %1$@";
+"player_work_show_movements" = "Show movements";
+"player_work_caption" = "%1$@ of %2$@ · %3$@ left in work";

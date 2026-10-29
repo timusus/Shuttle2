@@ -70,6 +70,6 @@ struct ComposerDetailTests {
 
     @Test func noComposerShowsNotFound() throws {
         let sut = ComposerDetailContent(state: ComposerUiState(loading: false, composer: nil, albums: []))
-        #expect((try? sut.inspect().find(text: "Composer Not Found")) != nil)
+        #expect((try? sut.inspect().find(text: "Not in your library")) != nil)
     }
 }

@@ -205,6 +205,13 @@ struct AlbumDetailTests {
         #expect(opened == "Beethoven")
     }
 
+    @Test func theComposerTapPushesTheComposerRoute() throws {
+        let navigator = Navigator()
+        let sut = AlbumDetailContent(state: classicalState(), onOpenComposer: { navigator.open(.composer(name: $0)) })
+        try sut.inspect().find(ViewType.Button.self, where: { (try? $0.accessibilityLabel().string())?.hasPrefix("Open composer") == true }).tap()
+        #expect(navigator.homePath.last == .composer(name: "Beethoven"))
+    }
+
     @Test func classicalAlbumWithoutComposerRouteLeavesTheEyebrowUntappable() throws {
         let sut = AlbumDetailContent(state: classicalState())
         #expect((try? sut.inspect().find(ViewType.Button.self, where: { (try? $0.accessibilityLabel().string())?.hasPrefix("Open composer") == true })) == nil)

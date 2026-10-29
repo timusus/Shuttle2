@@ -33,8 +33,7 @@ struct AlbumDetailView: View {
                 onOpenRecording: { key in
                     navigator.openAsserting(.album(albumKey: key.key, albumArtistKey: key.albumArtistGroupKey?.key, albumIdentity: key.identity))
                 },
-                // TODO: pass the composer page's open closure once its route lands (parallel composer-page work).
-                onOpenComposer: nil,
+                onOpenComposer: { navigator.openAsserting(.composer(name: $0)) },
                 onPlayNext: { songs in
                     models.actions.send(MediaActionPlayNext(selection: MediaSelectionSongs(songs: songs)), intent: services.playIntent)
                 },
@@ -122,7 +121,7 @@ struct AlbumDetailContent: View {
                         subtitle: subtitle(album),
                         artist: state.rows.map(\.eyebrow) ?? artistLink(album)?.name,
                         onArtist: heroArtistAction,
-                        artistLabel: state.rows?.eyebrow.map { "Open composer \($0)" },
+                        artistLabel: state.rows?.eyebrow.map { localizedString("composer_open", $0) },
                         credits: state.rows?.credits,
                         layout: layout,
                         onPlay: { onPlay(0) },
@@ -151,7 +150,7 @@ struct AlbumDetailContent: View {
                                 }
                             } header: {
                                 if discs.count > 1 {
-                                    SectionHeader("Disc \(group.disc)", style: .disc)
+                                    SectionHeader(localizedString("album_detail_disc", Int32(truncatingIfNeeded: group.disc)), style: .disc)
                                         .pinnedHeader()
                                 }
                             }

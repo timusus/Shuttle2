@@ -34,6 +34,12 @@ TABLE = "Localizable"
 # Plurals only the Swift code uses (Android resource names, matching the Swift call sites).
 IOS_PLURALS = ["songsPlural", "albumsPlural", "paywall_status_trial", "composer_works", "composer_albums", "composer_recordings", "album_detail_tracks", "album_detail_other_recordings"]
 
+# Strings only the Swift code uses (Android resource names, matching the Swift call sites).
+IOS_STRINGS = [
+    "composer_eyebrow", "composer_works_header", "composer_albums_header", "composer_open", "album_detail_disc",
+    "library_item_not_found", "player_work_play_movement", "player_work_show_movements", "player_work_caption",
+]
+
 # Plurals that exist on iOS only (no Android resource), English text for every locale (see plural_fallback): key ->
 # {quantity: text}. The key is the `String(localized:)` key of the call site.
 IOS_ONLY_PLURALS = {
@@ -65,7 +71,8 @@ def string_keys():
     source = (STRING_KEY.parent / "AllStringKeys.kt").read_text()
     declaration = source[source.index("val allStringKeys"):]
     enums = re.findall(r"(\w+)\.entries", declaration)
-    return [key for enum in enums for key in enum_keys((STRING_KEY.parent / f"{enum}.kt").read_text(), enum)]
+    keys = [key for enum in enums for key in enum_keys((STRING_KEY.parent / f"{enum}.kt").read_text(), enum)]
+    return keys + [key for key in IOS_STRINGS if key not in keys]
 
 
 def plural_keys():

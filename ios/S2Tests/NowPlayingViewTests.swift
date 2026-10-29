@@ -563,6 +563,15 @@ struct NowPlayingWorkViewTests {
         #expect(badge == "FLAC · 24/96 kHz")
     }
 
+    @Test func theClassicalTitleComposerOpensTheComposerRoute() throws {
+        var route: Route?
+        var actions = PlayerActions.none
+        actions.openRoute = { route = $0 }
+        let sut = NowPlayingContent(state: state(work: Self.work), actions: actions)
+        try sut.inspect().find(viewWithAccessibilityIdentifier: "nowPlaying.composer").button().tap()
+        #expect(route == .composer(name: "Beethoven"))
+    }
+
     @Test func theComposerOpensOnlyWhenARouteIsWired() throws {
         var opened = 0
         let wired = ClassicalTitleBlock(work: Self.work, secondaryInk: .secondary, onOpenComposer: { opened += 1 }) { EmptyView() }

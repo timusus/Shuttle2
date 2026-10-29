@@ -61,8 +61,7 @@ struct ClassicalTitleBlock<Actions: View>: View {
         if let onOpenComposer {
             Button(action: onOpenComposer) { text.contentShape(Rectangle()) }
                 .buttonStyle(.plain)
-                .accessibilityLabel(composer)
-                .accessibilityHint("Opens the composer")
+                .accessibilityLabel(localizedString("composer_open", composer))
                 .accessibilityIdentifier("nowPlaying.composer")
         } else {
             text.accessibilityIdentifier("nowPlaying.composer")
@@ -94,7 +93,7 @@ struct WorkRibbonView: View {
             }
             .buttonStyle(.plain)
             .accessibilityLabel(work.caption(positionMs: positionMs))
-            .accessibilityHint("Show movements")
+            .accessibilityHint(localizedString("player_work_show_movements"))
             .accessibilityIdentifier("nowPlaying.workCaption")
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -115,7 +114,7 @@ struct WorkRibbonView: View {
                         .contentShape(Rectangle())
                         .onTapGesture { tap(segment, width: width) }
                         .accessibilityElement()
-                        .accessibilityLabel(width >= Self.minJumpWidth && !work.continuous ? "Play movement \(segment.ordinal)" : "Show movements")
+                        .accessibilityLabel(width >= Self.minJumpWidth && !work.continuous ? localizedString("player_work_play_movement", "\(segment.ordinal)") : localizedString("player_work_show_movements"))
                         .accessibilityAddTraits(.isButton)
                 }
             }

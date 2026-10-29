@@ -31,7 +31,7 @@ struct ClassicalAlbumRowsView: View {
             case .actHeader(let act):
                 SectionHeader(act.label, style: .disc).pinnedHeader()
             case .discDivider(let divider):
-                SectionHeader("Disc \(divider.disc)", style: .disc).pinnedHeader()
+                SectionHeader(localizedString("album_detail_disc", Int32(truncatingIfNeeded: divider.disc)), style: .disc).pinnedHeader()
             case .workHeader(let work):
                 workHeader(work)
             case .movement(let movement):
@@ -65,7 +65,7 @@ struct ClassicalAlbumRowsView: View {
     private func composerHeading(_ heading: AlbumRowComposerHeading) -> some View {
         if let composer = heading.composer, let open = actions.onOpenComposer {
             SectionHeader(heading.name) { open(composer) }
-                .accessibilityLabel("Open composer \(heading.name)")
+                .accessibilityLabel(localizedString("composer_open", heading.name))
         } else {
             SectionHeader(heading.name)
         }

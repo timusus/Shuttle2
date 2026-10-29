@@ -13,11 +13,17 @@ struct ComposerDetailView: View {
         let models = services.viewModels.viewModel(route.cacheKey) {
             ComposerDetailModels(graph: services.graph, composer: name)
         }
-        Observing(models.composer.uiState) { state in
+        Observing(models.composer.uiState, models.actions.uiState) { state, actions in
             ComposerDetailContent(
                 state: state,
-                onOpenAlbum: { navigator.openAsserting(.album(albumKey: $0.key, albumArtistKey: $0.albumArtistGroupKey?.key, albumIdentity: $0.identity)) }
+                onOpenAlbum: { navigator.openAsserting(.album(albumKey: $0.key, albumArtistKey: $0.albumArtistGroupKey?.key, albumIdentity: $0.identity)) },
+                albumActions: DetailAlbumActions(
+                    onPlay: { models.actions.send(MediaActionPlay(selection: MediaSelectionAlbums(album: $0), position: 0), intent: services.playIntent) },
+                    onPlayNext: { models.actions.send(MediaActionPlayNext(selection: MediaSelectionAlbums(album: $0)), intent: services.playIntent) },
+                    onAddToQueue: { models.actions.send(MediaActionAddToQueue(selection: MediaSelectionAlbums(album: $0)), intent: services.playIntent) }
+                )
             )
+            .mediaActionResults(actions.events, handled: { models.actions.onEventHandled(id: $0) })
         }
     }
 }
@@ -25,12 +31,14 @@ struct ComposerDetailView: View {
 /// The Composer screen's ViewModel, cached under its route's key.
 final class ComposerDetailModels: ViewModelGroup {
     let composer: ComposerViewModel
+    let actions: MediaActionsViewModel
 
     init(graph: IosAppGraph, composer: String) {
         self.composer = graph.composerViewModelFactory.create(composer: composer)
+        actions = graph.mediaActionsViewModel
     }
 
-    var members: [Lifecycle_viewmodelViewModel] { [composer] }
+    var members: [Lifecycle_viewmodelViewModel] { [composer, actions] }
 }
 
 /// A composer's page from a `ComposerUiState`, as Android's `ComposerDetailScreen`: their classical works, one row per
@@ -39,6 +47,7 @@ final class ComposerDetailModels: ViewModelGroup {
 struct ComposerDetailContent: View {
     let state: ComposerUiState
     var onOpenAlbum: (AlbumGroupKey) -> Void = { _ in }
+    var albumActions = DetailAlbumActions()
 
     @State private var recordingsOf: ComposerWork?
 
@@ -50,7 +59,7 @@ struct ComposerDetailContent: View {
                 ComposerHero(name: composer.name, subtitle: eyebrow(localizedPlural("composer_works", composer.works.count), localizedPlural("composer_albums", composer.albums.count)))
             } rows: {
                 Section {
-                    SectionHeader("Works")
+                    SectionHeader(localizedString("composer_works_header"))
                         .rowSeparator(.none)
                     ForEach(composer.works, id: \.key) { work in
                         Button {
@@ -66,9 +75,9 @@ struct ComposerDetailContent: View {
                     }
                 }
                 if !state.albums.isEmpty {
-                    DetailAlbumShelf(title: "Albums", albums: state.albums, subtitle: { $0.albumArtist }, onAlbumTap: { album in
+                    DetailAlbumShelf(title: localizedString("composer_albums_header"), albums: state.albums, subtitle: { $0.albumArtist }, onAlbumTap: { album in
                         if let key = album.groupKey { onOpenAlbum(key) }
-                    })
+                    }, albumActions: albumActions)
                 }
             }
             .sheet(item: $recordingsOf) { work in
@@ -78,7 +87,7 @@ struct ComposerDetailContent: View {
                 }
             }
         } else {
-            EmptyState("Composer Not Found", systemImage: "music.quarternote.3")
+            EmptyState(localizedString("library_item_not_found"), systemImage: "music.quarternote.3")
         }
     }
 }
@@ -95,7 +104,7 @@ private struct ComposerHero: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.xsmall) {
-            Text("Composer".uppercased())
+            Text(localizedString("composer_eyebrow").uppercased())
                 .font(.s2Eyebrow)
                 .tracking(1.5)
                 .foregroundStyle(tint)

@@ -204,7 +204,8 @@ struct NowPlayingContent: View {
             if let work = state.work {
                 ClassicalTitleBlock(
                     work: work, secondaryInk: secondaryInk, qualityBadge: state.qualityBadge,
-                    spokenQualityBadge: state.spokenQualityBadge
+                    spokenQualityBadge: state.spokenQualityBadge,
+                    onOpenComposer: work.composer.map { composer in { actions.openRoute(.composer(name: composer)) } }
                 ) { songAccessibilityActions }
                     .contentShape(Rectangle())
                     .contextMenu { songMenu }
