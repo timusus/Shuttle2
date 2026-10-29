@@ -41,7 +41,7 @@ class SongInfoViewModelTest {
         val song = createSong(id = 2, name = "Two")
         songRepository.setSongs(listOf(createSong(id = 1), song))
 
-        val viewModel = SongInfoViewModel(2, ObserveSongs(songRepository, FakeOfflineSongs().filter), LoadLyrics(songRepository, NoOnlineLyrics))
+        val viewModel = SongInfoViewModel(2, ObserveSongs(songRepository, FakeOfflineSongs().filter), LoadLyrics(songRepository, NoOnlineLyrics), fixedCopyContext())
         backgroundScope.launch { viewModel.uiState.collect {} }
         advanceUntilIdle()
 
@@ -49,11 +49,25 @@ class SongInfoViewModelTest {
     }
 
     @Test
+    fun `a merged song shows the copy that plays and lists its copies`() = runTest {
+        val local = createSong(id = 1, path = "/music/1.flac")
+        val emby = createSong(id = 2, path = "emby://2", mediaProvider = MediaProviderType.Emby)
+        songRepository.setSongs(listOf(local.copy(copies = listOf(emby, local))))
+
+        val viewModel = SongInfoViewModel(1, ObserveSongs(songRepository, FakeOfflineSongs().filter), LoadLyrics(songRepository, NoOnlineLyrics), fixedCopyContext())
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        advanceUntilIdle()
+
+        viewModel.uiState.value.song?.id shouldBe 2L
+        viewModel.uiState.value.copies?.rows?.map { it.song.id } shouldBe listOf(2L, 1L)
+    }
+
+    @Test
     fun `loads the song's lyrics apart from the song`() = runTest {
         songRepository.setSongs(listOf(createSong(id = 2)))
         songRepository.lyrics[2] = "la la la"
 
-        val viewModel = SongInfoViewModel(2, ObserveSongs(songRepository, FakeOfflineSongs().filter), LoadLyrics(songRepository, NoOnlineLyrics))
+        val viewModel = SongInfoViewModel(2, ObserveSongs(songRepository, FakeOfflineSongs().filter), LoadLyrics(songRepository, NoOnlineLyrics), fixedCopyContext())
         backgroundScope.launch { viewModel.uiState.collect {} }
         advanceUntilIdle()
 
@@ -71,7 +85,7 @@ class SongInfoViewModelTest {
     fun `a song no longer in the library is not found`() = runTest {
         songRepository.setSongs(emptyList())
 
-        val viewModel = SongInfoViewModel(2, ObserveSongs(songRepository, FakeOfflineSongs().filter), LoadLyrics(songRepository, NoOnlineLyrics))
+        val viewModel = SongInfoViewModel(2, ObserveSongs(songRepository, FakeOfflineSongs().filter), LoadLyrics(songRepository, NoOnlineLyrics), fixedCopyContext())
         backgroundScope.launch { viewModel.uiState.collect {} }
         advanceUntilIdle()
 

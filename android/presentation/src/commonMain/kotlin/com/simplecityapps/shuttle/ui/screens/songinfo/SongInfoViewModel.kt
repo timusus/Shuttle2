@@ -7,6 +7,7 @@ import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.query.SongQuery
 import com.simplecityapps.shuttle.ui.actions.LoadLyrics
+import com.simplecityapps.shuttle.ui.actions.ObserveCopyContext
 import com.simplecityapps.shuttle.ui.actions.ObserveSongs
 import com.simplecityapps.shuttle.ui.text.SongInfoString
 import com.simplecityapps.shuttle.ui.text.StringKey
@@ -22,11 +23,14 @@ import kotlin.math.pow
 import kotlin.math.round
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 
 data class SongInfoUiState(
+    // The copy that plays when the song has several, so the chips and File section describe it.
     val song: Song? = null,
+    // Null unless copies are merged and the song has two or more.
+    val copies: SongCopyRows? = null,
     // Loaded apart from the song, which doesn't carry its lyrics.
     val lyrics: String? = null,
     val loading: Boolean = true,
@@ -37,6 +41,7 @@ class SongInfoViewModel @AssistedInject constructor(
     @Assisted songId: Long,
     observeSongs: ObserveSongs,
     loadLyrics: LoadLyrics,
+    observeCopyContext: ObserveCopyContext,
 ) : ViewModel() {
     @AssistedFactory
     @ManualViewModelAssistedFactoryKey(Factory::class)
@@ -46,9 +51,12 @@ class SongInfoViewModel @AssistedInject constructor(
     }
 
     val uiState: StateFlow<SongInfoUiState> = observeSongs(SongQuery.SongIds(listOf(songId)), includeUnavailable = true)
-        .map { songs ->
-            val song = songs.firstOrNull()
-            SongInfoUiState(song = song, lyrics = song?.let { loadLyrics(it) }, loading = false)
+        .combine(observeCopyContext()) { songs, context ->
+            val requested = songs.firstOrNull()
+            val rows = requested?.copyRows(context)
+            // Rows exist only while merging; with merging off the song is the one asked for.
+            val song = if (rows != null) requested.copies.first().copy(copies = requested.copies) else requested
+            SongInfoUiState(song = song, copies = rows, lyrics = song?.let { loadLyrics(it) }, loading = false)
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SongInfoUiState())
 }
@@ -123,10 +131,12 @@ internal fun MediaProviderType.songInfoSourceRow(): SongInfoRow = when (this) {
 
 /** The file's headline facts under the artwork, those the song has: its format, bit rate and sample rate. */
 fun Song.infoChips(): List<String> = listOfNotNull(
-    audioCodec?.takeIf { it.startsWith("pcm_", ignoreCase = true) }?.let { "PCM" } ?: formatName(mimeType),
+    formatLabel(),
     bitRate?.let(::formatBitRate),
     sampleRate?.let(::formatSampleRate),
 )
+
+internal fun Song.formatLabel(): String? = audioCodec?.takeIf { it.startsWith("pcm_", ignoreCase = true) }?.let { "PCM" } ?: formatName(mimeType)
 
 /**
  * The song's path as a person reads it: a Storage Access Framework document URI becomes the path inside its
