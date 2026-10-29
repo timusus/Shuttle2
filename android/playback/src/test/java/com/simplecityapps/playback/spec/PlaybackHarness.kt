@@ -40,6 +40,7 @@ import com.simplecityapps.playback.settings.PlaybackSettings
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import com.simplecityapps.shuttle.persistence.KeyValueStore
+import com.simplecityapps.shuttle.persistence.SourceStateStore
 import com.simplecityapps.shuttle.settings.SettingsStore
 import java.io.ByteArrayOutputStream
 import java.io.File
@@ -269,7 +270,9 @@ class PlaybackHarness(
                 appCoroutineScope = scope,
                 mainImmediateDispatcher = Dispatchers.Main.immediate,
                 castQueue = cast,
-                foregroundHold = foregroundHold
+                foregroundHold = foregroundHold,
+                sourceState = SourceStateStore(InMemoryKeyValueStore()),
+                replaceSong = queueFacade::replaceSong
             )
     }
 

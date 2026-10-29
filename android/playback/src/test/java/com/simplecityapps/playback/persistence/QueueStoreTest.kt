@@ -449,6 +449,27 @@ class QueueStoreTest {
     }
 
     @Test
+    fun `a restored song whose file is gone plays its copy once the copies are found`() {
+        saved(queueIds = "1,2", queuePosition = 0, playbackPosition = 0, repeatMode = RepeatMode.Off)
+        val gone = unreadableSong(1).copy(duration = LONG_SONG_MS)
+        val fake = FakeSongRepository(listOf(gone) + library.drop(1))
+        val withCopies = object : SongRepository by fake {
+            override fun getSongs(query: SongQuery) = fake.getSongs(query).map { songs ->
+                songs?.map { song -> if (query is SongQuery.SongIds && query.withCopies) song.copy(copies = listOf(song, library.last())) else song }
+            }
+        }
+        val harness = harness(songRepository = withCopies)
+
+        harness.restore()
+        harness.runUntil { harness.queueOperations.queueStateFlow.value.items.first().song.copies.isNotEmpty() }
+        harness.playbackOperations.play()
+        harness.runUntil { harness.currentIds().first() == 4L }
+
+        harness.currentIds() shouldBe listOf(4L, 2L)
+        harness.queueOperations.queueStateFlow.value.currentPosition shouldBe 0
+    }
+
+    @Test
     fun `a restore does not wait for the library to find copies - the songs get them once it has`() {
         saved(queueIds = "1,2", queuePosition = 0, playbackPosition = 0, repeatMode = RepeatMode.Off)
         val libraryLoaded = CompletableDeferred<Unit>()

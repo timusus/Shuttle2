@@ -143,6 +143,8 @@ internal class IosEngineEvents(
         val next = song.copies.firstOrNull { copy ->
             copy.id !in tried && sourceState?.missingSongs(copy.mediaProvider.name)?.contains(copy.id) != true
         } ?: return false
+        // Counted now, so a replaceSong that leaves the entry unchanged ends in failure rather than retrying next forever
+        loads.triedCopies = uid to tried + next.id
         val positionMs = if (feed.ready) feeder.progress() ?: 0 else feed.loadingFrom ?: 0
         log.warn { "song ${song.id} failed; playing its copy ${next.id} from ${next.mediaProvider} at $positionMs ms" }
         feed.failed = true

@@ -266,6 +266,8 @@ class ItemLoader(
         val next = song.copies.firstOrNull { copy ->
             copy.id !in tried && sourceState?.missingSongs(copy.mediaProvider.name)?.contains(copy.id) != true
         } ?: return false
+        // Counted now, so a replaceSong that leaves the entry unchanged ends in failure rather than retrying next forever
+        triedCopies = failedEntry.uid to tried + next.id
         val positionMs = if (failedIndex == player.currentMediaItemIndex) player.currentPosition else 0
         Timber.w("Playing ${song.name} from ${next.mediaProvider} instead")
         replaceSong(failedEntry.uid, next.copy(copies = song.copies))

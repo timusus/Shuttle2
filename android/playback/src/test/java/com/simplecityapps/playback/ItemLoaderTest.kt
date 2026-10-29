@@ -457,6 +457,22 @@ class ItemLoaderTest {
     }
 
     @Test
+    fun `a chosen copy that replaceSong leaves unplayed is tried once, then the song fails as before`() {
+        val stuck =
+            ItemLoader(player, player, giveUp = { gaveUp++ }, isReplaceableTranscode = { false }, sourceState = sourceState, replaceSong = { _, _ -> })
+                .also(player::addListener)
+        val otherMissing = testSong(5, path = "file:///nonexistent/other.wav", mimeType = "audio/wav")
+        queue(withCopies(missing, otherMissing), playable)
+        var result: Result<Boolean>? = null
+
+        stuck.load(0, skipUnloadable = false) { result = it }
+        driver.runUntil { result != null }
+
+        result?.isFailure shouldBe true
+        gaveUp shouldBe 1
+    }
+
+    @Test
     fun `a copy already marked missing is passed over for the next`() {
         sourceState.setSongMissing("Shuttle", 2, missing = true)
         queue(withCopies(missing, playable, PlaybackHarness.song(4)))
