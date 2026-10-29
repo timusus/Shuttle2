@@ -213,6 +213,26 @@ struct PlaybackSystemCoordinatorTests {
         #expect(await waitUntil { rate == 1.5 && info.playbackState == .playing })
     }
 
+    @Test func togglingClassicalDisplayRewordsTheLockScreenForAPlayingMovement() async throws {
+        let work = [
+            TestSongs.song(1, "Allegro", artist: "Kleiber", album: "Beethoven 5", durationMs: 400_000, composer: "Beethoven", work: "Symphony No. 5", movementName: "Allegro", movementNumber: 1),
+            TestSongs.song(2, "Andante", artist: "Kleiber", album: "Beethoven 5", durationMs: 600_000, composer: "Beethoven", work: "Symphony No. 5", movementName: "Andante", movementNumber: 2),
+        ]
+        // Not loadQueue: its wait is for the plain song name, which the movement's title replaces.
+        let controller = graph.playerController
+        _ = try await controller.queueOperations.setQueue(songs: work, shuffleSongs: nil, position: 0, context: PlayContextNone.shared)
+        controller.load(seekPosition: nil, skipUnloadable: false, playWhenReady: false) { _ in }
+        #expect(await waitUntil { (info[MPMediaItemPropertyArtist] as String?)?.hasPrefix("Beethoven: Symphony No. 5") == true })
+
+        let toggle = try #require(IosSettingsCatalog.shared.appearance.items[1] as? SettingItemSwitch)
+        graph.settingsViewModel.onSwitchChange(item: toggle, checked: false)
+        #expect(await waitUntil { info[MPMediaItemPropertyArtist] as String? == "Kleiber" })
+        #expect(title == "Allegro")
+
+        graph.settingsViewModel.onSwitchChange(item: toggle, checked: true)
+        #expect(await waitUntil { (info[MPMediaItemPropertyArtist] as String?)?.hasPrefix("Beethoven: Symphony No. 5") == true })
+    }
+
     @Test func theButtonFollowsIntentImmediatelyThroughLoading() async throws {
         try await beginLoad()
         #expect(!intendsToPlay)

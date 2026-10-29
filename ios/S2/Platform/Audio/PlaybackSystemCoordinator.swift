@@ -35,8 +35,9 @@ final class PlaybackSystemCoordinator {
     private var observer: Task<Void, Never>?
     private var intentListener: Int?
     private var settingObserver: Task<Void, Never>?
-    /// The text last handed to the session, to refresh it only when the queue or the setting changes what it says.
-    private var shownText: SystemSurfaceText?
+    /// The text last handed to the session for the current item (nil text: the item had none), to refresh only when the
+    /// queue or the setting changes what it says.
+    private var shown: (uid: Int64, text: SystemSurfaceText?)?
 
     init(
         playback: IosPlayerController,
@@ -66,7 +67,7 @@ final class PlaybackSystemCoordinator {
             player,
             { [weak self] key in
                 let shown = self?.text.text(uid: key.uid)
-                self?.shownText = shown
+                self?.noteShown(shown, uid: key.uid)
                 return Self.metadata(shown)
             },
             { key in
@@ -95,11 +96,18 @@ final class PlaybackSystemCoordinator {
     /// The session reads the text once per item, so a queue edit around the playing item or the Classical display
     /// setting changing under it has to ask again.
     private func refreshText() {
-        guard let uid = playback.queueOperations.queueStateFlow.value.currentItem?.uid else { return }
+        guard let uid = playback.queueOperations.queueStateFlow.value.currentItem?.uid,
+              let shown, shown.uid == uid else { return }
         let current = text.text(uid: uid)
-        guard shownText != nil, current != shownText else { return }
-        shownText = current
+        guard current != shown.text else { return }
+        self.shown = (uid, current)
         session?.refreshMetadata()
+    }
+
+    /// Only the current item's text counts: the session also asks about the item it prefetches.
+    private func noteShown(_ text: SystemSurfaceText?, uid: Int64) {
+        guard uid == playback.queueOperations.queueStateFlow.value.currentItem?.uid else { return }
+        shown = (uid, text)
     }
 
     /// Releases the remote commands, clears Now Playing and stops the widgets following the player.
@@ -110,7 +118,7 @@ final class PlaybackSystemCoordinator {
         observer = nil
         settingObserver?.cancel()
         settingObserver = nil
-        shownText = nil
+        shown = nil
         if let intentListener { intent.removeListener(intentListener) }
         intentListener = nil
     }
