@@ -51,7 +51,10 @@ struct AlbumDetailView: View {
                     onPlayNext: { models.actions.send(MediaActionPlayNext(selection: MediaSelectionAlbums(album: $0)), intent: services.playIntent) },
                     onAddToQueue: { models.actions.send(MediaActionAddToQueue(selection: MediaSelectionAlbums(album: $0)), intent: services.playIntent) }
                 ),
-                downloads: DetailDownloads(actions: models.actions, intent: services.playIntent, downloads: services.graph.offlineDownloads)
+                downloads: DetailDownloads(actions: models.actions, intent: services.playIntent, downloads: services.graph.offlineDownloads),
+                onPrimarySource: { songs, provider in
+                    Task { try? await services.graph.setAlbumPrimarySource.invoke(albumSongs: songs, provider: provider) }
+                }
             )
             .mediaActionResults(actions.events, handled: { models.actions.onEventHandled(id: $0) })
         }
@@ -104,8 +107,11 @@ struct AlbumDetailContent: View {
     var albumActions = DetailAlbumActions()
     /// The album's and each track's Download and Remove Download, and the hero's download status.
     var downloads = DetailDownloads()
+    /// Makes one source primary for the album's songs; nil provider goes back to the automatic choice.
+    var onPrimarySource: ([Song], MediaProviderType?) -> Void = { _, _ in }
 
     @State private var songInfo: SongInfoTarget?
+    @Environment(\.copyContext) private var copyContext
 
     var body: some View {
         switch state.loadingState {
@@ -176,6 +182,9 @@ struct AlbumDetailContent: View {
                             Button("Go to Artist", systemImage: "music.mic", action: onGoToArtist)
                         }
                         DownloadMenuItems(songs: state.songs, downloads: downloads)
+                        if let sources = AlbumSources.choices(for: state.songs, context: copyContext) {
+                            PrimarySourceMenu(sources: sources) { onPrimarySource(state.songs, $0) }
+                        }
                     } label: {
                         Label("More", systemImage: "ellipsis.circle")
                     }
@@ -257,6 +266,10 @@ struct AlbumDetailContent: View {
         onGoToArtist == nil ? nil : AlbumArtistLink(album)
     }
 
+    private var sourcesText: String? {
+        AlbumSources.choices(for: state.songs, context: copyContext)?.headerText
+    }
+
     /// With a tappable artist line above it the eyebrow leaves the artist out, else it leads with it.
     private func subtitle(_ album: Album) -> String {
         // A classical page leads with the composer and credits, so the subtitle drops the artist and counts tracks.
@@ -265,7 +278,8 @@ struct AlbumDetailContent: View {
                 album.year.map { String($0.intValue) },
                 localizedPlural("album_detail_tracks", Int(album.songCount)),
                 totalDuration(state.songs),
-                AudioQuality.sharedBadge(of: state.songs)
+                AudioQuality.sharedBadge(of: state.songs),
+                sourcesText
             )
         }
         return eyebrow(
@@ -273,7 +287,8 @@ struct AlbumDetailContent: View {
             album.year.map { String($0.intValue) },
             pluralized(state.songs.count, .song),
             totalDuration(state.songs),
-            AudioQuality.sharedBadge(of: state.songs)
+            AudioQuality.sharedBadge(of: state.songs),
+            sourcesText
         )
     }
 }
