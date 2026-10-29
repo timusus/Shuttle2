@@ -37,8 +37,9 @@ def mb(table):
     names = COLUMNS[table]
     with open(f"{MB}/{table}", encoding="utf-8") as f:
         found = len(f.readline().rstrip("\n").split("\t"))
-    # Newer schemas append columns; the leading ones keep their meaning
-    names = names[:found] + [f"extra{i}" for i in range(found - len(names))]
+    # Checked against schema sequence 31; a schema change must be read before the columns are trusted
+    if found != len(names):
+        sys.exit(f"{table}: {found} columns in the dump, {len(names)} expected; update COLUMNS from CreateTables.sql")
     cols = ", ".join(f"'{n}': 'VARCHAR'" for n in names)
     return (f"read_csv('{MB}/{table}', delim='\t', header=false, quote='', escape='', nullstr='\\N', "
             f"columns={{{cols}}}, parallel=true)")
