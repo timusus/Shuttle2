@@ -20,7 +20,7 @@ import kotlinx.coroutines.flow.flowOf
  *   playlist (save the queue).
  * - Play from: a single merged song with copies from two or more sources, right after Play, while merging is on.
  *   Opens a copy picker.
-- Play after this work: right after Play next, while the current song is in a work run and classical display is on.
+ * - Play after this work: right after Play next, while the current song is in a work run and classical display is on.
  * - Start radio: a single song, album or artist.
  * - Go to album: a single song. Go to artist: a single song or album.
  * - Edit tags: when every provider in the selection supports tag editing (local files only).
