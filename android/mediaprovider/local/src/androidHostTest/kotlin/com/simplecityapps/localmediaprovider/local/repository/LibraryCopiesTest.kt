@@ -12,13 +12,18 @@ import com.simplecityapps.mediaprovider.repository.artists.AlbumArtistQuery
 import com.simplecityapps.mediaprovider.repository.genres.GenreQuery
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.model.SongCopyAvailability
 import com.simplecityapps.shuttle.query.SongQuery
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.types.shouldBeSameInstanceAs
 import kotlin.time.Instant
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
@@ -220,6 +225,41 @@ class LibraryCopiesTest {
         merge.value = false
         repository.countSongs().first() shouldBe 24
         repository.countSongsByProvider().first() shouldBe mapOf(MediaProviderType.Shuttle to 12, MediaProviderType.Emby to 12)
+    }
+
+    @Test
+    fun `with merging off an availability change does not re-emit the library`() = runTest {
+        insert(local(1..3) + emby(1..3))
+        merge.value = false
+        val availability = MutableStateFlow(SongCopyAvailability())
+        val copies = LibraryCopies(backgroundScope, UnconfinedTestDispatcher(testScheduler), database.songDataDao().getAll(), merge, availability)
+        val loaded = copies.library.filterNotNull().first()
+
+        availability.value = SongCopyAvailability(offline = true)
+        testScheduler.advanceUntilIdle()
+
+        copies.library.value shouldBeSameInstanceAs loaded
+    }
+
+    @Test
+    fun `switching merging back on never answers from the unmerged library`() = runTest {
+        insert(local(1..1) + emby(1..1))
+        merge.value = false
+        val rebuilt = CompletableDeferred<Unit>()
+        var collections = 0
+        val songs = flow {
+            if (collections++ > 0) rebuilt.await()
+            emitAll(database.songDataDao().getAll())
+        }
+        val copies = copies(songs)
+        val embySong = copies.library.filterNotNull().first().raw.single { it.mediaProvider == MediaProviderType.Emby }
+
+        merge.value = true
+        val answer = backgroundScope.async(UnconfinedTestDispatcher(testScheduler)) { copies.copiesOf(embySong) }
+        answer.isCompleted shouldBe false
+        rebuilt.complete(Unit)
+
+        answer.await().map { it.mediaProvider }.toSet() shouldBe setOf(MediaProviderType.Shuttle, MediaProviderType.Emby)
     }
 
     @Test

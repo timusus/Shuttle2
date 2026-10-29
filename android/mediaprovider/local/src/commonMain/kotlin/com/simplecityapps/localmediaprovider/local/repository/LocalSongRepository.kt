@@ -23,6 +23,7 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
@@ -78,7 +79,7 @@ class LocalSongRepository(
     override fun countSongs(): Flow<Int> = copies.enabled
         .flatMapLatest { merging ->
             if (merging) {
-                combine(copies.library.filterNotNull(), minTrackLength) { library, min -> library.songs.count { song -> !song.blacklisted && min.keeps(song) } }
+                combine(copies.library.filterNotNull().filter { it.merging }, minTrackLength) { library, min -> library.songs.count { song -> !song.blacklisted && min.keeps(song) } }
             } else {
                 minTrackLength.flatMapLatest { min -> songDataDao.countVisible(min.seconds * 1000) }
             }

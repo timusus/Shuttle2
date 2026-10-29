@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
@@ -38,9 +39,15 @@ class LibraryCopies(
     private val grouping: Flow<SongCopyGrouping> = flowOf(SongCopyGrouping())
 ) {
     /** The library as it lists, or null until it has loaded. */
-    val library: StateFlow<CopyLibrary?> = combine(songs, enabled, ranking(), grouping) { songs, enabled, ranking, grouping ->
-        if (enabled) CopyLibrary.merged(songs, grouping, ranking) else CopyLibrary(songs, songs, emptyMap())
-    }
+    val library: StateFlow<CopyLibrary?> = enabled
+        .flatMapLatest { enabled ->
+            // Ranking and grouping are only collected while merging, so availability changes cost nothing with it off.
+            if (enabled) {
+                combine(songs, ranking(), grouping) { songs, ranking, grouping -> CopyLibrary.merged(songs, grouping, ranking) }
+            } else {
+                songs.map { songs -> CopyLibrary(songs, songs, emptyMap(), merging = false) }
+            }
+        }
         .flowOn(ioDispatcher)
         .stateIn(scope, SharingStarted.Lazily, null)
 
@@ -49,7 +56,12 @@ class LibraryCopies(
 
     /** Each merged copy's id to the song standing for it; empty at once while copies aren't merged. */
     val standIns: Flow<Map<Long, Song>> = enabled.flatMapLatest { enabled ->
-        if (enabled) library.filterNotNull().map { it.standIns } else flowOf(emptyMap())
+        if (enabled) library.filterNotNull().filter { it.merging }.map { it.standIns } else flowOf(emptyMap())
+    }
+
+    /** The merged library, waiting out the unmerged snapshot that outlives a switch back on; null once merging is off. */
+    val mergedLibrary: Flow<CopyLibrary?> = enabled.flatMapLatest { enabled ->
+        if (enabled) library.filterNotNull().filter { it.merging } else flowOf(null)
     }
 
     /** [songs], a whole album's or more, merged as the library is now; a group never spans two albums. */
@@ -59,8 +71,7 @@ class LibraryCopies(
 
     /** Each of [songs], still the exact copy it is, carrying the ranked copies of its group to fall back to. */
     suspend fun withCopies(songs: List<Song>): List<Song> {
-        if (!enabled.first()) return songs
-        val library = library.filterNotNull().first()
+        val library = mergedLibrary.first() ?: return songs
         val ranking = ranking().first()
         return songs.map { song ->
             val group = library.groups[song.id]?.filterNot { it.blacklisted }
@@ -73,8 +84,8 @@ class LibraryCopies(
      * group; the song alone while copies aren't merged.
      */
     suspend fun copiesOf(song: Song): List<Song> {
-        if (!enabled.first()) return listOf(song)
-        return library.filterNotNull().first().groups[song.id] ?: song.copies.ifEmpty { listOf(song) }
+        val library = mergedLibrary.first() ?: return listOf(song)
+        return library.groups[song.id] ?: song.copies.ifEmpty { listOf(song) }
     }
 }
 
@@ -82,7 +93,8 @@ class LibraryCopies(
 class CopyLibrary(
     val raw: List<Song>,
     val songs: List<Song>,
-    val groups: Map<Long, List<Song>>
+    val groups: Map<Long, List<Song>>,
+    val merging: Boolean = true
 ) {
     val standIns: Map<Long, Song> by lazy { songs.flatMap { song -> song.copies.map { copy -> copy.id to song } }.toMap() }
 
