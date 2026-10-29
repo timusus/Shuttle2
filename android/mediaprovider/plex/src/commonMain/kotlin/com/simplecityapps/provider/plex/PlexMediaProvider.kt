@@ -6,7 +6,6 @@ import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.MessageProgress
 import com.simplecityapps.mediaprovider.PlaylistListing
 import com.simplecityapps.mediaprovider.PlaylistUpdateData
-import com.simplecityapps.mediaprovider.isLosslessCodec
 import com.simplecityapps.mediaprovider.server.AuthenticatedCredentials
 import com.simplecityapps.mediaprovider.server.Page
 import com.simplecityapps.mediaprovider.server.ServerSession
@@ -27,6 +26,7 @@ import com.simplecityapps.provider.plex.http.Stream
 import com.simplecityapps.shuttle.logging.Logger
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.model.isLosslessCodec
 import kotlin.time.Clock
 import kotlin.time.Instant
 import kotlinx.coroutines.flow.Flow

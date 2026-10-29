@@ -5,7 +5,6 @@ import com.simplecityapps.mediaprovider.OpenedStream
 import com.simplecityapps.mediaprovider.StreamUrlProvider
 import com.simplecityapps.mediaprovider.StreamingPolicy
 import com.simplecityapps.mediaprovider.TimeSeekableStream
-import com.simplecityapps.mediaprovider.isLosslessCodec
 import com.simplecityapps.mediaprovider.server.AuthenticatedCredentials
 import com.simplecityapps.mediaprovider.server.StreamProfile
 import com.simplecityapps.mediaprovider.server.TranscodeCodec
@@ -16,6 +15,7 @@ import com.simplecityapps.provider.subsonic.http.SubsonicService
 import com.simplecityapps.provider.subsonic.http.TranscodingProfileDto
 import com.simplecityapps.shuttle.logging.Logger
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.model.isLosslessCodec
 import com.simplecityapps.shuttle.settings.TranscodeFormat
 import com.simplecityapps.shuttle.streaming.DeliveredFormat
 

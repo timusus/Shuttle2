@@ -88,7 +88,11 @@ data class Song(
     val movementTotal: Int? = null,
     // Whether the work and movement are to be shown (SHOWMOVEMENT, shwm).
     val showMovement: Boolean? = null,
-    val performers: List<Performer>? = null
+    val performers: List<Performer>? = null,
+    // [SongCopyMatcher.blockingHash] as stored with the song, so a library groups copies without normalising every tag.
+    val copyBlockingHash: Long? = null,
+    // The copies of this song across sources, best first and this one among them, when the library merges them.
+    val copies: List<Song> = emptyList()
 ) {
     val isFavourite: Boolean
         get() = favouritedAt != null

@@ -1,6 +1,7 @@
 package com.simplecityapps.mediaprovider
 
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.model.isLosslessCodec
 import kotlin.time.Instant
 
 class SongDiff(

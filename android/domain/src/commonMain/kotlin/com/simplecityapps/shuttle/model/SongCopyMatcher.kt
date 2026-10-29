@@ -125,18 +125,32 @@ data class SongCopyMatch(
 class SongCopyMatcher(private val params: SongCopyMatchParams = SongCopyMatchParams()) {
     fun prepare(tags: SongCopyTags): PreparedSongCopy {
         val steps = params.normalisation
-        val album = tags.album?.let { normaliseAlbum(it, steps) }?.takeIf { it.isNotEmpty() && it !in params.placeholderAlbums }
-        val disc = tags.disc ?: if (params.missingDiscIsOne) 1 else null
-        val blockingKey = if (album != null && tags.track != null) "$album\u0000${disc ?: "?"}\u0000${tags.track}" else null
         return PreparedSongCopy(
             tags = tags,
-            blockingKey = blockingKey,
+            blockingKey = blockingKey(tags.album, tags.disc, tags.track),
             title = tags.title?.let { normaliseTitle(it, steps) }?.takeIf { it.isNotEmpty() },
             markers = tags.title?.let(::versionMarkers).orEmpty(),
             albumArtist = tags.albumArtist?.let { normaliseArtist(it, steps) }?.takeIf { it.isNotEmpty() },
             artist = tags.artist?.let { normaliseArtist(it, steps) }?.takeIf { it.isNotEmpty() }
         )
     }
+
+    private fun blockingKey(
+        album: String?,
+        disc: Int?,
+        track: Int?
+    ): String? {
+        val normalised = album?.let { normaliseAlbum(it, params.normalisation) }?.takeIf { it.isNotEmpty() && it !in params.placeholderAlbums }
+        val resolvedDisc = disc ?: if (params.missingDiscIsOne) 1 else null
+        return if (normalised != null && track != null) "$normalised\u0000${resolvedDisc ?: "?"}\u0000$track" else null
+    }
+
+    /** [PreparedSongCopy.blockingHash] from the three tags it reads, for storing with a song whenever its tags are written. */
+    fun blockingHash(
+        album: String?,
+        disc: Int?,
+        track: Int?
+    ): Long? = blockingKey(album, disc, track)?.let(::fnv1a64)
 
     fun match(
         a: SongCopyTags,
