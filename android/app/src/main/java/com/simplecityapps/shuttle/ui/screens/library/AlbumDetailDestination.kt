@@ -2,6 +2,7 @@ package com.simplecityapps.shuttle.ui.screens.library
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.LibraryMusic
+import androidx.compose.material.icons.rounded.Storage
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -48,6 +49,9 @@ fun AlbumDetailDestination(
                 onDismissRequest = { recordingsOf = null },
             )
         }
+        uiState.sources?.takeIf { uiState.choosingSource }?.let { sources ->
+            PrimarySourceSheet(sources, onPick = viewModel::onSetPrimarySource, onDismissRequest = viewModel::onDismissSourcePicker)
+        }
         AlbumDetailScreen(
             uiState = uiState,
             artworkKey = remember(route) { albumArtworkKey(route) },
@@ -71,7 +75,14 @@ fun AlbumDetailDestination(
             },
             onOtherRecordings = { recordingsOf = it },
             onOpenComposer = { composer -> onOpen(ComposerRoute(composer)) },
-            onAlbumMore = { album -> actions.showActions(MediaActionsTarget(album.name.orEmpty(), album.friendlyArtistName, MediaSelection.Albums(album), ArtworkPlaceholder.Album)) },
+            onAlbumMore = { album ->
+                val extraActions = if (uiState.sources != null) {
+                    listOf(S2Action(resources.getString(R.string.album_primary_source), viewModel::onChooseSource, Icons.Rounded.Storage))
+                } else {
+                    emptyList()
+                }
+                actions.showActions(MediaActionsTarget(album.name.orEmpty(), album.friendlyArtistName, MediaSelection.Albums(album), ArtworkPlaceholder.Album, extraActions = extraActions))
+            },
             onSongMore = { song -> actions.showActions(MediaActionsTarget(song.name.orEmpty(), song.rowSubtitle, MediaSelection.Songs(song), ArtworkPlaceholder.Song)) },
             onOpenAlbum = { album -> onOpen(album.route) },
             onMoreByAlbumMore = { album -> actions.showActions(albumMoreTarget(album, resources.getString(R.string.menu_title_view_album)) { onOpen(album.route) }) },

@@ -21,6 +21,12 @@
         <item quantity="other"><xliff:g example="12" id="count">%1$d</xliff:g>&#160;tracks</item>
     </plurals>
     <!-- How many sources (device, servers) hold an album's or song's copies, in an album header or song menu header; two or more -->
+    <string name="album_primary_source">Primary source</string>
+    <string name="album_primary_source_automatic">Automatic</string>
+    <plurals name="album_primary_source_songs">
+        <item quantity="one"><xliff:g example="1" id="count">%1$d</xliff:g> of <xliff:g example="1" id="total">%2$d</xliff:g> song</item>
+        <item quantity="other"><xliff:g example="8" id="count">%1$d</xliff:g> of <xliff:g example="12" id="total">%2$d</xliff:g> songs</item>
+    </plurals>
     <plurals name="library_sources_count">
         <item quantity="one"><xliff:g example="1" id="count">%1$d</xliff:g>&#160;source</item>
         <item quantity="other"><xliff:g example="3" id="count">%1$d</xliff:g>&#160;sources</item>

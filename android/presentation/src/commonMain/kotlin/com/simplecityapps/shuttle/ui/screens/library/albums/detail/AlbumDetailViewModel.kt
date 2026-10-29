@@ -8,6 +8,7 @@ import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumGroupKey
 import com.simplecityapps.shuttle.model.AlbumSources
 import com.simplecityapps.shuttle.model.FindOtherRecordings
+import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.OtherRecording
 import com.simplecityapps.shuttle.model.PlayContext
 import com.simplecityapps.shuttle.model.Song
@@ -23,6 +24,7 @@ import com.simplecityapps.shuttle.ui.actions.ObserveArtists
 import com.simplecityapps.shuttle.ui.actions.ObserveCopyContext
 import com.simplecityapps.shuttle.ui.actions.ObserveCurrentSong
 import com.simplecityapps.shuttle.ui.actions.ObserveSongs
+import com.simplecityapps.shuttle.ui.actions.SetAlbumPrimarySource
 import com.simplecityapps.shuttle.ui.theme.ArtworkSeed
 import com.simplecityapps.shuttle.ui.theme.ObserveArtworkSeed
 import dev.zacsweers.metro.AppScope
@@ -33,12 +35,15 @@ import dev.zacsweers.metro.ContributesIntoMap
 import dev.zacsweers.metrox.viewmodel.ManualViewModelAssistedFactory
 import dev.zacsweers.metrox.viewmodel.ManualViewModelAssistedFactoryKey
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 
 data class AlbumDetailUiState(
     val album: Album? = null,
@@ -59,6 +64,8 @@ data class AlbumDetailUiState(
     val otherRecordings: Map<Long, List<OtherRecording>> = emptyMap(),
     /** The album's sources; null unless merging is on and the songs span two or more sources. */
     val sources: AlbumSources? = null,
+    /** The Primary source picker is open; only while [sources] offers a choice. */
+    val choosingSource: Boolean = false,
 ) {
     // Swift sees no default arguments.
     constructor(
@@ -70,7 +77,7 @@ data class AlbumDetailUiState(
         moreByArtist: List<Album>,
         moreByArtistNames: List<String>,
         classical: Boolean,
-    ) : this(album, songs, currentSong, loadingState, seed, moreByArtist, moreByArtistNames, classical, null, emptyMap())
+    ) : this(album, songs, currentSong, loadingState, seed, moreByArtist, moreByArtistNames, classical, null, emptyMap(), null, false)
 
     /** The first conductor or performer credit among the songs, for the subtitle; null when classical display is off, the songs aren't a classical block or none is tagged. */
     val performers: String? get() = if (classical && songs.isClassicalBlock()) songs.firstNotNullOfOrNull { it.performersLine() } else null
@@ -94,6 +101,7 @@ class AlbumDetailViewModel @AssistedInject constructor(
     observeSetting: ObserveSetting,
     findOtherRecordings: FindOtherRecordings,
     observeCopyContext: ObserveCopyContext,
+    private val setAlbumPrimarySource: SetAlbumPrimarySource,
     @IoDispatcher ioDispatcher: CoroutineDispatcher,
 ) : ViewModel() {
 
@@ -126,14 +134,30 @@ class AlbumDetailViewModel @AssistedInject constructor(
         albumSources(songs, context.preferences.primaryAlbums).takeIf { context.mergeCopies && it.hasChoice }
     }
 
-    private class Extras(val moreBy: MoreBy, val classical: Boolean, val grouped: Grouped, val sources: AlbumSources?)
+    private val choosingSource = MutableStateFlow(false)
+
+    fun onChooseSource() {
+        choosingSource.value = true
+    }
+
+    fun onDismissSourcePicker() {
+        choosingSource.value = false
+    }
+
+    /** Makes [provider] the album's primary source; null is Automatic. */
+    fun onSetPrimarySource(provider: MediaProviderType?) {
+        choosingSource.value = false
+        viewModelScope.launch { setAlbumPrimarySource(songs.first(), provider) }
+    }
+
+    private class Extras(val moreBy: MoreBy, val classical: Boolean, val grouped: Grouped, val sources: AlbumSources?, val choosingSource: Boolean)
 
     val uiState: StateFlow<AlbumDetailUiState> = combine(
         songs,
         album,
         observeCurrentSong(),
         observeArtworkSeed(songs.map { it.firstOrNull() }),
-        combine(moreBy, classicalDisplay, classicalRows.grouped, sources, ::Extras),
+        combine(moreBy, classicalDisplay, classicalRows.grouped, sources, choosingSource, ::Extras),
     ) { _, album, currentSong, seed, extras ->
         val songs = extras.grouped.songs
         AlbumDetailUiState(
@@ -153,6 +177,7 @@ class AlbumDetailViewModel @AssistedInject constructor(
             rows = extras.grouped.rows?.withPlaying(currentSong?.id),
             otherRecordings = extras.grouped.otherRecordings,
             sources = extras.sources,
+            choosingSource = extras.choosingSource && extras.sources != null,
         )
     }.stateIn(
         scope = viewModelScope,

@@ -30,6 +30,7 @@ import com.simplecityapps.shuttle.settings.ObserveSetting
 import com.simplecityapps.shuttle.settings.SaveSetting
 import com.simplecityapps.shuttle.settings.SettingsStore
 import com.simplecityapps.shuttle.ui.actions.ObserveCurrentSong
+import com.simplecityapps.shuttle.ui.actions.SetAlbumPrimarySource
 import com.simplecityapps.shuttle.ui.theme.ArtworkSeed
 import com.simplecityapps.shuttle.ui.theme.ArtworkSeedSource
 import com.simplecityapps.shuttle.ui.theme.ObserveArtworkSeed
@@ -517,6 +518,58 @@ class AlbumDetailViewModelTest {
         viewModel.uiState.value.sources shouldBe null
     }
 
+    @Test
+    fun `choosing a primary source marks it and Automatic clears it`() = runTest {
+        fakeSongRepository.setSongs(mergedSongs())
+        fakeAlbumRepository.setAlbums(listOf(testAlbum))
+        val viewModel = createViewModel()
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        advanceUntilIdle()
+        viewModel.uiState.value.sources!!.automatic shouldBe true
+
+        viewModel.onSetPrimarySource(MediaProviderType.Emby)
+        advanceUntilIdle()
+        val chosen = viewModel.uiState.value.sources!!
+        chosen.automatic shouldBe false
+        chosen.sources.filter { it.primary }.map { it.provider } shouldBe listOf(MediaProviderType.Emby)
+
+        viewModel.onSetPrimarySource(null)
+        advanceUntilIdle()
+        viewModel.uiState.value.sources!!.automatic shouldBe true
+    }
+
+    @Test
+    fun `the source picker opens and closes`() = runTest {
+        fakeSongRepository.setSongs(mergedSongs())
+        fakeAlbumRepository.setAlbums(listOf(testAlbum))
+        val viewModel = createViewModel()
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        advanceUntilIdle()
+
+        viewModel.onChooseSource()
+        advanceUntilIdle()
+        viewModel.uiState.value.choosingSource shouldBe true
+
+        viewModel.onDismissSourcePicker()
+        advanceUntilIdle()
+        viewModel.uiState.value.choosingSource shouldBe false
+    }
+
+    @Test
+    fun `picking a source closes the picker`() = runTest {
+        fakeSongRepository.setSongs(mergedSongs())
+        fakeAlbumRepository.setAlbums(listOf(testAlbum))
+        val viewModel = createViewModel()
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        advanceUntilIdle()
+        viewModel.onChooseSource()
+
+        viewModel.onSetPrimarySource(MediaProviderType.Plex)
+        advanceUntilIdle()
+
+        viewModel.uiState.value.choosingSource shouldBe false
+    }
+
     private fun createViewModel(groupKey: AlbumGroupKey? = testAlbum.groupKey): AlbumDetailViewModel {
         val testMediaActions = TestMediaActions(
             fakeSongRepository,
@@ -537,6 +590,7 @@ class AlbumDetailViewModelTest {
             observeSetting = ObserveSetting(settingsStore),
             findOtherRecordings = FindOtherRecordings(),
             observeCopyContext = fakeObserveCopyContext(copyStore),
+            setAlbumPrimarySource = SetAlbumPrimarySource(copyStore),
             ioDispatcher = UnconfinedTestDispatcher(),
         )
     }
