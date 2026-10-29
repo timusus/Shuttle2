@@ -1,47 +1,72 @@
 import SwiftUI
 
 /// A song inside a work (after Android's `ClassicalTitle`): the composer in accent caps, the work largest with its key
-/// and catalogue under it, then the movement as the title, and the performers.
-struct ClassicalTitleBlock: View {
+/// and catalogue under it, then the movement as the title, the performers and the quality badge. Android's classical
+/// title has no artist or album line to open, so none is drawn here either.
+struct ClassicalTitleBlock<Actions: View>: View {
     let work: NowPlayingWorkState
     let secondaryInk: Color
+    var qualityBadge: String?
+    var spokenQualityBadge: String?
+    /// Nil until the composer route is wired: the composer is then plain text.
+    var onOpenComposer: (() -> Void)?
+    @ViewBuilder var accessibilityActions: () -> Actions
 
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.tiny) {
             if let composer = work.composer {
-                Text(composer.uppercased())
-                    .font(.subheadline.weight(.semibold))
-                    .tracking(1.5)
-                    .foregroundStyle(.tint)
-                    .lineLimit(1)
-                    .accessibilityIdentifier("nowPlaying.composer")
+                composerText(composer)
             }
             Text(work.work)
                 .font(.s2HeroTitle)
                 .lineLimit(2)
                 .foregroundStyle(.primary)
                 .accessibilityAddTraits(.isHeader)
+                .accessibilityActions { accessibilityActions() }
                 .accessibilityIdentifier("nowPlaying.title")
             if let detail = work.detail {
-                Text(detail)
+                MarqueeText(detail)
                     .font(.title3)
                     .foregroundStyle(secondaryInk)
-                    .lineLimit(1)
                     .accessibilityIdentifier("nowPlaying.workDetail")
             }
-            Text(work.movement)
+            MarqueeText(work.movement)
                 .font(.title3.weight(.semibold))
-                .lineLimit(1)
                 .accessibilityIdentifier("nowPlaying.movement")
             if let performers = work.performers {
-                Text(performers)
+                MarqueeText(performers)
                     .font(.body)
                     .foregroundStyle(secondaryInk)
-                    .lineLimit(1)
                     .accessibilityIdentifier("nowPlaying.performers")
+            }
+            if let badge = qualityBadge {
+                Text(badge)
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(secondaryInk)
+                    .padding(.top, Spacing.tiny)
+                    .accessibilityLabel("Audio quality, \(spokenQualityBadge ?? badge)")
+                    .accessibilityIdentifier("nowPlaying.quality")
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    @ViewBuilder
+    private func composerText(_ composer: String) -> some View {
+        let text = Text(composer.uppercased())
+            .font(.subheadline.weight(.semibold))
+            .tracking(1.5)
+            .foregroundStyle(.tint)
+            .lineLimit(1)
+        if let onOpenComposer {
+            Button(action: onOpenComposer) { text.contentShape(Rectangle()) }
+                .buttonStyle(.plain)
+                .accessibilityLabel(composer)
+                .accessibilityHint("Opens the composer")
+                .accessibilityIdentifier("nowPlaying.composer")
+        } else {
+            text.accessibilityIdentifier("nowPlaying.composer")
+        }
     }
 }
 

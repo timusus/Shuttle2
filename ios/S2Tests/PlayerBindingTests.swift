@@ -307,6 +307,50 @@ struct PlayerBindingClassicalTests {
         #expect(binding.miniPlayer.artist == work.miniSubtitle)
     }
 
+    private func midQueueSongs() -> [Song] {
+        [
+            TestSongs.song(9, "Hyperballad", artist: "Björk", album: "Post", durationMs: 300_000),
+            TestSongs.song(1, "Allegro", artist: "Kleiber", album: "Beethoven 5", durationMs: 400_000, composer: "Beethoven", work: "Symphony No. 5", movementName: "Allegro", movementNumber: 1),
+            TestSongs.song(2, "Andante", artist: "Kleiber", album: "Beethoven 5", durationMs: 600_000, composer: "Beethoven", work: "Symphony No. 5", movementName: "Andante", movementNumber: 2),
+        ]
+    }
+
+    @Test func aWorkThatStartsMidQueueMapsItsMovementsToTheirQueueItems() async throws {
+        let controller = graph.playerController
+        _ = try await controller.queueOperations.setQueue(songs: midQueueSongs(), shuffleSongs: nil, position: 2, context: PlayContextNone.shared)
+        controller.load(seekPosition: nil, skipUnloadable: false, playWhenReady: false) { _ in }
+        #expect(await waitUntil { binding.nowPlaying.work != nil })
+
+        let work = try #require(binding.nowPlaying.work)
+        let rows = binding.nowPlaying.queue
+        #expect(rows.count == 3)
+        #expect(work.movements.map(\.queueUID) == [rows[1].id, rows[2].id])
+        #expect(work.segments.map(\.queueUID) == [rows[1].id, rows[2].id])
+        #expect(work.currentMovement == 1)
+    }
+
+    @Test func theCurrentMovementFollowsTheQueueWithinAMidQueueWork() async throws {
+        let controller = graph.playerController
+        _ = try await controller.queueOperations.setQueue(songs: midQueueSongs(), shuffleSongs: nil, position: 1, context: PlayContextNone.shared)
+        controller.load(seekPosition: nil, skipUnloadable: false, playWhenReady: false) { _ in }
+        #expect(await waitUntil { binding.nowPlaying.work != nil })
+        #expect(binding.nowPlaying.work?.currentMovement == 0)
+    }
+
+    @Test func withClassicalDisplayOffAWorkSongIsPlain() async throws {
+        let suite = TestSuites.shared.make()
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defaults.set(false, forKey: "pref_classical_display")
+        let offGraph = IosAppGraphKt.createIosAppGraph(audioPlayer: KitAudioPlayer(player: rig.player), isolatedStorage: suite, localFiles: IosLocalFilesNone.shared)
+        let binding = PlayerBinding(viewModel: IosAppGraphKt.createPlayerViewModel(offGraph), intent: PlayIntent(following: offGraph.playerController))
+        let controller = offGraph.playerController
+        _ = try await controller.queueOperations.setQueue(songs: midQueueSongs(), shuffleSongs: nil, position: 1, context: PlayContextNone.shared)
+        controller.load(seekPosition: nil, skipUnloadable: false, playWhenReady: false) { _ in }
+        #expect(await waitUntil { binding.nowPlaying.title == "Allegro" })
+        #expect(binding.nowPlaying.work == nil)
+        #expect(binding.miniPlayer.title == "Allegro")
+    }
+
     @Test func aPlainSongHasNoWork() async throws {
         let controller = graph.playerController
         _ = try await controller.queueOperations.setQueue(songs: TestSongs.demo, shuffleSongs: nil, position: 0, context: PlayContextNone.shared)

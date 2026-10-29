@@ -538,4 +538,38 @@ struct NowPlayingWorkViewTests {
         try sut.inspect().find(viewWithAccessibilityIdentifier: "workMovement.0").button().tap()
         #expect(jumped == 11)
     }
+
+    @Test func aLaterRowJumpsToItsOwnQueueItem() throws {
+        var jumped: Int64?
+        let sut = WorkMovementSheet(work: Self.work) { jumped = $0 }
+        try sut.inspect().find(viewWithAccessibilityIdentifier: "workMovement.1").button().tap()
+        #expect(jumped == 12)
+    }
+
+    @Test func theCaptionOpensTheMovementList() throws {
+        var opened = 0
+        var jumped: Int64?
+        let sut = WorkRibbonView(work: Self.work, positionMs: 0, secondaryInk: .secondary, onJump: { jumped = $0 }, onOpenList: { opened += 1 })
+        try sut.inspect().find(viewWithAccessibilityIdentifier: "nowPlaying.workCaption").button().tap()
+        #expect(opened == 1)
+        #expect(jumped == nil)
+    }
+
+    @Test func theClassicalTitleKeepsTheQualityBadge() throws {
+        let song = TestSongs.song(1, "Andante", artist: "Kleiber", album: "Beethoven 5", durationMs: 600_000, mimeType: "audio/flac", bitDepth: 24, sampleRate: 96_000)
+        var playing = state(work: Self.work)
+        playing.quality = AudioQuality(song: song)
+        let badge = try NowPlayingContent(state: playing).inspect().find(viewWithAccessibilityIdentifier: "nowPlaying.quality").text().string()
+        #expect(badge == "FLAC · 24/96 kHz")
+    }
+
+    @Test func theComposerOpensOnlyWhenARouteIsWired() throws {
+        var opened = 0
+        let wired = ClassicalTitleBlock(work: Self.work, secondaryInk: .secondary, onOpenComposer: { opened += 1 }) { EmptyView() }
+        try wired.inspect().find(viewWithAccessibilityIdentifier: "nowPlaying.composer").button().tap()
+        #expect(opened == 1)
+        let plain = ClassicalTitleBlock(work: Self.work, secondaryInk: .secondary) { EmptyView() }
+        #expect((try? plain.inspect().find(viewWithAccessibilityIdentifier: "nowPlaying.composer").button()) == nil)
+        #expect((try? plain.inspect().find(text: "BEETHOVEN")) != nil)
+    }
 }

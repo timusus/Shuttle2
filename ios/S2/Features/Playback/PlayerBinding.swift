@@ -254,6 +254,7 @@ final class PlayerBinding {
     /// The player state the rest of `nowPlaying` was last built from: a progress tick keeps the same instance,
     /// so the queue rows are only rebuilt when the player state itself changes.
     @ObservationIgnored private var lastPlayer: PlayerUiState?
+    @ObservationIgnored private var lastWorkState: NowPlayingWorkState?
     @ObservationIgnored private var reportedPositionMs = 0
     @ObservationIgnored private var seekHold = SeekHold()
     /// The song whose actions the `.songActions` task follows, by id.
@@ -292,13 +293,16 @@ final class PlayerBinding {
         let current = player.current
         let artwork = current.map { ArtworkSource.song($0.song) }
 
-        let work = player.work.map { work in
-            NowPlayingWorkState(
-                work,
-                queueUIDs: player.items.map(\.uid),
-                currentIndex: player.items.firstIndex { $0.position == .current } ?? 0
-            )
+        if player !== lastPlayer {
+            lastWorkState = player.work.map { work in
+                NowPlayingWorkState(
+                    work,
+                    queueUIDs: player.items.map(\.uid),
+                    currentIndex: player.items.firstIndex { $0.position == .current } ?? 0
+                )
+            }
         }
+        let work = lastWorkState
 
         let mini = MiniPlayerState(
             title: work?.miniTitle ?? current?.song.name,

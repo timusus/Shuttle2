@@ -132,6 +132,9 @@ struct NowPlayingContent: View {
                 }
             }
         }
+        .onChange(of: state.work == nil) { _, gone in
+            if gone { showMovements = false }
+        }
         .alert("New Playlist", isPresented: $showNewPlaylist) {
             TextField("Playlist Name", text: $newPlaylistName)
             Button("Cancel", role: .cancel) { newPlaylistName = "" }
@@ -199,9 +202,15 @@ struct NowPlayingContent: View {
     private func controls(spacing: CGFloat) -> some View {
         VStack(spacing: spacing) {
             if let work = state.work {
-                ClassicalTitleBlock(work: work, secondaryInk: secondaryInk)
+                ClassicalTitleBlock(
+                    work: work, secondaryInk: secondaryInk, qualityBadge: state.qualityBadge,
+                    spokenQualityBadge: state.spokenQualityBadge
+                ) { songAccessibilityActions }
                     .contentShape(Rectangle())
                     .contextMenu { songMenu }
+                    .confirmationDialog("Add to Playlist", isPresented: $showPlaylistChoices, titleVisibility: .visible) {
+                        playlistChoices
+                    }
                 WorkRibbonView(
                     work: work, positionMs: state.positionMs, secondaryInk: secondaryInk,
                     onJump: actions.selectQueueItem, onOpenList: { showMovements = true }
@@ -275,10 +284,14 @@ struct NowPlayingContent: View {
         .contentShape(Rectangle())
         .contextMenu { songMenu }
         .confirmationDialog("Add to Playlist", isPresented: $showPlaylistChoices, titleVisibility: .visible) {
-            NowPlayingPlaylistChoices(
-                playlists: state.playlists, onNewPlaylist: { showNewPlaylist = true }, onChoose: actions.addToPlaylist
-            )
+            playlistChoices
         }
+    }
+
+    private var playlistChoices: some View {
+        NowPlayingPlaylistChoices(
+            playlists: state.playlists, onNewPlaylist: { showNewPlaylist = true }, onChoose: actions.addToPlaylist
+        )
     }
 
     /// An artist or album line: a button to its screen when the song offers `action`, plain text otherwise.
