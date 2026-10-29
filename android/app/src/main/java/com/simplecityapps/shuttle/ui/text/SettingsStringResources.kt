@@ -128,6 +128,15 @@ val SettingsString.resId: Int
         SettingsString.SETTINGS_GROUP_ARTISTS -> R.string.settings_group_artists
         SettingsString.PREF_SHOW_CREDITED_ARTISTS_TITLE -> R.string.pref_show_credited_artists_title
         SettingsString.PREF_SHOW_CREDITED_ARTISTS_SUMMARY -> R.string.pref_show_credited_artists_summary
+        SettingsString.SETTINGS_GROUP_COPIES -> R.string.settings_group_copies
+        SettingsString.PREF_MERGE_COPIES_TITLE -> R.string.pref_merge_copies_title
+        SettingsString.PREF_MERGE_COPIES_SUMMARY -> R.string.pref_merge_copies_summary
+        SettingsString.PREF_PREFERRED_COPY_TITLE -> R.string.pref_preferred_copy_title
+        SettingsString.PREF_PREFERRED_COPY_MERGING_OFF -> R.string.pref_preferred_copy_merging_off
+        SettingsString.PREF_PREFERRED_COPY_LOCAL -> R.string.pref_preferred_copy_local
+        SettingsString.PREF_PREFERRED_COPY_LOCAL_DESCRIPTION -> R.string.pref_preferred_copy_local_description
+        SettingsString.PREF_PREFERRED_COPY_BEST_QUALITY -> R.string.pref_preferred_copy_best_quality
+        SettingsString.PREF_PREFERRED_COPY_BEST_QUALITY_DESCRIPTION -> R.string.pref_preferred_copy_best_quality_description
         SettingsString.PREF_FILE_LOGGING_TITLE -> R.string.pref_file_logging_title
         SettingsString.PREF_FILE_LOGGING_SUBTITLE -> R.string.pref_file_logging_subtitle
         SettingsString.PREF_SHARE_DEBUG_LOGS_TITLE -> R.string.pref_share_debug_logs_title

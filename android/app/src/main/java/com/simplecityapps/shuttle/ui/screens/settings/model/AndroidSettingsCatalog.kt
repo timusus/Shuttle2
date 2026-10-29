@@ -9,6 +9,7 @@ import com.simplecityapps.playback.settings.PlaybackSettings
 import com.simplecityapps.shuttle.BuildConfig
 import com.simplecityapps.shuttle.entitlement.ProFeature
 import com.simplecityapps.shuttle.model.MinTrackLength
+import com.simplecityapps.shuttle.model.PreferredCopy
 import com.simplecityapps.shuttle.settings.Accent
 import com.simplecityapps.shuttle.settings.AppearanceSettings
 import com.simplecityapps.shuttle.settings.ArtistSettings
@@ -282,6 +283,26 @@ object AndroidSettingsCatalog : SettingsCatalog {
                             ChoiceOption(MinTrackLength.ThirtySeconds, SettingsString.PREF_MIN_TRACK_LENGTH_30_SECONDS),
                             ChoiceOption(MinTrackLength.SixtySeconds, SettingsString.PREF_MIN_TRACK_LENGTH_60_SECONDS)
                         )
+                    )
+                )
+            ),
+            SettingsGroup(
+                title = SettingsString.SETTINGS_GROUP_COPIES,
+                items = listOf(
+                    SettingItem.Switch(
+                        setting = LibrarySettings.MergeCopies,
+                        title = SettingsString.PREF_MERGE_COPIES_TITLE,
+                        summary = SettingsString.PREF_MERGE_COPIES_SUMMARY
+                    ),
+                    SettingItem.Choice(
+                        setting = LibrarySettings.PreferredCopy,
+                        title = SettingsString.PREF_PREFERRED_COPY_TITLE,
+                        options = listOf(
+                            ChoiceOption(PreferredCopy.Local, SettingsString.PREF_PREFERRED_COPY_LOCAL, description = SettingsString.PREF_PREFERRED_COPY_LOCAL_DESCRIPTION),
+                            ChoiceOption(PreferredCopy.BestQuality, SettingsString.PREF_PREFERRED_COPY_BEST_QUALITY, description = SettingsString.PREF_PREFERRED_COPY_BEST_QUALITY_DESCRIPTION)
+                        ),
+                        dependsOn = LibrarySettings.MergeCopies,
+                        disabledHint = SettingsString.PREF_PREFERRED_COPY_MERGING_OFF
                     )
                 )
             ),

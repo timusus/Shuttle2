@@ -162,6 +162,15 @@
 "settings_group_artists" = "Artists";
 "pref_show_credited_artists_title" = "Show featured artists";
 "pref_show_credited_artists_summary" = "List artists who only appear on other artists' albums or compilations";
+"settings_group_copies" = "Copies across sources";
+"pref_merge_copies_title" = "Merge copies across sources";
+"pref_merge_copies_summary" = "Show a song once when it's in more than one source";
+"pref_preferred_copy_title" = "Preferred copy";
+"pref_preferred_copy_merging_off" = "Merging is off";
+"pref_preferred_copy_local" = "On this device";
+"pref_preferred_copy_local_description" = "Local or downloaded first, then best quality";
+"pref_preferred_copy_best_quality" = "Best quality";
+"pref_preferred_copy_best_quality_description" = "Lossless and higher bitrate first, within your streaming limit";
 "pref_file_logging_title" = "Журнал отладки";
 "pref_file_logging_subtitle" = "Записывает логи в файл на диске";
 "pref_share_debug_logs_title" = "Поделиться журналами отладки";

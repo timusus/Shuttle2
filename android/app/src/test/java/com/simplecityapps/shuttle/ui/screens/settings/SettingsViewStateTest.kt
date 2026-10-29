@@ -1,5 +1,6 @@
 package com.simplecityapps.shuttle.ui.screens.settings
 
+import com.simplecityapps.mediaprovider.settings.LibrarySettings
 import com.simplecityapps.playback.settings.PlaybackSettings
 import com.simplecityapps.shuttle.settings.AppearanceSettings
 import com.simplecityapps.shuttle.settings.DebugSettings
@@ -122,6 +123,23 @@ class SettingsViewStateTest {
             .none { it.item.key == PlaybackSettings.UsbDacDirectOutput.key } shouldBe true
         destination(SettingsDestination.PlaybackAndSound, sdkInt = 34).rows()
             .any { it.item.key == PlaybackSettings.UsbDacDirectOutput.key } shouldBe true
+    }
+
+    @Test
+    fun `the preferred copy is enabled while copies are merged`() {
+        val preferred = destination(SettingsDestination.Library).row(LibrarySettings.PreferredCopy.key) as Row.Choice
+
+        preferred.enabled shouldBe true
+        preferred.override shouldBe null
+    }
+
+    @Test
+    fun `the preferred copy is disabled with a hint while merging is off`() {
+        val state = SettingsUiState(values = mapOf(LibrarySettings.MergeCopies.key to false))
+        val preferred = destination(SettingsDestination.Library, state).row(LibrarySettings.PreferredCopy.key) as Row.Choice
+
+        preferred.enabled shouldBe false
+        preferred.override shouldBe SettingsString.PREF_PREFERRED_COPY_MERGING_OFF
     }
 
     @Test

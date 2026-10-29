@@ -1,8 +1,10 @@
 package com.simplecityapps.shuttle.shared.settings
 
+import com.simplecityapps.mediaprovider.settings.LibrarySettings
 import com.simplecityapps.playback.dsp.replaygain.MAX_REPLAY_GAIN_PREAMP_DB
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainMode
 import com.simplecityapps.playback.settings.PlaybackSettings
+import com.simplecityapps.shuttle.model.PreferredCopy
 import com.simplecityapps.shuttle.settings.AppearanceSettings
 import com.simplecityapps.shuttle.settings.ArtistSettings
 import com.simplecityapps.shuttle.settings.ArtworkSettings
@@ -136,6 +138,26 @@ object IosSettingsCatalog : SettingsCatalog {
                         title = SettingsString.PREF_MEDIA_RESCAN_TITLE,
                         summary = SettingsString.PREF_MEDIA_RESCAN_SUMMARY,
                         key = "pref_media_rescan"
+                    )
+                )
+            ),
+            SettingsGroup(
+                title = SettingsString.SETTINGS_GROUP_COPIES,
+                items = listOf(
+                    SettingItem.Switch(
+                        setting = LibrarySettings.MergeCopies,
+                        title = SettingsString.PREF_MERGE_COPIES_TITLE,
+                        summary = SettingsString.PREF_MERGE_COPIES_SUMMARY
+                    ),
+                    SettingItem.Choice(
+                        setting = LibrarySettings.PreferredCopy,
+                        title = SettingsString.PREF_PREFERRED_COPY_TITLE,
+                        options = listOf(
+                            ChoiceOption(PreferredCopy.Local, SettingsString.PREF_PREFERRED_COPY_LOCAL, description = SettingsString.PREF_PREFERRED_COPY_LOCAL_DESCRIPTION),
+                            ChoiceOption(PreferredCopy.BestQuality, SettingsString.PREF_PREFERRED_COPY_BEST_QUALITY, description = SettingsString.PREF_PREFERRED_COPY_BEST_QUALITY_DESCRIPTION)
+                        ),
+                        dependsOn = LibrarySettings.MergeCopies,
+                        disabledHint = SettingsString.PREF_PREFERRED_COPY_MERGING_OFF
                     )
                 )
             ),

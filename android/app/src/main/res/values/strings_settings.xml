@@ -220,6 +220,24 @@
     <string name="pref_show_credited_artists_title">Show featured artists</string>
     <!-- Settings: Summary of the switch that also lists artists who have no album of their own -->
     <string name="pref_show_credited_artists_summary">List artists who only appear on other artists\' albums or compilations</string>
+    <!-- Settings: Title of the Library group for songs that are in more than one source -->
+    <string name="settings_group_copies">Copies across sources</string>
+    <!-- Settings: Title of the switch that shows a song once when it is in more than one source -->
+    <string name="pref_merge_copies_title">Merge copies across sources</string>
+    <!-- Settings: Summary of the merge copies switch -->
+    <string name="pref_merge_copies_summary">Show a song once when it\'s in more than one source</string>
+    <!-- Settings: Title of the choice of which copy of a song plays first -->
+    <string name="pref_preferred_copy_title">Preferred copy</string>
+    <!-- Settings: Shown in place of the Preferred copy value while merging is off -->
+    <string name="pref_preferred_copy_merging_off">Merging is off</string>
+    <!-- Settings: Preferred copy option that plays a copy on this device first -->
+    <string name="pref_preferred_copy_local">On this device</string>
+    <!-- Settings: Description of the On this device option -->
+    <string name="pref_preferred_copy_local_description">Local or downloaded first, then best quality</string>
+    <!-- Settings: Preferred copy option that plays the highest quality copy -->
+    <string name="pref_preferred_copy_best_quality">Best quality</string>
+    <!-- Settings: Description of the Best quality option -->
+    <string name="pref_preferred_copy_best_quality_description">Lossless and higher bitrate first, within your streaming limit</string>
     <!-- Settings: Summary of the Sources row on the Settings screen. %1$s is the streaming quality used on mobile data, e.g. "320 kbps" -->
     <string name="settings_sources_summary_streaming">%1$s on mobile data</string>
     <!-- Settings: Summary of the Library row on the Settings screen. %1$s is how often the library rescans, e.g. "Weekly" or "Never" -->

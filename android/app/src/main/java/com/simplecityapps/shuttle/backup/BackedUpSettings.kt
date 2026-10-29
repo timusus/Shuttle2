@@ -55,6 +55,8 @@ internal object BackedUpSettings {
         LibrarySettings.RescanFrequency,
         LibrarySettings.ReportPlaybackToServer,
         LibrarySettings.MinTrackLength,
+        LibrarySettings.MergeCopies,
+        LibrarySettings.PreferredCopy,
         StreamingSettings.UnmeteredQuality,
         StreamingSettings.MeteredQuality,
         StreamingSettings.DownloadQuality,

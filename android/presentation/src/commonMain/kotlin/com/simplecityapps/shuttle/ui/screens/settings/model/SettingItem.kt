@@ -76,7 +76,9 @@ data class SettingOverride(
 data class ChoiceOption<T>(
     val value: T,
     val label: StringKey,
-    val proFeature: ProFeature? = null
+    val proFeature: ProFeature? = null,
+    /** A line under the label saying what the option does. */
+    val description: StringKey? = null
 )
 
 /**
@@ -116,6 +118,8 @@ sealed interface SettingItem {
         override val dependsOn: Setting<Boolean>? = null,
         /** Only while its switch's row is shown: a switch hidden below its API level takes nothing over. */
         val overriddenBy: SettingOverride? = null,
+        /** Shown in place of the value while the row is disabled by [dependsOn]. */
+        val disabledHint: StringKey? = null,
         /** The row and the Settings root add the date of the last library scan to this choice's label. */
         val showsLastScan: Boolean = false
     ) : SettingItem {

@@ -199,7 +199,7 @@ private fun <T> choiceRow(
     return SettingsDestinationViewState.Row.Choice(
         item = item,
         label = item.currentLabel(uiState),
-        override = override?.hint,
+        override = override?.hint ?: item.disabledHint.takeIf { !enabled },
         lastScan = uiState.lastScanDate.takeIf { item.showsLastScan },
         enabled = enabled && override == null,
         selectedIndex = item.options.indexOfFirst { it.value == current }
