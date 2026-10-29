@@ -64,6 +64,7 @@
 		44C327B4FBF11A10614B931B /* SongRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = D679F550BBE525E21437DE0B /* SongRow.swift */; };
 		4502DC19F9889A95EFDF6AAD /* CarPlayCatalogTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 810F43EC6F7206E3D0B7FF52 /* CarPlayCatalogTests.swift */; };
 		48BBD8574995CA01C2A459C1 /* FilterChip.swift in Sources */ = {isa = PBXBuildFile; fileRef = 041ABAC56D609C794639DB1A /* FilterChip.swift */; };
+		4A05EC1F85DDEDC9B1CE7FA3 /* ComposerDetailTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4B2EABAF6926F456CC00C79 /* ComposerDetailTests.swift */; };
 		4B7D96BE34E44984943545EE /* JumpBackInGrid.swift in Sources */ = {isa = PBXBuildFile; fileRef = 906D37F830AB77668D7F8D89 /* JumpBackInGrid.swift */; };
 		4B96097323C737315CE491A7 /* HomeScreenQuickAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41B5B04A7057516E45EAB2EE /* HomeScreenQuickAction.swift */; };
 		4BB77D4A9957ED117DDCF31A /* TestSongs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14BB2620441276D4E9C54BA6 /* TestSongs.swift */; };
@@ -107,6 +108,7 @@
 		76E94E7833435C1AF3752B49 /* ProSettingsSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E8D9DB18D7662E94052AB35 /* ProSettingsSection.swift */; };
 		7A701E93B15CFAEEF3311D42 /* LibraryListTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 191927F39E29CE059057C079 /* LibraryListTests.swift */; };
 		807B002033B439F30DB6F44E /* Sentry in Frameworks */ = {isa = PBXBuildFile; productRef = E1CF29EA73E2E84524801440 /* Sentry */; };
+		8195CB2BA7F07673B5DFC703 /* ComposerDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63925DB66E273FD3A99DE95E /* ComposerDetailView.swift */; };
 		83383C1E9DCF9FF60907D62A /* KotlinLogSink.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0FAEE3FBBE47AD9BFB7A8E3 /* KotlinLogSink.swift */; };
 		842361F9758C975E8AAB0BDB /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = CB2C91FE8406D6ED46243D9D /* Localizable.strings */; };
 		85CD36E6527CD8C02C94C68E /* AppGraph.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E5961F296B2738309AF66BC /* AppGraph.swift */; };
@@ -368,6 +370,7 @@
 		606AE93327386A0D14444102 /* GeneratedArtwork.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeneratedArtwork.swift; sourceTree = "<group>"; };
 		60C0C48BCE8CEF1B30FF9D34 /* AlbumArtistListTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlbumArtistListTests.swift; sourceTree = "<group>"; };
 		626D669847C07508951E6DCF /* AlbumArtistDetailTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlbumArtistDetailTests.swift; sourceTree = "<group>"; };
+		63925DB66E273FD3A99DE95E /* ComposerDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComposerDetailView.swift; sourceTree = "<group>"; };
 		644FCDF9D90ECEA9AEB75600 /* LibraryViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryViewTests.swift; sourceTree = "<group>"; };
 		67AA5EABDB43DCBE61D34029 /* ShellContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShellContainer.swift; sourceTree = "<group>"; };
 		6B467DAFF667D6F5A48F5DBA /* PlaylistListTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaylistListTests.swift; sourceTree = "<group>"; };
@@ -450,6 +453,7 @@
 		B02CC080EC19C791990DFA19 /* en-GB */ = {isa = PBXFileReference; lastKnownFileType = text.plist.stringsdict; name = "en-GB"; path = "en-GB.lproj/Localizable.stringsdict"; sourceTree = "<group>"; };
 		B2A215E10EED997DF8D49390 /* SearchViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchViewTests.swift; sourceTree = "<group>"; };
 		B32385386778AA341330EA17 /* CoverMosaic.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoverMosaic.swift; sourceTree = "<group>"; };
+		B4B2EABAF6926F456CC00C79 /* ComposerDetailTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComposerDetailTests.swift; sourceTree = "<group>"; };
 		B4EABE937DFDA953B4A4F31C /* PlayerPalette.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerPalette.swift; sourceTree = "<group>"; };
 		B68CE2B34453BFF2F0D8C705 /* PlayerNotice.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerNotice.swift; sourceTree = "<group>"; };
 		B7AADEAF2F8D24AC514AD547 /* AirPlayButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AirPlayButton.swift; sourceTree = "<group>"; };
@@ -825,6 +829,7 @@
 				BB1F6A8475DD9D2EA014187B /* AlbumSectionHeader.swift */,
 				90D5584F3316306808B17435 /* ArtistHero.swift */,
 				8B6D4DEFEAC9DB24515AEE9C /* ArtistSongsHeader.swift */,
+				63925DB66E273FD3A99DE95E /* ComposerDetailView.swift */,
 				3F4C5F1ADF27B6EC0DF70141 /* DetailAlbumShelf.swift */,
 				3628FAC4C3FBCD32BF91F313 /* DetailDownloads.swift */,
 				3B4774E3E0FD8DEAA08337F7 /* DetailFormatting.swift */,
@@ -934,6 +939,7 @@
 				C72BD30E191F8DDEFB8D6B41 /* ArtworkTintTests.swift */,
 				810F43EC6F7206E3D0B7FF52 /* CarPlayCatalogTests.swift */,
 				5E1633C34A912D4852F34CC2 /* CombineFlowBridgeTests.swift */,
+				B4B2EABAF6926F456CC00C79 /* ComposerDetailTests.swift */,
 				91A4064C4CA7EA59DB04DB03 /* DebugArtworkTests.swift */,
 				CA8F70031E091A9E05A0ABE8 /* DesignSystemTests.swift */,
 				FBA8DC3CAF502AB452A47E5C /* DetailSupportTests.swift */,
@@ -1214,6 +1220,7 @@
 				180D0F578E822E01F136A9B4 /* CarPlaySceneDelegate.swift in Sources */,
 				C59FBDB9E91FA89CBA2B6386 /* Colors.swift in Sources */,
 				231078D87B2D4E48A18485EC /* CombineFlowBridge.swift in Sources */,
+				8195CB2BA7F07673B5DFC703 /* ComposerDetailView.swift in Sources */,
 				EA877E9F937EC35097A15E73 /* ConsumeEvents.swift in Sources */,
 				553A58C265C6AFA440D89FCF /* ContentView.swift in Sources */,
 				2ABA345B8D63E42DA6D413BF /* CoverMosaic.swift in Sources */,
@@ -1339,6 +1346,7 @@
 				1D096299208BE05D1B687A6A /* ArtworkTintTests.swift in Sources */,
 				4502DC19F9889A95EFDF6AAD /* CarPlayCatalogTests.swift in Sources */,
 				AD30CBCBD32BA3F24F6B355E /* CombineFlowBridgeTests.swift in Sources */,
+				4A05EC1F85DDEDC9B1CE7FA3 /* ComposerDetailTests.swift in Sources */,
 				5DF9EB33C38E447BC8F2378C /* DebugArtworkTests.swift in Sources */,
 				36448DF63FDD4D6333FB9DD2 /* DesignSystemTests.swift in Sources */,
 				2DA2E2E30509CFBEDD4130AD /* DetailSupportTests.swift in Sources */,

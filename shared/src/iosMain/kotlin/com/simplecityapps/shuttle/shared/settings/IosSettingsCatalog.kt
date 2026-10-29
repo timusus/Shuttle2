@@ -175,6 +175,11 @@ object IosSettingsCatalog : SettingsCatalog {
                         summary = SettingsString.PREF_COLOUR_FROM_ARTWORK_SUMMARY
                     ),
                     SettingItem.Switch(
+                        setting = AppearanceSettings.ClassicalDisplay,
+                        title = SettingsString.PREF_CLASSICAL_DISPLAY_TITLE,
+                        summary = SettingsString.PREF_CLASSICAL_DISPLAY_SUMMARY
+                    ),
+                    SettingItem.Switch(
                         setting = AppearanceSettings.ShowHomeOnLaunch,
                         title = SettingsString.PREF_SHOW_HOME_ON_LAUNCH_TITLE
                     )

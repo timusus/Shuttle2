@@ -42,6 +42,8 @@ enum Route: Hashable, Codable {
     case album(albumKey: String?, albumArtistKey: String?, albumIdentity: String? = nil)
     case albumArtist(albumArtistKey: String?)
     case genre(name: String)
+    /// A composer's page (Android's `ComposerRoute`): the composer tag as written.
+    case composer(name: String)
     case playlist(id: Int64)
     case smartPlaylist(id: String)
     /// Sources (Android's `SourcesRoute`): the media servers, pushed from Settings' Sources row and the Library's
@@ -64,6 +66,7 @@ enum Route: Hashable, Codable {
         case .album(let albumKey, let albumArtistKey, let albumIdentity): "album:\(albumKey ?? "")|\(albumArtistKey ?? "")" + (albumIdentity.map { "|\($0)" } ?? "")
         case .albumArtist(let albumArtistKey): "albumArtist:\(albumArtistKey ?? "")"
         case .genre(let name): "genre:\(name)"
+        case .composer(let name): "composer:\(name)"
         case .playlist(let id): "playlist:\(id)"
         case .smartPlaylist(let id): "smartPlaylist:\(id)"
         case .sources: "sources"

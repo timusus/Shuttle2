@@ -13,6 +13,7 @@ import com.simplecityapps.shuttle.ui.screens.library.albumartists.AlbumArtistLis
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.detail.AlbumArtistDetailViewModel
 import com.simplecityapps.shuttle.ui.screens.library.albums.AlbumListViewModel
 import com.simplecityapps.shuttle.ui.screens.library.albums.detail.AlbumDetailViewModel
+import com.simplecityapps.shuttle.ui.screens.library.composer.ComposerViewModel
 import com.simplecityapps.shuttle.ui.screens.library.folders.FolderListViewModel
 import com.simplecityapps.shuttle.ui.screens.library.genres.GenreCoversViewModel
 import com.simplecityapps.shuttle.ui.screens.library.genres.GenreListViewModel
@@ -65,6 +66,7 @@ interface IosViewModelAccessors {
 
     val albumDetailViewModelFactory: AlbumDetailViewModel.Factory
     val albumArtistDetailViewModelFactory: AlbumArtistDetailViewModel.Factory
+    val composerViewModelFactory: ComposerViewModel.Factory
     val genreDetailViewModelFactory: GenreDetailViewModel.Factory
     val playlistDetailViewModelFactory: PlaylistDetailViewModel.Factory
     val genreDetailCoversViewModelFactory: GenreDetailCoversViewModel.Factory

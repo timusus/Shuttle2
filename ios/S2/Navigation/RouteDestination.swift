@@ -31,6 +31,8 @@ struct RouteDestinationView: View {
                 .zoomDestination(id: route.cacheKey)
         case .genre(let name):
             GenreDetailView(name: name)
+        case .composer(let name):
+            ComposerDetailView(name: name)
         case .playlist(let id):
             PlaylistDetailView(id: id)
         case .smartPlaylist(let id):
