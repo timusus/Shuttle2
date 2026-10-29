@@ -526,7 +526,7 @@ class ItemLoaderTest {
     }
 
     @Test
-    fun `earlier copies are tried again once a copy has played`() {
+    fun `copies that each fail transiently once playing stop playback after one pass`() {
         val other = PlaybackHarness.song(4)
         queue(withCopies(playable, other))
         load(skipUnloadable = true)
@@ -535,6 +535,36 @@ class ItemLoaderTest {
 
         failWith(java.io.IOException("broken"))
         driver.runUntil { player.isPlaying && currentSongId == 4L }
+        failWith(java.io.IOException("broken"))
+
+        gaveUp shouldBe 1
+        currentSongId shouldBe 4L
+        sourceState.missingSongs("Shuttle") shouldBe emptySet()
+    }
+
+    @Test
+    fun `a song's copies are all tried again when it plays again on repeat`() {
+        val other = PlaybackHarness.song(4)
+        queue(withCopies(playable, other))
+        player.repeatMode = Player.REPEAT_MODE_ONE
+        load(skipUnloadable = true)
+        player.play()
+        driver.runUntil { player.isPlaying }
+        failWith(java.io.IOException("broken"))
+        driver.runUntil { player.isPlaying && currentSongId == 4L }
+        var repeated = false
+        player.addListener(
+            object : Player.Listener {
+                override fun onMediaItemTransition(
+                    mediaItem: androidx.media3.common.MediaItem?,
+                    reason: Int
+                ) {
+                    if (reason == Player.MEDIA_ITEM_TRANSITION_REASON_REPEAT) repeated = true
+                }
+            }
+        )
+
+        driver.runUntil { repeated && player.isPlaying }
         failWith(java.io.IOException("broken"))
 
         driver.runUntil { player.isPlaying && currentSongId == 2L }

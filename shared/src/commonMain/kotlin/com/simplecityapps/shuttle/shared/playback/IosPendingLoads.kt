@@ -15,7 +15,7 @@ internal class IosPendingLoads {
     /** Songs skipped in a row because they failed to load. */
     var failures = 0
 
-    /** The uid of the item whose copies a failure has tried, and the song ids it tried; forgotten when the user starts an item or a copy plays. */
+    /** The uid of the item whose copies a failure has tried, and the song ids it tried; forgotten when the user starts an item, playback moves on or repeats it, or every copy failed. */
     var triedCopies: Pair<Long, Set<Long>>? = null
 
     /** Makes [load] the pending load. One still pending never had its item ready, and is told it was dropped. */

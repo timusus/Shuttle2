@@ -153,6 +153,7 @@ class ItemLoader(
         reason: Int
     ) {
         if (_loadFailure.value?.uid != mediaItem?.queueEntryOrNull?.uid) clearLoadFailure()
+        if (reason == Player.MEDIA_ITEM_TRANSITION_REASON_REPEAT || triedCopies?.first != mediaItem?.queueEntryOrNull?.uid) triedCopies = null
         val playsOn = reason == Player.MEDIA_ITEM_TRANSITION_REASON_AUTO || reason == Player.MEDIA_ITEM_TRANSITION_REASON_REPEAT
         if (playsOn && player.playerError == null) {
             val entry = mediaItem?.queueEntryOrNull
@@ -161,10 +162,12 @@ class ItemLoader(
         }
     }
 
-    /** [entry]'s copy plays: it's no longer missing, and a later failure may try the entry's other copies again. */
+    /**
+     * [entry]'s copy plays: it's no longer missing. Its copies tried stay tried, so copies that each fail transiently
+     * once playing end in one pass rather than taking turns forever.
+     */
     private fun playedWell(entry: QueueEntry) {
         sourceState?.setSongMissing(entry.song.mediaProvider.name, entry.song.id, missing = false)
-        triedCopies = null
     }
 
     /**
@@ -212,6 +215,8 @@ class ItemLoader(
             }
         }
         loadFailures = 0
+        // Playback stops here, so whatever plays the entry again is the user's retry, of every copy.
+        triedCopies = null
         if (failedEntry != null && failedIndex == player.currentMediaItemIndex) {
             _loadFailure.value = SongLoadFailure(failedEntry.uid, failedEntry.song, error.isConnectionFailure())
         }

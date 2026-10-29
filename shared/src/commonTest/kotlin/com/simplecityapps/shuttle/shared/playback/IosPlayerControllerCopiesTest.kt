@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.shared.playback
 
 import com.simplecityapps.playback.PlaybackState
+import com.simplecityapps.playback.queue.RepeatMode
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import io.kotest.matchers.shouldBe
@@ -116,12 +117,29 @@ class IosPlayerControllerCopiesTest : IosPlayerControllerTestBase() {
     }
 
     @Test
-    fun `a copy that played well leaves the earlier copies to try again`() = test { controller ->
+    fun `copies that each fail transiently once playing stop playback after one pass`() = test { controller ->
         controller.start(listOf(a.onEmby().withCopies(second), b))
         engine.failCurrent(IosFailureKind.Connection)
         engine.settle()
         controller.currentSong?.id shouldBe second.id
 
+        engine.failCurrent(IosFailureKind.Connection)
+        engine.settle()
+
+        controller.currentSong?.id shouldBe second.id
+        controller.playbackState() shouldNotBe PlaybackState.Playing
+        missing() shouldBe emptySet()
+    }
+
+    @Test
+    fun `a song's copies are all tried again when it plays again on repeat`() = test { controller ->
+        controller.queueOperations.setRepeatMode(RepeatMode.One)
+        controller.start(listOf(a.onEmby().withCopies(second)))
+        engine.failCurrent(IosFailureKind.Connection)
+        engine.settle()
+        controller.currentSong?.id shouldBe second.id
+
+        engine.finishTrack()
         engine.failCurrent(IosFailureKind.Connection)
 
         controller.currentSong?.id shouldBe a.id

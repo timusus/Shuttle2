@@ -52,12 +52,14 @@ internal class IosEngineEvents(
         feeder.publishState()
     }
 
-    /** The player can play [feed]: the first playing or paused report since it became current. */
+    /**
+     * The player can play [feed]: the first playing or paused report since it became current. Its copies tried stay
+     * tried, so copies that each fail transiently once playing end in one pass rather than taking turns forever.
+     */
     private fun markReady(feed: IosFeed) {
         if (feed.failed || feed.ready) return
         feed.ready = true
         loads.failures = 0
-        loads.triedCopies = null
         val song = feed.item.song
         sourceState?.setSongMissing(song.mediaProvider.name, song.id, missing = false)
         loads.complete(Result.success(loads.pending?.attempt == 1))
@@ -71,6 +73,7 @@ internal class IosEngineEvents(
         val repeated = feeder.current?.takeIf { !it.failed && it.ready }?.item?.uid == arrived.uid
         // Not ready yet: the player reports a failed next after moving onto it. A repeat sends no new state report.
         feeder.arrive(arrived)
+        if (repeated || loads.triedCopies?.first != arrived.uid) loads.triedCopies = null
         if (repeated) feeder.current?.let(::markReady)
         queue.setCurrent(arrived.uid)
         feeder.publishProgress(0)
@@ -175,6 +178,8 @@ internal class IosEngineEvents(
             }
         }
         loads.failures = 0
+        // Playback stops here, so whatever plays the item again is the user's retry, of every copy.
+        loads.triedCopies = null
         log.warn { "song ${feed.item.song.id} failed${if (feed.ready) " while playing" else ""}; stopped there" }
         feeder.giveUp()
         loads.complete(Result.failure(IllegalStateException("Failed to load ${feed.item.song.name}")))
