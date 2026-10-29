@@ -5,14 +5,18 @@ import androidx.lifecycle.viewModelScope
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistQuery
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
 import com.simplecityapps.shuttle.model.Playlist
+import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.ui.actions.AvailableMediaActions
 import com.simplecityapps.shuttle.ui.actions.MediaAction
 import com.simplecityapps.shuttle.ui.actions.MediaActionHandler
 import com.simplecityapps.shuttle.ui.actions.MediaActionResult
 import com.simplecityapps.shuttle.ui.actions.MediaActionType
 import com.simplecityapps.shuttle.ui.actions.MediaSelection
+import com.simplecityapps.shuttle.ui.actions.ObserveCopyContext
 import com.simplecityapps.shuttle.ui.common.PendingEvent
 import com.simplecityapps.shuttle.ui.common.PendingEvents
+import com.simplecityapps.shuttle.ui.screens.songinfo.SongCopyRows
+import com.simplecityapps.shuttle.ui.screens.songinfo.copyRows
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.ContributesIntoMap
 import dev.zacsweers.metro.Inject
@@ -25,6 +29,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -47,6 +52,7 @@ class MediaActionsViewModel @Inject constructor(
     private val handler: MediaActionHandler,
     private val availableMediaActions: AvailableMediaActions,
     playlistRepository: PlaylistRepository,
+    private val observeCopyContext: ObserveCopyContext,
 ) : ViewModel() {
     private val playlistPickerShown = MutableStateFlow(false)
 
@@ -80,4 +86,7 @@ class MediaActionsViewModel @Inject constructor(
     }
 
     fun availableActions(selection: MediaSelection): Flow<List<MediaActionType>> = availableMediaActions(selection)
+
+    /** The copy picker's rows for [song], live with availability; null when merging is off. */
+    fun copyRows(song: Song): Flow<SongCopyRows?> = observeCopyContext().map { song.copyRows(it) }
 }

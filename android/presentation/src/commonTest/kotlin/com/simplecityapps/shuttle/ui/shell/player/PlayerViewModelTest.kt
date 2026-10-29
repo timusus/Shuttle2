@@ -4,13 +4,13 @@ import androidx.lifecycle.SavedStateHandle
 import com.simplecityapps.createPlatformFeatures
 import com.simplecityapps.createPlaylist
 import com.simplecityapps.createSong
-import com.simplecityapps.fakes.FakeCopyPreferencesStore
 import com.simplecityapps.fakes.FakePlaybackOperations
 import com.simplecityapps.fakes.FakePlaylistRepository
 import com.simplecityapps.fakes.FakeQueueOperations
 import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.fakes.FakeSuggestionsRepository
 import com.simplecityapps.fakes.TestMediaActions
+import com.simplecityapps.fakes.fakeObserveCopyContext
 import com.simplecityapps.playback.CastDevice
 import com.simplecityapps.playback.PlaybackProgress
 import com.simplecityapps.playback.PlaybackState
@@ -154,7 +154,7 @@ class PlayerViewModelTest {
             savedNowPlaying = { savedNowPlaying },
             clearQueue = ClearQueue(queueOperations, playbackOperations, playbackOperations),
             restoreQueue = RestoreQueue(queueOperations, playbackOperations),
-            availableMediaActions = AvailableMediaActions(mediaActions.resolveSongs, mediaActions.songDownloader, createPlatformFeatures(), queueOperations, ObserveSetting(settingsStore), FakeCopyPreferencesStore()),
+            availableMediaActions = AvailableMediaActions(mediaActions.resolveSongs, mediaActions.songDownloader, createPlatformFeatures(), queueOperations, ObserveSetting(settingsStore), fakeObserveCopyContext()),
             mediaActionHandler = mediaActions.handler,
             observeLyrics = ObserveLyrics(LoadLyrics(songRepository, onlineLyrics)),
             savedStateHandle = savedStateHandle,

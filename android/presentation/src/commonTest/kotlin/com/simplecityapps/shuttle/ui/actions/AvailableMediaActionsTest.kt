@@ -4,14 +4,17 @@ import com.simplecityapps.createAlbum
 import com.simplecityapps.createGenre
 import com.simplecityapps.createPlatformFeatures
 import com.simplecityapps.createSong
+import com.simplecityapps.fakes.FakeCopyAvailabilitySource
 import com.simplecityapps.fakes.FakeCopyPreferencesStore
 import com.simplecityapps.fakes.FakeQueueOperations
 import com.simplecityapps.fakes.FakeSongDownloader
 import com.simplecityapps.fakes.TestMediaActions
+import com.simplecityapps.fakes.fakeObserveCopyContext
 import com.simplecityapps.playback.queue.QueueItem
 import com.simplecityapps.playback.queue.QueueState
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.model.SongCopyAvailability
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import com.simplecityapps.shuttle.settings.AppearanceSettings
 import com.simplecityapps.shuttle.settings.ObserveSetting
@@ -48,7 +51,9 @@ class AvailableMediaActionsTest {
     private val queueOperations = FakeQueueOperations()
     private val settingsStore = SettingsStore(InMemoryKeyValueStore())
     private val copyStore = FakeCopyPreferencesStore()
-    private val availableActions = AvailableMediaActions(TestMediaActions().resolveSongs, downloads, createPlatformFeatures(), queueOperations, ObserveSetting(settingsStore), copyStore)
+    private val copyAvailability = FakeCopyAvailabilitySource()
+    private val copyContext = fakeObserveCopyContext(copyStore, copyAvailability)
+    private val availableActions = AvailableMediaActions(TestMediaActions().resolveSongs, downloads, createPlatformFeatures(), queueOperations, ObserveSetting(settingsStore), copyContext)
 
     private val remote = createSong(id = 1, mediaProvider = MediaProviderType.Jellyfin, path = "jellyfin://1")
 
@@ -136,7 +141,7 @@ class AvailableMediaActionsTest {
     @Test
     fun `a platform without offline downloads offers neither download action`() = runTest {
         downloads.heldPaths.value = setOf(remote.path)
-        val withoutDownloads = AvailableMediaActions(TestMediaActions().resolveSongs, downloads, createPlatformFeatures(offlineDownloads = false), queueOperations, ObserveSetting(settingsStore), copyStore)
+        val withoutDownloads = AvailableMediaActions(TestMediaActions().resolveSongs, downloads, createPlatformFeatures(offlineDownloads = false), queueOperations, ObserveSetting(settingsStore), copyContext)
 
         val actions = withoutDownloads(MediaSelection.Songs(listOf(remote, createSong(id = 2, mediaProvider = MediaProviderType.Jellyfin, path = "jellyfin://2")))).first()
 
@@ -189,5 +194,19 @@ class AvailableMediaActionsTest {
         copyStore.mergeCopies.value = false
 
         actionsFor(MediaSelection.Songs(song)) shouldNotContain PlayFrom
+    }
+
+    @Test
+    fun `play from is not offered while fewer than two copies can play`() = runTest {
+        val song = mergedSong(MediaProviderType.Shuttle, MediaProviderType.Emby)
+
+        copyAvailability.availability.value = SongCopyAvailability(unreachableProviders = setOf(MediaProviderType.Emby))
+        actionsFor(MediaSelection.Songs(song)) shouldNotContain PlayFrom
+
+        copyAvailability.availability.value = SongCopyAvailability(missingSongIds = setOf(1L))
+        actionsFor(MediaSelection.Songs(song)) shouldNotContain PlayFrom
+
+        copyAvailability.availability.value = SongCopyAvailability()
+        actionsFor(MediaSelection.Songs(song)) shouldContain PlayFrom
     }
 }

@@ -10,6 +10,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.simplecityapps.createPlaylist
 import com.simplecityapps.createSong
+import com.simplecityapps.fakes.fakeObserveCopyContext
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
 import com.simplecityapps.shuttle.designsystem.component.ArtworkPlaceholder
 import com.simplecityapps.shuttle.designsystem.component.S2Action
@@ -57,7 +58,7 @@ class MediaActionsHostTest {
         every { available(any()) } returns flowOf(MediaActionType.entries - MediaActionType.PlayAfterWork - MediaActionType.PlayFrom)
         val playlistRepository = mockk<PlaylistRepository>()
         every { playlistRepository.getPlaylists(any()) } returns flowOf(listOf(roadTrip))
-        val viewModel = MediaActionsViewModel(handler, available, playlistRepository)
+        val viewModel = MediaActionsViewModel(handler, available, playlistRepository, fakeObserveCopyContext())
         rule.setContent {
             S2Theme {
                 MediaActionsHost(onNavigate = {}, viewModel = viewModel, appGraphAvailable = false) { actions ->

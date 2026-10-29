@@ -74,6 +74,7 @@ import androidx.test.ext.junit.rules.ActivityScenarioRule
 import androidx.window.core.layout.WindowSizeClass
 import androidx.window.core.layout.computeWindowSizeClass
 import com.simplecityapps.createSong
+import com.simplecityapps.fakes.fakeObserveCopyContext
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainMode
 import com.simplecityapps.shuttle.designsystem.theme.S2Theme
@@ -366,7 +367,7 @@ class AppShellRobot(
         every { available(any()) } answers { flowOf(actions.songActions) }
         val playlistRepository = mockk<PlaylistRepository>()
         every { playlistRepository.getPlaylists(any()) } answers { flowOf(actions.playlists) }
-        MediaActionsViewModel(handler, available, playlistRepository)
+        MediaActionsViewModel(handler, available, playlistRepository, fakeObserveCopyContext())
     }
 
     val calls: List<String> get() = actions.calls

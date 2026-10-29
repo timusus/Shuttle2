@@ -252,6 +252,17 @@ fun MediaActionsHost(
         )
     }
 
+    state.copyPicker?.let { song ->
+        val copies by remember(song) { viewModel.copyRows(song) }.collectAsStateWithLifecycle(null)
+        copies?.let { rows ->
+            CopyPickerSheet(
+                rows = rows.rows,
+                onPick = { copy -> viewModel.dispatch(MediaAction.PlayFromCopy(MediaSelection.Songs(song), copy)) },
+                onDismissRequest = { state.copyPicker = null },
+            )
+        }
+    }
+
     state.createPlaylist?.let { selection ->
         CreatePlaylistDialog(
             onCreate = { name -> viewModel.dispatch(MediaAction.CreatePlaylist(selection, name)) },

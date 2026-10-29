@@ -18,7 +18,7 @@ import kotlinx.coroutines.flow.flowOf
  *
  * - Play, Shuffle, Play next, Add to queue, Add to playlist: everything but the queue, which only offers Add to
  *   playlist (save the queue).
- * - Play from: a single merged song with copies from two or more sources, right after Play, while merging is on.
+ * - Play from: a single merged song with playable copies from two or more sources, right after Play, while merging is on.
  *   Opens a copy picker.
  * - Play after this work: right after Play next, while the current song is in a work run and classical display is on.
  * - Start radio: a single song, album or artist.
@@ -37,7 +37,7 @@ class AvailableMediaActions @Inject constructor(
     private val platformFeatures: PlatformFeatures,
     private val queueOperations: QueueOperations,
     private val observeSetting: ObserveSetting,
-    private val copyPreferencesStore: CopyPreferencesStore,
+    private val observeCopyContext: ObserveCopyContext,
 ) {
     operator fun invoke(selection: MediaSelection): Flow<List<MediaActionType>> {
         val base = withPlayFrom(withPlayAfterWork(baseActions(selection), selection), selection)
@@ -61,13 +61,14 @@ class AvailableMediaActions @Inject constructor(
         }.distinctUntilChanged()
     }
 
-    /** Play from follows Play for a single song with copies from two or more sources, while merging is on. */
+    /** Play from follows Play for a single song with playable copies in two or more sources, while merging is on. */
     private fun withPlayFrom(actions: Flow<List<MediaActionType>>, selection: MediaSelection): Flow<List<MediaActionType>> {
         val song = (selection as? MediaSelection.Songs)?.songs?.singleOrNull()
         if (song == null || song.copies.map { it.mediaProvider }.distinct().size < 2) return actions
-        return combine(actions, copyPreferencesStore.mergeCopies) { list, merging ->
+        return combine(actions, observeCopyContext()) { list, context ->
             val at = list.indexOf(MediaActionType.Play)
-            if (merging && at >= 0) list.toMutableList().apply { add(at + 1, MediaActionType.PlayFrom) } else list
+            val playable = song.copies.filter { context.availability.isPlayable(it) }.map { it.mediaProvider }.distinct().size
+            if (context.mergeCopies && playable >= 2 && at >= 0) list.toMutableList().apply { add(at + 1, MediaActionType.PlayFrom) } else list
         }
     }
 

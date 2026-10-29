@@ -3,11 +3,11 @@ package com.simplecityapps.shuttle.ui.common.mediaactions
 import com.simplecityapps.createPlatformFeatures
 import com.simplecityapps.createPlaylist
 import com.simplecityapps.createSong
-import com.simplecityapps.fakes.FakeCopyPreferencesStore
 import com.simplecityapps.fakes.FakePlaylistRepository
 import com.simplecityapps.fakes.FakeQueueOperations
 import com.simplecityapps.fakes.FakeSongDownloader
 import com.simplecityapps.fakes.TestMediaActions
+import com.simplecityapps.fakes.fakeObserveCopyContext
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import com.simplecityapps.shuttle.settings.ObserveSetting
 import com.simplecityapps.shuttle.settings.SettingsStore
@@ -48,8 +48,9 @@ class MediaActionsViewModelTest {
 
     private fun TestScope.viewModel() = MediaActionsViewModel(
         actions.handler,
-        AvailableMediaActions(actions.resolveSongs, FakeSongDownloader(), createPlatformFeatures(), FakeQueueOperations(), ObserveSetting(SettingsStore(InMemoryKeyValueStore())), FakeCopyPreferencesStore()),
+        AvailableMediaActions(actions.resolveSongs, FakeSongDownloader(), createPlatformFeatures(), FakeQueueOperations(), ObserveSetting(SettingsStore(InMemoryKeyValueStore())), fakeObserveCopyContext()),
         playlistRepository,
+        fakeObserveCopyContext(),
     ).also { viewModel -> backgroundScope.launch { viewModel.uiState.collect {} } }
 
     @Test
