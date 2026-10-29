@@ -26,8 +26,19 @@ struct AlbumDetailView: View {
                     models.actions.send(MediaActionPlay(selection: MediaSelectionSongs(songs: state.songs), position: Int32(index), context: state.playContext), intent: services.playIntent)
                 },
                 onShuffle: {
-                    models.actions.send(MediaActionShuffle(selection: MediaSelectionSongs(songs: state.songs), context: state.playContext), intent: services.playIntent)
+                    let selection = MediaSelectionSongs(songs: state.songs)
+                    // A classical album shuffles by work, keeping each work's movements together and in order.
+                    models.actions.send(state.rows == nil ? MediaActionShuffle(selection: selection, context: state.playContext) : MediaActionShuffleWorks(selection: selection, context: state.playContext), intent: services.playIntent)
                 },
+                onPlayWork: { songs in
+                    models.actions.send(MediaActionPlay(selection: MediaSelectionSongs(songs: songs), position: 0, context: state.playContext), intent: services.playIntent)
+                },
+                onToggleWork: { models.album.onToggleWork(firstSongId: $0) },
+                onOpenRecording: { key in
+                    navigator.openAsserting(.album(albumKey: key.key, albumArtistKey: key.albumArtistGroupKey?.key, albumIdentity: key.identity))
+                },
+                // TODO: pass the composer page's open closure once its route lands (parallel composer-page work).
+                onOpenComposer: nil,
                 onPlayNext: { songs in
                     models.actions.send(MediaActionPlayNext(selection: MediaSelectionSongs(songs: songs)), intent: services.playIntent)
                 },
@@ -72,6 +83,13 @@ struct AlbumDetailContent: View {
     var isPlaying: Bool = false
     var onPlay: (Int) -> Void = { _ in }
     var onShuffle: () -> Void = {}
+    /// Plays a work's movements (a work header tap or Play button).
+    var onPlayWork: ([Song]) -> Void = { _ in }
+    /// Folds or unfolds a long work, by its first song's id.
+    var onToggleWork: (Int64) -> Void = { _ in }
+    var onOpenRecording: (AlbumGroupKey) -> Void = { _ in }
+    /// Opens a composer page by their tag as written; nil leaves the composer eyebrow and headings untappable.
+    var onOpenComposer: ((String) -> Void)? = nil
     var onPlayNext: ([Song]) -> Void = { _ in }
     var onAddToQueue: ([Song]) -> Void = { _ in }
     var onPlayAlbumNext: (Album) -> Void = { _ in }
@@ -98,8 +116,10 @@ struct AlbumDetailContent: View {
                     DetailHero(
                         title: album.name ?? "Unknown Album",
                         subtitle: subtitle(album),
-                        artist: artistLink(album)?.name,
-                        onArtist: onGoToArtist,
+                        artist: state.rows?.eyebrow ?? artistLink(album)?.name,
+                        onArtist: heroArtistAction,
+                        artistLabel: state.rows?.eyebrow.map { "Open composer \($0)" },
+                        credits: state.rows?.credits,
                         layout: layout,
                         onPlay: { onPlay(0) },
                         onShuffle: onShuffle,
@@ -109,15 +129,27 @@ struct AlbumDetailContent: View {
                             .artworkTile(points, shape: .artworkHero)
                     }
                 } rows: {
-                    ForEach(discs, id: \.disc) { group in
-                        Section {
-                            ForEach(group.songs, id: \.id) { song in
-                                trackRow(song, album: album)
-                            }
-                        } header: {
-                            if discs.count > 1 {
-                                SectionHeader("Disc \(group.disc)", style: .disc)
-                                    .pinnedHeader()
+                    if let classical = state.rows {
+                        ClassicalAlbumRowsView(
+                            rows: classical.rows,
+                            album: album,
+                            otherRecordings: state.otherRecordings,
+                            isPlaying: isPlaying,
+                            actions: classicalActions,
+                            downloads: downloads,
+                            onSongInfo: { songInfo = SongInfoTarget(songID: $0.id) }
+                        )
+                    } else {
+                        ForEach(discs, id: \.disc) { group in
+                            Section {
+                                ForEach(group.songs, id: \.id) { song in
+                                    trackRow(song, album: album)
+                                }
+                            } header: {
+                                if discs.count > 1 {
+                                    SectionHeader("Disc \(group.disc)", style: .disc)
+                                        .pinnedHeader()
+                                }
                             }
                         }
                     }
@@ -150,6 +182,25 @@ struct AlbumDetailContent: View {
                 EmptyState("Album Not Found", systemImage: "square.stack")
             }
         }
+    }
+
+    /// The eyebrow composer opens their page; on a classical album the artist line is the composer's, never the artist's.
+    private var heroArtistAction: (() -> Void)? {
+        guard let rows = state.rows else { return onGoToArtist }
+        guard let composer = rows.eyebrowComposer, let onOpenComposer else { return nil }
+        return { onOpenComposer(composer) }
+    }
+
+    private var classicalActions: ClassicalAlbumActions {
+        ClassicalAlbumActions(
+            onPlayFrom: onPlay,
+            onPlayWork: onPlayWork,
+            onToggleWork: onToggleWork,
+            onPlayNext: onPlayNext,
+            onAddToQueue: onAddToQueue,
+            onOpenRecording: onOpenRecording,
+            onOpenComposer: onOpenComposer
+        )
     }
 
     private func trackRow(_ song: Song, album: Album) -> some View {
@@ -205,7 +256,16 @@ struct AlbumDetailContent: View {
 
     /// With a tappable artist line above it the eyebrow leaves the artist out, else it leads with it.
     private func subtitle(_ album: Album) -> String {
-        eyebrow(
+        // A classical page leads with the composer and credits, so the subtitle drops the artist and counts tracks.
+        if state.rows != nil {
+            return eyebrow(
+                album.year.map { String($0.intValue) },
+                localizedPlural("album_detail_tracks", Int(album.songCount)),
+                totalDuration(state.songs),
+                AudioQuality.sharedBadge(of: state.songs)
+            )
+        }
+        return eyebrow(
             artistLink(album) == nil ? artistName(album) : nil,
             album.year.map { String($0.intValue) },
             pluralized(state.songs.count, .song),

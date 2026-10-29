@@ -10,6 +10,10 @@ struct DetailHero<Artwork: View>: View {
     /// An artist line above the subtitle that opens the artist (a text button in the tint); nil leaves it out.
     var artist: String? = nil
     var onArtist: (() -> Void)? = nil
+    /// VoiceOver's label for the artist button when it isn't an artist (a classical album's composer).
+    var artistLabel: String? = nil
+    /// A line of conductor and performer credits under the subtitle.
+    var credits: String? = nil
     var layout: DetailHeroLayout = .stacked
     var onPlay: () -> Void = {}
     var onShuffle: () -> Void = {}
@@ -35,7 +39,12 @@ struct DetailHero<Artwork: View>: View {
                     .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 2)
                     .accessibilityAddTraits(.isHeader)
                     .detailTitleProbe()
-                if let artist, let onArtist {
+                if let artist, onArtist == nil {
+                    Text(artist)
+                        .font(.s2Eyebrow)
+                        .foregroundStyle(tint)
+                        .multilineTextAlignment(textAlignment)
+                } else if let artist, let onArtist {
                     Button(action: onArtist) {
                         Text(artist)
                             .font(.s2Eyebrow)
@@ -47,11 +56,17 @@ struct DetailHero<Artwork: View>: View {
                     .buttonStyle(.plain)
                     // The label's padding grows the hit area toward 44 pt; this takes it back out of the layout.
                     .padding(.vertical, -12)
-                    .accessibilityLabel("Go to \(artist)")
-                    .accessibilityHint("Opens the artist")
+                    .accessibilityLabel(artistLabel ?? "Go to \(artist)")
+                    .accessibilityHint(artistLabel == nil ? "Opens the artist" : "")
                 }
                 if let subtitle, !subtitle.isEmpty {
                     Text(subtitle)
+                        .font(.s2Eyebrow)
+                        .foregroundStyle(.s2TextSecondary)
+                        .multilineTextAlignment(textAlignment)
+                }
+                if let credits, !credits.isEmpty {
+                    Text(credits)
                         .font(.s2Eyebrow)
                         .foregroundStyle(.s2TextSecondary)
                         .multilineTextAlignment(textAlignment)

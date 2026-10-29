@@ -8,19 +8,19 @@ import ViewInspector
 /// and what tapping a track plays.
 @MainActor
 struct AlbumDetailTests {
-    private func song(_ id: Int64, _ name: String, track: Int32?, disc: Int32?) -> Song {
+    private func song(_ id: Int64, _ name: String, track: Int32?, disc: Int32?, composer: String? = nil, work: String? = nil, movement: String? = nil, movementNumber: Int32? = nil, movementTotal: Int32? = nil) -> Song {
         Song(
             id: id, name: name, albumArtist: "Radiohead", artists: ["Radiohead"], album: "OK Computer",
             track: track.map { KotlinInt(int: $0) }, disc: disc.map { KotlinInt(int: $0) }, duration: 240_000,
-            date: nil, genres: [], path: "demo://\(id)", size: 0, mimeType: "audio/flac", lastModified: nil,
+            date: nil, genres: composer == nil ? [] : ["Classical"], path: "demo://\(id)", size: 0, mimeType: "audio/flac", lastModified: nil,
             lastPlayed: nil, lastCompleted: nil, playCount: 0, playbackPosition: 0, blacklisted: false,
             externalId: nil, mediaProvider: .shuttle, replayGainTrack: nil, replayGainAlbum: nil, lyrics: nil,
             grouping: nil, bitRate: nil, bitDepth: nil, sampleRate: nil, channelCount: nil, audioCodec: nil,
             artworkVersion: nil, artworkItemId: nil, dateAdded: nil, favouritedAt: nil, albumArtists: nil, artistsTag: nil,
             artistDisplay: nil, albumArtistDisplay: nil, compilation: nil, mbTrackId: nil, mbAlbumId: nil, mbReleaseGroupId: nil,
             mbArtistIds: nil, mbAlbumArtistIds: nil, serverAlbumId: nil, serverArtistIds: nil,
-            serverAlbumArtistIds: nil, albumIdentity: nil, composer: nil, composerSort: nil, conductor: nil, arranger: nil,
-            work: nil, movementName: nil, movementNumber: nil, movementTotal: nil, showMovement: nil, performers: []
+            serverAlbumArtistIds: nil, albumIdentity: nil, composer: composer, composerSort: nil, conductor: nil, arranger: nil,
+            work: work, movementName: movement, movementNumber: movementNumber.map { KotlinInt(int: $0) }, movementTotal: movementTotal.map { KotlinInt(int: $0) }, showMovement: nil, performers: []
         )
     }
 
@@ -169,6 +169,53 @@ struct AlbumDetailTests {
         let state = AlbumDetailUiState(album: album(songCount: 1, artistKey: nil), songs: songs, currentSong: nil, loadingState: .ready, seed: ArtworkSeedNone.shared, moreByArtist: [], moreByArtistNames: [], classical: false)
         let menu = try AlbumDetailContent(state: state, onGoToArtist: {}).inspect().find(ViewType.Menu.self)
         #expect((try? menu.find(button: "Go to Artist")) == nil)
+    }
+
+    private func classicalState(currentSongId: Int64? = nil) -> AlbumDetailUiState {
+        let work = "Symphony No. 5 in C minor, Op. 67"
+        let songs = [
+            song(1, "Allegro con brio", track: 1, disc: 1, composer: "Beethoven", work: work, movement: "Allegro con brio", movementNumber: 1, movementTotal: 2),
+            song(2, "Andante con moto", track: 2, disc: 1, composer: "Beethoven", work: work, movement: "Andante con moto", movementNumber: 2, movementTotal: 2),
+        ]
+        let rows = AlbumRowsKt.buildAlbumRows(songs: songs, albumArtist: "Radiohead", currentSongId: currentSongId.map { KotlinLong(value: $0) }, toggled: [], otherRecordings: [:])
+        return AlbumDetailUiState(album: album(songCount: 2), songs: songs, currentSong: nil, loadingState: .ready, seed: ArtworkSeedNone.shared, moreByArtist: [], moreByArtistNames: [], classical: true, rows: rows, otherRecordings: [:])
+    }
+
+    @Test func classicalAlbumShowsWorkHeaderMovementsAndNoDiscDivider() throws {
+        let sut = AlbumDetailContent(state: classicalState(), onOpenComposer: { _ in })
+        #expect((try? sut.inspect().find(ViewType.Text.self, where: { try $0.string().hasPrefix("Symphony No. 5") })) != nil)
+        #expect((try? sut.inspect().find(text: "Allegro con brio")) != nil)
+        #expect((try? sut.inspect().find(text: "Andante con moto")) != nil)
+        #expect((try? sut.inspect().find(text: "Disc 1")) == nil)
+        // The subtitle counts tracks and drops the artist, which the credits line names.
+        #expect((try? sut.inspect().find(ViewType.Text.self, where: { try $0.string().hasPrefix("1997 · 2 tracks") })) != nil)
+    }
+
+    @Test func tappingAMovementPlaysFromItsIndexInTheAlbum() throws {
+        var played: Int?
+        let sut = AlbumDetailContent(state: classicalState(), onPlay: { played = $0 })
+        try sut.inspect().find(button: "Andante con moto").tap()
+        #expect(played == 1)
+    }
+
+    @Test func composerEyebrowOpensTheComposer() throws {
+        var opened: String?
+        let sut = AlbumDetailContent(state: classicalState(), onOpenComposer: { opened = $0 })
+        try sut.inspect().find(ViewType.Button.self, where: { (try? $0.accessibilityLabel().string())?.hasPrefix("Open composer") == true }).tap()
+        #expect(opened == "Beethoven")
+    }
+
+    @Test func classicalAlbumWithoutComposerRouteLeavesTheEyebrowUntappable() throws {
+        let sut = AlbumDetailContent(state: classicalState())
+        #expect((try? sut.inspect().find(ViewType.Button.self, where: { (try? $0.accessibilityLabel().string())?.hasPrefix("Open composer") == true })) == nil)
+        #expect((try? sut.inspect().find(text: "Beethoven")) != nil)
+    }
+
+    @Test func shortWorkHeaderPlaysItsMovements() throws {
+        var playedWork: [Song] = []
+        let sut = AlbumDetailContent(state: classicalState(), onPlayWork: { playedWork = $0 })
+        try sut.inspect().find(ViewType.Button.self, where: { (try? $0.accessibilityLabel().string())?.hasPrefix("Play Symphony No. 5") == true }).tap()
+        #expect(playedWork.map(\.id) == [1, 2])
     }
 
     @Test func placeholders() throws {

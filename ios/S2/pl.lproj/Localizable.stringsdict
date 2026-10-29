@@ -307,6 +307,34 @@
 			<string>%1$d recordings</string>
 		</dict>
 	</dict>
+	<key>album_detail_tracks</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@count@</string>
+		<key>count</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>other</key>
+			<string>%1$d tracks</string>
+		</dict>
+	</dict>
+	<key>album_detail_other_recordings</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@count@</string>
+		<key>count</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>other</key>
+			<string>Other recordings (%1$d)</string>
+		</dict>
+	</dict>
 	<key>Couldn't download %lld songs. Check you're signed in to the server and try again.</key>
 	<dict>
 		<key>NSStringLocalizedFormatKey</key>

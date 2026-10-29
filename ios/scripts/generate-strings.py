@@ -32,7 +32,7 @@ PROJECT_YML = ROOT / "ios/project.yml"
 TABLE = "Localizable"
 
 # Plurals only the Swift code uses (Android resource names, matching the Swift call sites).
-IOS_PLURALS = ["songsPlural", "albumsPlural", "paywall_status_trial", "composer_works", "composer_albums", "composer_recordings"]
+IOS_PLURALS = ["songsPlural", "albumsPlural", "paywall_status_trial", "composer_works", "composer_albums", "composer_recordings", "album_detail_tracks", "album_detail_other_recordings"]
 
 # Plurals that exist on iOS only (no Android resource), English text for every locale (see plural_fallback): key ->
 # {quantity: text}. The key is the `String(localized:)` key of the call site.
