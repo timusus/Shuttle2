@@ -33,7 +33,9 @@ class LocalGenreRepository(
     private val songDataDao: SongDataDao,
     val songRepository: SongRepository,
     private val albumIndex: LibraryAlbumIndex,
-    private val minTrackLength: Flow<MinTrackLength> = flowOf(MinTrackLength.Off)
+    private val minTrackLength: Flow<MinTrackLength> = flowOf(MinTrackLength.Off),
+    /** A genre counts and lists a merged song once, as the song standing for its copies. */
+    private val copies: LibraryCopies = LibraryCopies(scope, ioDispatcher, songDataDao.getAll())
 ) : GenreRepository {
     /**
      * The ids and totals of each genre, from narrow rows rather than whole songs; the songs themselves are read only
@@ -47,24 +49,27 @@ class LocalGenreRepository(
     private class CoverCandidate(val song: Song, val albumArtist: String, val album: String?)
 
     private val genreRelay: StateFlow<GenreSongs?> by lazy {
-        minTrackLength
-            .flatMapLatest { min -> songDataDao.genreRows(min.seconds * 1000) }
-            .map { rows -> genreSongs(rows) }
+        combine(minTrackLength.flatMapLatest { min -> songDataDao.genreRows(min.seconds * 1000) }, copies.standIns) { rows, standIns -> genreSongs(rows, standIns) }
             .flowOn(ioDispatcher)
             .stateIn(scope, SharingStarted.Lazily, null)
     }
 
-    private fun genreSongs(rows: List<SongGenreRow>): GenreSongs {
+    private fun genreSongs(
+        rows: List<SongGenreRow>,
+        standIns: Map<Long, Song>
+    ): GenreSongs {
         val byGenre = LinkedHashMap<String, MutableList<SongGenreRow>>()
         for (row in rows) {
             for (genre in row.genres.distinct()) {
                 byGenre.getOrPut(genre) { ArrayList() }.add(row)
             }
         }
+        val songId = { row: SongGenreRow -> standIns[row.id]?.id ?: row.id }
         return GenreSongs(
-            songIds = byGenre.mapValues { (_, genreRows) -> genreRows.map { it.id } },
+            songIds = byGenre.mapValues { (_, genreRows) -> genreRows.map(songId).distinct() },
             totals = byGenre.map { (name, genreRows) ->
-                Genre(name, genreRows.size, genreRows.sumOf { it.duration }, genreRows.map { it.mediaProvider }.distinct())
+                val songs = genreRows.distinctBy(songId)
+                Genre(name, songs.size, songs.sumOf { it.duration }, genreRows.map { it.mediaProvider }.distinct())
             }
         )
     }
@@ -86,9 +91,9 @@ class LocalGenreRepository(
         .distinctUntilChanged()
         .flatMapLatest { ids ->
             // A song in several of the genres is listed once per genre, as the genres' lists are.
-            songRepository.getSongs(SongQuery.SongIds(ids)).filterNotNull().map { songs ->
+            combine(songRepository.getSongs(SongQuery.SongIds(ids)).filterNotNull(), copies.standIns) { songs, standIns ->
                 val byId = songs.associateBy { it.id }
-                ids.mapNotNull { id -> byId[id] }
+                ids.mapNotNull { id -> standIns[id] ?: byId[id] }
             }
         }
         .map { songs ->

@@ -207,7 +207,8 @@ abstract class LibraryModule {
             database: MediaDatabase,
             songRepository: SongRepository,
             albumIndex: LibraryAlbumIndex,
-            librarySettings: LibrarySettings
-        ): GenreRepository = LocalGenreRepository(appCoroutineScope, ioDispatcher, database.songDataDao(), songRepository, albumIndex, librarySettings.minTrackLength.flow)
+            librarySettings: LibrarySettings,
+            copies: LibraryCopies
+        ): GenreRepository = LocalGenreRepository(appCoroutineScope, ioDispatcher, database.songDataDao(), songRepository, albumIndex, librarySettings.minTrackLength.flow, copies)
     }
 }

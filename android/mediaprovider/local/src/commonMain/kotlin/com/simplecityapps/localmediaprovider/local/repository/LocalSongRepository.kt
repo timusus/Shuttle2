@@ -23,6 +23,7 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
@@ -71,8 +72,15 @@ class LocalSongRepository(
         min: MinTrackLength
     ): List<Song> = filter(min::keeps).filter(query.predicate).matching(query).sortedWith(query.sortOrder.comparator)
 
-    override fun countSongs(): Flow<Int> = minTrackLength
-        .flatMapLatest { min -> songDataDao.countVisible(min.seconds * 1000) }
+    /** Counted in the database while copies aren't merged, so Home's first load needn't wait for the whole library. */
+    override fun countSongs(): Flow<Int> = copies.enabled
+        .flatMapLatest { merging ->
+            if (merging) {
+                combine(copies.library.filterNotNull(), minTrackLength) { library, min -> library.songs.count { song -> !song.blacklisted && min.keeps(song) } }
+            } else {
+                minTrackLength.flatMapLatest { min -> songDataDao.countVisible(min.seconds * 1000) }
+            }
+        }
         .distinctUntilChanged()
         .flowOn(ioDispatcher)
 
@@ -204,7 +212,7 @@ class LocalSongRepository(
      * playlist that holds it.
      */
     override fun getFavouriteSongIds(): Flow<Set<Long>> = combine(songDataDao.getFavouriteIds(), copies.standIns) { ids, standIns ->
-        ids.toSet().let { favourites -> favourites + favourites.mapNotNull(standIns::get) }
+        ids.toSet().let { favourites -> favourites + favourites.mapNotNull { id -> standIns[id]?.id } }
     }
         .distinctUntilChanged()
         .flowOn(ioDispatcher)

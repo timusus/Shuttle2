@@ -12,10 +12,10 @@ import kotlinx.coroutines.flow.map
 interface SongRepository {
     fun getSongs(query: SongQuery): Flow<List<Song>?>
 
-    /** How many songs [getSongs] of [SongQuery.All] holds (not excluded, not under the minimum track length), counted without loading them. */
+    /** How many songs [getSongs] of [SongQuery.All] holds (not excluded, not under the minimum track length), a song held by several sources once. */
     fun countSongs(): Flow<Int>
 
-    /** [countSongs] per media provider; a provider with no songs has no entry. */
+    /** The songs each media provider holds, as [countSongs] counts them but a song held by several sources counted for each; a provider with no songs has no entry. */
     fun countSongsByProvider(): Flow<Map<MediaProviderType, Int>>
 
     /**

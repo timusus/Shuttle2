@@ -28,7 +28,7 @@ class LibraryCopies(
     scope: CoroutineScope,
     ioDispatcher: CoroutineDispatcher,
     songs: Flow<List<Song>>,
-    private val enabled: Flow<Boolean> = flowOf(false),
+    val enabled: Flow<Boolean> = flowOf(false),
     private val availability: Flow<SongCopyAvailability> = flowOf(SongCopyAvailability()),
     private val grouping: SongCopyGrouping = SongCopyGrouping()
 ) {
@@ -42,8 +42,8 @@ class LibraryCopies(
     /** [CopyLibrary.songs], for the albums and artists built from them. */
     val listedSongs: Flow<List<Song>> = library.filterNotNull().map { it.songs }
 
-    /** Each merged copy's id to the id of the song standing for it; empty at once while copies aren't merged. */
-    val standIns: Flow<Map<Long, Long>> = enabled.flatMapLatest { enabled ->
+    /** Each merged copy's id to the song standing for it; empty at once while copies aren't merged. */
+    val standIns: Flow<Map<Long, Song>> = enabled.flatMapLatest { enabled ->
         if (enabled) library.filterNotNull().map { it.standIns } else flowOf(emptyMap())
     }
 
@@ -66,7 +66,7 @@ class CopyLibrary(
     val songs: List<Song>,
     val groups: Map<Long, List<Song>>
 ) {
-    val standIns: Map<Long, Long> by lazy { songs.flatMap { song -> song.copies.map { copy -> copy.id to song.id } }.toMap() }
+    val standIns: Map<Long, Song> by lazy { songs.flatMap { song -> song.copies.map { copy -> copy.id to song } }.toMap() }
 
     companion object {
         fun merged(

@@ -9,6 +9,7 @@ import com.simplecityapps.localmediaprovider.local.data.room.database.trackingId
 import com.simplecityapps.localmediaprovider.local.data.room.entity.SongData
 import com.simplecityapps.mediaprovider.repository.albums.AlbumQuery
 import com.simplecityapps.mediaprovider.repository.artists.AlbumArtistQuery
+import com.simplecityapps.mediaprovider.repository.genres.GenreQuery
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.query.SongQuery
@@ -194,6 +195,40 @@ class LibraryCopiesTest {
         repository.update(merged.copy(name = "Renamed"))
 
         database.songDataDao().getAll().first().associate { it.mediaProvider to it.dateAdded } shouldBe mapOf(MediaProviderType.Shuttle to localAdded, MediaProviderType.Emby to embyAdded)
+    }
+
+    @Test
+    fun `a genre held locally and on Emby counts and lists each song once, with the history of all its copies`() = runTest {
+        insert((local(1..12) + emby(1..12)).map { it.copy(genres = listOf("Electronic"), duration = 60_000) })
+        val repository = songRepository()
+        repository.loadSongs(SongQuery.All()).first().copies.forEach { copy -> repository.recordPlayedThrough(copy) }
+        val genres = LocalGenreRepository(backgroundScope, UnconfinedTestDispatcher(testScheduler), database.songDataDao(), repository, database.libraryAlbumIndex(), copies = copies())
+
+        genres.getGenres(GenreQuery.All()).first { it.isNotEmpty() }.single().let { genre -> genre.songCount to genre.duration } shouldBe (12 to 720_000)
+        val genreSongs = genres.getSongsForGenres(listOf("Electronic"), SongQuery.All()).first { it.isNotEmpty() }
+        genreSongs.size shouldBe 12
+        genreSongs.single { it.track == 1 }.playCount shouldBe 2
+        genres.getGenreCoverSongs("Electronic", limit = 4).first { it.isNotEmpty() }.size shouldBe 1
+    }
+
+    @Test
+    fun `the library's song count counts a merged song once and every copy while merging is off`() = runTest {
+        insert(local(1..12) + emby(1..12))
+        val repository = songRepository()
+
+        repository.countSongs().first() shouldBe 12
+        merge.value = false
+        repository.countSongs().first() shouldBe 24
+        repository.countSongsByProvider().first() shouldBe mapOf(MediaProviderType.Shuttle to 12, MediaProviderType.Emby to 12)
+    }
+
+    @Test
+    fun `merging off counts a genre's songs in every source`() = runTest {
+        insert((local(1..12) + emby(1..12)).map { it.copy(genres = listOf("Electronic")) })
+        merge.value = false
+        val genres = LocalGenreRepository(backgroundScope, UnconfinedTestDispatcher(testScheduler), database.songDataDao(), songRepository(), database.libraryAlbumIndex(), copies = copies())
+
+        genres.getGenres(GenreQuery.All()).first { it.isNotEmpty() }.single().songCount shouldBe 24
     }
 
     @Test
