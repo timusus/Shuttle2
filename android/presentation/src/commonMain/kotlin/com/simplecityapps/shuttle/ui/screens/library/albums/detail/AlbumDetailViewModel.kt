@@ -6,10 +6,12 @@ import com.simplecityapps.mediaprovider.repository.albums.AlbumQuery
 import com.simplecityapps.shuttle.di.IoDispatcher
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumGroupKey
+import com.simplecityapps.shuttle.model.AlbumSources
 import com.simplecityapps.shuttle.model.FindOtherRecordings
 import com.simplecityapps.shuttle.model.OtherRecording
 import com.simplecityapps.shuttle.model.PlayContext
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.model.albumSources
 import com.simplecityapps.shuttle.model.isClassicalBlock
 import com.simplecityapps.shuttle.model.performersLine
 import com.simplecityapps.shuttle.model.playContext
@@ -18,6 +20,7 @@ import com.simplecityapps.shuttle.settings.AppearanceSettings
 import com.simplecityapps.shuttle.settings.ObserveSetting
 import com.simplecityapps.shuttle.ui.actions.ObserveAlbums
 import com.simplecityapps.shuttle.ui.actions.ObserveArtists
+import com.simplecityapps.shuttle.ui.actions.ObserveCopyContext
 import com.simplecityapps.shuttle.ui.actions.ObserveCurrentSong
 import com.simplecityapps.shuttle.ui.actions.ObserveSongs
 import com.simplecityapps.shuttle.ui.theme.ArtworkSeed
@@ -54,6 +57,8 @@ data class AlbumDetailUiState(
     val rows: AlbumRows? = null,
     /** Other albums' recordings of each of this album's works, by the work's first song id; works with none are absent. */
     val otherRecordings: Map<Long, List<OtherRecording>> = emptyMap(),
+    /** The album's sources; null unless merging is on and the songs span two or more sources. */
+    val sources: AlbumSources? = null,
 ) {
     // Swift sees no default arguments.
     constructor(
@@ -88,6 +93,7 @@ class AlbumDetailViewModel @AssistedInject constructor(
     observeArtworkSeed: ObserveArtworkSeed,
     observeSetting: ObserveSetting,
     findOtherRecordings: FindOtherRecordings,
+    observeCopyContext: ObserveCopyContext,
     @IoDispatcher ioDispatcher: CoroutineDispatcher,
 ) : ViewModel() {
 
@@ -115,14 +121,19 @@ class AlbumDetailViewModel @AssistedInject constructor(
         classicalRows.toggleWork(firstSongId)
     }
 
-    private class Extras(val moreBy: MoreBy, val classical: Boolean, val grouped: Grouped)
+    // Songs only carry several copies while merging is on, so a choice of sources implies it.
+    private val sources = combine(songs, observeCopyContext()) { songs, context ->
+        albumSources(songs, context.preferences.primaryAlbums).takeIf { context.mergeCopies && it.hasChoice }
+    }
+
+    private class Extras(val moreBy: MoreBy, val classical: Boolean, val grouped: Grouped, val sources: AlbumSources?)
 
     val uiState: StateFlow<AlbumDetailUiState> = combine(
         songs,
         album,
         observeCurrentSong(),
         observeArtworkSeed(songs.map { it.firstOrNull() }),
-        combine(moreBy, classicalDisplay, classicalRows.grouped, ::Extras),
+        combine(moreBy, classicalDisplay, classicalRows.grouped, sources, ::Extras),
     ) { _, album, currentSong, seed, extras ->
         val songs = extras.grouped.songs
         AlbumDetailUiState(
@@ -141,6 +152,7 @@ class AlbumDetailViewModel @AssistedInject constructor(
             classical = extras.classical,
             rows = extras.grouped.rows?.withPlaying(currentSong?.id),
             otherRecordings = extras.grouped.otherRecordings,
+            sources = extras.sources,
         )
     }.stateIn(
         scope = viewModelScope,

@@ -20,6 +20,11 @@
         <item quantity="one"><xliff:g example="1" id="count">%1$d</xliff:g>&#160;track</item>
         <item quantity="other"><xliff:g example="12" id="count">%1$d</xliff:g>&#160;tracks</item>
     </plurals>
+    <!-- How many sources (device, servers) hold an album's or song's copies, in an album header or song menu header; two or more -->
+    <plurals name="library_sources_count">
+        <item quantity="one"><xliff:g example="1" id="count">%1$d</xliff:g>&#160;source</item>
+        <item quantity="other"><xliff:g example="3" id="count">%1$d</xliff:g>&#160;sources</item>
+    </plurals>
     <!-- The number of movements in a classical work -->
     <plurals name="work_movements">
         <item quantity="one"><xliff:g example="1" id="count">%1$d</xliff:g>&#160;movement</item>

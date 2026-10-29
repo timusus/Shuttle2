@@ -34,3 +34,6 @@ fun albumSources(albumSongs: List<Song>, primaryAlbums: Set<String> = emptySet()
     }.sortedWith(compareByDescending<AlbumSource> { it.songCount }.thenBy { it.provider.ordinal })
     return AlbumSources(albumSongs.size, sources, automatic = sources.none { it.primary })
 }
+
+/** How many sources hold a copy of this song; a song only lists several copies while the library merges them. */
+val Song.sourceCount: Int get() = copies.map { it.mediaProvider }.distinct().size

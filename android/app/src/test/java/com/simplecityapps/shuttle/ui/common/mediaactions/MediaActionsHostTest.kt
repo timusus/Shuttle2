@@ -15,6 +15,8 @@ import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
 import com.simplecityapps.shuttle.designsystem.component.ArtworkPlaceholder
 import com.simplecityapps.shuttle.designsystem.component.S2Action
 import com.simplecityapps.shuttle.designsystem.theme.S2Theme
+import com.simplecityapps.shuttle.model.MediaProviderType
+import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.ui.actions.AvailableMediaActions
 import com.simplecityapps.shuttle.ui.actions.MediaAction
 import com.simplecityapps.shuttle.ui.actions.MediaActionHandler
@@ -73,6 +75,7 @@ class MediaActionsHostTest {
     private fun target(
         onlyTypes: Set<MediaActionType>? = null,
         leadingActions: List<S2Action> = emptyList(),
+        song: Song = this.song,
     ) = MediaActionsTarget(
         title = "Phase Garden",
         subtitle = "Juniper Static",
@@ -87,6 +90,21 @@ class MediaActionsHostTest {
         setContent(target())
         rule.onNodeWithText("Shuffle").assertIsDisplayed()
         rule.onNodeWithText("Start radio").assertIsDisplayed()
+    }
+
+    @Test
+    fun `a song with copies in several sources says how many in the header`() {
+        val emby = createSong(id = 2, mediaProvider = MediaProviderType.Emby)
+        setContent(target(song = song.copy(copies = listOf(song, emby))))
+
+        rule.onNodeWithText("Juniper Static · 2 sources").assertIsDisplayed()
+    }
+
+    @Test
+    fun `a song with one copy keeps its plain header`() {
+        setContent(target())
+
+        rule.onNodeWithText("Juniper Static").assertIsDisplayed()
     }
 
     @Test

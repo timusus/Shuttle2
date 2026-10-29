@@ -28,6 +28,20 @@ class AlbumDetailScreenTest {
     }
 
     @Test
+    fun `an album held by several sources says how many`() {
+        robot.setAlbum(readyAlbumDetail(sources = threeAlbumSources()))
+
+        robot.assertTextDisplayed("3 sources", substring = true)
+    }
+
+    @Test
+    fun `an album from one source says nothing about sources`() {
+        robot.setAlbum(readyAlbumDetail())
+
+        robot.assertTextNotDisplayed(" sources", substring = true)
+    }
+
+    @Test
     fun `the header names the album artist, not every featured track artist`() {
         val album = createAlbum(
             name = "Skin",

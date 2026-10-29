@@ -5,12 +5,14 @@ import com.simplecityapps.createAlbumArtist
 import com.simplecityapps.createSong
 import com.simplecityapps.fakes.FakeAlbumArtistRepository
 import com.simplecityapps.fakes.FakeAlbumRepository
+import com.simplecityapps.fakes.FakeCopyPreferencesStore
 import com.simplecityapps.fakes.FakeGenreRepository
 import com.simplecityapps.fakes.FakePlaybackOperations
 import com.simplecityapps.fakes.FakePlaylistRepository
 import com.simplecityapps.fakes.FakeQueueOperations
 import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.fakes.TestMediaActions
+import com.simplecityapps.fakes.fakeObserveCopyContext
 import com.simplecityapps.mediaprovider.repository.albums.AlbumQuery
 import com.simplecityapps.playback.queue.QueueState
 import com.simplecityapps.playback.queue.toQueueItem
@@ -19,6 +21,7 @@ import com.simplecityapps.shuttle.model.AlbumGroupKey
 import com.simplecityapps.shuttle.model.AlbumIdentityRule
 import com.simplecityapps.shuttle.model.ArtistHeroArtwork
 import com.simplecityapps.shuttle.model.FindOtherRecordings
+import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Performer
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
@@ -471,6 +474,49 @@ class AlbumDetailViewModelTest {
         viewModel.uiState.value.moreByArtist shouldBe emptyList()
     }
 
+    private val copyStore = FakeCopyPreferencesStore()
+
+    private fun mergedSongs(): List<Song> {
+        val local = createSong(id = 1, path = "/music/1.flac")
+        val emby = createSong(id = 2, path = "emby://2", mediaProvider = MediaProviderType.Emby).copy(externalId = "e2")
+        val plex = createSong(id = 3, path = "plex://3", mediaProvider = MediaProviderType.Plex).copy(externalId = "p3")
+        return listOf(local.copy(copies = listOf(local, emby)), plex.copy(copies = listOf(plex, emby)))
+    }
+
+    @Test
+    fun `an album held by several sources reports how many`() = runTest {
+        fakeSongRepository.setSongs(mergedSongs())
+        fakeAlbumRepository.setAlbums(listOf(testAlbum))
+        val viewModel = createViewModel()
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        advanceUntilIdle()
+
+        viewModel.uiState.value.sources!!.sourceCount shouldBe 3
+    }
+
+    @Test
+    fun `an album from one source reports no sources`() = runTest {
+        fakeSongRepository.setSongs(listOf(createSong(id = 1)))
+        fakeAlbumRepository.setAlbums(listOf(testAlbum))
+        val viewModel = createViewModel()
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        advanceUntilIdle()
+
+        viewModel.uiState.value.sources shouldBe null
+    }
+
+    @Test
+    fun `an album reports no sources while merging is off`() = runTest {
+        copyStore.mergeCopies.value = false
+        fakeSongRepository.setSongs(mergedSongs())
+        fakeAlbumRepository.setAlbums(listOf(testAlbum))
+        val viewModel = createViewModel()
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        advanceUntilIdle()
+
+        viewModel.uiState.value.sources shouldBe null
+    }
+
     private fun createViewModel(groupKey: AlbumGroupKey? = testAlbum.groupKey): AlbumDetailViewModel {
         val testMediaActions = TestMediaActions(
             fakeSongRepository,
@@ -490,6 +536,7 @@ class AlbumDetailViewModelTest {
             observeArtworkSeed = ObserveArtworkSeed(seedSource, ObserveSetting(settingsStore)),
             observeSetting = ObserveSetting(settingsStore),
             findOtherRecordings = FindOtherRecordings(),
+            observeCopyContext = fakeObserveCopyContext(copyStore),
             ioDispatcher = UnconfinedTestDispatcher(),
         )
     }

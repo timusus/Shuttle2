@@ -9,8 +9,11 @@ import com.simplecityapps.createSong
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumArtist
 import com.simplecityapps.shuttle.model.AlbumGroupKey
+import com.simplecityapps.shuttle.model.AlbumSource
+import com.simplecityapps.shuttle.model.AlbumSources
 import com.simplecityapps.shuttle.model.ArtistHeroArtwork
 import com.simplecityapps.shuttle.model.Genre
+import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.PlaylistSong
 import com.simplecityapps.shuttle.model.SmartPlaylist
@@ -42,7 +45,19 @@ fun readyAlbumDetail(
     currentSong: Song? = null,
     moreByArtist: List<Album> = emptyList(),
     moreByArtistNames: List<String> = if (moreByArtist.isEmpty()) emptyList() else listOfNotNull(album.albumArtist),
-) = AlbumDetailUiState(album = album, songs = songs, currentSong = currentSong, loadingState = AlbumDetailUiState.LoadingState.Ready, moreByArtist = moreByArtist, moreByArtistNames = moreByArtistNames)
+    sources: AlbumSources? = null,
+) = AlbumDetailUiState(album = album, songs = songs, currentSong = currentSong, loadingState = AlbumDetailUiState.LoadingState.Ready, moreByArtist = moreByArtist, moreByArtistNames = moreByArtistNames, sources = sources)
+
+/** A 12-song album held in full on this device, by Plex for 10 songs and by Jellyfin for 8; nothing is primary. */
+fun threeAlbumSources(primary: MediaProviderType? = null) = AlbumSources(
+    songCount = 12,
+    sources = listOf(
+        AlbumSource(MediaProviderType.MediaStore, 12, primary == MediaProviderType.MediaStore),
+        AlbumSource(MediaProviderType.Plex, 10, primary == MediaProviderType.Plex),
+        AlbumSource(MediaProviderType.Jellyfin, 8, primary == MediaProviderType.Jellyfin),
+    ),
+    automatic = primary == null,
+)
 
 /**
  * A recital album: a three-movement sonata run, a lone prelude and an untagged encore, in track order, as the
