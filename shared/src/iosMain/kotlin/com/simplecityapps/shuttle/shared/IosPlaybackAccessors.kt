@@ -6,11 +6,15 @@ import com.simplecityapps.shuttle.playbackreporting.PlaybackReporting
 import com.simplecityapps.shuttle.scrobbling.PlaybackScrobbling
 import com.simplecityapps.shuttle.scrobbling.flush.InProcessScrobbleFlushScheduler
 import com.simplecityapps.shuttle.shared.playback.IosPlayerController
+import com.simplecityapps.shuttle.shared.playback.IosSystemSurfaceText
 
 /** The player and what follows its events; part of [IosAppGraph]. */
 interface IosPlaybackAccessors {
     /** Playback: `PlaybackOperations`, and the queue through its `queueOperations`. One for the graph, on main. */
     val playerController: IosPlayerController
+
+    /** The title, artist and album the lock screen and widgets show for a queued song. */
+    val systemSurfaceText: IosSystemSurfaceText
 
     /** Records each song's plays and pause positions from [playerController]'s events; Swift starts it once, at launch. */
     val recordPlays: RecordPlays

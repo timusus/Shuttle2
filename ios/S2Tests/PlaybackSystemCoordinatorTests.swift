@@ -81,6 +81,22 @@ struct PlaybackSystemCoordinatorTests {
         #expect(rig.player.currentItem?.songId == 2)
     }
 
+    @Test func aMovementOfAWorkShowsTheComposerAndWork() async throws {
+        let work = [
+            TestSongs.song(11, "Allegro", artist: "Orchestra", album: "Disc", durationMs: 300_000, composer: "Beethoven", work: "Symphony No. 5", movementName: "Allegro", movementNumber: 1),
+            TestSongs.song(12, "Andante", artist: "Orchestra", album: "Disc", durationMs: 300_000, composer: "Beethoven", work: "Symphony No. 5", movementName: "Andante", movementNumber: 2),
+        ]
+        let controller = graph.playerController
+        _ = try await controller.queueOperations.setQueue(songs: work, shuffleSongs: nil, position: 0, context: PlayContextNone.shared)
+        controller.load(seekPosition: nil, skipUnloadable: false, playWhenReady: false) { _ in }
+        #expect(await waitUntil { title == "I. Allegro" })
+        #expect(info[MPMediaItemPropertyArtist] as String? == "Beethoven: Symphony No. 5")
+        #expect(info[MPMediaItemPropertyAlbumTitle] as String? == "Disc")
+
+        commands.press(.nextTrack)
+        #expect(await waitUntil { title == "II. Andante" })
+    }
+
     @Test func playAndPauseFromTheLockScreenReflectBack() async throws {
         try await playQueue()
         #expect(await waitUntil { rate == 1 && info.playbackState == .playing })

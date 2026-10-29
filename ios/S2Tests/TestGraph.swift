@@ -79,7 +79,7 @@ func makeTestCoordinator(
     info: FakeNowPlayingInfoCenter,
     commands: FakeRemoteCommandCenter
 ) -> PlaybackSystemCoordinator {
-    PlaybackSystemCoordinator(playback: graph.playerController, intent: intent, player: rig.player) { player, metadata, artwork in
+    PlaybackSystemCoordinator(playback: graph.playerController, intent: intent, player: rig.player, text: graph.systemSurfaceText) { player, metadata, artwork in
         NowPlayingSession(
             player: player, supportedRates: PlaybackSystemCoordinator.supportedRates, metadata: metadata, artwork: artwork,
             infoCenter: info, commandCenter: commands, now: { 0 }

@@ -26,6 +26,7 @@ final class PlaybackSystemCoordinator {
     private let playback: IosPlayerController
     private let intent: PlayIntent
     private let nowPlayingPlayer: NowPlayingPlayer
+    private let text: IosSystemSurfaceText
     private let makeSession: MakeSession
     private let artworkLoader: ArtworkLoader
     /// The widgets' copy of Now Playing; nil in tests that don't look at it.
@@ -33,11 +34,15 @@ final class PlaybackSystemCoordinator {
     private(set) var session: NowPlayingSession<QueueKey>?
     private var observer: Task<Void, Never>?
     private var intentListener: Int?
+    private var settingObserver: Task<Void, Never>?
+    /// The text last handed to the session, to refresh it only when the queue or the setting changes what it says.
+    private var shownText: SystemSurfaceText?
 
     init(
         playback: IosPlayerController,
         intent: PlayIntent,
         player: Player<QueueKey>,
+        text: IosSystemSurfaceText,
         widgets: NowPlayingWidgetPublisher? = nil,
         artworkLoader: ArtworkLoader = .shared,
         makeSession: @escaping MakeSession = { player, metadata, artwork in
@@ -46,6 +51,7 @@ final class PlaybackSystemCoordinator {
     ) {
         self.playback = playback
         self.intent = intent
+        self.text = text
         nowPlayingPlayer = NowPlayingPlayer(player: player, playback: playback, intent: intent)
         self.widgets = widgets
         self.artworkLoader = artworkLoader
@@ -58,7 +64,11 @@ final class PlaybackSystemCoordinator {
         let artworkLoader = artworkLoader
         session = makeSession(
             player,
-            { key in Self.metadata(player.song(for: key)) },
+            { [weak self] key in
+                let shown = self?.text.text(uid: key.uid)
+                self?.shownText = shown
+                return Self.metadata(shown)
+            },
             { key in
                 guard let song = player.song(for: key),
                       let image = await artworkLoader.image(for: .song(song), maxPixelSize: Self.artworkPixels) else { return nil }
@@ -70,8 +80,26 @@ final class PlaybackSystemCoordinator {
         observer = Task { [weak self] in
             for await _ in queue {
                 self?.publishWidgets()
+                self?.refreshText()
             }
         }
+        let setting = text.classicalDisplay
+        settingObserver = Task { [weak self] in
+            for await _ in setting {
+                self?.publishWidgets()
+                self?.refreshText()
+            }
+        }
+    }
+
+    /// The session reads the text once per item, so a queue edit around the playing item or the Classical display
+    /// setting changing under it has to ask again.
+    private func refreshText() {
+        guard let uid = playback.queueOperations.queueStateFlow.value.currentItem?.uid else { return }
+        let current = text.text(uid: uid)
+        guard shownText != nil, current != shownText else { return }
+        shownText = current
+        session?.refreshMetadata()
     }
 
     /// Releases the remote commands, clears Now Playing and stops the widgets following the player.
@@ -80,13 +108,16 @@ final class PlaybackSystemCoordinator {
         session = nil
         observer?.cancel()
         observer = nil
+        settingObserver?.cancel()
+        settingObserver = nil
+        shownText = nil
         if let intentListener { intent.removeListener(intentListener) }
         intentListener = nil
     }
 
-    /// What Now Playing shows for `song`; its duration is `NowPlayingPlayer`'s.
-    static func metadata(_ song: Song?) -> NowPlayingMetadata {
-        NowPlayingMetadata(title: song?.name ?? "", artist: song?.friendlyArtistName, album: song?.album)
+    /// What Now Playing shows for `text`; its duration is `NowPlayingPlayer`'s.
+    static func metadata(_ text: SystemSurfaceText?) -> NowPlayingMetadata {
+        NowPlayingMetadata(title: text?.title ?? "", artist: text?.artist, album: text?.album)
     }
 
     /// Nonisolated: the system calls the request handler off the main thread.
@@ -100,9 +131,10 @@ final class PlaybackSystemCoordinator {
             return
         }
         let song = current.song
+        let shown = text.text(uid: current.uid)
         widgets?.update(
             item: NowPlayingItem(
-                id: String(current.uid), title: song.name ?? "", artist: song.friendlyArtistName, album: song.album,
+                id: String(current.uid), title: shown?.title ?? "", artist: shown?.artist, album: shown?.album,
                 artwork: .song(song)
             ),
             // Read straight from the player, not `isPlayIntended`, which lags it by a hop through an observer task.

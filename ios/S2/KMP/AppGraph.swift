@@ -137,6 +137,7 @@ final class IosAppDependencies {
             playback: graph.playerController,
             intent: playIntent,
             player: audioPlayer.player,
+            text: graph.systemSurfaceText,
             widgets: NowPlayingWidgetPublisher()
         )
         let intent = playIntent
