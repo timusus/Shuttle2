@@ -51,6 +51,9 @@ abstract class IosPlayerControllerTestBase {
     /** Whether a [server] song may stream, given whether the user asked to play it; the real gate in the gate tests. */
     protected var serverAccess: suspend (Song, Boolean) -> ServerAccess = { _, _ -> ServerAccess.Allowed }
 
+    /** Whether Classical display is on. */
+    protected var classicalDisplay = false
+
     protected fun url(song: Song) = "song:${song.id}"
 
     /** While set, every stream resolution waits for it: a slow server answer. */
@@ -100,7 +103,8 @@ abstract class IosPlayerControllerTestBase {
                 }
             },
             scope = CoroutineScope(dispatcher),
-            random = Random(1)
+            random = Random(1),
+            classicalDisplay = { classicalDisplay }
         )
         engine.open = controller.itemResolver::resolve
         block(controller)

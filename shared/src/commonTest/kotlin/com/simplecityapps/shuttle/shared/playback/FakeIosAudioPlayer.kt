@@ -80,6 +80,7 @@ class FakeIosAudioPlayer : IosAudioPlayer {
         startMs: Long,
         playWhenReady: Boolean
     ) {
+        orderings += "items"
         calls += "items ${order.map { it.songId }} at $currentIndex@$startMs${if (playWhenReady) " playing" else ""}"
         this.order = order
         index = currentIndex
@@ -92,6 +93,7 @@ class FakeIosAudioPlayer : IosAudioPlayer {
         order: List<IosQueueEntry>,
         currentIndex: Int
     ) {
+        orderings += "replace"
         calls += "replace ${order.map { it.songId }} at $currentIndex"
         this.order = order
         index = currentIndex
@@ -248,7 +250,11 @@ class FakeIosAudioPlayer : IosAudioPlayer {
     /** Every [setWorkAlbumGain], in order. */
     val workAlbumGains = mutableListOf<List<IosQueueEntry>>()
 
+    /** The work sets and orders handed over, interleaved, kept apart from [calls] so they don't show in its assertions. */
+    val orderings = mutableListOf<String>()
+
     override fun setWorkAlbumGain(entries: List<IosQueueEntry>) {
+        orderings += "work ${entries.map { it.songId }}"
         workAlbumGains += entries
     }
 
