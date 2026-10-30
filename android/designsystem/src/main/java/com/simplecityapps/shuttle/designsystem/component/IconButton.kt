@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.FavoriteBorder
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.FilledIconToggleButton
 import androidx.compose.material3.FilledTonalIconButton
@@ -36,7 +35,6 @@ enum class S2IconButtonSize {
     Large,
     ;
 
-    @OptIn(ExperimentalMaterial3ExpressiveApi::class)
     internal val containerSize: DpSize
         @Composable get() = when (this) {
             ExtraSmall -> IconButtonDefaults.extraSmallContainerSize()
@@ -45,7 +43,6 @@ enum class S2IconButtonSize {
             Large -> IconButtonDefaults.largeContainerSize()
         }
 
-    @OptIn(ExperimentalMaterial3ExpressiveApi::class)
     internal val iconSize: Dp
         get() = when (this) {
             ExtraSmall -> IconButtonDefaults.extraSmallIconSize
@@ -60,7 +57,6 @@ enum class S2IconButtonSize {
  *
  * Shows a tooltip with the value of [contentDescription].
  */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun S2IconButton(
     icon: ImageVector,
@@ -95,7 +91,6 @@ fun S2IconButton(
  * A two-state icon button (favourite, shuffle, repeat): checked morphs the shape to square and
  * fills it, and [checkedIcon] replaces [icon] when set.
  */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun S2IconToggleButton(
     icon: ImageVector,
