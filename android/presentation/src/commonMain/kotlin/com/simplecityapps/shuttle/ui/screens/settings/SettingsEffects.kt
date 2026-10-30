@@ -22,6 +22,9 @@ interface SettingsEffects {
     fun downloadAllArtwork()
 
     suspend fun shareDebugLogs(): ShareDebugLogsResult
+
+    /** Opens the sibling Shuttle Podcasts app's store page; only Android's Settings has the row. */
+    fun openShuttlePodcasts() = Unit
 }
 
 enum class ShareDebugLogsResult { Shared, Empty }

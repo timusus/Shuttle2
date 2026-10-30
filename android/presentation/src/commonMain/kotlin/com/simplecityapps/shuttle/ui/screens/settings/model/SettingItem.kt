@@ -56,7 +56,8 @@ enum class SettingsAction {
     ImportBackup,
     ClearArtworkCache,
     DownloadAllArtwork,
-    ShareDebugLogs
+    ShareDebugLogs,
+    OpenShuttlePodcasts
 }
 
 /** A confirmation dialog shown before a destructive or costly action runs. */

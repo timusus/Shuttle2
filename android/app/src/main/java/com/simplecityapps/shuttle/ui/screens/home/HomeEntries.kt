@@ -57,6 +57,8 @@ private fun HomeDestination(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     // Home reloads as it comes on screen, and while it's off screen only as the hour turns
     HomeVisibilityEffect(viewModel::onVisibilityChanged)
+    val promoViewModel: PodcastsPromoViewModel = metroViewModel()
+    val showPodcastsPromo by promoViewModel.uiState.collectAsStateWithLifecycle()
     val emptyViewModel: LibraryEmptyViewModel = metroViewModel()
     val emptyState by emptyViewModel.uiState.collectAsStateWithLifecycle()
     val accessRequests = rememberMusicAccessRequests(emptyViewModel)
@@ -101,6 +103,9 @@ private fun HomeDestination(
                     onOpen(WhatsNewRoute)
                 },
                 onDismissWhatsNew = viewModel::onWhatsNewHandled,
+                showPodcastsPromo = showPodcastsPromo,
+                onGetPodcasts = promoViewModel::onGetIt,
+                onDismissPodcasts = promoViewModel::onDismiss,
                 onOpenItem = { item -> onOpen(item.route) },
                 onRefresh = viewModel::refresh,
                 onAction = actions::dispatch,

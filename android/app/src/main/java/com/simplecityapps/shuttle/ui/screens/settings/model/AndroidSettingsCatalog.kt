@@ -426,6 +426,17 @@ object AndroidSettingsCatalog : SettingsCatalog {
                 )
             ),
             SettingsGroup(
+                title = SettingsString.SETTINGS_GROUP_MORE_FROM_SIMPLECITY,
+                items = listOf(
+                    SettingItem.Action(
+                        action = SettingsAction.OpenShuttlePodcasts,
+                        title = SettingsString.PREF_SHUTTLE_PODCASTS_TITLE,
+                        summary = SettingsString.PREF_SHUTTLE_PODCASTS_SUMMARY,
+                        key = "pref_shuttle_podcasts"
+                    )
+                )
+            ),
+            SettingsGroup(
                 title = SettingsString.SETTINGS_GROUP_ADVANCED,
                 items = listOfNotNull(
                     SettingItem.Switch(

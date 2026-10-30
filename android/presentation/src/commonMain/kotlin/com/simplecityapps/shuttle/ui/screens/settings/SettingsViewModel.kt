@@ -178,6 +178,8 @@ class SettingsViewModel @Inject constructor(
             SettingsAction.ShareDebugLogs -> viewModelScope.launch {
                 events.post(SettingsUiEvent.DebugLogsShared(effects.shareDebugLogs()))
             }
+
+            SettingsAction.OpenShuttlePodcasts -> effects.openShuttlePodcasts()
         }
     }
 

@@ -9,6 +9,7 @@ import com.simplecityapps.shuttle.appinitializers.FavouriteSyncInitializer
 import com.simplecityapps.shuttle.appinitializers.MediaProviderInitializer
 import com.simplecityapps.shuttle.appinitializers.PlaybackInitializer
 import com.simplecityapps.shuttle.appinitializers.PlaybackReportingInitializer
+import com.simplecityapps.shuttle.appinitializers.PodcastsPromoInitializer
 import com.simplecityapps.shuttle.appinitializers.ScrobblingInitializer
 import com.simplecityapps.shuttle.appinitializers.SearchIndexInitializer
 import com.simplecityapps.shuttle.appinitializers.ShortcutInitializer
@@ -74,6 +75,10 @@ abstract class AppBindsModule {
     @Binds
     @IntoSet
     abstract fun provideEntitlementInitializer(bind: EntitlementInitializer): AppInitializer
+
+    @Binds
+    @IntoSet
+    abstract fun providePodcastsPromoInitializer(bind: PodcastsPromoInitializer): AppInitializer
 
     @Binds
     @IntoSet

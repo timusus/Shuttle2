@@ -108,6 +108,14 @@
     <string name="home_whats_new_open">See what\'s new</string>
     <!-- Home: content description for the button that dismisses the What's new card -->
     <string name="home_whats_new_dismiss">Dismiss</string>
+    <!-- Home: one-time card promoting the Shuttle Podcasts app -->
+    <string name="home_podcasts_promo_title" translatable="false">Shuttle Podcasts</string>
+    <!-- Home: message under the Shuttle Podcasts card title -->
+    <string name="home_podcasts_promo_message">From the makers of Shuttle. A simple podcast player that skips inserted ads.</string>
+    <!-- Home: button on the Shuttle Podcasts card that opens its Play Store page -->
+    <string name="home_podcasts_promo_open">Get it</string>
+    <!-- Home: content description for the button that dismisses the Shuttle Podcasts card -->
+    <string name="home_podcasts_promo_dismiss">Dismiss</string>
     <!-- Home: title of the empty state when the library has no songs -->
     <string name="home_empty_title">No music yet</string>
     <!-- Home: message of the empty state when the library has no songs -->

@@ -210,6 +210,12 @@
     <string name="settings_privacy_summary">Crash reports and analytics</string>
     <!-- Settings: Title of the Advanced group (debug logging) on the About screen -->
     <string name="settings_group_advanced">Advanced</string>
+    <!-- Settings > About: header of the group linking to the developer's other apps -->
+    <string name="settings_group_more_from_simplecity">More from Simplecity</string>
+    <!-- Settings > About: row that opens the Shuttle Podcasts Play Store page; a product name, leave untranslated -->
+    <string name="pref_shuttle_podcasts_title" translatable="false">Shuttle Podcasts</string>
+    <!-- Settings > About: one line under the Shuttle Podcasts row -->
+    <string name="pref_shuttle_podcasts_summary">A simple podcast player that skips inserted ads</string>
     <!-- Settings: Title of the Sources group that holds the streaming quality, download and artwork Wi-Fi rules -->
     <string name="settings_group_streaming_and_downloads">Streaming &amp; downloads</string>
     <!-- Settings: Title of the Library group that holds the scan schedule and excluded songs -->

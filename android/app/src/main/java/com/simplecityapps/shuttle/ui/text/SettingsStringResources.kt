@@ -122,6 +122,9 @@ val SettingsString.resId: Int
         SettingsString.PREF_ANALYTICS_SUBTITLE -> R.string.pref_analytics_subtitle
         SettingsString.PREF_VIEW_CHANGELOG_TITLE -> R.string.pref_view_changelog_title
         SettingsString.PREF_VIEW_LICENSES_TITLE -> R.string.pref_view_licenses_title
+        SettingsString.SETTINGS_GROUP_MORE_FROM_SIMPLECITY -> R.string.settings_group_more_from_simplecity
+        SettingsString.PREF_SHUTTLE_PODCASTS_TITLE -> R.string.pref_shuttle_podcasts_title
+        SettingsString.PREF_SHUTTLE_PODCASTS_SUMMARY -> R.string.pref_shuttle_podcasts_summary
         SettingsString.SETTINGS_GROUP_ADVANCED -> R.string.settings_group_advanced
         SettingsString.SETTINGS_GROUP_STREAMING_AND_DOWNLOADS -> R.string.settings_group_streaming_and_downloads
         SettingsString.SETTINGS_GROUP_SCANNING -> R.string.settings_group_scanning

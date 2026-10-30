@@ -20,6 +20,7 @@ import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.material.icons.rounded.Casino
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.NewReleases
+import androidx.compose.material.icons.rounded.Podcasts
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Shuffle
 import androidx.compose.material3.MaterialTheme
@@ -72,6 +73,10 @@ data class HomeCallbacks(
     val onShuffleRandom: (ShuffleBy) -> Unit = {},
     val onOpenWhatsNew: () -> Unit = {},
     val onDismissWhatsNew: () -> Unit = {},
+    /** The one-time Shuttle Podcasts card; shown after What's new. */
+    val showPodcastsPromo: Boolean = false,
+    val onGetPodcasts: () -> Unit = {},
+    val onDismissPodcasts: () -> Unit = {},
     /** Pull to refresh: reloads the sections. */
     val onRefresh: () -> Unit = {},
     /** Opens an item's detail: an album, artist, playlist or genre. */
@@ -219,6 +224,9 @@ private fun HomeShelves(
     ) {
         if (content.showWhatsNew) {
             item(key = "whats-new") { WhatsNewCard(callbacks, Modifier.animateItem()) }
+        }
+        if (callbacks.showPodcastsPromo) {
+            item(key = "podcasts-promo") { PodcastsPromoCard(callbacks, Modifier.animateItem()) }
         }
         // Cold start's Shuffle all leads, above the shelves: the one sure thing to do with a new library.
         if (content.coldStart) {
@@ -375,6 +383,36 @@ private fun WhatsNewCard(
         S2Button(
             text = stringResource(R.string.home_whats_new_open),
             onClick = callbacks.onOpenWhatsNew,
+            style = S2ButtonStyle.Text,
+            modifier = Modifier.padding(S2Spacing.xsmall),
+        )
+    }
+}
+
+@Composable
+private fun PodcastsPromoCard(
+    callbacks: HomeCallbacks,
+    modifier: Modifier = Modifier,
+) {
+    S2Card(modifier = modifier.fillMaxWidth().padding(horizontal = S2Spacing.medium, vertical = S2Spacing.small)) {
+        Row(modifier = Modifier.padding(start = S2Spacing.medium, top = S2Spacing.smallMedium), verticalAlignment = Alignment.CenterVertically) {
+            S2Icon(Icons.Rounded.Podcasts, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+            S2Text(
+                text = stringResource(R.string.home_podcasts_promo_title),
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.weight(1f).padding(horizontal = S2Spacing.smallMedium),
+            )
+            S2IconButton(icon = Icons.Rounded.Close, contentDescription = stringResource(R.string.home_podcasts_promo_dismiss), onClick = callbacks.onDismissPodcasts)
+        }
+        S2Text(
+            text = stringResource(R.string.home_podcasts_promo_message),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(horizontal = S2Spacing.medium),
+        )
+        S2Button(
+            text = stringResource(R.string.home_podcasts_promo_open),
+            onClick = callbacks.onGetPodcasts,
             style = S2ButtonStyle.Text,
             modifier = Modifier.padding(S2Spacing.xsmall),
         )

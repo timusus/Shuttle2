@@ -20,6 +20,8 @@ import com.simplecityapps.shuttle.di.IoDispatcher
 import com.simplecityapps.shuttle.settings.AppearanceSettings
 import com.simplecityapps.shuttle.settings.Setting
 import com.simplecityapps.shuttle.ui.ThemeManager
+import com.simplecityapps.shuttle.ui.promo.PodcastsPromo
+import com.simplecityapps.shuttle.ui.promo.PromoSurface
 import com.simplecityapps.shuttle.ui.widgets.WidgetManager
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer
@@ -41,7 +43,8 @@ class AndroidSettingsEffects @Inject constructor(
     private val themeManager: ThemeManager,
     private val mediaImporter: MediaImporter,
     private val imageLoader: ArtworkImageLoader,
-    @IoDispatcher private val ioDispatcher: CoroutineDispatcher
+    @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
+    private val promo: PodcastsPromo
 ) : SettingsEffects {
     override fun <T> onSettingChanged(
         setting: Setting<T>,
@@ -83,6 +86,8 @@ class AndroidSettingsEffects @Inject constructor(
         context.startActivity(Intent.createChooser(send, null).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
         return ShareDebugLogsResult.Shared
     }
+
+    override fun openShuttlePodcasts() = promo.onTapped(PromoSurface.Settings)
 
     private companion object {
         /** A subdirectory of the cache, named in `res/xml/file_paths.xml`. */

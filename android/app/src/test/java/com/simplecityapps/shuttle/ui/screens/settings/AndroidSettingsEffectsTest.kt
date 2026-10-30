@@ -42,7 +42,8 @@ class AndroidSettingsEffectsTest {
         themeManager = themeManager,
         mediaImporter = mockk(relaxed = true),
         imageLoader = mockk(relaxed = true),
-        ioDispatcher = UnconfinedTestDispatcher()
+        ioDispatcher = UnconfinedTestDispatcher(),
+        promo = mockk(relaxed = true)
     )
 
     @Before
