@@ -31,7 +31,11 @@ object ShuttlePodcastsLink {
         try {
             context.startActivity(view(marketUrl(surface)))
         } catch (_: ActivityNotFoundException) {
-            context.startActivity(view(webUrl(surface)))
+            try {
+                context.startActivity(view(webUrl(surface)))
+            } catch (_: ActivityNotFoundException) {
+                // codehealth-ignore empty-catch: no store and no browser (some TVs, stripped ROMs); there is nowhere to send the user
+            }
         }
     }
 
