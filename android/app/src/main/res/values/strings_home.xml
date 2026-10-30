@@ -111,7 +111,7 @@
     <!-- Home: one-time card promoting the Shuttle Podcasts app -->
     <string name="home_podcasts_promo_title" translatable="false">Shuttle Podcasts</string>
     <!-- Home: message under the Shuttle Podcasts card title -->
-    <string name="home_podcasts_promo_message">From the makers of Shuttle. A simple podcast player that skips inserted ads.</string>
+    <string name="home_podcasts_promo_message">From the maker of Shuttle. A simple podcast player that skips inserted ads.</string>
     <!-- Home: button on the Shuttle Podcasts card that opens its Play Store page -->
     <string name="home_podcasts_promo_open">Get it</string>
     <!-- Home: content description for the button that dismisses the Shuttle Podcasts card -->
