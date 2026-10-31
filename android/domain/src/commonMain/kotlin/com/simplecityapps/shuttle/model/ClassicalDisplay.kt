@@ -85,6 +85,20 @@ fun Song.classicalText(artist: String?, album: String?): ClassicalText? {
     )
 }
 
+/**
+ * "Composer • Performer • Album" for a lone classical song with a composer but no work, which has no work line to carry
+ * the composer; null otherwise, and when the composer is the performer or album artist (the album page's rule), so
+ * the caller keeps its own "[artist] • [album]". The performer is [artist], else the album artist.
+ */
+fun Song.loneComposerSubtitle(artist: String?, album: String?): String? {
+    if (!work.isNullOrBlank() || !listOf(this).isClassicalBlock()) return null
+    val composer = composerDisplayName() ?: return null
+    val performer = artist?.takeIf { it.isNotBlank() } ?: albumArtist?.takeIf { it.isNotBlank() }
+    val credited = listOfNotNull(performer, albumArtist)
+    if (credited.any { it.equals(composer, ignoreCase = true) || it.equals(composerName()?.name, ignoreCase = true) }) return null
+    return listOfNotNull(composer, performer, album?.takeIf { it.isNotBlank() }).joinToString(" • ")
+}
+
 private fun stripWorkPrefix(title: String, work: String?): String {
     if (work.isNullOrEmpty() || !title.startsWith(work)) return title
     val rest = title.substring(work.length)

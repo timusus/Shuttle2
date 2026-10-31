@@ -103,6 +103,36 @@ class ClassicalDisplayTest {
     }
 
     @Test
+    fun `a lone classical song with a composer and no work leads its subtitle with the composer`() {
+        val lone = song(id = 1).copy(name = "Capricho Arabe", composer = "Francisco Tárrega", genres = listOf("Classical"), albumArtist = "Anabel Montesinos")
+
+        lone.loneComposerSubtitle(artist = "Anabel Montesinos", album = "Guitar Recital") shouldBe "Francisco Tárrega • Anabel Montesinos • Guitar Recital"
+        lone.loneComposerSubtitle(artist = null, album = null) shouldBe "Francisco Tárrega • Anabel Montesinos"
+    }
+
+    @Test
+    fun `a song with a work keeps its work line and no lone composer subtitle`() {
+        val inWork = song(id = 1).copy(composer = "Beethoven", work = "Symphony No. 5", movementName = "Allegro", movementNumber = 1, genres = listOf("Classical"))
+
+        inWork.loneComposerSubtitle(artist = "Kleiber", album = "Symphonies") shouldBe null
+        inWork.classicalText(artist = "Kleiber", album = "Symphonies")?.subtitle shouldBe "Beethoven: Symphony No. 5"
+    }
+
+    @Test
+    fun `a non-classical song keeps its artist and album subtitle`() {
+        song(id = 1).copy(composer = "Lennon", genres = listOf("Rock")).loneComposerSubtitle(artist = "Beatles", album = "Help!") shouldBe null
+        song(id = 1).loneComposerSubtitle(artist = "Beatles", album = "Help!") shouldBe null
+        song(id = 1).copy(genres = listOf("Classical")).loneComposerSubtitle(artist = "Erik", album = "Recital") shouldBe null
+    }
+
+    @Test
+    fun `a composer who is also the artist is not repeated`() {
+        val own = song(id = 1).copy(composer = "Erik Satie", genres = listOf("Classical"), albumArtist = "Erik Satie")
+
+        own.loneComposerSubtitle(artist = "Erik Satie", album = "Gymnopédies") shouldBe null
+    }
+
+    @Test
     fun `the performers line falls back to the artist text`() {
         song(id = 1).performersLine(fallback = "Some Artist") shouldBe "Some Artist"
         song(id = 1).performersLine() shouldBe null

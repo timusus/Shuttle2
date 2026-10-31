@@ -63,6 +63,7 @@ import com.simplecityapps.shuttle.designsystem.theme.S2TouchTarget
 import com.simplecityapps.shuttle.designsystem.theme.artworkRole
 import com.simplecityapps.shuttle.designsystem.theme.isLargeText
 import com.simplecityapps.shuttle.model.NowPlayingWork
+import com.simplecityapps.shuttle.model.loneComposerSubtitle
 import com.simplecityapps.shuttle.ui.screens.library.ComposerRoute
 import com.simplecityapps.shuttle.ui.screens.settings.SettingsDestinationRoute
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsDestination
@@ -157,7 +158,7 @@ internal fun NowPlayingTitle(
             } else {
                 Text(text = current?.title.orEmpty(), style = titleStyle, maxLines = if (largeText) 2 else 1, overflow = TextOverflow.Ellipsis)
                 Text(
-                    text = listOfNotNull(current?.artist, current?.album).joinToString(" • "),
+                    text = current?.let { it.song.loneComposerSubtitle(it.artist, it.album) } ?: listOfNotNull(current?.artist, current?.album).joinToString(" • "),
                     style = MaterialTheme.typography.titleLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
