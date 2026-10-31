@@ -214,9 +214,11 @@ public final class LoopbackMediaServer: @unchecked Sendable {
     public init(body: Data, mimeType: String) throws {
         self._body = body
         self.mimeType = mimeType
+        // The simulator shares the host's port space; a wildcard bind with endpoint reuse can land on a
+        // port a host process holds on 127.0.0.1, so bind loopback explicitly with no reuse.
         let parameters = NWParameters.tcp
-        parameters.allowLocalEndpointReuse = true
-        listener = try NWListener(using: parameters, on: .any)
+        parameters.requiredLocalEndpoint = .hostPort(host: "127.0.0.1", port: .any)
+        listener = try NWListener(using: parameters)
 
         let ready = DispatchSemaphore(value: 0)
         listener.stateUpdateHandler = { [weak self] state in

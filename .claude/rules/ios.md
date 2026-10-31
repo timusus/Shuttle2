@@ -169,6 +169,7 @@ on compact and a form sheet otherwise, presented from `ContentView`.
   xcframework has no x86_64 simulator slice, and package targets ignore the project's `EXCLUDED_ARCHS`.
 - **The test bundle does not link Shared.** It only has the search path for `import Shared`; Kotlin resolves from the
   host app through `BUNDLE_LOADER`. Linking the static framework into the tests too would load a second Kotlin runtime.
+- **Local test servers bind 127.0.0.1, never reuse the endpoint, and read the port back** (port 0). The simulator shares the host's port space (devtools #24).
 - **Kotlin/Native wants a framework bundle id**; `shared/build.gradle.kts` sets `binaryOption("bundleId", ...)`.
 - `:shared` is in `ModuleLayers` as a composition root (like `:android:app`); a new exported module needs no layer change.
 - The bundle id `com.simplecityapps.shuttle.dev` is a placeholder until the App Store Connect app exists.
