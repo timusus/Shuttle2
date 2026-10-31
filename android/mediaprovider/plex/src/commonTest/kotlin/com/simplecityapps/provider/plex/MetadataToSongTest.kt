@@ -7,8 +7,19 @@ import com.simplecityapps.shuttle.model.serverArtistId
 import io.kotest.matchers.shouldBe
 import kotlin.test.Test
 import kotlin.time.Instant
+import kotlinx.datetime.LocalDate
 
 class MetadataToSongTest {
+    @Test
+    fun `a parent year of 0 or 1 is no date but a real year is the first of it`() {
+        fun date(year: Int) = S2Json.decodeFromString<Metadata>("""{"key": "/library/metadata/1", "guid": "plex://track/1", "parentYear": $year}""")
+            .toSong(MediaProviderType.Plex, SYNCED_AT).date
+
+        date(0) shouldBe null
+        date(1) shouldBe null
+        date(2011) shouldBe LocalDate(2011, 1, 1)
+    }
+
     @Test
     fun `a track with its own artist credits it - with the album's artist and ids and its MusicBrainz recording`() {
         // As a Plex Media Server sends a track fetched with includeGuids=1

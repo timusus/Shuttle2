@@ -217,6 +217,13 @@ class FileTagsTest {
     }
 
     @Test
+    fun `a year of 0000 is missing and a padded year still parses`() {
+        "0000".toYearDate() shouldBe null
+        "0001".toYearDate() shouldBe null
+        " 2011".toYearDate() shouldBe LocalDate(2011, 1, 1)
+    }
+
+    @Test
     fun `the original release year beats a reissue's date`() {
         mapOf("DATE" to listOf("2017"), "ORIGINALDATE" to listOf("2002-01-28")).toFileTags().year shouldBe "2002"
         mapOf("DATE" to listOf("2017"), "YEAR" to listOf("2002")).toFileTags().year shouldBe "2017"

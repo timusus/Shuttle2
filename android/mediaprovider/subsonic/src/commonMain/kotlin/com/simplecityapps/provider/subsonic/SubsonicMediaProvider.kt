@@ -29,12 +29,12 @@ import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Performer
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.model.musicBrainzIds
+import com.simplecityapps.shuttle.model.toTagYearDate
 import io.ktor.http.encodeURLPathPart
 import kotlin.time.Instant
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.map
-import kotlinx.datetime.LocalDate
 
 /**
  * Syncs a Subsonic server's songs and playlists. Songs come from `search3` with an empty query, a page at a time, which
@@ -176,7 +176,7 @@ internal fun SongDto.toSong(): Song {
         track = track,
         disc = discNumber,
         duration = (duration ?: 0) * 1000,
-        date = year?.takeIf { it > 0 }?.let { LocalDate(it, 1, 1) },
+        date = year.toTagYearDate(),
         genres = genres.mapNotNull { it.name?.takeIf(String::isNotBlank) }.ifEmpty { listOfNotNull(genre?.takeIf(String::isNotBlank)) },
         path = songPath(id),
         size = size ?: 0,

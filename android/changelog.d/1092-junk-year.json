@@ -1,0 +1,1 @@
+{ "type": "fixes", "text": "Albums no longer show year 0 or 1 when one track has a bad year tag.", "commits": [] }

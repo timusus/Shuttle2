@@ -7,6 +7,7 @@ import com.simplecityapps.shuttle.model.AlbumGroupKey
 import com.simplecityapps.shuttle.model.AlbumIdentityRule
 import com.simplecityapps.shuttle.model.ArtistCredits
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.model.asTagYear
 import com.simplecityapps.shuttle.model.isAlbumArtist
 
 /** The album [key] names, made of its songs: the album and suggestions repositories both build albums with this. */
@@ -16,7 +17,7 @@ internal fun List<Song>.toAlbum(key: AlbumGroupKey): Album = Album(
     artists = flatMap { it.artists }.distinct(),
     songCount = size,
     duration = sumOf { it.duration },
-    year = mapNotNull { it.date?.year }.minOrNull(),
+    year = mapNotNull { it.date?.year?.asTagYear() }.minOrNull(),
     // Every play of any of its songs counts, so one skipped track doesn't keep an album out of Most Played
     playCount = sumOf { it.playCount },
     lastSongPlayed = mapNotNull { it.lastPlayed }.maxOrNull(),

@@ -8,6 +8,7 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import kotlin.test.Test
 import kotlin.time.Instant
+import kotlinx.datetime.LocalDate
 
 private fun Item.toSong(syncedAt: Instant) = toSong(MediaBrowserServer.Emby, syncedAt)
 
@@ -173,6 +174,15 @@ class ItemToSongTest {
         song.playCount shouldBe 0
         song.lastPlayed shouldBe null
         parse().toSong(SYNCED_AT).playCount shouldBe 0
+    }
+
+    @Test
+    fun `a production year of 0 or 1 is no date but a real year is the first of it`() {
+        fun date(year: Int) = S2Json.decodeFromString<Item>("""{"Id": "1", "ProductionYear": $year}""").toSong(SYNCED_AT).date
+
+        date(0) shouldBe null
+        date(1) shouldBe null
+        date(2011) shouldBe LocalDate(2011, 1, 1)
     }
 
     private fun userData(json: String): Item = S2Json.decodeFromString<Item>("{\"Id\": \"item-1\", \"UserData\": $json}")

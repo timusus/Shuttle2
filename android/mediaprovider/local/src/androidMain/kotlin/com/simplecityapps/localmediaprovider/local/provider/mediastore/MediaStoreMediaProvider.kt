@@ -30,6 +30,7 @@ import com.simplecityapps.mediaprovider.songTagsOutdated
 import com.simplecityapps.mediaprovider.splitArtistTag
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.model.toTagYearDate
 import com.simplecityapps.shuttle.persistence.SourceStateStore
 import kotlin.time.Instant
 import kotlinx.coroutines.CoroutineDispatcher
@@ -41,7 +42,6 @@ import kotlinx.coroutines.flow.collectIndexed
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
-import kotlinx.datetime.LocalDate
 import timber.log.Timber
 
 class MediaStoreMediaProvider(
@@ -227,7 +227,7 @@ class MediaStoreMediaProvider(
                             track = track,
                             disc = disc,
                             duration = songCursor.getInt(songCursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION)),
-                            date = songCursor.getIntOrNull(songCursor.getColumnIndexOrThrow(MediaStore.Audio.Media.YEAR))?.let { LocalDate(it, 1, 1) },
+                            date = songCursor.getIntOrNull(songCursor.getColumnIndexOrThrow(MediaStore.Audio.Media.YEAR)).toTagYearDate(),
                             genres = emptyList(),
                             path = path,
                             size = songCursor.getLong(songCursor.getColumnIndexOrThrow(MediaStore.Audio.Media.SIZE)),

@@ -27,6 +27,7 @@ import com.simplecityapps.shuttle.logging.Logger
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.model.albumArtworkSong
 import com.simplecityapps.shuttle.model.musicBrainzIds
+import com.simplecityapps.shuttle.model.toTagYearDate
 import kotlin.time.Clock
 import kotlin.time.Instant
 import kotlinx.coroutines.flow.Flow
@@ -35,7 +36,6 @@ import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.last
 import kotlinx.coroutines.flow.lastOrNull
 import kotlinx.coroutines.flow.map
-import kotlinx.datetime.LocalDate
 
 /** The sync engine of a MediaBrowser [server][MediaBrowserAuthenticationManager.server]: its songs and playlists. */
 open class MediaBrowserMediaProvider(
@@ -409,7 +409,7 @@ fun Item.toSong(server: MediaBrowserServer, syncedAt: Instant): Song {
         track = indexNumber,
         disc = parentIndexNumber,
         duration = ((runTime ?: 0) / (10 * 1000)).toInt(),
-        date = productionYear?.let { year -> LocalDate(year, 1, 1) },
+        date = productionYear.toTagYearDate(),
         genres = genres,
         path = server.songPath(this),
         size = 0,

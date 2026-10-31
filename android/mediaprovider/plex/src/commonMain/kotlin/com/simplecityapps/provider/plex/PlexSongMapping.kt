@@ -7,8 +7,8 @@ import com.simplecityapps.provider.plex.http.STREAM_TYPE_AUDIO
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.model.musicBrainzIds
+import com.simplecityapps.shuttle.model.toTagYearDate
 import kotlin.time.Instant
-import kotlinx.datetime.LocalDate
 
 /**
  * What changes when a playlist is renamed or its items edited: Plex updates its updatedAt. Its item count too, so an edit
@@ -31,7 +31,7 @@ internal fun Metadata.toSong(
     disc = parentIndex,
     // A track the server hasn't finished analysing may carry its length only on its media
     duration = (duration ?: media.firstNotNullOfOrNull { it.duration })?.toInt() ?: 0,
-    date = year?.let { LocalDate(it, 1, 1) },
+    date = year.toTagYearDate(),
     genres = emptyList(),
     path = songPath,
     size = media.firstOrNull()?.parts?.firstOrNull()?.size ?: 0L,

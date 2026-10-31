@@ -23,6 +23,7 @@ import com.simplecityapps.mediaprovider.SongPathRemap
 import com.simplecityapps.mediaprovider.repository.songs.SongStatsRestore
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.model.toTagYearDate
 import com.simplecityapps.shuttle.model.withAlbumIdentities
 import kotlin.time.Clock
 import kotlin.time.Instant
@@ -34,7 +35,6 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
-import kotlinx.datetime.LocalDate
 
 /** One row of [SongDataDao.genreRows]. */
 data class SongGenreRow(
@@ -501,7 +501,7 @@ fun SongData.toSong(): Song = Song(
     track = track,
     disc = disc,
     duration = duration,
-    date = year?.let { LocalDate(it, 1, 1) },
+    date = year.toTagYearDate(),
     genres = genres,
     path = path,
     size = size,

@@ -3,6 +3,7 @@ package com.simplecityapps.localmediaprovider.local.provider
 import com.simplecityapps.mediaprovider.splitArtistTag
 import com.simplecityapps.shuttle.model.Performer
 import com.simplecityapps.shuttle.model.musicBrainzIds
+import com.simplecityapps.shuttle.model.toTagYearDate
 import kotlinx.datetime.LocalDate
 
 /**
@@ -230,8 +231,8 @@ private fun String.parseR128Gain(): Double? = trim().toIntOrNull()?.let { it / 2
 private fun String.parseReplayGain(): Double? = replace(oldValue = "db", newValue = "", ignoreCase = true).trim().toDoubleOrNull()
 
 /** The date [parseDate] read, as the first of its year: songs store the year only. */
-fun String.toYearDate(): LocalDate? = parseDate()?.toIntOrNull()?.let { LocalDate(it, 1, 1) }
+fun String.toYearDate(): LocalDate? = parseDate()?.toIntOrNull().toTagYearDate()
 
-internal fun String.parseDate(): String? = take(4).takeIf { it.length == 4 && it.all { char -> char in '0'..'9' } }
+internal fun String.parseDate(): String? = trim().take(4).takeIf { it.length == 4 && it.all { char -> char in '0'..'9' } }
 
 private fun <V> Map<String, V>.getCaseInsensitive(key: String): V? = get(key) ?: get(key.lowercase())
