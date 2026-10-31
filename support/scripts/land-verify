@@ -284,7 +284,9 @@ lint_changed() {
         case "$f" in *.kt|*.kts) [ -f "$f" ] && files+=("$f") ;; esac
         case "$f" in ios/*.swift) swift=1 ;; esac
     done
-    if [ "$swift" = 1 ] && command -v swiftformat >/dev/null 2>&1; then
+    if [ "$swift" = 1 ] && ! command -v swiftformat >/dev/null 2>&1; then
+        echo "lint: swiftformat not installed, Swift lint skipped"
+    elif [ "$swift" = 1 ]; then
         swiftformat --lint --quiet --config ios/.swiftformat ios || { echo "lint: swiftformat findings; fix with: swiftformat --config ios/.swiftformat ios"; rc=1; }
     fi
     if [ "${#files[@]}" -eq 0 ]; then echo "lint: no changed Kotlin files"; return "$rc"; fi

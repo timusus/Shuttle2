@@ -50,10 +50,22 @@ fi
 root="$(git rev-parse --show-toplevel)" || exit 0
 cd "$root" || exit 0
 # Swift: lint only (swiftformat --lint), the author runs the fix. Skipped with one line when swiftformat is missing.
-swift="$(git -c core.quotePath=false diff --cached --name-only --diff-filter=ACMR | grep -E '\.swift$' | grep -E '^ios/' | grep -Ev '(^|/)(build|DerivedData|\.build)/')"
-if [ -n "$swift" ]; then
+# Files with unstaged changes are skipped: the lint reads the working tree, not the staged blob.
+swift=()
+while IFS= read -r f; do
+  [ -z "$f" ] && continue
+  case "$f" in */build/*|*/DerivedData/*|*/.build/*) continue ;; esac
+  if ! git diff --quiet -- "$f"; then
+    echo "pre-commit: not linting $f (it has unstaged changes)" >&2
+    continue
+  fi
+  swift+=("$f")
+done <<EOF1
+$(git -c core.quotePath=false diff --cached --name-only --diff-filter=ACMR | grep -E '^ios/.*\.swift$')
+EOF1
+if [ ${#swift[@]} -gt 0 ]; then
   if command -v swiftformat >/dev/null 2>&1; then
-    if ! printf '%s\n' "$swift" | xargs swiftformat --lint --quiet --config ios/.swiftformat; then
+    if ! swiftformat --lint --quiet --config ios/.swiftformat "${swift[@]}"; then
       echo "pre-commit: swiftformat findings; fix with: swiftformat --config ios/.swiftformat <files> (SKIP_LINT=1 bypasses)" >&2
       exit 1
     fi
