@@ -7,6 +7,7 @@ import UIKit
 /// the Now Playing song, a first-run welcome), SF Pro for everything else, and monospaced digits for every time
 /// and count. Every style is relative to a Dynamic Type text style, so all of them follow the user's text size.
 extension Font {
+
     // MARK: Display
 
     /// The largest in-content title, matching the navigation bar's large title: the first-run welcome.

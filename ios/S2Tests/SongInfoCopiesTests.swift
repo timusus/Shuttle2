@@ -1,6 +1,5 @@
 import Shared
 import Testing
-
 @testable import S2
 
 /// Song Info's Copies section: the pills and the footer that say which copy plays and why.

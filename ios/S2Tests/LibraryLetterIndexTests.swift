@@ -109,8 +109,8 @@ struct LibraryLetterIndexTests {
             )
         }
         let state = AlbumArtistListUiState(
-            albumArtists: artists, selectedArtists: [], viewMode: .list, sortOrder: .`default`, loadingState: .ready, scanProgress: nil,
-            letterIndex: LetterIndexKt.albumArtistLetterIndex(albumArtists: artists, sortOrder: .`default`)
+            albumArtists: artists, selectedArtists: [], viewMode: .list, sortOrder: .default, loadingState: .ready, scanProgress: nil,
+            letterIndex: LetterIndexKt.albumArtistLetterIndex(albumArtists: artists, sortOrder: .default)
         )
         #expect(try AlbumArtistListContent(state: state).inspect().findAll(ViewType.Section.self).count == 2)
     }

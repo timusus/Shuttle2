@@ -2,7 +2,6 @@ import Shared
 import SwiftUI
 import Testing
 import ViewInspector
-
 @testable import S2
 
 /// Settings > Downloads (#852): the downloads as the screen lists them, and its Retry, Dismiss and Remove All.

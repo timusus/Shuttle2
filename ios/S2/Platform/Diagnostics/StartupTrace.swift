@@ -27,8 +27,8 @@ enum StartupTrace {
     }
 
     nonisolated static let log = OSLog(subsystem: "com.simplecityapps.shuttle", category: "Startup")
-    nonisolated private static let logger = Logger(log)
-    nonisolated private static let signposter = OSSignposter(logHandle: log)
+    private nonisolated static let logger = Logger(log)
+    private nonisolated static let signposter = OSSignposter(logHandle: log)
 
     private static var seen = Set<Milestone>()
     /// The app-wide milestones logged, by their name's address: a literal's text is in the binary, so a repeat looks it up

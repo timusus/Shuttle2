@@ -9,6 +9,7 @@ import ViewInspector
 /// shown before the trial starts (guideline 3.1.1), and the buttons each standing offers.
 @MainActor
 struct PaywallViewTests {
+
     // MARK: Status
 
     @Test func mapsEachEntitlementToTheUsersStanding() {

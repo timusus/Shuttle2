@@ -59,7 +59,7 @@ extension AlbumSortOrder {
 }
 
 extension AlbumArtistSortOrder {
-    static let libraryMenuOrder: [AlbumArtistSortOrder] = [.`default`, .albumCount]
+    static let libraryMenuOrder: [AlbumArtistSortOrder] = [.default, .albumCount]
 
     var libraryMenuTitle: String {
         switch self {
@@ -70,7 +70,7 @@ extension AlbumArtistSortOrder {
 }
 
 extension GenreSortOrder {
-    static let libraryMenuOrder: [GenreSortOrder] = [.`default`, .songCount]
+    static let libraryMenuOrder: [GenreSortOrder] = [.default, .songCount]
 
     var libraryMenuTitle: String {
         switch self {
@@ -82,11 +82,11 @@ extension GenreSortOrder {
 
 extension PlaylistSortOrder {
     /// `Default` is creation order (the playlist's id), oldest first.
-    static let libraryMenuOrder: [PlaylistSortOrder] = [.name, .`default`]
+    static let libraryMenuOrder: [PlaylistSortOrder] = [.name, .default]
 
     var libraryMenuTitle: String {
         switch self {
-        case .`default`: "Date Created"
+        case .default: "Date Created"
         default: "Name"
         }
     }

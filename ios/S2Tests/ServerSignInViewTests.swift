@@ -148,7 +148,6 @@ struct ServerSignInViewTests {
         #expect(try signInButton(sut).isDisabled())
     }
 
-
     @Test func subsonicTakesAUsernameAndPasswordOrAnAPIKey() throws {
         let sut = ServerSignInContent(state: ServerSignInState(type: .subsonic))
         #expect((try? sut.inspect().find(text: "Connect to Navidrome / Subsonic")) != nil)

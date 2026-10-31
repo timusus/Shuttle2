@@ -25,21 +25,20 @@ extension View {
 
 /// A nil `summary` hides the download items, so only screens that offer downloads show them.
 struct DetailDownloads {
-    var summary: (([Song]) -> DownloadSummary)? = nil
+    var summary: (([Song]) -> DownloadSummary)?
     var onDownload: ([Song]) -> Void = { _ in }
     var onRemove: ([Song]) -> Void = { _ in }
 }
 
+@MainActor
 extension DetailDownloads {
     /// Reads the graph's downloads and sends the actions through `actions`, with `intent`. Its screen observes
     /// `OfflineDownloads.downloads`, so it's redrawn, and the summary read again, as a download moves on.
-    @MainActor
     init(actions: MediaActionsViewModel, intent: PlayIntent, downloads: OfflineDownloads) {
         self.init(downloads: downloads, send: { actions.send($0, intent: intent) })
     }
 
     /// The same, sending the actions through `send`, for a screen that has no `MediaActionsViewModel` of its own (Search).
-    @MainActor
     init(downloads: OfflineDownloads, send: @escaping (any MediaAction) -> Void) {
         summary = { downloads.summary(songs: $0) }
         onDownload = { send(MediaActionDownload(selection: MediaSelectionSongs(songs: $0))) }

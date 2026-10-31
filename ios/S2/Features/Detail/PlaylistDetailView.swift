@@ -16,37 +16,37 @@ struct PlaylistDetailView: View {
         Observing(models.playlist.uiState, models.covers.uiState, models.actions.uiState) { state, covers, actions in
             // Redrawn as a download moves on, so the hero and menus read the songs' downloads again
             Observing(services.graph.offlineDownloads.downloads) { _ in
-            PlaylistDetailContent(
-                state: state,
-                covers: covers,
-                isPlaying: services.playerBinding.isPlaying,
-                onPlay: { index in
-                    models.actions.send(MediaActionPlay(selection: MediaSelectionSongs(songs: state.songs.map(\.song)), position: Int32(index), context: state.playContext), intent: services.playIntent)
-                },
-                onShuffle: {
-                    models.actions.send(MediaActionShuffle(selection: MediaSelectionSongs(songs: state.songs.map(\.song)), context: state.playContext), intent: services.playIntent)
-                },
-                onPlayNext: { song in
-                    models.actions.send(MediaActionPlayNext(selection: MediaSelectionSongs(song: song)), intent: services.playIntent)
-                },
-                onAddToQueue: { song in
-                    models.actions.send(MediaActionAddToQueue(selection: MediaSelectionSongs(song: song)), intent: services.playIntent)
-                },
-                onExclude: { song in
-                    models.actions.send(MediaActionExclude(selection: MediaSelectionSongs(song: song)), intent: services.playIntent)
-                },
-                onMove: { from, to in models.playlist.onMove(fromId: from, toId: to) },
-                onMoveFinished: { models.playlist.onMoveFinished() },
-                onRemove: { entry in
-                    guard let playlist = state.playlist else { return }
-                    models.actions.send(MediaActionRemoveFromPlaylist(
-                        playlist: playlist, entries: [entry], before: state.songs
-                    ), intent: services.playIntent)
-                },
-                onRename: { name in models.playlist.onRename(name: name) },
-                onDelete: { models.playlist.onDelete() },
-                downloads: DetailDownloads(actions: models.actions, intent: services.playIntent, downloads: services.graph.offlineDownloads)
-            )
+                PlaylistDetailContent(
+                    state: state,
+                    covers: covers,
+                    isPlaying: services.playerBinding.isPlaying,
+                    onPlay: { index in
+                        models.actions.send(MediaActionPlay(selection: MediaSelectionSongs(songs: state.songs.map(\.song)), position: Int32(index), context: state.playContext), intent: services.playIntent)
+                    },
+                    onShuffle: {
+                        models.actions.send(MediaActionShuffle(selection: MediaSelectionSongs(songs: state.songs.map(\.song)), context: state.playContext), intent: services.playIntent)
+                    },
+                    onPlayNext: { song in
+                        models.actions.send(MediaActionPlayNext(selection: MediaSelectionSongs(song: song)), intent: services.playIntent)
+                    },
+                    onAddToQueue: { song in
+                        models.actions.send(MediaActionAddToQueue(selection: MediaSelectionSongs(song: song)), intent: services.playIntent)
+                    },
+                    onExclude: { song in
+                        models.actions.send(MediaActionExclude(selection: MediaSelectionSongs(song: song)), intent: services.playIntent)
+                    },
+                    onMove: { from, to in models.playlist.onMove(fromId: from, toId: to) },
+                    onMoveFinished: { models.playlist.onMoveFinished() },
+                    onRemove: { entry in
+                        guard let playlist = state.playlist else { return }
+                        models.actions.send(MediaActionRemoveFromPlaylist(
+                            playlist: playlist, entries: [entry], before: state.songs
+                        ), intent: services.playIntent)
+                    },
+                    onRename: { name in models.playlist.onRename(name: name) },
+                    onDelete: { models.playlist.onDelete() },
+                    downloads: DetailDownloads(actions: models.actions, intent: services.playIntent, downloads: services.graph.offlineDownloads)
+                )
             }
             .mediaActionResults(actions.events, handled: { models.actions.onEventHandled(id: $0) }, send: { models.actions.send($0, intent: services.playIntent) })
             .playlistDetailEvents(state.events, handled: { models.playlist.onEventHandled(id: $0) })

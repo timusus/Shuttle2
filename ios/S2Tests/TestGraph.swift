@@ -87,10 +87,10 @@ func makeTestCoordinator(
     }
 }
 
+@MainActor
 extension PlayerTestRig {
     /// Pumps decodes and transport events until `condition` holds, letting Kotlin's main-queue work run between rounds;
     /// the output clock stands still. Bounded by rounds, not time: false once `rounds` pumps haven't satisfied it.
-    @MainActor
     func pump(rounds: Int = 2_000, until condition: () -> Bool) async -> Bool {
         for _ in 0..<rounds {
             pump()

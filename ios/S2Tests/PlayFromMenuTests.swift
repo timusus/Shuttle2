@@ -1,6 +1,5 @@
 import Shared
 import Testing
-
 @testable import S2
 
 /// Which copies a song's Play From menu offers (#1069).

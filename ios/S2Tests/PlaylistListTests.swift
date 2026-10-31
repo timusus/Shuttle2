@@ -16,7 +16,7 @@ struct PlaylistListTests {
         _ loading: PlaylistListUiState.LoadingState
     ) -> PlaylistListUiState {
         PlaylistListUiState(
-            playlists: playlists, smartPlaylists: smartPlaylists, covers: covers, sortOrder: .`default`, loadingState: loading, scanProgress: nil
+            playlists: playlists, smartPlaylists: smartPlaylists, covers: covers, sortOrder: .default, loadingState: loading, scanProgress: nil
         )
     }
 

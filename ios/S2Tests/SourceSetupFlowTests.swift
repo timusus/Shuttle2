@@ -8,6 +8,7 @@ import ViewInspector
 /// run's gating itself is `SourceSetupViewModel`'s, tested in `:android:presentation`.
 @MainActor
 struct SourceSetupFlowTests {
+
     // MARK: Signed out of a server (#819)
 
     @Test func theSignOutAlertNamesTheServer() {

@@ -466,7 +466,7 @@ struct NowPlayingContent: View {
                     actions: actions,
                     notice: notice
                 )
-                    .playerTinted(artworkTint, ink: artworkTintInk, isTinted: isArtworkTinted)
+                .playerTinted(artworkTint, ink: artworkTintInk, isTinted: isArtworkTinted)
             }
             .frame(maxWidth: .infinity)
         }

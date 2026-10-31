@@ -1,0 +1,20 @@
+--swiftversion 5.9
+--indent 4
+--maxwidth none
+--wraparguments preserve
+--wrapparameters preserve
+--wrapcollections preserve
+--wrapconditions preserve
+--wrapreturntype preserve
+--wrapternary default
+--self remove
+--ifdef no-indent
+--ranges preserve
+--importgrouping testable-last
+--commas inline
+--stripunusedargs closure-only
+
+--exclude build,DerivedData,.build,.swiftpm,Frameworks,Pods
+
+# Kept as written: these touch semantics, API surface, signatures, control-flow shape or the comment style.
+--disable trailingCommas,wrapIfStatementBodies,wrapIfExpressionBodies,wrapFunctionBodies,wrapLoopBodies,numberFormatting,hoistTry,noForceUnwrapInTests,redundantSelf,blankLinesAtStartOfScope,blankLinesAtEndOfScope,docComments,redundantProperty,preferKeyPath,opaqueGenericParameters,redundantType,sortImports,trailingClosures,unusedArguments,wrapMultilineStatementBraces,hoistPatternLet,redundantMemberwiseInit,noExplicitOwnership,redundantInternal,redundantPublic,preferFinalClasses,redundantEquatable,sortDeclarations,organizeDeclarations,markTypes,extensionAccessControl,propertyTypes,redundantViewBuilder,wrapPropertyBodies,swiftTestingTestCaseNames,environmentEntry,sortSwitchCases,sortTypealiases,wrapSwitchCases,preferSwiftTesting,redundantThrows,redundantAsync,repeatedGuard,contentBuilder,initCoderUnavailable,genericExtensions,conditionalAssignment,hoistAwait,andOperator

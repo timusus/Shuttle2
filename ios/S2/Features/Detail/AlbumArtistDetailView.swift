@@ -313,10 +313,10 @@ private struct AlbumArtistDetailEventsModifier: ViewModifier {
     }
 }
 
+@MainActor
 extension Optional where Wrapped == Navigator {
     /// Opens `route` on the environment's `Navigator`. The app always provides one (`ContentView`), so a missing one
     /// is a wiring bug: a debug build stops on it rather than a tap silently doing nothing.
-    @MainActor
     func openAsserting(_ route: Route) {
         guard let navigator = self else {
             assertionFailure("No Navigator in the environment to open \(route)")

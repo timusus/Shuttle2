@@ -1,6 +1,5 @@
 import Shared
 import Testing
-
 @testable import S2
 
 /// An album's "n Sources" and its Primary Source menu appear only for an album held by two or more sources (#1069).

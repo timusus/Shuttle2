@@ -47,7 +47,7 @@ struct JumpBackInGrid: View {
                         item: item,
                         progress: progress[item.key],
                         tileKey: "jumpBackIn|\(item.key)",
-                            perform: perform,
+                        perform: perform,
                         open: open,
                         play: play
                     )

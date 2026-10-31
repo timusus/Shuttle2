@@ -241,10 +241,10 @@ final class PlayIntent {
     }
 }
 
+@MainActor
 extension MediaActionsViewModel {
     /// Dispatches `action`. One that plays (`PlayIntent.plays`) is the listener's intent from this call, until the
     /// player takes it up (`PlayIntent.begin`); `key` names what it plays, for a spinner on that item.
-    @MainActor
     func send(_ action: any MediaAction, key: String? = nil, intent: PlayIntent) {
         guard PlayIntent.plays(action) else {
             dispatch(action: action)

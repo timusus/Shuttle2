@@ -4,7 +4,7 @@ import SwiftUI
 struct AlbumDetailView: View {
     let albumKey: String?
     let albumArtistKey: String?
-    var albumIdentity: String? = nil
+    var albumIdentity: String?
 
     @Environment(Navigator.self) private var navigator: Navigator?
     @Environment(\.appServices) private var appServices
@@ -95,13 +95,13 @@ struct AlbumDetailContent: View {
     var onToggleWork: (Int64) -> Void = { _ in }
     var onOpenRecording: (AlbumGroupKey) -> Void = { _ in }
     /// Opens a composer page by their tag as written; nil leaves the composer eyebrow and headings untappable.
-    var onOpenComposer: ((String) -> Void)? = nil
+    var onOpenComposer: ((String) -> Void)?
     var onPlayNext: ([Song]) -> Void = { _ in }
     var onAddToQueue: ([Song]) -> Void = { _ in }
     var onPlayAlbumNext: (Album) -> Void = { _ in }
     var onAddAlbumToQueue: (Album) -> Void = { _ in }
     /// Opens the album's artist (`AlbumArtistLink`); nil, or an album without a usable link, hides the menu item and the hero's link.
-    var onGoToArtist: (() -> Void)? = nil
+    var onGoToArtist: (() -> Void)?
     /// Opens an album of the More by shelf.
     var onAlbumTap: (Album) -> Void = { _ in }
     var albumActions = DetailAlbumActions()
@@ -292,7 +292,6 @@ struct AlbumDetailContent: View {
         )
     }
 }
-
 
 /// Where an album's artist line goes: the album artist, by name and group key. Nil unless both are real, so the
 /// link never opens `Route.albumArtist(nil)` or names someone other than the page it opens (the track artists

@@ -512,4 +512,3 @@ final class PlayerBinding {
         }
     }
 }
-

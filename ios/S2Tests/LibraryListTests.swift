@@ -165,8 +165,8 @@ struct LibraryListTests {
         for viewMode in [ViewMode.list, .grid] {
             var shuffled = false
             let state = AlbumArtistListUiState(
-                albumArtists: artists, selectedArtists: [], viewMode: viewMode, sortOrder: .`default`, loadingState: .ready, scanProgress: nil,
-                letterIndex: LetterIndexKt.albumArtistLetterIndex(albumArtists: artists, sortOrder: .`default`)
+                albumArtists: artists, selectedArtists: [], viewMode: viewMode, sortOrder: .default, loadingState: .ready, scanProgress: nil,
+                letterIndex: LetterIndexKt.albumArtistLetterIndex(albumArtists: artists, sortOrder: .default)
             )
             let button = try AlbumArtistListContent(state: state, onShuffle: { shuffled = true }).inspect()
                 .find(ViewType.Toolbar.self).find(viewWithAccessibilityIdentifier: "albumArtists.shuffle")
@@ -276,7 +276,7 @@ struct LibraryListTests {
 struct LibrarySkeletonLayoutTests {
     private func artistState(_ viewMode: ViewMode) -> AlbumArtistListUiState {
         AlbumArtistListUiState(
-            albumArtists: [], selectedArtists: [], viewMode: viewMode, sortOrder: .`default`, loadingState: .loading, scanProgress: nil, letterIndex: nil
+            albumArtists: [], selectedArtists: [], viewMode: viewMode, sortOrder: .default, loadingState: .loading, scanProgress: nil, letterIndex: nil
         )
     }
 

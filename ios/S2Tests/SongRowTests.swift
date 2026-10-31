@@ -3,7 +3,6 @@ import Shared
 import SwiftUI
 import Testing
 import ViewInspector
-
 @testable import S2
 
 /// The one song row (#702): its credits, its sort key, its glyphs, and the configurations each screen gives it.

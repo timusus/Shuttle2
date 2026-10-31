@@ -24,7 +24,7 @@ struct HomeView: View {
                 importStatus: ImportStatus(importState),
                 onShuffleAll: {
                     if let action = models.home.shuffleAll() { models.actions.send(action, intent: services.playIntent) }
-    },
+                },
                 onPlaySection: { models.home.playSection(id: $0) },
                 onOpen: { item in navigator.open(Self.route(item)) },
                 onAction: { models.actions.send($0, intent: services.playIntent) },

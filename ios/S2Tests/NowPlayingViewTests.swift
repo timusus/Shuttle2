@@ -203,7 +203,7 @@ struct NowPlayingViewTests {
         try button.button().tap()
         #expect(toggled == 1)
         #expect((try? NowPlayingContent(state: state()).inspect().find(viewWithAccessibilityLabel: "Favorite")
-            .accessibilityValue().string()) == "Off")
+                .accessibilityValue().string()) == "Off")
     }
 
     @Test func theSongMenuOffersTheSongsActionsAndForwardsThem() throws {

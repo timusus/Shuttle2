@@ -11,10 +11,10 @@ protocol LibraryIntentPerforming: AnyObject {
     func playlists() async throws -> [PlaylistEntity]
 }
 
+@MainActor
 extension IntentPerformers {
-    @MainActor static var library: (any LibraryIntentPerforming)?
+    static var library: (any LibraryIntentPerforming)?
 
-    @MainActor
     static func requireLibrary() throws -> any LibraryIntentPerforming {
         guard let library else { throw ShuttleIntentError.notReady }
         return library

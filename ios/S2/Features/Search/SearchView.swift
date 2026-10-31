@@ -376,26 +376,26 @@ struct SearchResultList: View {
             resultLink(.album(album), identifier: "search.result.album") {
                 AlbumRow(album: album, playback: nowPlaying.playback(album: album), artworkSize: artworkSize ?? ArtworkSize.albumRow)
             }
-                .contextMenu { menu(MediaSelectionAlbums(album: album)) }
+            .contextMenu { menu(MediaSelectionAlbums(album: album)) }
         case .songs:
             let song = items.songs[index]
             Button { onPlaySong(index) } label: {
                 SongRow(song: song, playback: nowPlaying.playback(song: song), artworkSize: artworkSize ?? ArtworkSize.row)
             }
-                .buttonStyle(.pressScale)
-                .accessibilityIdentifier("search.result.song")
-                .contextMenu {
-                    // Reading the song's badge rebuilds this menu when its download starts, finishes or is removed.
-                    let _ = downloadBadges[song.path]
-                    SongRowMenu(
-                        song: song,
-                        onPlayNext: { onAction(MediaActionPlayNext(selection: MediaSelectionSongs(song: $0))) },
-                        onAddToQueue: { onAction(MediaActionAddToQueue(selection: MediaSelectionSongs(song: $0))) },
-                        onExclude: { onAction(MediaActionExclude(selection: MediaSelectionSongs(song: $0))) },
-                        onSongInfo: { songInfo = SongInfoTarget(songID: $0.id) },
-                        downloads: downloads
-                    )
-                }
+            .buttonStyle(.pressScale)
+            .accessibilityIdentifier("search.result.song")
+            .contextMenu {
+                // Reading the song's badge rebuilds this menu when its download starts, finishes or is removed.
+                let _ = downloadBadges[song.path]
+                SongRowMenu(
+                    song: song,
+                    onPlayNext: { onAction(MediaActionPlayNext(selection: MediaSelectionSongs(song: $0))) },
+                    onAddToQueue: { onAction(MediaActionAddToQueue(selection: MediaSelectionSongs(song: $0))) },
+                    onExclude: { onAction(MediaActionExclude(selection: MediaSelectionSongs(song: $0))) },
+                    onSongInfo: { songInfo = SongInfoTarget(songID: $0.id) },
+                    downloads: downloads
+                )
+            }
         case .genres:
             let genre = items.genres[index]
             resultLink(.genre(genre), identifier: "search.result.genre") { GenreRow(genre: genre, artworkSize: artworkSize ?? ArtworkSize.row) }

@@ -8,12 +8,12 @@ struct DetailHero<Artwork: View>: View {
     let title: String
     let subtitle: String?
     /// An artist line above the subtitle that opens the artist (a text button in the tint); nil leaves it out.
-    var artist: String? = nil
-    var onArtist: (() -> Void)? = nil
+    var artist: String?
+    var onArtist: (() -> Void)?
     /// VoiceOver's label for the artist button when it isn't an artist (a classical album's composer).
-    var artistLabel: String? = nil
+    var artistLabel: String?
     /// A line of conductor and performer credits under the subtitle.
-    var credits: String? = nil
+    var credits: String?
     var layout: DetailHeroLayout = .stacked
     var onPlay: () -> Void = {}
     var onShuffle: () -> Void = {}

@@ -10,8 +10,8 @@ import ViewInspector
 struct GenreListTests {
     private func state(_ genres: [Genre], _ loading: GenreListUiState.LoadingState) -> GenreListUiState {
         GenreListUiState(
-            genres: genres, loadingState: loading, scanProgress: nil, sortOrder: .`default`,
-            letterIndex: LetterIndexKt.genreLetterIndex(genres: genres, sortOrder: .`default`)
+            genres: genres, loadingState: loading, scanProgress: nil, sortOrder: .default,
+            letterIndex: LetterIndexKt.genreLetterIndex(genres: genres, sortOrder: .default)
         )
     }
 

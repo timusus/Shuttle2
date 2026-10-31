@@ -197,8 +197,8 @@ private struct LetterIndexModifier: ViewModifier {
                     halt.stop()
                     scrollTo(section)
                 }
-                    .padding(.bottom, clearance.value)
-                    .ignoresSafeArea(.container, edges: .bottom)
+                .padding(.bottom, clearance.value)
+                .ignoresSafeArea(.container, edges: .bottom)
             }
     }
 
