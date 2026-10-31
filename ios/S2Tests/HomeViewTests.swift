@@ -108,7 +108,7 @@ struct HomeViewTests {
             genre.key: progress(finished: true),
         ])]))
         #expect((try? sut.inspect().find(text: "Jump Back In")) != nil)
-        for detail in ["Album", "Artist · Rooster", "Playlist · Airbag", "Genre · Finished"] {
+        for detail in ["Album", "Rooster", "Airbag", "Genre · Finished"] {
             #expect((try? sut.inspect().find(text: detail)) != nil, "no \(detail)")
         }
         let labels = try sut.inspect().findAll(ViewType.Button.self, where: { (try? $0.accessibilityIdentifier()) == "homeGrid.cell" })
