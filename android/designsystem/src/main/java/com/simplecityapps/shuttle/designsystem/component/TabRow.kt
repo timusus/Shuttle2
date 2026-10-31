@@ -58,6 +58,7 @@ fun S2TabRow(
 /** Sizes and places the indicator on the content span interpolated between the two tabs [position] sits between. */
 private fun TabIndicatorScope.fractionalTabIndicator(position: () -> Float): Modifier = Modifier.tabIndicatorLayout { measurable, constraints, tabPositions ->
     val last = tabPositions.lastIndex
+    if (last < 0) return@tabIndicatorLayout layout(constraints.maxWidth, constraints.maxHeight) {}
     val at = position().coerceIn(0f, last.toFloat())
     val from = tabPositions[at.toInt()]
     val to = tabPositions[minOf(at.toInt() + 1, last)]
