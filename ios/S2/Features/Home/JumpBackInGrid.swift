@@ -300,7 +300,7 @@ struct JumpBackInProgressBar: View {
 
 /// One tile, after Spotify's recents: the artwork in a square slot flush with the tile's top, bottom and leading edges,
 /// with how far through the item its queue was left as a thin bar along its foot, and beside it the title over up to
-/// two lines and a line saying the kind and where it was left ("Album · Airbag", "Playlist · Shuffled", "Genre ·
+/// two lines and the song it was left on ("Airbag"), or when none is known the kind and state ("Playlist · Shuffled", "Genre ·
 /// Finished"), on a rounded fill. A tap opens the item; long-press has the rest (Play, Play from Start, Shuffle,
 /// queue, Go to).
 struct JumpBackInCell: View {
