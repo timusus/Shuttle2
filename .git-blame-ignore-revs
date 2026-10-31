@@ -1,0 +1,3 @@
+# Formatting-only commits; git blame skips them with blame.ignoreRevsFile (set by default on GitHub).
+# style: baseline swiftformat reformat (ios)
+95b43c2fe216fba3ed3aaa6c2b5da76706af6b5a
