@@ -239,6 +239,7 @@ private fun LibraryPager(
             selectedIndex = pagerState.targetPage.coerceIn(0, tabs.lastIndex),
             onSelect = { index -> scope.launch { pagerState.animateScrollToPage(index) } },
             modifier = Modifier.testTag("library-sections"),
+            indicatorPosition = { pagerState.currentPage + pagerState.currentPageOffsetFraction },
         )
         HorizontalPager(state = pagerState, key = { tabs[it] }, modifier = Modifier.fillMaxSize().testTag("library-pager")) { index ->
             // Only the visible section scrolls to the top on a re-select.
