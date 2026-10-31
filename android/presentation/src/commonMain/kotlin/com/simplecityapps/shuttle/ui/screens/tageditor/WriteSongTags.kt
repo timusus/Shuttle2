@@ -4,8 +4,8 @@ import com.simplecityapps.localmediaprovider.local.provider.TagLibProperty
 import com.simplecityapps.mediaprovider.model.AudioFile
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.model.toTagYearDate
 import dev.zacsweers.metro.Inject
-import kotlinx.datetime.LocalDate
 
 data class TagWriteResult(
     /** The songs whose files were written, as the library now has them. */
@@ -94,7 +94,7 @@ internal fun Song.edited(edits: Map<TagField, String>): Song {
         album = text(TagField.Album, album),
         albumArtist = text(TagField.AlbumArtist, albumArtist),
         albumArtistDisplay = text(TagField.AlbumArtist, albumArtistDisplay),
-        date = if (TagField.Year in edits) edits.getValue(TagField.Year).trim().toIntOrNull()?.let { LocalDate(it, 1, 1) } else date,
+        date = if (TagField.Year in edits) edits.getValue(TagField.Year).trim().toIntOrNull().toTagYearDate() else date,
         track = number(TagField.Track, track),
         disc = number(TagField.Disc, disc),
         // The same separators the library's tag reader splits a genre on (';' and ',', never '/').
