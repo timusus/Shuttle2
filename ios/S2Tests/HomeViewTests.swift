@@ -169,7 +169,13 @@ struct HomeViewTests {
     @Test func aTileNamesTheSongEvenWhenItsQueueIsShuffled() {
         let item = HomeItemAlbumItem(album: album("OK Computer"))
         #expect(JumpBackInText.state(progress(shuffled: true)) == "Airbag")
-        #expect(JumpBackInText.detail(item: item, progress: progress(shuffled: true)) == "Album · Airbag")
+        #expect(JumpBackInText.detail(item: item, progress: progress(shuffled: true)) == "Airbag")
+        #expect(JumpBackInText.accessibilityLabel(item: item, progress: progress(shuffled: true)).contains("Album, on Airbag"))
+    }
+
+    @Test func aTileWithoutASongKeepsTheKindAndState() {
+        let item = HomeItemAlbumItem(album: album("OK Computer"))
+        #expect(JumpBackInText.detail(item: item, progress: progress(song: nil)) == "Album")
     }
 
     @Test func aShuffledTileWithoutASongSaysShuffled() {

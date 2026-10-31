@@ -58,8 +58,10 @@ struct JumpBackInGrid: View {
 }
 
 enum JumpBackInText {
-    /// A tile's second line: the kind, then the song it was left on, "Shuffled" or "Finished" ("Album · Airbag").
+    /// A tile's second line: the song it was left on alone (the kind beside it is cut off in a two-column grid, and
+    /// VoiceOver still reads it), else the kind then "Shuffled" or "Finished" ("Album · Finished").
     static func detail(item: HomeItem, progress: HomeItemProgress?) -> String {
+        if let progress, !progress.finished, let song = progress.songName { return song }
         guard let state = state(progress) else { return item.typeLabel }
         return "\(item.typeLabel) · \(state)"
     }

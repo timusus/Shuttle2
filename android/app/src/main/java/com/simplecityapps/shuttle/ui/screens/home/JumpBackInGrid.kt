@@ -241,7 +241,12 @@ private fun JumpBackInTile(
         progress.finished -> stringResource(R.string.home_state_finished)
         else -> progress.songName ?: stringResource(R.string.home_state_shuffled).takeIf { progress.shuffled }
     }
-    val detail = state?.let { stringResource(R.string.home_tile_subtitle, kind, it) } ?: kind
+    // A known song gets the whole line: beside the kind it is cut off on a two-column phone. TalkBack still reads the kind.
+    val detail = when {
+        progress != null && !progress.finished && progress.songName != null -> progress.songName!!
+        state != null -> stringResource(R.string.home_tile_subtitle, kind, state)
+        else -> kind
+    }
     val description = jumpBackInDescription(title, kind, progress, relativeTime = null)
     // Medium artwork rounds at `small` and sits S2Spacing.xsmall in, so the tile rounds at that plus the inset: `medium`.
     JumpBackInSurface(MaterialTheme.shapes.medium, modifier) {

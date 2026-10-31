@@ -187,11 +187,11 @@ class HomeScreenTest {
     }
 
     @Test
-    fun `tiles say the kind and the song, even when shuffled, or Finished`() {
+    fun `tiles show the song alone, even when shuffled, and the kind with Finished`() {
         robot.setContent(HomeScenarios.resuming)
 
-        robot.assertTextDisplayed("Playlist · Open Roads")
-        robot.assertTextDisplayed("Artist · Tidal Pull")
+        robot.assertTextDisplayed("Open Roads")
+        robot.assertTextDisplayed("Tidal Pull")
         robot.assertTextDisplayed("Album · Finished")
         robot.assertDescriptionShown("Road Trip, Playlist, on Open Roads, 50% through")
         robot.assertDescriptionShown("Saltmarsh Choir, Artist, on Tidal Pull, shuffled")
