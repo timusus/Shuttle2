@@ -107,7 +107,9 @@ open class MediaBrowserAuthenticationManager(
      * the profile's own: AAC over HLS on Android, which stays seekable). A null cap streams the original, whatever its
      * bitrate. [startPositionMs] starts a transcode that far in (`StartTimeTicks`): a progressive transcode can't be
      * range-seeked, so a seek restarts it there. The server ignores it for direct play, which seeks by range.
-     * The stream's `PlaySessionId` is [playId], the play whose reports carry it, else a new one.
+     * The stream's `PlaySessionId` is [playId], the play whose reports carry it, else a new one. With [overCap] (the
+     * song's known bitrate is over the cap) only the transcode target is listed to direct-play: Emby checks direct play
+     * against a static bitrate the request can't carry, so it would otherwise send the original.
      */
     fun buildUniversalPath(
         itemId: String,
@@ -115,11 +117,12 @@ open class MediaBrowserAuthenticationManager(
         maxBitrateKbps: Int?,
         startPositionMs: Long = 0,
         format: TranscodeFormat = TranscodeFormat.Auto,
-        playId: String? = null
+        playId: String? = null,
+        overCap: Boolean = false
     ): String? = universalPath(
         itemId = itemId,
         authenticatedCredentials = authenticatedCredentials,
-        directPlayContainers = streamProfile.directPlayContainers,
+        directPlayContainers = streamDirectPlayContainers(format, overCap),
         target = streamProfile.streamTarget(format),
         maxBitrateKbps = maxBitrateKbps,
         startPositionMs = startPositionMs,
@@ -156,13 +159,14 @@ open class MediaBrowserAuthenticationManager(
         itemId: String,
         authenticatedCredentials: AuthenticatedCredentials,
         maxBitrateKbps: Int?,
-        format: TranscodeFormat
+        format: TranscodeFormat,
+        overCap: Boolean = false
     ): Boolean? {
         val address = credentialStore.address ?: return null
         val target = streamProfile.streamTarget(format)
         val profile = DeviceProfile(
             maxStreamingBitrate = maxBitrateKbps?.let { it * 1000 },
-            directPlayProfiles = streamProfile.directPlayContainers.split(',').map { entry ->
+            directPlayProfiles = streamDirectPlayContainers(format, overCap).split(',').map { entry ->
                 DirectPlayProfile(container = entry.substringBefore('|'), audioCodec = entry.substringAfter('|', "").ifEmpty { null })
             },
             transcodingProfiles = listOf(TranscodingProfile(container = target.container, audioCodec = target.codec.codec, protocol = target.protocol))
@@ -170,6 +174,15 @@ open class MediaBrowserAuthenticationManager(
         val result = userService.playbackInfo(address, authenticatedCredentials, itemId, profile.maxStreamingBitrate, PlaybackInfoRequest(profile))
         if (result is NetworkResult.Failure) logger.warn(result.error) { "Failed to get $itemId's playback info" }
         return (result as? NetworkResult.Success)?.body?.mediaSources?.firstOrNull()?.transcodes
+    }
+
+    private fun streamDirectPlayContainers(
+        format: TranscodeFormat,
+        overCap: Boolean
+    ): String {
+        if (!overCap) return streamProfile.directPlayContainers
+        val target = streamProfile.streamTarget(format)
+        return "${target.container}|${target.codec.codec}"
     }
 
     /** What the [StreamProfile] transcodes a stream to in [format]. */

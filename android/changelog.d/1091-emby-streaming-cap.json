@@ -1,0 +1,1 @@
+{ "type": "fixes", "text": "Emby now transcodes songs over your streaming quality cap instead of sending the original file.", "commits": [] }

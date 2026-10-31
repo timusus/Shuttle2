@@ -91,8 +91,37 @@ class MediaBrowserStreamUrlProviderTest {
         val request = server.requestsTo(path).single()
         request.url.parameters["UserId"] shouldBe "user456"
         request.url.parameters["MaxStreamingBitrate"] shouldBe "320000"
-        request.bodyText shouldContain """{"Type":"Audio","Container":"flac"}"""
         request.bodyText shouldContain """{"Type":"Audio","Container":"mp3","AudioCodec":"mp3","Protocol":"http","Context":"Streaming"}"""
+    }
+
+    @Test
+    fun `a song over the cap lists only the transcode target to direct-play`() = eachServer {
+        server.respond(path, fixture = "transcode", method = "POST")
+
+        val stream = provider.openStream(song)
+
+        stream.url shouldContain "&Container=mp3|mp3&"
+        server.requestsTo(path).single().bodyText shouldContain """"DirectPlayProfiles":[{"Type":"Audio","Container":"mp3","AudioCodec":"mp3"}]"""
+    }
+
+    @Test
+    fun `a song under the cap keeps the full direct-play list`() = eachServer {
+        server.respond(path, fixture = "direct", method = "POST")
+
+        val stream = provider.openStream(song.copy(bitRate = 200))
+
+        stream.url shouldContain "&Container=mp3|mp3,"
+        stream.url shouldContain ",flac"
+    }
+
+    @Test
+    fun `a song of unknown bitrate keeps the full direct-play list`() = eachServer {
+        server.respond(path, fixture = "direct", method = "POST")
+
+        val stream = provider.openStream(song.copy(bitRate = null))
+
+        stream.url shouldContain "&Container=mp3|mp3,"
+        stream.url shouldContain ",flac"
     }
 
     @Test

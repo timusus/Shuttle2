@@ -56,7 +56,7 @@ open class MediaBrowserStreamUrlProvider(
         val itemId = song.itemId()
         val transcodes = transcodeAnswers.load()[itemId]
             ?: withTimeoutOrNull(PLAYBACK_INFO_TIMEOUT_MS) {
-                authenticationManager.transcodes(itemId, authenticatedCredentials, maxBitrateKbps, format)
+                authenticationManager.transcodes(itemId, authenticatedCredentials, maxBitrateKbps, format, song.isOverCap(maxBitrateKbps))
             }?.also { answer ->
                 transcodeAnswers.update { answers -> (if (answers.size >= MAX_REMEMBERED_ANSWERS) emptyMap() else answers) + (itemId to answer) }
             }
@@ -85,7 +85,8 @@ open class MediaBrowserStreamUrlProvider(
         maxBitrateKbps = maxBitrateKbps,
         startPositionMs = startPositionMs,
         format = format,
-        playId = playId
+        playId = playId,
+        overCap = song.isOverCap(maxBitrateKbps)
     ) ?: throw IllegalStateException("Failed to build $scheme path")
 
     /**
@@ -143,10 +144,13 @@ open class MediaBrowserStreamUrlProvider(
         maxBitrateKbps: Int?,
         format: TranscodeFormat
     ): DeliveredFormat? {
-        val bitRate = song.bitRate
-        val overCap = maxBitrateKbps != null && bitRate != null && bitRate > maxBitrateKbps
-        if (!overCap && authenticationManager.directPlays(song.audioCodec)) return null
+        if (!song.isOverCap(maxBitrateKbps) && authenticationManager.directPlays(song.audioCodec)) return null
         return authenticationManager.streamTarget(format).codec.delivered(maxBitrateKbps)
+    }
+
+    private fun Song.isOverCap(maxBitrateKbps: Int?): Boolean {
+        val bitRate = bitRate
+        return maxBitrateKbps != null && bitRate != null && bitRate > maxBitrateKbps
     }
 
     private fun Song.itemId(): String = path.substringAfterLast('/')
