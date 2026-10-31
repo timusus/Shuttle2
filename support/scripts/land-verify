@@ -278,13 +278,18 @@ architecture_tests() {
 }
 
 lint_changed() {
-    local f files=()
+    local f files=() swift=0 rc=0
     for f in ${changed[@]+"${changed[@]}"}; do
         case "$f" in */generated/*|*/build/*|generated/*|build/*) continue ;; esac
         case "$f" in *.kt|*.kts) [ -f "$f" ] && files+=("$f") ;; esac
+        case "$f" in ios/*.swift) swift=1 ;; esac
     done
-    if [ "${#files[@]}" -eq 0 ]; then echo "lint: no changed Kotlin files"; return 0; fi
-    support/scripts/lint "${files[@]}"
+    if [ "$swift" = 1 ] && command -v swiftformat >/dev/null 2>&1; then
+        swiftformat --lint --quiet --config ios/.swiftformat ios || { echo "lint: swiftformat findings; fix with: swiftformat --config ios/.swiftformat ios"; rc=1; }
+    fi
+    if [ "${#files[@]}" -eq 0 ]; then echo "lint: no changed Kotlin files"; return "$rc"; fi
+    support/scripts/lint "${files[@]}" || rc=1
+    return "$rc"
 }
 
 # The simulator for iOS tests. Inside the verify lease only one verify runs, so one fixed device

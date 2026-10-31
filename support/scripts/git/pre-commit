@@ -7,5 +7,21 @@ VENDOR_DIR="${SUPPORT_DIR}/vendor"
 
 PATH="${VENDOR_DIR}/ktlint:$PATH"
 
-git diff --name-only --cached --relative | grep '\.kt[s"]\?$' | xargs ktlint --android --relative .
-if [ $? -ne 0 ]; then exit 1; fi
+root="$(git rev-parse --show-toplevel)"
+
+kt="$(git diff --name-only --cached --relative --diff-filter=d | grep '\.kt[s"]\?$' || true)"
+if [ -n "$kt" ]; then
+  echo "$kt" | xargs ktlint --relative . || { echo "pre-commit: ktlint failed; fix with: support/scripts/lint -F" >&2; exit 1; }
+fi
+
+swift="$(git diff --name-only --cached --relative --diff-filter=d | grep '\.swift$' || true)"
+if [ -n "$swift" ]; then
+  if command -v swiftformat >/dev/null 2>&1; then
+    echo "$swift" | xargs swiftformat --lint --quiet --config "$root/ios/.swiftformat" || {
+      echo "pre-commit: swiftformat failed; fix with: swiftformat --config ios/.swiftformat <files>" >&2
+      exit 1
+    }
+  else
+    echo "pre-commit: swiftformat not installed, skipping Swift lint (brew install swiftformat)" >&2
+  fi
+fi

@@ -49,6 +49,19 @@ fi
 
 root="$(git rev-parse --show-toplevel)" || exit 0
 cd "$root" || exit 0
+# Swift: lint only (swiftformat --lint), the author runs the fix. Skipped with one line when swiftformat is missing.
+swift="$(git -c core.quotePath=false diff --cached --name-only --diff-filter=ACMR | grep -E '\.swift$' | grep -E '^ios/' | grep -Ev '(^|/)(build|DerivedData|\.build)/')"
+if [ -n "$swift" ]; then
+  if command -v swiftformat >/dev/null 2>&1; then
+    if ! printf '%s\n' "$swift" | xargs swiftformat --lint --quiet --config ios/.swiftformat; then
+      echo "pre-commit: swiftformat findings; fix with: swiftformat --config ios/.swiftformat <files> (SKIP_LINT=1 bypasses)" >&2
+      exit 1
+    fi
+  else
+    echo "pre-commit: swiftformat not installed, skipping Swift lint (brew install swiftformat)" >&2
+  fi
+fi
+
 ktlint="support/vendor/ktlint/ktlint"
 [ -x "$ktlint" ] || exit 0
 
