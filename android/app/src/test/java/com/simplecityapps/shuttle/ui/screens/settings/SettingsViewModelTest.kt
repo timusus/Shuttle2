@@ -1,5 +1,6 @@
 package com.simplecityapps.shuttle.ui.screens.settings
 
+import com.simplecityapps.fakes.FakeClock
 import com.simplecityapps.mediaprovider.StreamingPolicy
 import com.simplecityapps.mediaprovider.settings.LibrarySettings
 import com.simplecityapps.playback.dsp.equalizer.Equalizer
@@ -35,6 +36,7 @@ import com.simplecityapps.shuttle.ui.text.EqualizerPresetString
 import com.simplecityapps.shuttle.ui.text.SettingsString
 import com.simplecityapps.testing.MainDispatcherRule
 import io.kotest.matchers.shouldBe
+import kotlin.time.Clock
 import kotlin.time.Instant
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -44,6 +46,7 @@ import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
+import kotlinx.datetime.TimeZone
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -74,7 +77,10 @@ class SettingsViewModelTest {
         proFeatureGate.tryUse(feature)
     }
 
-    private fun viewModel() = SettingsViewModel(ObserveSetting(store), ReadSetting(store), SaveSetting(store), preferenceManager, KeyValueEqualizerPresetStore(prefs), IsLastFmConfigured { lastFmConfigured }, effects, AndroidSettingsCatalog, backupFlow, tryUseProFeature)
+    private fun viewModel(
+        clock: Clock = Clock.System,
+        timeZone: TimeZone = TimeZone.currentSystemDefault()
+    ) = SettingsViewModel(ObserveSetting(store), ReadSetting(store), SaveSetting(store), preferenceManager, KeyValueEqualizerPresetStore(prefs), IsLastFmConfigured { lastFmConfigured }, effects, AndroidSettingsCatalog, backupFlow, tryUseProFeature, clock, timeZone)
 
     private inline fun <reified T : SettingItem> item(key: String): T = AndroidSettingsCatalog.items.filterIsInstance<T>().first { it.key == key }
 
@@ -353,7 +359,8 @@ class SettingsViewModelTest {
 
     @Test
     fun `exporting asks for a save location, then builds and writes the backup`() = runTest(mainDispatcherRule.testDispatcher) {
-        val viewModel = viewModel()
+        val fakeClock = FakeClock(Instant.parse("${TODAY_ISO_STRING}T10:00:00Z"))
+        val viewModel = viewModel(clock = fakeClock, timeZone = TimeZone.UTC)
         backgroundScope.launch { viewModel.uiState.collect {} }
         runCurrent()
 
@@ -362,7 +369,10 @@ class SettingsViewModelTest {
         viewModel.exportBackupTo("content://dest")
         runCurrent()
 
-        events(viewModel) shouldBe listOf(SettingsUiEvent.BackupExportRequested("shuttle-library-backup.json"), SettingsUiEvent.BackupExportSaved)
+        events(viewModel) shouldBe listOf(
+            SettingsUiEvent.BackupExportRequested("shuttle-library-backup-$TODAY_ISO_STRING.json"),
+            SettingsUiEvent.BackupExportSaved,
+        )
         backupFlow.written shouldBe mapOf("content://dest" to "{\"staged\":true}")
     }
 
@@ -424,4 +434,6 @@ class SettingsViewModelTest {
 
         events(viewModel) shouldBe emptyList()
     }
+
+    private val TODAY_ISO_STRING = "2026-10-18"
 }
