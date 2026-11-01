@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+# Entry point: aso listing|bulk|track|report [args]. Creates the Python venv and node deps on first use.
+set -euo pipefail
+here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+data="${ASO_DATA_DIR:-$HOME/.local/share/shuttle-music-aso}"
+venv="$data/venv"
+node_dir="$data/node"
+mkdir -p "$data"
+
+py() {
+  if [ ! -x "$venv/bin/python" ]; then
+    python3 -m venv "$venv"
+    "$venv/bin/pip" install -q -r "$here/requirements.txt"
+  fi
+}
+js() {
+  if [ ! -d "$node_dir/node_modules/google-play-scraper" ]; then
+    mkdir -p "$node_dir"
+    cp "$here/package.json" "$node_dir/package.json"
+    (cd "$node_dir" && npm install --silent)
+  fi
+}
+
+cmd="${1:-}"
+[ $# -gt 0 ] && shift
+case "$cmd" in
+  listing) py; exec "$venv/bin/python" "$here/listing.py" "$@" ;;
+  bulk)    py; exec "$venv/bin/python" "$here/bulk.py" "$@" ;;
+  track)   js; NODE_PATH="$node_dir/node_modules" exec node "$here/track.js" "$@" ;;
+  report)  exec python3 "$here/report.py" "$@" ;;
+  *) echo "usage: aso listing pull|push | bulk ls|get | track | report [--days N]" >&2; exit 2 ;;
+esac

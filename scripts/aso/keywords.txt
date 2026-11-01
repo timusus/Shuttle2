@@ -1,0 +1,93 @@
+# English (us, gb, au, ca, in)
+music player
+offline music player
+music player offline
+mp3 player
+music app
+audio player
+music player for android
+local music player
+simple music player
+music player no ads
+flac player
+lossless music player
+hi res music player
+audiophile music player
+opus player
+gapless music player
+replaygain
+equalizer music player
+music tag editor
+tag editor
+folder music player
+music player widget
+android auto music player
+chromecast music player
+lyrics music player
+jellyfin
+jellyfin music
+jellyfin music player
+jellyfin client
+jellyfin audio
+emby
+emby music
+emby music player
+plex music
+plex music player
+plex audio
+plex client
+plexamp
+subsonic
+subsonic client
+navidrome
+navidrome client
+opensubsonic
+self hosted music
+media server music player
+music server app
+stream my music
+shuttle
+shuttle music
+shuttle music player
+symfonium
+finamp
+poweramp
+musicolet
+[us/es]
+reproductor de musica
+reproductor de musica sin conexion
+reproductor mp3
+reproductor flac
+musica sin internet
+jellyfin
+plex musica
+[mx/es]
+reproductor de musica
+reproductor de musica sin conexion
+reproductor mp3
+musica sin internet
+jellyfin
+[br/pt]
+player de musica
+player de musica offline
+reprodutor de musica
+tocador de musica
+player flac
+musica offline
+jellyfin
+[ru/ru]
+музыкальный плеер
+плеер
+плеер без интернета
+flac плеер
+jellyfin
+[fr/fr]
+lecteur de musique
+lecteur musique hors ligne
+lecteur flac
+jellyfin
+[de/de]
+musik player
+musikplayer offline
+flac player
+jellyfin
