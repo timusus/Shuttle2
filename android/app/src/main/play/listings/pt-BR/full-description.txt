@@ -1,6 +1,6 @@
 O Shuttle Music Player é um player de música para as músicas do seu celular e para a música do seu próprio servidor Jellyfin, Plex ou Emby. Sem anúncios, sem conta comigo e com uma única biblioteca para tudo.
 
-Toque MP3, FLAC, Opus, AAC, Ogg e mais direto do seu aparelho, offline. Ou entre no seu servidor de mídia e transmita toda a sua coleção, com capas e playlists.
+Reproduza MP3, FLAC, Opus, AAC, Ogg e mais direto do seu aparelho, offline. Ou entre no seu servidor de mídia e transmita toda a sua coleção, com capas e playlists.
 
 POR QUE O SHUTTLE
 

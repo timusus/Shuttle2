@@ -23,7 +23,7 @@ FUNKCJE
 • Zbiorczy edytor tagów
 • Android Auto
 • Chromecast
-• Wyłącznik czasowy
+• Timer uśpienia
 • Losowe odtwarzanie albumów i kolejka pod Twoją kontrolą
 • Playlisty, inteligentne playlisty i import M3U
 • Pobieranie okładek
@@ -33,8 +33,8 @@ FUNKCJE
 
 DARMOWY OKRES PRÓBNY, POTEM ODBLOKOWANIE
 
-Shuttle Music Player to płatna aplikacja z 14-dniowym darmowym okresem próbnym wszystkich funkcji. Na start nie jest potrzebna karta. Po okresie próbnym odblokuj ją jednorazowym zakupem lub planem rocznym. Jeśli jej nie odblokujesz, odtwarzanie stopniowo przyspiesza, aż to zrobisz.
+Shuttle Music Player to płatna aplikacja z 14-dniowym darmowym okresem próbnym wszystkich funkcji. Na start nie jest potrzebna karta płatnicza. Po okresie próbnym odblokuj ją jednorazowym zakupem lub planem rocznym. Jeśli jej nie odblokujesz, odtwarzanie stopniowo przyspiesza, aż to zrobisz.
 
-STWORZONE PRZEZ JEDNEGO DEWELOPERA
+STWORZONE PRZEZ JEDNEGO PROGRAMISTĘ
 
-Shuttle od czasów oryginalnego Shuttle Music Player tworzy jeden niezależny deweloper. Pytania, błędy i pomysły trafiają prosto do mnie: developer@simplecityapps.com.
+Shuttle od czasów oryginalnego Shuttle Music Player tworzy jeden niezależny programista. Pytania, błędy i pomysły trafiają prosto do mnie: developer@simplecityapps.com.

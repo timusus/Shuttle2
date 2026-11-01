@@ -28,7 +28,7 @@ FUNKTIONEN
 • Playlists, intelligente Playlists und M3U-Import
 • Cover-Download
 • Widgets für den Startbildschirm
-• Tag-/Nachtmodus und Designs
+• Hell-/Dunkelmodus und Designs
 • Suche über Künstler, Alben und Songs
 
 TESTZEIT, DANN FREISCHALTEN
