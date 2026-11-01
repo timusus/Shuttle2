@@ -1,40 +1,40 @@
-Shuttle Music to odtwarzacz muzyki dla utworów na telefonie i muzyki z Twojego własnego serwera Jellyfin, Plex lub Emby. Bez reklam, bez konta u nas i z jedną biblioteką na wszystko.
+Shuttle Music Player to odtwarzacz muzyki dla utworów na Twoim telefonie i muzyki z Twojego własnego serwera Jellyfin, Plex lub Emby. Bez reklam, bez konta u mnie i z jedną biblioteką na wszystko.
 
 Odtwarzaj MP3, FLAC, Opus, AAC, Ogg i inne formaty prosto z urządzenia, offline. Albo zaloguj się na swój serwer multimediów i strumieniuj całą kolekcję z okładkami i playlistami.
 
 DLACZEGO SHUTTLE
 
-• Muzyka lokalna i z serwera w jednej aplikacji. Pliki offline i biblioteka Jellyfin, Plex lub Emby leżą obok siebie.
-• Własna biblioteka budowana z Twoich tagów. Shuttle czyta pliki bezpośrednio, zamiast polegać na Android Media Store, więc playlisty nie znikają, a tagi importują się poprawnie.
+• Muzyka lokalna i z serwera w jednej aplikacji. Twoje pliki offline i biblioteka Jellyfin, Plex lub Emby leżą obok siebie.
+• Własny czytnik tagów: biblioteka powstaje z tagów w Twoich plikach, z wybranych przez Ciebie folderów.
 • Wbudowane dekodery Opus i FLAC, dzięki którym brzmią tak samo na każdym telefonie.
-• 10-pasmowy equalizer z wykresem charakterystyki częstotliwościowej oraz ReplayGain dla równej głośności między utworami i albumami.
-• Edytor tagów, który zmienia jeden utwór albo cały album naraz.
+• 10-pasmowy korektor z presetami i wykresem charakterystyki częstotliwościowej oraz ReplayGain, który wyrównuje głośność między utworami i albumami.
+• Edytor tagów, który edytuje jeden utwór albo cały album naraz.
 
 JELLYFIN, PLEX I EMBY
 
-Shuttle to klient muzyczny dla własnych serwerów multimediów. Dodaj serwer Jellyfin lub Emby, podając adres i dane logowania, albo zaloguj się do Plex kontem Plex. Przeglądaj albumy, wykonawców, gatunki i playlisty na serwerze, wyszukuj w nich i odtwarzaj na telefonie, w samochodzie przez Android Auto albo na głośnikach przez Chromecast.
+Shuttle to klient muzyczny dla serwerów multimediów hostowanych we własnym zakresie. Dodaj serwer Jellyfin lub Emby, podając adres i swój login, albo zaloguj się do Plex kontem Plex. Przeglądaj albumy, wykonawców, gatunki i playlisty na serwerze, wyszukuj w nich i odtwarzaj na telefonie, w samochodzie przez Android Auto albo na głośnikach przez Chromecast.
 
 FUNKCJE
 
 • Odtwarzacz muzyki offline dla plików na telefonie
 • Strumieniowanie z serwerów multimediów Jellyfin, Plex i Emby
-• 10-pasmowy equalizer, presety i przedwzmacniacz
+• 10-pasmowy korektor, presety i przedwzmacniacz
 • ReplayGain (tryb utworu i albumu)
 • Zbiorczy edytor tagów
 • Android Auto
 • Chromecast
 • Wyłącznik czasowy
 • Losowe odtwarzanie albumów i kolejka pod Twoją kontrolą
-• Playlisty
-• Teksty utworów
-• Automatyczne pobieranie okładek
+• Playlisty, inteligentne playlisty i import M3U
+• Pobieranie okładek
+• Widżety na ekran główny
 • Tryb dzienny/nocny i motywy
 • Wyszukiwanie wykonawców, albumów i utworów
 
 DARMOWY OKRES PRÓBNY, POTEM ODBLOKOWANIE
 
-Shuttle Music to płatna aplikacja z 14-dniowym darmowym okresem próbnym wszystkich funkcji. Na start nie jest potrzebna karta. Po okresie próbnym odblokuj aplikację jednorazowym zakupem lub niedrogim planem rocznym. Jeśli jej nie odblokujesz, odtwarzanie będzie stopniowo przyspieszać, aż to zrobisz.
+Shuttle Music Player to płatna aplikacja z 14-dniowym darmowym okresem próbnym wszystkich funkcji. Na start nie jest potrzebna karta. Po okresie próbnym odblokuj ją jednorazowym zakupem lub planem rocznym. Jeśli jej nie odblokujesz, odtwarzanie stopniowo przyspiesza, aż to zrobisz.
 
-STWORZONE PRZEZ JEDNEGO PROGRAMISTĘ
+STWORZONE PRZEZ JEDNEGO DEWELOPERA
 
-Shuttle tworzy jeden niezależny programista, od czasu pierwotnego Shuttle Music Player. Pytania, błędy i pomysły trafiają prosto do mnie: developer@simplecityapps.com.
+Shuttle od czasów oryginalnego Shuttle Music Player tworzy jeden niezależny deweloper. Pytania, błędy i pomysły trafiają prosto do mnie: developer@simplecityapps.com.

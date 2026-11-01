@@ -1,1 +1,1 @@
-Offline Musik-Player für Jellyfin, Plex & Emby. Equalizer & Tag-Editor.
+Premium-Musik-Player für lokale Dateien, Plex, Emby und Jellyfin

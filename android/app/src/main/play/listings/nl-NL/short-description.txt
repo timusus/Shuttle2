@@ -1,1 +1,1 @@
-Offline muziekspeler voor Jellyfin, Plex en Emby. Equalizer en tag-editor.
+Een premium muziekspeler voor lokale muziek, Plex, Emby en Jellyfin

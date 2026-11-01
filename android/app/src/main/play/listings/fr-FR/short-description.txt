@@ -1,1 +1,1 @@
-Lecteur de musique hors ligne pour Jellyfin, Plex et Emby. Égaliseur, tags.
+Un lecteur de musique premium pour vos fichiers, Plex, Emby et Jellyfin

@@ -1,1 +1,1 @@
-Jellyfin、Plex、Embyに対応したオフライン音楽プレーヤー。イコライザーとタグ編集。
+ローカル音源、Plex、Emby、Jellyfinを再生するプレミアム音楽プレイヤー

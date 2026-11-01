@@ -1,1 +1,1 @@
-Odtwarzacz muzyki offline dla Jellyfin, Plex i Emby. Equalizer i tagi.
+Odtwarzacz muzyki premium: pliki lokalne, Plex, Emby i Jellyfin

@@ -1,40 +1,40 @@
-Shuttle Music is een muziekspeler voor de nummers op je telefoon en de muziek op je eigen Jellyfin-, Plex- of Emby-server. Geen advertenties, geen account bij ons en één bibliotheek voor alles.
+Shuttle Music Player is een muziekspeler voor de nummers op je telefoon en de muziek op je eigen Jellyfin-, Plex- of Emby-server. Geen advertenties, geen account bij mij en één bibliotheek voor alles.
 
-Speel MP3, FLAC, Opus, AAC, Ogg en meer rechtstreeks af vanaf je apparaat, offline. Of log in op je mediaserver en stream je hele collectie met hoezen en afspeellijsten.
+Speel MP3, FLAC, Opus, AAC, Ogg en meer rechtstreeks af van je apparaat, offline. Of log in op je mediaserver en stream je hele collectie met albumhoezen en afspeellijsten.
 
 WAAROM SHUTTLE
 
 • Lokale muziek en servermuziek in één app. Je offlinebestanden en je Jellyfin-, Plex- of Emby-bibliotheek staan naast elkaar.
-• Een eigen bibliotheek, opgebouwd uit je tags. Shuttle leest je bestanden rechtstreeks in plaats van op de Android Media Store te vertrouwen, zodat afspeellijsten niet verdwijnen en tags goed worden geïmporteerd.
+• Een eigen tag-lezer: je bibliotheek wordt opgebouwd uit de tags in je bestanden, vanuit de mappen die je kiest.
 • Ingebouwde Opus- en FLAC-decoders, zodat ze op elke telefoon hetzelfde klinken.
-• Een equalizer met 10 banden en een grafiek van de frequentieweergave, plus ReplayGain voor een gelijkmatig volume tussen nummers en albums.
-• Een tag-editor die één nummer of een heel album in één keer bewerkt.
+• Een equalizer met 10 banden, voorinstellingen en een frequentieresponsgrafiek, plus ReplayGain voor een gelijkmatig volume tussen nummers en albums.
+• Een tag-editor die één nummer of een heel album tegelijk bewerkt.
 
 JELLYFIN, PLEX EN EMBY
 
-Shuttle is een muziekclient voor zelf gehoste mediaservers. Voeg je Jellyfin- of Emby-server toe met het adres en je inloggegevens, of log in bij Plex met je Plex-account. Blader door de albums, artiesten, genres en afspeellijsten van je server, zoek erin en speel af op je telefoon, in de auto met Android Auto of op je speakers met Chromecast.
+Shuttle is een muziekclient voor zelf gehoste mediaservers. Voeg je Jellyfin- of Emby-server toe met het adres en je inloggegevens, of log in bij Plex met je Plex-account. Blader door de albums, artiesten, genres en afspeellijsten van je server, zoek erin en speel af op je telefoon, in je auto met Android Auto of op je speakers met Chromecast.
 
 FUNCTIES
 
 • Offline muziekspeler voor de bestanden op je telefoon
 • Streamen vanaf Jellyfin-, Plex- en Emby-mediaservers
-• Equalizer met 10 banden, presets en voorversterker
+• Equalizer met 10 banden, voorinstellingen en voorversterking
 • ReplayGain (nummer- en albummodus)
 • Tag-editor voor meerdere bestanden tegelijk
 • Android Auto
 • Chromecast
 • Slaaptimer
-• Albums willekeurig afspelen en een wachtrij die je zelf bepaalt
-• Afspeellijsten
-• Songteksten
-• Automatisch hoezen downloaden
+• Albums shuffelen en een wachtrij die je zelf beheert
+• Afspeellijsten, slimme afspeellijsten en M3U-import
+• Albumhoezen downloaden
+• Widgets voor het startscherm
 • Dag-/nachtmodus en thema's
 • Zoeken in artiesten, albums en nummers
 
 GRATIS PROEFPERIODE, DAARNA ONTGRENDELEN
 
-Shuttle Music is een betaalde app met een gratis proefperiode van 14 dagen voor alle functies. Om te beginnen is geen creditcard nodig. Na de proefperiode ontgrendel je de app met een eenmalige aankoop of een voordelig jaarabonnement. Als je de app niet ontgrendelt, gaat het afspelen steeds sneller totdat je dat doet.
+Shuttle Music Player is een betaalde app met een gratis proefperiode van 14 dagen voor alle functies. Je hebt geen creditcard nodig om te beginnen. Na de proefperiode ontgrendel je de app met een eenmalige aankoop of een jaarabonnement. Ontgrendel je de app niet, dan versnelt het afspelen geleidelijk totdat je dat doet.
 
 GEMAAKT DOOR ÉÉN ONTWIKKELAAR
 
-Shuttle wordt sinds de oorspronkelijke Shuttle Music Player gemaakt door één onafhankelijke ontwikkelaar. Vragen, bugs en ideeën gaan rechtstreeks naar mij via developer@simplecityapps.com.
+Shuttle wordt sinds de originele Shuttle Music Player gebouwd door één onafhankelijke ontwikkelaar. Vragen, bugs en ideeën gaan rechtstreeks naar mij: developer@simplecityapps.com.

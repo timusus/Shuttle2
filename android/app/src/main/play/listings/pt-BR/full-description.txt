@@ -1,40 +1,40 @@
-O Shuttle Music é um player de música para as músicas do seu celular e para a música do seu próprio servidor Jellyfin, Plex ou Emby. Sem anúncios, sem conta conosco e uma única biblioteca para tudo.
+O Shuttle Music Player é um player de música para as músicas do seu celular e para a música do seu próprio servidor Jellyfin, Plex ou Emby. Sem anúncios, sem conta comigo e com uma única biblioteca para tudo.
 
 Toque MP3, FLAC, Opus, AAC, Ogg e mais direto do seu aparelho, offline. Ou entre no seu servidor de mídia e transmita toda a sua coleção, com capas e playlists.
 
 POR QUE O SHUTTLE
 
-• Música local e do servidor em um só app. Seus arquivos offline e sua biblioteca Jellyfin, Plex ou Emby ficam lado a lado.
-• Uma biblioteca própria, criada a partir das suas tags. O Shuttle lê seus arquivos diretamente em vez de depender do Android Media Store, então as playlists não somem e as tags são importadas corretamente.
-• Decodificadores de Opus e FLAC integrados, para tocarem igual em qualquer celular.
-• Um equalizador de 10 bandas com gráfico de resposta em frequência, além de ReplayGain para manter o volume estável entre faixas e álbuns.
+• Música local e de servidor em um só app. Seus arquivos offline e sua biblioteca Jellyfin, Plex ou Emby ficam lado a lado.
+• Leitor de tags próprio: sua biblioteca é montada a partir das tags dos seus arquivos, nas pastas que você escolher.
+• Decodificadores Opus e FLAC integrados, para tocar igual em qualquer celular.
+• Equalizador de 10 bandas com predefinições e gráfico de resposta em frequência, além de ReplayGain para um volume constante entre faixas e álbuns.
 • Um editor de tags que edita uma música ou um álbum inteiro de uma vez.
 
 JELLYFIN, PLEX E EMBY
 
-O Shuttle é um cliente de música para servidores de mídia auto-hospedados. Adicione seu servidor Jellyfin ou Emby com o endereço e o seu login, ou entre no Plex com sua conta Plex. Navegue pelos álbuns, artistas, gêneros e playlists do seu servidor, pesquise nele e toque no celular, no carro com o Android Auto ou nas caixas de som com o Chromecast.
+O Shuttle é um cliente de música para servidores de mídia próprios. Adicione seu servidor Jellyfin ou Emby com o endereço e o seu login, ou entre no Plex com a sua conta Plex. Navegue pelos álbuns, artistas, gêneros e playlists do seu servidor, pesquise nele e toque no celular, no carro com o Android Auto ou nas caixas de som com o Chromecast.
 
 RECURSOS
 
-• Player de música offline para os arquivos do celular
-• Streaming de servidores de mídia Jellyfin, Plex e Emby
+• Player de música offline para os arquivos do seu celular
+• Transmissão de servidores de mídia Jellyfin, Plex e Emby
 • Equalizador de 10 bandas, predefinições e pré-amplificador
-• ReplayGain (modos faixa e álbum)
+• ReplayGain (modos por faixa e por álbum)
 • Editor de tags em lote
 • Android Auto
 • Chromecast
-• Timer de soneca
-• Reprodução aleatória por álbum e uma fila que você controla
-• Playlists
-• Letras
-• Download automático de capas
+• Timer de desligamento
+• Aleatório por álbum e uma fila sob o seu controle
+• Playlists, playlists inteligentes e importação de M3U
+• Download de capas
+• Widgets na tela inicial
 • Modo dia/noite e temas
-• Busca entre artistas, álbuns e músicas
+• Busca por artistas, álbuns e músicas
 
-TESTE GRÁTIS E DEPOIS DESBLOQUEIO
+TESTE GRÁTIS, DEPOIS DESBLOQUEIE
 
-O Shuttle Music é um app pago com teste grátis de 14 dias de todos os recursos. Não é preciso cartão para começar. Depois do teste, desbloqueie com uma compra única ou um plano anual de baixo custo. Se você não desbloquear, a reprodução vai ficando mais rápida aos poucos até que você o faça.
+O Shuttle Music Player é um app pago com teste grátis de 14 dias de todos os recursos. Não precisa de cartão para começar. Depois do teste, desbloqueie com uma compra única ou um plano anual. Se você não desbloquear, a reprodução vai acelerando aos poucos até você desbloquear.
 
 FEITO POR UM ÚNICO DESENVOLVEDOR
 
-O Shuttle é feito por um desenvolvedor independente desde o Shuttle Music Player original. Dúvidas, bugs e ideias vão direto para mim em developer@simplecityapps.com.
+O Shuttle é feito por um desenvolvedor independente desde o Shuttle Music Player original. Dúvidas, bugs e ideias vão direto para mim, em developer@simplecityapps.com.

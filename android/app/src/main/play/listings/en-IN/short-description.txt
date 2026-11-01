@@ -1,0 +1,1 @@
+A premium music player for local, Plex, Emby & Jellyfin playback

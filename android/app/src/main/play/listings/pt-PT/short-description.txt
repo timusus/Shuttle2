@@ -1,1 +1,1 @@
-Reprodutor de música offline para Jellyfin, Plex e Emby. EQ e editor de tags.
+Um leitor de música premium para música local, Plex, Emby e Jellyfin
