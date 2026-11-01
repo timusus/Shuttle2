@@ -1,0 +1,40 @@
+Shuttle Music es un reproductor de música para las canciones de tu teléfono y la música de tu propio servidor Jellyfin, Plex o Emby. Sin anuncios, sin cuenta con nosotros y una sola biblioteca para todo.
+
+Reproduce MP3, FLAC, Opus, AAC, Ogg y más directo desde tu dispositivo, sin conexión. O inicia sesión en tu servidor multimedia y transmite toda tu colección con sus carátulas y listas de reproducción.
+
+POR QUÉ SHUTTLE
+
+• Música local y del servidor en una sola app. Tus archivos sin conexión y tu biblioteca de Jellyfin, Plex o Emby conviven lado a lado.
+• Su propia biblioteca, creada a partir de tus etiquetas. Shuttle lee tus archivos directamente en lugar de depender del Android Media Store, así que las listas no desaparecen y las etiquetas se importan bien.
+• Decodificadores de Opus y FLAC integrados, para que suenen igual en cualquier teléfono.
+• Un ecualizador de 10 bandas con gráfico de respuesta en frecuencia, más ReplayGain para un volumen constante entre pistas y álbumes.
+• Un editor de etiquetas que edita una canción o un álbum completo a la vez.
+
+JELLYFIN, PLEX Y EMBY
+
+Shuttle es un cliente de música para servidores multimedia autoalojados. Agrega tu servidor Jellyfin o Emby con su dirección y tus credenciales, o inicia sesión en Plex con tu cuenta de Plex. Explora los álbumes, artistas, géneros y listas de reproducción de tu servidor, busca en él y reproduce en tu teléfono, en tu auto con Android Auto o en tus bocinas con Chromecast.
+
+FUNCIONES
+
+• Reproductor de música sin conexión para los archivos de tu teléfono
+• Transmisión desde servidores multimedia Jellyfin, Plex y Emby
+• Ecualizador de 10 bandas, preajustes y preamplificador
+• ReplayGain (modos pista y álbum)
+• Editor de etiquetas por lotes
+• Android Auto
+• Chromecast
+• Temporizador de apagado
+• Reproducción aleatoria por álbum y una cola que tú controlas
+• Listas de reproducción
+• Letras
+• Descarga automática de carátulas
+• Modo día/noche y temas
+• Búsqueda entre artistas, álbumes y canciones
+
+PRUEBA GRATIS Y LUEGO DESBLOQUEO
+
+Shuttle Music es una app de pago con una prueba gratis de 14 días de todas las funciones. No se necesita tarjeta para empezar. Después de la prueba, desbloquéala con una compra única o un plan anual de bajo costo. Si no la desbloqueas, la reproducción se acelera poco a poco hasta que lo hagas.
+
+HECHA POR UN SOLO DESARROLLADOR
+
+Shuttle lo desarrolla un programador independiente desde el Shuttle Music Player original. Preguntas, errores e ideas me llegan directo a developer@simplecityapps.com.

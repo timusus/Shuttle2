@@ -1,0 +1,40 @@
+Shuttle Music ist ein Musik-Player für die Songs auf deinem Handy und die Musik auf deinem eigenen Jellyfin-, Plex- oder Emby-Server. Keine Werbung, kein Konto bei uns und eine Bibliothek für alles.
+
+Spiele MP3, FLAC, Opus, AAC, Ogg und mehr direkt von deinem Gerät ab, auch offline. Oder melde dich bei deinem Medienserver an und streame deine ganze Sammlung samt Cover und Playlists.
+
+WARUM SHUTTLE
+
+• Lokale Musik und Servermusik in einer App. Deine Offline-Dateien und deine Jellyfin-, Plex- oder Emby-Bibliothek liegen nebeneinander.
+• Eine eigene Bibliothek, aufgebaut aus deinen Tags. Shuttle liest deine Dateien direkt, statt sich auf den Android Media Store zu verlassen. So gehen Playlists nicht verloren und Tags werden korrekt importiert.
+• Eingebaute Opus- und FLAC-Decoder, damit sie auf jedem Handy gleich klingen.
+• Ein 10-Band-Equalizer mit Frequenzgang-Grafik sowie ReplayGain für gleichmäßige Lautstärke zwischen Titeln und Alben.
+• Ein Tag-Editor, der einen Song oder gleich ein ganzes Album bearbeitet.
+
+JELLYFIN, PLEX UND EMBY
+
+Shuttle ist ein Musik-Client für selbst gehostete Medienserver. Füge deinen Jellyfin- oder Emby-Server mit Adresse und Login hinzu, oder melde dich mit deinem Plex-Konto bei Plex an. Durchsuche Alben, Künstler, Genres und Playlists deines Servers, suche darin und spiele auf deinem Handy, im Auto mit Android Auto oder auf deinen Lautsprechern mit Chromecast ab.
+
+FUNKTIONEN
+
+• Offline-Musik-Player für die Dateien auf deinem Handy
+• Streaming von Jellyfin-, Plex- und Emby-Medienservern
+• 10-Band-Equalizer, Presets und Vorverstärker
+• ReplayGain (Titel- und Albummodus)
+• Tag-Editor für mehrere Dateien
+• Android Auto
+• Chromecast
+• Schlaf-Timer
+• Album-Zufallswiedergabe und eine Warteschlange, die du steuerst
+• Playlists
+• Songtexte
+• Automatischer Download von Covern
+• Tag-/Nachtmodus und Designs
+• Suche nach Künstlern, Alben und Songs
+
+KOSTENLOSE TESTPHASE, DANN FREISCHALTEN
+
+Shuttle Music ist eine kostenpflichtige App mit 14 Tagen kostenloser Testphase für alle Funktionen. Zum Start ist keine Karte nötig. Nach der Testphase schaltest du die App mit einem Einmalkauf oder einem günstigen Jahresabo frei. Wenn du sie nicht freischaltest, wird die Wiedergabe nach und nach schneller, bis du es tust.
+
+VON EINEM ENTWICKLER
+
+Shuttle wird seit dem ursprünglichen Shuttle Music Player von einem unabhängigen Entwickler gebaut. Fragen, Fehler und Ideen gehen direkt an mich: developer@simplecityapps.com.

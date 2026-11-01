@@ -1,0 +1,1 @@
+Reproductor de música sin conexión para Jellyfin, Plex y Emby. EQ y etiquetas.

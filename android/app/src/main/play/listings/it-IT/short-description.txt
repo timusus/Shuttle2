@@ -1,0 +1,1 @@
+Lettore musicale offline per Jellyfin, Plex ed Emby. Equalizzatore e tag.

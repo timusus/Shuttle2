@@ -1,0 +1,40 @@
+Shuttle Music è un lettore musicale per i brani sul tuo telefono e per la musica sul tuo server Jellyfin, Plex o Emby. Niente pubblicità, nessun account con noi e un'unica libreria per tutto.
+
+Riproduci MP3, FLAC, Opus, AAC, Ogg e altro direttamente dal tuo dispositivo, offline. Oppure accedi al tuo media server e ascolta in streaming tutta la tua collezione, con copertine e playlist.
+
+PERCHÉ SHUTTLE
+
+• Musica locale e del server in un'unica app. I tuoi file offline e la tua libreria Jellyfin, Plex o Emby stanno fianco a fianco.
+• Una libreria tutta sua, costruita a partire dai tuoi tag. Shuttle legge direttamente i tuoi file invece di affidarsi all'Android Media Store, così le playlist non spariscono e i tag vengono importati correttamente.
+• Decoder Opus e FLAC integrati, per una resa identica su ogni telefono.
+• Un equalizzatore a 10 bande con grafico della risposta in frequenza, più ReplayGain per un volume costante tra brani e album.
+• Un editor di tag che modifica un singolo brano o un intero album in una volta sola.
+
+JELLYFIN, PLEX ED EMBY
+
+Shuttle è un client musicale per media server self-hosted. Aggiungi il tuo server Jellyfin o Emby con indirizzo e credenziali, oppure accedi a Plex con il tuo account Plex. Sfoglia album, artisti, generi e playlist del tuo server, cerca al suo interno e riproduci sul telefono, in auto con Android Auto o sulle casse con Chromecast.
+
+FUNZIONI
+
+• Lettore musicale offline per i file sul telefono
+• Streaming dai media server Jellyfin, Plex ed Emby
+• Equalizzatore a 10 bande, preset e preamplificatore
+• ReplayGain (modalità brano e album)
+• Editor di tag in batch
+• Android Auto
+• Chromecast
+• Timer di spegnimento
+• Riproduzione casuale per album e una coda che controlli tu
+• Playlist
+• Testi
+• Download automatico delle copertine
+• Modalità giorno/notte e temi
+• Ricerca tra artisti, album e brani
+
+PROVA GRATUITA, POI SBLOCCO
+
+Shuttle Music è un'app a pagamento con una prova gratuita di 14 giorni di ogni funzione. Per iniziare non serve nessuna carta. Dopo la prova, sbloccala con un acquisto singolo o un piano annuale a basso costo. Se non la sblocchi, la riproduzione accelera gradualmente finché non lo fai.
+
+FATTO DA UNO SVILUPPATORE
+
+Shuttle è sviluppato da uno sviluppatore indipendente fin dal Shuttle Music Player originale. Domande, bug e idee arrivano direttamente a me, all'indirizzo developer@simplecityapps.com.

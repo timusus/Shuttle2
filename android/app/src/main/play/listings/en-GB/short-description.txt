@@ -1,0 +1,1 @@
+Offline music player that streams from Jellyfin, Plex & Emby. EQ & tag editor.
