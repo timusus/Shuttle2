@@ -1,13 +1,13 @@
-Shuttle Music is a music player for the songs on your phone and the music on your own Jellyfin, Plex or Emby server. No ads, no account with us, and one library for all of it.
+Shuttle Music Player is a music player for the songs on your phone and the music on your own Jellyfin, Plex or Emby server. No ads, no account with me, and one library for all of it.
 
 Play MP3, FLAC, Opus, AAC, Ogg and more straight from your device, offline. Or sign in to your media server and stream your whole collection with its artwork and playlists.
 
 WHY SHUTTLE
 
 • Local and server music in one app. Your offline files and your Jellyfin, Plex or Emby library sit side by side.
-• Its own library, built from your tags. Shuttle reads your files directly instead of relying on the Android Media Store, so playlists don't go missing and tags import correctly.
+• Its own tag reader, so your library is built from the tags in your files, from the folders you choose.
 • Built-in Opus and FLAC decoders, so they play the same on every phone.
-• A 10-band equalizer with a frequency response graph, plus ReplayGain for a steady volume between tracks and albums.
+• A 10-band equalizer with presets and a frequency response graph, plus ReplayGain for a steady volume between tracks and albums.
 • A tag editor that edits one song or a whole album at once.
 
 JELLYFIN, PLEX AND EMBY
@@ -25,15 +25,15 @@ FEATURES
 • Chromecast
 • Sleep timer
 • Album shuffle and a queue you control
-• Playlists
-• Lyrics
-• Automatic artwork downloading
+• Playlists, smart playlists and M3U import
+• Artwork downloading
+• Home screen widgets
 • Day/night mode and themes
 • Search across artists, albums and songs
 
 FREE TRIAL, THEN UNLOCK
 
-Shuttle Music is a paid app with a 14-day free trial of every feature. No card is needed to start. After the trial, unlock it with a one-time purchase or a low yearly plan. If you don't unlock it, playback gradually speeds up until you do.
+Shuttle Music Player is a paid app with a 14-day free trial of every feature. No card is needed to start. After the trial, unlock it with a one-time purchase or a yearly plan. If you don't unlock it, playback gradually speeds up until you do.
 
 MADE BY ONE DEVELOPER
 
