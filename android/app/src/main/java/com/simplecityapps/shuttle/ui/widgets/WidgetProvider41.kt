@@ -95,8 +95,6 @@ class WidgetProvider41 : ShuttleAppWidgetProvider() {
             setViewVisibility(R.id.nextButton, View.GONE)
         }
 
-        if (updateReason == WidgetManager.UpdateReason.PlaystateChanged || updateReason == WidgetManager.UpdateReason.Unknown) {
-            setImageViewResource(R.id.playPauseButton, getPlaybackDrawable())
-        }
+        setImageViewResource(R.id.playPauseButton, getPlaybackDrawable())
     }
 }
