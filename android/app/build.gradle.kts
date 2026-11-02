@@ -314,18 +314,10 @@ fun isReleaseBuild(): Boolean {
     }
 }
 
-fun versionName(): String {
-    return "${AppVersion.versionMajor}.${AppVersion.versionMinor}.${AppVersion.versionPatch}${if (!AppVersion.versionSuffix.isNullOrEmpty()) "-${AppVersion.versionSuffix}" else ""} (${versionCode()})"
-}
+// Hardcoded date-based version for the 1.0.10 hotfix: the internal track already has 26101301.
+fun versionName(): String = "2026.11.03"
 
-fun versionCode(): Int {
-    // Major + minor + CI build number (where available)
-    return (AppVersion.versionMajor * 10000000) + (AppVersion.versionMinor * 1000000) + (AppVersion.versionPatch * 10000) +
-            when {
-                isCiBuild() -> getEnv("GITHUB_RUN_NUMBER").toInt() + 20 // Add 20 due to move from Jenkins to GH Actions
-                else -> 1
-            }
-}
+fun versionCode(): Int = 26110301
 
 class MissingEnvVarException(private val name: String) : Exception() {
     override val message: String
