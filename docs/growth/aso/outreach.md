@@ -54,7 +54,7 @@ Title: `Shuttle Music: an Android music player for Plex, Jellyfin and Emby libra
 > - Home-screen widgets and a sleep timer
 > - Batch tag editor, smart playlists and M3U import
 >
-> It does not have lyrics, scrobbling, crossfade or downloads from the server yet.
+> It does not have lyrics, scrobbling, crossfade or downloads from the server.
 >
 > Play Store: https://play.google.com/store/apps/details?id=com.simplecityapps.shuttle
 > Site: https://shuttlemusicplayer.com
@@ -84,7 +84,7 @@ Title: `Shuttle Music: an Android music player for Emby, Jellyfin and Plex`
 > - Widgets and a sleep timer
 > - Batch tag editor, smart playlists and M3U import
 >
-> It is a paid app with a 14-day free trial, and the source is Apache 2.0. Not available yet: lyrics, scrobbling,
+> It is a paid app with a 14-day free trial, and the source is Apache 2.0. Not included: lyrics, scrobbling,
 > crossfade, and downloads from the server.
 >
 > Play Store: https://play.google.com/store/apps/details?id=com.simplecityapps.shuttle
@@ -227,10 +227,10 @@ fetched: check rules), and leave the disclosure in.
 >
 > It plays your Plex music library as well as local files, with FLAC and Opus, a 10-band EQ, ReplayGain, Android Auto,
 > Chromecast and widgets. Paid, 14-day free trial, source Apache 2.0. No lyrics, scrobbling, crossfade or server
-> downloads yet. Play Store: <link>.
+> downloads. Play Store: <link>.
 >
 > Plexamp is Plex's own music app, so try it too and compare on your own library. Tell me what you need and I'll say
-> honestly whether Shuttle does it.
+> whether Shuttle does it.
 
 ### r/emby: "Which music app for Emby on Android?"
 
@@ -240,7 +240,7 @@ fetched: check rules), and leave the disclosure in.
 > Auto, Chromecast, widgets, a sleep timer, a batch tag editor, smart playlists and M3U import. The source is Apache
 > 2.0. It doesn't do lyrics, scrobbling, crossfade or downloads from the server. Play Store: <link>.
 >
-> The Emby forum's Third Party Apps section lists other options. Happy to answer questions about how it handles Emby.
+> Happy to answer questions about how it handles Emby.
 
 ## Open problems
 
