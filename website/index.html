@@ -18,6 +18,9 @@
   <meta property="og:image:height" content="630">
   <meta property="og:image:alt" content="Shuttle Music's Now Playing and album screens, beside the line: Your music. Your server. Your rules.">
   <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Shuttle Music: your music, your server, your rules">
+  <meta name="twitter:description" content="A music player for Android and iPhone that plays the files on your phone and streams your own Jellyfin, Emby, Plex or Navidrome library.">
+  <meta name="twitter:image" content="https://shuttlemusicplayer.com/og-image.png">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="icon" href="/favicon-32x32.png" sizes="32x32" type="image/png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
@@ -45,17 +48,17 @@
         "publisher": { "@id": "https://shuttlemusicplayer.com/#org" }
       },
       {
-        "@type": "MobileApplication",
+        "@type": ["SoftwareApplication", "MobileApplication"],
         "@id": "https://shuttlemusicplayer.com/#android",
-        "name": "Shuttle Music",
+        "name": "Shuttle Music Player",
         "operatingSystem": "Android",
         "applicationCategory": "MultimediaApplication",
-        "description": "A music player for the files on your phone and your own Jellyfin, Emby, Plex or Navidrome server.",
+        "description": "A music player for the files on your phone and your own Jellyfin, Emby or Plex server.",
         "url": "https://shuttlemusicplayer.com/",
         "image": "https://shuttlemusicplayer.com/assets/icon-512.png",
         "downloadUrl": "https://play.google.com/store/apps/details?id=com.simplecityapps.shuttle",
         "installUrl": "https://play.google.com/store/apps/details?id=com.simplecityapps.shuttle",
-        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+        "offers": { "@type": "Offer", "availability": "https://schema.org/InStock", "description": "Paid app with a 14-day free trial. One-time purchase or yearly plan through Google Play." },
         "publisher": { "@id": "https://shuttlemusicplayer.com/#org" }
       }
     ]
@@ -166,6 +169,24 @@
           <div class="source"><h3>Emby</h3><p>Your server address and Emby login.</p></div>
           <div class="source"><h3>Plex</h3><p>Sign in with plex.tv, then pick your server and library.</p></div>
           <div class="source"><h3>Navidrome</h3><p>And other Subsonic servers, with a password or an API key.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="guides">
+      <div class="wrap">
+        <div class="section-head">
+          <span class="eyebrow">Guides</span>
+          <h2>Find your way in.</h2>
+        </div>
+        <div class="sources">
+          <div class="source"><h3><a href="/jellyfin-music-player">Jellyfin</a></h3><p>Stream your Jellyfin music on Android.</p></div>
+          <div class="source"><h3><a href="/plex-music-player">Plex</a></h3><p>Play your Plex music library.</p></div>
+          <div class="source"><h3><a href="/emby-music-player">Emby</a></h3><p>An Emby music app for Android.</p></div>
+          <div class="source"><h3><a href="/flac-player">FLAC player</a></h3><p>Lossless, gapless, with built-in decoders.</p></div>
+          <div class="source"><h3><a href="/equalizer">Equalizer</a></h3><p>Ten bands, presets and a preamp.</p></div>
+          <div class="source"><h3><a href="/android-auto">Android Auto</a></h3><p>Your library on the car display.</p></div>
+          <div class="source"><h3><a href="/tag-editor">Tag editor</a></h3><p>Fix song details, one or many.</p></div>
         </div>
       </div>
     </section>

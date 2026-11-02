@@ -1,6 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://shuttlemusicplayer.com/</loc><lastmod>2026-10-06</lastmod></url>
-  <url><loc>https://shuttlemusicplayer.com/support</loc><lastmod>2026-10-06</lastmod></url>
+  <url><loc>https://shuttlemusicplayer.com/</loc><lastmod>2026-11-03</lastmod></url>
+  <url><loc>https://shuttlemusicplayer.com/jellyfin-music-player</loc><lastmod>2026-11-03</lastmod></url>
+  <url><loc>https://shuttlemusicplayer.com/plex-music-player</loc><lastmod>2026-11-03</lastmod></url>
+  <url><loc>https://shuttlemusicplayer.com/emby-music-player</loc><lastmod>2026-11-03</lastmod></url>
+  <url><loc>https://shuttlemusicplayer.com/flac-player</loc><lastmod>2026-11-03</lastmod></url>
+  <url><loc>https://shuttlemusicplayer.com/equalizer</loc><lastmod>2026-11-03</lastmod></url>
+  <url><loc>https://shuttlemusicplayer.com/android-auto</loc><lastmod>2026-11-03</lastmod></url>
+  <url><loc>https://shuttlemusicplayer.com/tag-editor</loc><lastmod>2026-11-03</lastmod></url>
+  <url><loc>https://shuttlemusicplayer.com/support</loc><lastmod>2026-11-03</lastmod></url>
   <url><loc>https://shuttlemusicplayer.com/privacy</loc><lastmod>2026-10-06</lastmod></url>
 </urlset>
