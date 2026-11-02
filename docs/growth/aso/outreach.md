@@ -56,9 +56,9 @@ Title: `Shuttle Music: an Android music player for Plex, Jellyfin and Emby libra
 >
 > It does not have lyrics, scrobbling, crossfade or downloads from the server yet.
 >
-> Play Store: <Play link>
+> Play Store: https://play.google.com/store/apps/details?id=com.simplecityapps.shuttle
 > Site: https://shuttlemusicplayer.com
-> Source (Apache 2.0): <repo link>
+> Source (Apache 2.0): https://github.com/timusus/Shuttle2
 >
 > I'd like to hear what your library needs that this doesn't do. Replies here are the quickest way to reach me.
 
@@ -87,7 +87,7 @@ Title: `Shuttle Music: an Android music player for Emby, Jellyfin and Plex`
 > It is a paid app with a 14-day free trial, and the source is Apache 2.0. Not available yet: lyrics, scrobbling,
 > crossfade, and downloads from the server.
 >
-> Play Store: <Play link>
+> Play Store: https://play.google.com/store/apps/details?id=com.simplecityapps.shuttle
 > Site: https://shuttlemusicplayer.com
 >
 > Feedback on how it behaves with your Emby library is welcome.
@@ -170,8 +170,8 @@ Issue text (title: `Add Shuttle Music (Android music client)`):
 
 > I'm the developer of Shuttle Music. Suggesting it for the Android music clients list.
 >
-> - Repo: <repo link> (Apache 2.0)
-> - Play Store: <Play link>
+> - Repo: https://github.com/timusus/Shuttle2 (Apache 2.0)
+> - Play Store: https://play.google.com/store/apps/details?id=com.simplecityapps.shuttle
 > - Site: https://shuttlemusicplayer.com
 > - Description: Android music player for local files and Jellyfin, Emby and Plex, with a 10-band equaliser,
 >   ReplayGain, Android Auto and Chromecast.
@@ -181,7 +181,7 @@ Issue text (title: `Add Shuttle Music (Android music client)`):
 
 README-style line if that format is used:
 
-`- [Shuttle Music](<repo link>) - Android music player for local, Jellyfin, Emby and Plex libraries. 🔺 Paid`
+`- [Shuttle Music](https://github.com/timusus/Shuttle2) - Android music player for local, Jellyfin, Emby and Plex libraries. 🔺 Paid`
 
 ### awesome-selfhosted
 
@@ -200,7 +200,7 @@ README-style line if that format is used:
   Music-Player-GO. Entry format and rules: unverified, check rules.
 - Likely entry (confirm the format first):
 
-`- [Shuttle Music](<repo link>) - Music player for local files and Jellyfin, Emby and Plex libraries.`
+`- [Shuttle Music](https://github.com/timusus/Shuttle2) - Music player for local files and Jellyfin, Emby and Plex libraries.`
 
 - Blocker: the list may expect free apps only.
 
@@ -244,7 +244,7 @@ fetched: check rules), and leave the disclosure in.
 
 ## Open problems
 
-- Public repo URL and Play link placeholders (`<repo link>`, `<Play link>`) need filling in.
+- Public repo URL and Play link placeholders (`https://github.com/timusus/Shuttle2`, `https://play.google.com/store/apps/details?id=com.simplecityapps.shuttle`) need filling in.
 - Rules not fetched: Emby forum rules, Plex Apps & Creations rules, subreddit self-promotion rules, AlternativeTo form
   limits, IzzyOnDroid inclusion policy.
 - iOS availability is not claimed anywhere, since 1.0.10 is Android.
