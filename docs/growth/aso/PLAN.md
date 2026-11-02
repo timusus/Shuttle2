@@ -18,6 +18,7 @@ row in `experiments.md`.
 | Experiments | "New Listing" en-US short description test, 11 Jan to 10 Sep 2026: control "A premium music player for local, Plex, Emby & Jellyfin playback" kept | Play Console |
 | Custom listings | Jellyfin, Plex and Emby search keyword listings, live since 3 Oct, no data yet | Play Console |
 | Install languages (Oct) | en-US, es-US, pt-BR, en-GB, en-IN, ru, es-419, fr | bulk language |
+| Google search (site) | 5-31 Oct: 84 clicks, 1.18k impressions, avg position 5.1, 58 queries, almost all branded ("shuttle music player" 29/185 at 2.4). Seven feature pages live 3 Nov, indexing requested; sitemap resubmitted | Search Console, `sc-domain:shuttlemusicplayer.com` |
 | Managed publishing | off: an applied edit goes live once review passes | Play Console |
 
 ## Rules for listing copy
