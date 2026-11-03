@@ -1,5 +1,20 @@
 [
   {
+    "versionName": "2026.11.03",
+    "releaseDate": "03/11/2026",
+    "features": [
+
+    ],
+    "fixes": [
+      "Fixed signing in to and playing music from Jellyfin 12 servers",
+      "The home screen widget's play/pause button now stays in sync"
+    ],
+    "improvements": [
+    ],
+    "notes": [
+    ]
+  },
+  {
     "versionName": "1.0.10",
     "releaseDate": "21/01/2026",
     "features": [
