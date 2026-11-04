@@ -18,10 +18,19 @@ object S2ArtworkApi {
     fun albumArtworkUrl(
         artist: String,
         album: String
-    ): String = "https://$HOST/v1/artwork?artist=${artist.formUrlEncode()}&album=${album.formUrlEncode()}"
+    ): String = "https://$HOST/v1/artwork?artist=${artist.straightQuotes().formUrlEncode()}&album=${album.straightQuotes().formUrlEncode()}"
 
-    fun artistArtworkUrl(artist: String): String = "https://$HOST/v1/artwork?artist=${artist.formUrlEncode()}"
+    fun artistArtworkUrl(artist: String): String = "https://$HOST/v1/artwork?artist=${artist.straightQuotes().formUrlEncode()}"
 }
+
+// The API matches names literally, so tags with typographic quotes miss the straight-quote entries.
+private fun String.straightQuotes(): String = map {
+    when (it) {
+        '‘', '’', 'ʼ' -> '\''
+        '“', '”' -> '"'
+        else -> it
+    }
+}.joinToString("")
 
 /** `application/x-www-form-urlencoded`, byte for byte what `java.net.URLEncoder` produces for UTF-8. */
 internal fun String.formUrlEncode(): String = buildString {
