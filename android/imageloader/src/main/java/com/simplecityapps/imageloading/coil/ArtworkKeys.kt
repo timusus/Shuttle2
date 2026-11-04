@@ -19,7 +19,7 @@ internal fun Album.artworkCacheKey(): String = "album:${albumArtist ?: friendlyA
 fun AlbumArtist.artworkCacheKey(): String = "artist:${name ?: friendlyArtistName ?: "Unknown"}".withArtworkVersion(artworkVersion)
 
 /** Keys an artist's image by everything that changes it, so an image cached under an older minimum is looked up again. */
-fun ArtistHeroArtwork.artworkCacheKey(): String = "artistHero:${artist.artworkCacheKey()}|online=$onlineLookup|${fallbackAlbum?.artworkCacheKey()}|min=${ArtistHeroArtwork.MIN_ARTIST_IMAGE_SIZE}"
+fun ArtistHeroArtwork.artworkCacheKey(): String = "artistHero:${artist.artworkCacheKey()}|online=$onlineLookup|${fallbackAlbum?.artworkCacheKey()}|min=${ArtistHeroArtwork.ARTIST_IMAGE_MINIMUM_SIZES.joinToString(",")}"
 
 /** Keys a song shown as its artist by the song too, since its own artwork shows until the artist has an image. */
 fun ArtistImageArtwork.artworkCacheKey(): String = "artistImage:${artist.artworkCacheKey()}|${song.artworkCacheKey()}"

@@ -92,6 +92,9 @@ class ArtworkUrlsTest {
 
         artworkUrls.requests(albumArtist(song)) shouldBe listOf(
             ArtworkRequest("https://example.com/song-1/artist", minimumSize = ArtistHeroArtwork.MIN_ARTIST_IMAGE_SIZE),
+            s2("$S2_URL?artist=The+Artist").copy(minimumSize = ArtistHeroArtwork.MIN_ARTIST_IMAGE_SIZE),
+            ArtworkRequest("https://example.com/song-1/artist"),
+            s2("$S2_URL?artist=The+Artist"),
             ArtworkRequest("https://example.com/song-1/album"),
             s2("$S2_URL?artist=The+Artist&album=Album+%26+Co"),
         )
@@ -112,15 +115,25 @@ class ArtworkUrlsTest {
     }
 
     @Test
-    fun `the S2 API's artist image is asked for only when their tags carry one MusicBrainz id`() = runTest {
-        val song = song("song-1").copy(mbAlbumArtistIds = listOf("a74b1b7f-71a5-4011-9441-d0b5e4122711"))
+    fun `an artist image of any size beats an album cover and a large one beats a small one`() = runTest {
+        val song = song("song-1")
         library(song)
         remoteArtworkProvider.hasArtwork = false
 
         artworkUrls.requests(albumArtist(song)) shouldBe listOf(
             s2("$S2_URL?artist=The+Artist").copy(minimumSize = ArtistHeroArtwork.MIN_ARTIST_IMAGE_SIZE),
+            s2("$S2_URL?artist=The+Artist"),
             s2("$S2_URL?artist=The+Artist&album=Album+%26+Co"),
         )
+    }
+
+    @Test
+    fun `the S2 API's artist image is asked for by name without MusicBrainz tags and not for Various Artists`() = runTest {
+        val song = song("song-1").copy(albumArtist = "Various Artists")
+        library(song)
+        remoteArtworkProvider.hasArtwork = false
+
+        artworkUrls.requests(albumArtist(song)) shouldBe listOf(s2("$S2_URL?artist=Various+Artists&album=Album+%26+Co"))
     }
 
     @Test
@@ -131,7 +144,6 @@ class ArtworkUrlsTest {
 
         artworkUrls.requests(song) shouldBe listOf(s2("$S2_URL?artist=The+Artist&album=Album+%26+Co"))
         artworkUrls.requests(album(song)) shouldBe listOf(s2("$S2_URL?artist=The+Artist&album=Album+%26+Co"))
-        artworkUrls.requests(albumArtist(song)) shouldBe listOf(s2("$S2_URL?artist=The+Artist&album=Album+%26+Co"))
     }
 
     @Test
@@ -151,11 +163,14 @@ class ArtworkUrlsTest {
     }
 
     @Test
-    fun `an album artist with nothing in the library has no artwork`() = runTest {
+    fun `an album artist with nothing in the library has only the S2 API's artist image`() = runTest {
         val song = song("song-1")
         library()
 
-        artworkUrls.requests(albumArtist(song)) shouldBe emptyList()
+        artworkUrls.requests(albumArtist(song)) shouldBe listOf(
+            s2("$S2_URL?artist=The+Artist").copy(minimumSize = ArtistHeroArtwork.MIN_ARTIST_IMAGE_SIZE),
+            s2("$S2_URL?artist=The+Artist"),
+        )
         remoteArtworkProvider.artistArtworkRequests shouldBe emptyList()
     }
 
@@ -197,7 +212,12 @@ class ArtworkUrlsTest {
 
         artworkUrls.requests(song) shouldBe listOf(local, s2("$S2_URL?artist=The+Artist&album=Album+%26+Co"))
         artworkUrls.requests(album(song)) shouldBe listOf(local, s2("$S2_URL?artist=The+Artist&album=Album+%26+Co"))
-        artworkUrls.requests(albumArtist(song)) shouldBe listOf(local, s2("$S2_URL?artist=The+Artist&album=Album+%26+Co"))
+        artworkUrls.requests(albumArtist(song)) shouldBe listOf(
+            s2("$S2_URL?artist=The+Artist").copy(minimumSize = ArtistHeroArtwork.MIN_ARTIST_IMAGE_SIZE),
+            s2("$S2_URL?artist=The+Artist"),
+            local,
+            s2("$S2_URL?artist=The+Artist&album=Album+%26+Co"),
+        )
 
         artworkSettings.localOnly.value = true
 

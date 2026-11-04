@@ -21,10 +21,23 @@ class ArtistHeroArtworkTest {
     }
 
     @Test
-    fun `the online lookup isn't trusted without a MusicBrainz id - however exactly the name matches`() {
+    fun `an artist with a name and no MusicBrainz id is looked up by name`() {
         val songs = listOf(song("Airbag", albumArtist = "Radiohead"))
 
-        ArtistHeroArtwork.of(radiohead, albums = emptyList(), songs = songs).onlineLookup shouldBe false
+        ArtistHeroArtwork.of(radiohead, albums = emptyList(), songs = songs).onlineLookup shouldBe true
+    }
+
+    @Test
+    fun `Various Artists is not looked up by name`() {
+        val various = artist("Various Artists")
+        val songs = listOf(song("Track", albumArtist = "Various Artists"))
+
+        ArtistHeroArtwork.of(various, albums = emptyList(), songs = songs).onlineLookup shouldBe false
+    }
+
+    @Test
+    fun `an artist image is tried at the minimum size and then at any size`() {
+        ArtistHeroArtwork.ARTIST_IMAGE_MINIMUM_SIZES shouldBe listOf(500, 0)
     }
 
     @Test
@@ -41,7 +54,8 @@ class ArtistHeroArtworkTest {
     fun `a song crediting several album artists says nothing about which id is theirs`() {
         val songs = listOf(song("Airbag", albumArtist = "Radiohead", mbAlbumArtistIds = listOf(mbid, "0383dadf-2a4e-4d10-a46a-e9e041da8eb3")))
 
-        ArtistHeroArtwork.of(radiohead, albums = emptyList(), songs = songs).onlineLookup shouldBe false
+        ArtistHeroArtwork.musicBrainzArtistId(radiohead, songs) shouldBe null
+        ArtistHeroArtwork.of(radiohead, albums = emptyList(), songs = songs).onlineLookup shouldBe true
     }
 
     @Test

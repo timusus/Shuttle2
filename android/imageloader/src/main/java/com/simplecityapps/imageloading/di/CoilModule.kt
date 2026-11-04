@@ -20,8 +20,8 @@ import com.simplecityapps.imageloading.coil.ArtworkFetcher
 import com.simplecityapps.imageloading.coil.ArtworkSource
 import com.simplecityapps.imageloading.coil.CoilArtworkImageLoader
 import com.simplecityapps.imageloading.coil.SongArtworkKeyer
+import com.simplecityapps.imageloading.coil.artistHeroSources
 import com.simplecityapps.imageloading.coil.artworkCacheKey
-import com.simplecityapps.imageloading.coil.on
 import com.simplecityapps.imageloading.coil.source.ArtworkTagReader
 import com.simplecityapps.imageloading.coil.source.EmbeddedAlbumArtworkSource
 import com.simplecityapps.imageloading.coil.source.EmbeddedSongArtworkSource
@@ -116,13 +116,14 @@ object CoilModule {
             }
         // MediaStore's artist image is an album thumbnail, so the artist's own image and top album's cover are used instead.
         val artistHeroSources =
-            buildList<ArtworkSource<ArtistHeroArtwork>> {
-                val minimumSize = ArtistHeroArtwork.MIN_ARTIST_IMAGE_SIZE
-                add(FolderAlbumArtistArtworkSource(context, songRepository, sharedStorageListsImages).on(minimumSize) { it.artist })
-                add(MediaServerAlbumArtistArtworkSource(artworkSettings, songRepository, remoteArtworkProvider).on(minimumSize) { it.artist })
-                add(S2AlbumArtistArtworkSource(artworkSettings).on(minimumSize) { hero -> hero.artist.takeIf { hero.onlineLookup } })
-                addAll(albumSources.map { source -> source.on { it.fallbackAlbum } })
-            }
+            artistHeroSources(
+                ownSources = listOf(
+                    FolderAlbumArtistArtworkSource(context, songRepository, sharedStorageListsImages),
+                    MediaServerAlbumArtistArtworkSource(artworkSettings, songRepository, remoteArtworkProvider),
+                ),
+                onlineSource = S2AlbumArtistArtworkSource(artworkSettings),
+                albumSources = albumSources,
+            )
         val artistHeroFetcher = ArtworkFetcher.Factory(ArtistHeroArtwork::artworkCacheKey, artistHeroSources)
         val songFetcher = ArtworkFetcher.Factory(Song::artworkCacheKey, songSources)
 

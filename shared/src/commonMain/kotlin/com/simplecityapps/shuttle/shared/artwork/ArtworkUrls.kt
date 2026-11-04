@@ -63,7 +63,7 @@ class ArtworkUrls(
     /** Rows use the hero's rule so a row shows the same image as the artist's page. */
     suspend fun requests(albumArtist: AlbumArtist): List<ArtworkRequest> = requests(loadArtistArtwork(albumArtist))
 
-    /** Same chain as Android; an artist image below the minimum size falls through to the fallback album's cover. */
+    /** Same chain as Android: artist images at the minimum size, then at any size, then the fallback album's cover. */
     suspend fun requests(hero: ArtistHeroArtwork): List<ArtworkRequest> {
         val artist = if (artworkSettings.localOnly.value) {
             emptyList()
@@ -71,7 +71,9 @@ class ArtworkUrls(
             listOfNotNull(
                 serverArtistSong(hero.artist)?.let { (song, id) -> serverRequest { remoteArtworkProvider.getArtistArtworkUrl(song, id) } },
                 (hero.artist.name ?: hero.artist.friendlyArtistName)?.takeIf { hero.onlineLookup }?.let { artist -> s2Request(S2ArtworkApi.artistArtworkUrl(artist)) },
-            ).map { it.copy(minimumSize = ArtistHeroArtwork.MIN_ARTIST_IMAGE_SIZE) }
+            ).let { candidates ->
+                ArtistHeroArtwork.ARTIST_IMAGE_MINIMUM_SIZES.flatMap { size -> candidates.map { it.copy(minimumSize = size) } }
+            }
         }
         return artist + hero.fallbackAlbum?.let { requests(it) }.orEmpty()
     }
