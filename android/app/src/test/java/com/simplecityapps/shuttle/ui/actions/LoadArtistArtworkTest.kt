@@ -49,10 +49,10 @@ class LoadArtistArtworkTest {
     }
 
     @Test
-    fun `an artist without a MusicBrainz id never uses the online image`() = runTest {
+    fun `a named artist without a MusicBrainz id uses the online image`() = runTest {
         library(createSong(id = 1, album = "OK Computer", albumArtist = "Radiohead", artists = listOf("Radiohead"), path = "/m/1.mp3"))
 
-        loadArtistArtwork(artist("Radiohead")).onlineLookup shouldBe false
+        loadArtistArtwork(artist("Radiohead")).onlineLookup shouldBe true
     }
 
     @Test

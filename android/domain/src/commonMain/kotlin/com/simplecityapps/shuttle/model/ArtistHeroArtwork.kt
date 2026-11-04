@@ -1,9 +1,9 @@
 package com.simplecityapps.shuttle.model
 
-/** One image rule for every artist surface; the online lookup is by name unless tags contradict it or the artist is Various Artists. */
+/** One image rule for every artist surface; the online lookup is by name unless the artist is Various Artists. */
 data class ArtistHeroArtwork(
     val artist: AlbumArtist,
-    /** Whether to ask the S2 artwork API for the artist's image: they have a name and their songs don't disagree on a MusicBrainz id. */
+    /** Whether to ask the S2 artwork API for the artist's image: they have a name and aren't Various Artists (by name or MusicBrainz id). */
     val onlineLookup: Boolean,
     /** The cover to fall back to: their most played album, else their newest ([topAlbum]). */
     val fallbackAlbum: Album?,
@@ -32,21 +32,9 @@ data class ArtistHeroArtwork(
             appearsOn: List<Album> = emptyList(),
         ): ArtistHeroArtwork = ArtistHeroArtwork(
             artist = artist,
-            onlineLookup = (artist.name ?: artist.friendlyArtistName) != null && !isVariousArtists(artist) && carriedIds(artist, songs).let { ids ->
-                ids.size <= 1 && VARIOUS_ARTISTS_MBID !in ids
-            },
+            onlineLookup = (artist.name ?: artist.friendlyArtistName) != null && !isVariousArtists(artist) && VARIOUS_ARTISTS_MBID !in carriedIds(artist, songs),
             fallbackAlbum = topAlbum(albums) ?: topAlbum(appearsOn),
         )
-
-        /**
-         * The one MusicBrainz artist id [songs] carry for [artist], or null when they carry none or disagree. Their own
-         * albums' songs give it as the album artist id; a song only crediting them, as its artist id when it credits
-         * no one else. Songs without an id don't count against it.
-         */
-        fun musicBrainzArtistId(
-            artist: AlbumArtist,
-            songs: List<Song>,
-        ): String? = carriedIds(artist, songs).singleOrNull()?.takeIf { it != VARIOUS_ARTISTS_MBID }
 
         private fun carriedIds(
             artist: AlbumArtist,

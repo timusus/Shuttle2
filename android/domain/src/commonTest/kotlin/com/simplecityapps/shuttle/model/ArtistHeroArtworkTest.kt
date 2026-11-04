@@ -41,31 +41,20 @@ class ArtistHeroArtworkTest {
     }
 
     @Test
-    fun `the online lookup isn't trusted when their songs disagree on the id`() {
+    fun `an artist whose songs disagree on the id is still looked up by name`() {
         val songs = listOf(
             song("Airbag", albumArtist = "Radiohead", mbAlbumArtistIds = listOf(mbid)),
             song("Creep", albumArtist = "Radiohead", mbAlbumArtistIds = listOf("0383dadf-2a4e-4d10-a46a-e9e041da8eb3")),
         )
 
-        ArtistHeroArtwork.of(radiohead, albums = emptyList(), songs = songs).onlineLookup shouldBe false
+        ArtistHeroArtwork.of(radiohead, albums = emptyList(), songs = songs).onlineLookup shouldBe true
     }
 
     @Test
     fun `a song crediting several album artists says nothing about which id is theirs`() {
         val songs = listOf(song("Airbag", albumArtist = "Radiohead", mbAlbumArtistIds = listOf(mbid, "0383dadf-2a4e-4d10-a46a-e9e041da8eb3")))
 
-        ArtistHeroArtwork.musicBrainzArtistId(radiohead, songs) shouldBe null
         ArtistHeroArtwork.of(radiohead, albums = emptyList(), songs = songs).onlineLookup shouldBe true
-    }
-
-    @Test
-    fun `a credited-only artist's id comes from the songs that credit only them`() {
-        val featured = artist("Thom Yorke")
-        val thomId = "8ed2e0b3-aa4c-4e13-bec3-dc7393ed4d6b"
-        val solo = song("Rabbit in Your Headlights", albumArtist = "UNKLE", artists = listOf("Thom Yorke"), mbArtistIds = listOf(thomId))
-        val duet = song("Duet", albumArtist = "Someone", artists = listOf("Thom Yorke; Björk"), mbArtistIds = listOf(thomId, "87c5dedd-371d-4a53-9f7f-80522fb7f3cb"))
-
-        ArtistHeroArtwork.musicBrainzArtistId(featured, listOf(solo, duet)) shouldBe thomId
     }
 
     @Test
