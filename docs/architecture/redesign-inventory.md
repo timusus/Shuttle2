@@ -450,7 +450,7 @@ All 12 taken as written on 2026-09-25 (epic #382); each can still be revisited.
 
 Audited against the code on 2026-09-26; device-only checks are in [device-checks.md](../testing/device-checks.md).
 
-- [x] Library tabs: Songs, Albums, Artists, Genres, Playlists, Folders (opt-in); reorder and hide tabs; last tab restored
+- [x] Library tabs: Playlists, Artists, Albums, Songs, Genres, Folders (opt-in); reorder and hide tabs; last tab restored
 - [x] Songs sort ×6, Albums sort ×4 incl. Random, Genres sort ×2, Playlists sort ×2
 - [x] Album and artist list/grid toggle, persisted
 - [x] Fast scroller with section popup on every long list

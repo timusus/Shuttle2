@@ -22,7 +22,7 @@ The rows are the parity checklist in
 
 | 1.0.10 feature | Compose replacement | Coverage | Gap |
 |---|---|---|---|
-| Tabs: Songs, Albums, Artists, Genres, Playlists, Folders (opt-in); reorder and hide; last tab restored | `screens/library/LibraryScreen`, `LibraryViewModel`, `LibraryPages` | `LibraryScreenTest`, `LibraryViewModelTest`, `LibraryScreenshotTest` | |
+| Tabs: Playlists, Artists, Albums, Songs, Genres, Folders (opt-in); reorder and hide; last tab restored | `screens/library/LibraryScreen`, `LibraryViewModel`, `LibraryPages` | `LibraryScreenTest`, `LibraryViewModelTest`, `LibraryScreenshotTest` | |
 | Sorts: Songs ×6, Albums ×4 incl. Random, Genres ×2, Playlists ×2 | `SongListViewModel`, `AlbumListViewModel`, `GenreListViewModel`, `PlaylistListViewModel` | `SongListTest`, `AlbumListTest`, `GenreListTest`, `PlaylistListTest`, `GenreListIntegrationTest` | |
 | Album and artist list/grid toggle, persisted | `AlbumListViewModel`, `AlbumArtistListViewModel`, `ViewMode` | `AlbumListTest`, `AlbumArtistListTest` | |
 | Fast scroller with section popup | `common/components/FastScroller` | `FastScrollerComputationTest`, `LibraryScreenTest` | |
