@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.ui.screens.library
 
 import androidx.compose.ui.test.junit4.createComposeRule
+import com.simplecityapps.shuttle.sorting.SongListSort
 import io.kotest.matchers.shouldBe
 import org.junit.Rule
 import org.junit.Test
@@ -16,26 +17,46 @@ class GenreDetailScreenTest {
     private val robot = LibraryDetailRobot(composeTestRule)
 
     @Test
-    fun `shows the genre, its song count, its albums and its songs`() {
+    fun `shows the genre, its album header and its songs`() {
         robot.setGenre(readyGenreDetail())
 
         robot.assertTextDisplayed("Electronic")
-        robot.assertTextDisplayed("3 songs", substring = true)
+        robot.assertTextDisplayed("Albums")
         robot.assertTextDisplayed("Phase Garden")
         robot.scrollTo("Chlorophyll Loop")
         robot.assertTextDisplayed("Chlorophyll Loop")
     }
 
     @Test
-    fun `tapping an album opens it and a song plays from its position`() {
+    fun `an album header folds and a song plays from its position`() {
         val state = readyGenreDetail()
         robot.setGenre(state)
 
-        robot.clickText("Phase Garden")
-        robot.lastAlbumClicked shouldBe state.albums[0]
-
         robot.clickText("Petal Arithmetic")
         robot.lastPlayed shouldBe (state.songs to 2)
+
+        robot.clickText("Phase Garden")
+        robot.lastAlbumToggled?.name shouldBe "Phase Garden"
+    }
+
+    @Test
+    fun `flat the songs header lists the songs and its menu picks a sort`() {
+        robot.setGenre(readyGenreDetail(sort = SongListSort.SongTitle))
+
+        robot.assertTextDisplayed("Songs")
+        robot.openPlaylistSortMenu()
+        robot.clickMenuItem("Album title")
+
+        robot.lastPlaylistSort shouldBe SongListSort.AlbumTitle
+    }
+
+    @Test
+    fun `grouped Collapse all folds every album`() {
+        robot.setGenre(readyGenreDetail())
+
+        robot.clickContentDescription("Collapse all")
+
+        robot.collapsedAll shouldBe true
     }
 
     @Test

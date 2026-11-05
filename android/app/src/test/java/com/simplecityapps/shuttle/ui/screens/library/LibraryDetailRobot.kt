@@ -126,6 +126,10 @@ class LibraryDetailRobot(private val rule: ComposeContentTestRule) {
             onAlbumClick = { lastAlbumClicked = it },
             onAlbumMore = ::more,
             onSongMore = ::more,
+            onSortSelected = { lastPlaylistSort = it },
+            onToggleAlbum = { lastAlbumToggled = it },
+            onExpandAll = { expandedAll = true },
+            onCollapseAll = { collapsedAll = true },
         )
     }
 

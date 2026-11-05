@@ -442,7 +442,6 @@ class LibraryScreenshotTest {
         detail.setGenre(
             readyGenreDetail(
                 genre = genre.toGenre(),
-                albums = SampleLibrary.albums.filter { it.genre == genre.name }.map { it.toAlbum() },
                 songs = genre.songs.take(6).map { it.toSong() },
             ),
         )

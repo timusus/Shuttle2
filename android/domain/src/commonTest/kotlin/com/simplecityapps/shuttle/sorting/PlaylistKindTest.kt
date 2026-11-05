@@ -32,6 +32,12 @@ class PlaylistKindTest {
     }
 
     @Test
+    fun `genre opens grouped A to Z with flat options`() {
+        PlaylistKind.Genre.defaultSort shouldBe AlbumTitle
+        PlaylistKind.Genre.sorts shouldBe listOf(AlbumNewestAdded, AlbumTitle, AlbumNewest, NewestAdded, SongTitle, Artist)
+    }
+
+    @Test
     fun `most played opens by play count and never groups`() {
         PlaylistKind.MostPlayed.defaultSort shouldBe MostPlayed
         PlaylistKind.MostPlayed.sorts shouldBe listOf(MostPlayed, SongTitle, Artist)

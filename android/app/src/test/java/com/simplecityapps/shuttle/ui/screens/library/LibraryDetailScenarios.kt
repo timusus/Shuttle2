@@ -194,10 +194,22 @@ val loadingAlbumArtistDetail = AlbumArtistDetailUiState(loadingState = AlbumArti
 
 fun readyGenreDetail(
     genre: Genre = createGenre(name = "Electronic"),
-    albums: List<Album> = listOf(createAlbum(name = "Phase Garden", albumArtist = "Juniper Static")),
     songs: List<Song> = phaseGardenSongs(),
     currentSong: Song? = null,
-) = GenreDetailUiState(genre = genre, albums = albums, songs = songs, currentSong = currentSong, loading = false)
+    sort: SongListSort = SongListSort.AlbumTitle,
+    expandAlbums: Boolean = true,
+): GenreDetailUiState {
+    val sections = songSections(songs, sort)
+    return GenreDetailUiState(
+        genre = genre,
+        songs = sections.flatMap { it.songs },
+        currentSong = currentSong,
+        loading = false,
+        sort = sort,
+        sections = sections,
+        expandedAlbums = if (expandAlbums) sections.mapNotNull { it.album?.groupKey }.toSet() else emptySet(),
+    )
+}
 
 val missingGenreDetail = GenreDetailUiState(genre = null, loading = false)
 

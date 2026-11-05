@@ -33,6 +33,9 @@ enum class PlaylistKind(val defaultSort: SongListSort, val sorts: List<SongListS
     /** Ordered by when each song last played to the end, newest first. */
     History(PlaylistOrder, listOf(PlaylistOrder, SongTitle, Artist)),
     UserSmart(PlaylistOrder, everySongSort + albumSorts),
+
+    /** A genre's songs, opening grouped A to Z as the albums list it replaced did. */
+    Genre(AlbumTitle, albumSorts + listOf(NewestAdded, SongTitle, Artist)),
     User(PlaylistOrder, everySongSort + albumSorts),
     ;
 
@@ -61,4 +64,7 @@ object PlaylistSortKey {
     fun user(playlistId: Long): String = "playlist_sort_user_$playlistId"
 
     fun userSmart(smartPlaylistId: Long): String = "playlist_sort_smart_$smartPlaylistId"
+
+    /** One sort shared by every genre. */
+    const val GENRE: String = "playlist_sort_genre"
 }
