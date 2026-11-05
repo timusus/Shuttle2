@@ -4,35 +4,25 @@ import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.Song
 
 /**
- * How an artist's detail screen lists its songs. The album orders group songs under their albums, each in
- * disc/track order; [SongTitle] and [MostPlayed] list them flat.
+ * The sorts an artist's detail screen offers, a subset of [SongListSort]. The album orders group songs under
+ * their albums, each in disc/track order; [SongTitle] and [MostPlayed] list them flat.
  */
-enum class ArtistSongSortOrder {
-    AlbumNewest,
-    AlbumOldest,
-    AlbumTitle,
-    SongTitle,
-    MostPlayed;
+enum class ArtistSongSortOrder(val sort: SongListSort) {
+    AlbumNewest(SongListSort.AlbumNewest),
+    AlbumOldest(SongListSort.AlbumOldest),
+    AlbumTitle(SongListSort.AlbumTitle),
+    SongTitle(SongListSort.SongTitle),
+    MostPlayed(SongListSort.MostPlayed),
+    ;
 
     /** Whether songs are grouped under their albums, which [albumComparator] then orders. */
-    val groupsByAlbum: Boolean get() = albumComparator != null
+    val groupsByAlbum: Boolean get() = sort.groupsByAlbum
 
     /** The order of the album groups, or null for the flat orders. */
-    val albumComparator: Comparator<Album>?
-        get() = when (this) {
-            AlbumNewest -> ArtistSongComparator.albumNewest
-            AlbumOldest -> ArtistSongComparator.albumOldest
-            AlbumTitle -> ArtistSongComparator.albumTitle
-            SongTitle, MostPlayed -> null
-        }
+    val albumComparator: Comparator<Album>? get() = sort.albumComparator
 
     /** The order of songs within an album group, or of the whole list for the flat orders. */
-    val songComparator: Comparator<Song>
-        get() = when (this) {
-            AlbumNewest, AlbumOldest, AlbumTitle -> ArtistSongComparator.trackOrder
-            SongTitle -> ArtistSongComparator.songTitle
-            MostPlayed -> ArtistSongComparator.mostPlayed
-        }
+    val songComparator: Comparator<Song> get() = checkNotNull(sort.songComparator)
 
     companion object {
         val Default = AlbumNewest
