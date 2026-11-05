@@ -165,6 +165,10 @@ struct PlaylistDetailContent: View {
             .songInfoSheet($songInfo)
             .animation(Motion.disclosure.reduced(reduceMotion), value: state.expandedAlbums)
             .environment(\.editMode, $editMode)
+            // The Edit/Done button goes away with Custom order, so leave edit mode with it or the list stays stuck there
+            .onChange(of: state.canReorder) { _, canReorder in
+                if !canReorder { editMode = .inactive }
+            }
             .toolbar {
                 if state.canReorder {
                     EditButton()
