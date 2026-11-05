@@ -7,7 +7,7 @@ import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.ContributesBinding
 import dev.zacsweers.metro.Inject
 
-/** The Rediscover and Heavy rotation playlists list what Home's shelves of the same name rank, so the two never disagree. */
+/** The Rediscover and Heavy rotation playlists list what Home's shelves of the same name draw from, in rank order; the shelves shuffle their picks by day. */
 @ContributesBinding(AppScope::class)
 class HomeRankedAlbumKeys @Inject constructor(
     private val rediscover: Rediscover,
@@ -20,7 +20,7 @@ class HomeRankedAlbumKeys @Inject constructor(
             SmartPlaylistId.Rediscover -> rediscover(now).filterIsInstance<HomeItem.AlbumItem>().mapNotNull { it.album.groupKey }
 
             // An artist stands for the albums of theirs played in the window, at the artist's rank; an album already listed is not listed twice
-            SmartPlaylistId.HeavyRotation -> heavyRotation(now).flatMap { it.playedAlbums }
+            SmartPlaylistId.HeavyRotation -> heavyRotation(now).filter { it.days >= HEAVY_ROTATION_MIN_DAYS }.flatMap { it.playedAlbums }
 
             else -> emptyList()
         }.distinct()

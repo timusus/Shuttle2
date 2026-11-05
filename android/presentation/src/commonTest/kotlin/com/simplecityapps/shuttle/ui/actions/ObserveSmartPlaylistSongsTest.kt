@@ -92,8 +92,11 @@ class ObserveSmartPlaylistSongsTest {
         playHistory.albumDays = listOf(
             day(blue.groupKey, today, 3),
             day(blue.groupKey, today - 3, 3),
+            day(blue.groupKey, today - 6, 3),
             day(court.groupKey, today - 3, 1),
             day(kidA.groupKey, today - 5, 4),
+            day(kidA.groupKey, today - 8, 4),
+            day(kidA.groupKey, today - 10, 4),
         )
 
         // Blue ranks first as an album, then Joni Mitchell adds Blue again (skipped) and Court and Spark, then Kid A
