@@ -8,6 +8,7 @@ import com.simplecityapps.shuttle.sorting.AlbumArtistSortOrder
 import com.simplecityapps.shuttle.sorting.AlbumSortOrder
 import com.simplecityapps.shuttle.sorting.ArtistSongSortOrder
 import com.simplecityapps.shuttle.sorting.GenreSortOrder
+import com.simplecityapps.shuttle.sorting.SongListSort
 import com.simplecityapps.shuttle.sorting.SongSortOrder
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.ContributesBinding
@@ -91,6 +92,12 @@ class SortPreferenceManager @Inject constructor(private val store: KeyValueStore
                 ArtistSongSortOrder.Default
             }
         }
+
+    override fun playlistSort(key: String): SongListSort? = store.getString(key, null)?.let { name -> SongListSort.entries.firstOrNull { it.name == name } }
+
+    override fun setPlaylistSort(key: String, sort: SongListSort) {
+        store.putString(key, sort.name)
+    }
 
     private companion object {
         val logger = Logger.tagged("SortPreferenceManager")

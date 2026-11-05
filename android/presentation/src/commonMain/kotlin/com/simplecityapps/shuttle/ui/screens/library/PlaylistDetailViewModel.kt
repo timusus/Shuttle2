@@ -4,14 +4,22 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistQuery
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
+import com.simplecityapps.shuttle.model.Album
+import com.simplecityapps.shuttle.model.AlbumGroupKey
 import com.simplecityapps.shuttle.model.PlayContext
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.PlaylistSong
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.model.playContext
-import com.simplecityapps.shuttle.sorting.PlaylistSongSortOrder
+import com.simplecityapps.shuttle.sorting.PlaylistKind
+import com.simplecityapps.shuttle.sorting.PlaylistSortKey
+import com.simplecityapps.shuttle.sorting.SongListSort
+import com.simplecityapps.shuttle.sorting.SongSection
+import com.simplecityapps.shuttle.sorting.albumsOf
+import com.simplecityapps.shuttle.sorting.songSections
 import com.simplecityapps.shuttle.ui.actions.ExportPlaylist
 import com.simplecityapps.shuttle.ui.actions.ObserveCurrentSong
+import com.simplecityapps.shuttle.ui.actions.ShuffleAlbums
 import com.simplecityapps.shuttle.ui.common.PendingEvent
 import com.simplecityapps.shuttle.ui.common.PendingEvents
 import dev.zacsweers.metro.AppScope
@@ -37,15 +45,41 @@ import kotlinx.coroutines.launch
 
 data class PlaylistDetailUiState(
     val playlist: Playlist? = null,
+    /** Every entry in [sort]'s order across all [sections], collapsed ones included: the play order. */
     val songs: List<PlaylistSong> = emptyList(),
     /** [PlaylistSong.id]s of the entries in the current multi-selection. */
     val selectedIds: Set<Long> = emptySet(),
     val currentSong: Song? = null,
     val loading: Boolean = true,
     val events: List<PendingEvent<PlaylistDetailEvent>> = emptyList(),
+    /** A view-only sort; [SongListSort.PlaylistOrder] is the stored order, the only one that can be reordered. */
+    val sort: SongListSort = SongListSort.PlaylistOrder,
+    /** The song list as shown: one section per album for the album sorts, else a single section with no album. */
+    val sections: List<SongSection> = emptyList(),
+    val expandedAlbums: Set<AlbumGroupKey> = emptySet(),
 ) {
+    /** Swift sees no default arguments, so the iOS screen and its tests keep building a stored-order state with this. */
+    constructor(
+        playlist: Playlist?,
+        songs: List<PlaylistSong>,
+        selectedIds: Set<Long>,
+        currentSong: Song?,
+        loading: Boolean,
+        events: List<PendingEvent<PlaylistDetailEvent>>,
+    ) : this(
+        playlist = playlist,
+        songs = songs,
+        selectedIds = selectedIds,
+        currentSong = currentSong,
+        loading = loading,
+        events = events,
+        sections = if (songs.isEmpty()) emptyList() else listOf(SongSection(album = null, songs = songs.map { it.song })),
+    )
+
     /** Drag to reorder only makes sense while the list shows the playlist's own order. */
-    val canReorder: Boolean get() = playlist != null && playlist.sortOrder == PlaylistSongSortOrder.Position && !playlist.sortDescending
+    val canReorder: Boolean get() = playlist != null && sort == SongListSort.PlaylistOrder
+
+    val allAlbumsExpanded: Boolean get() = sections.allAlbumsExpanded(expandedAlbums)
 
     val selectedEntries: List<PlaylistSong> get() = songs.filter { it.id in selectedIds }
 
@@ -64,11 +98,15 @@ sealed interface PlaylistDetailEvent {
 
     /** The playlist has songs; the UI opens the file picker and hands the chosen Uri to [PlaylistDetailViewModel.exportTo]. */
     data class ExportReady(val suggestedName: String) : PlaylistDetailEvent
+
+    /** Shuffle albums couldn't start playback; [reason] is the player's error, if it gave one. */
+    data class ShuffleAlbumsFailed(val reason: String?) : PlaylistDetailEvent
 }
 
 /**
- * One playlist, loaded by id: its songs in the playlist's sort, drag to reorder when sorted by position, a
- * multi-selection for batch removal, and the manage actions (sort, rename, clear, delete, export to m3u).
+ * One playlist, loaded by id: its songs in a view sort saved per playlist ([PlaylistKind.User]), drag to
+ * reorder in the stored order, a multi-selection for batch removal, and the manage actions (rename, clear,
+ * delete, export to m3u).
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class PlaylistDetailViewModel @AssistedInject constructor(
@@ -76,6 +114,9 @@ class PlaylistDetailViewModel @AssistedInject constructor(
     private val playlistRepository: PlaylistRepository,
     private val exportPlaylist: ExportPlaylist,
     observeCurrentSong: ObserveCurrentSong,
+    private val shuffleAlbums: ShuffleAlbums,
+    readSetting: ReadLibraryViewSetting,
+    saveSetting: SaveLibraryViewSetting,
 ) : ViewModel() {
     @AssistedFactory
     @ManualViewModelAssistedFactoryKey(Factory::class)
@@ -93,27 +134,65 @@ class PlaylistDetailViewModel @AssistedInject constructor(
 
     private val playlist = playlistRepository.getPlaylists(PlaylistQuery.PlaylistId(playlistId)).map { it.firstOrNull() }
 
+    private val options = PlaylistViewOptions(PlaylistKind.User, PlaylistSortKey.user(playlistId), readSetting, saveSetting)
+
+    /** The entries in their stored order, whatever sort the playlist row itself records. */
     private val songs = playlist
-        .distinctUntilChanged { old, new -> old?.id == new?.id && old?.sortOrder == new?.sortOrder && old?.sortDescending == new?.sortDescending }
+        .distinctUntilChanged { old, new -> old?.id == new?.id }
         .flatMapLatest { playlist -> playlist?.let { playlistRepository.getSongsForPlaylist(it) } ?: flowOf(emptyList()) }
-        .onEach { draggedOrder.value = null }
+        .map { entries -> entries.sortedBy { it.sortOrder } }
+        .onEach { entries ->
+            draggedOrder.value = null
+            if (entries.isNotEmpty()) options.expansion.onLoaded(albumsOf(entries.map { it.song }))
+        }
 
     val uiState: StateFlow<PlaylistDetailUiState> = combine(
-        playlist,
+        combine(playlist, options.sort, ::Pair),
         combine(songs, draggedOrder) { persisted, dragged -> dragged ?: persisted },
-        selectedIds,
+        combine(selectedIds, options.expansion.flow, ::Pair),
         observeCurrentSong(),
         events.flow,
-    ) { playlist, songs, selected, currentSong, events ->
+    ) { (playlist, sort), entries, (selected, expanded), currentSong, events ->
+        val sections = songSections(entries.map { it.song }, sort)
+        val shown = entriesInOrder(entries, sections)
         PlaylistDetailUiState(
             playlist = playlist,
-            songs = songs,
-            selectedIds = selected.filterTo(mutableSetOf()) { id -> songs.any { it.id == id } },
+            songs = shown,
+            selectedIds = selected.filterTo(mutableSetOf()) { id -> shown.any { it.id == id } },
             currentSong = currentSong,
             loading = false,
             events = events,
+            sort = sort,
+            sections = sections,
+            expandedAlbums = sections.expandedAmong(expanded),
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), PlaylistDetailUiState())
+
+    fun onSortSelected(sort: SongListSort) {
+        draggedOrder.value = null
+        options.select(sort)
+    }
+
+    fun onToggleAlbum(album: Album) {
+        options.expansion.toggle(album, uiState.value.sections.mapNotNull { it.album })
+    }
+
+    fun onExpandAll() {
+        options.expansion.expandAll(uiState.value.sections.mapNotNull { it.album })
+    }
+
+    fun onCollapseAll() {
+        options.expansion.collapseAll()
+    }
+
+    fun onShuffleAlbums() {
+        viewModelScope.launch {
+            val songs = uiState.value.songs.map { it.song }
+            if (songs.isEmpty()) return@launch
+            val result = shuffleAlbums(songs)
+            if (result is ShuffleAlbums.Result.Failure) events.post(PlaylistDetailEvent.ShuffleAlbumsFailed(result.message))
+        }
+    }
 
     fun onToggleSelected(entry: PlaylistSong) {
         selectedIds.update { if (entry.id in it) it - entry.id else it + entry.id }
@@ -123,20 +202,9 @@ class PlaylistDetailViewModel @AssistedInject constructor(
         selectedIds.value = emptySet()
     }
 
-    fun onSortOrderSelected(sortOrder: PlaylistSongSortOrder) {
-        val playlist = uiState.value.playlist ?: return
-        if (playlist.sortOrder == sortOrder) return
-        viewModelScope.launch { playlistRepository.updatePlaylistSortOder(playlist, sortOrder, playlist.sortDescending) }
-    }
-
-    fun onSortDescendingChanged(descending: Boolean) {
-        val playlist = uiState.value.playlist ?: return
-        if (playlist.sortDescending == descending) return
-        viewModelScope.launch { playlistRepository.updatePlaylistSortOder(playlist, playlist.sortOrder, descending) }
-    }
-
     /** Moves the entry keyed [fromId] to where [toId] sits, on screen only; [onMoveFinished] persists the order. */
     fun onMove(fromId: Long, toId: Long) {
+        if (!uiState.value.canReorder) return
         val current = draggedOrder.value ?: uiState.value.songs
         val from = current.indexOfFirst { it.id == fromId }
         val to = current.indexOfFirst { it.id == toId }
@@ -189,4 +257,12 @@ class PlaylistDetailViewModel @AssistedInject constructor(
     }
 
     fun onEventHandled(id: Long) = events.consume(id)
+
+    private companion object {
+        /** [entries] in the order [sections] list their songs; a song added twice keeps its entries apart. */
+        fun entriesInOrder(entries: List<PlaylistSong>, sections: List<SongSection>): List<PlaylistSong> {
+            val bySong = entries.groupBy { it.song.id }.mapValues { ArrayDeque(it.value) }
+            return sections.flatMap { it.songs }.map { bySong.getValue(it.id).removeFirst() }
+        }
+    }
 }

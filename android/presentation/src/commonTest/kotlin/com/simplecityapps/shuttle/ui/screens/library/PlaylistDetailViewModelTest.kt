@@ -2,15 +2,22 @@ package com.simplecityapps.shuttle.ui.screens.library
 
 import com.simplecityapps.createPlaylist
 import com.simplecityapps.createSong
+import com.simplecityapps.fakes.FakeAlbumListPreferences
+import com.simplecityapps.fakes.FakeArtistListPreferences
+import com.simplecityapps.fakes.FakePlaybackOperations
 import com.simplecityapps.fakes.FakePlaylistRepository
 import com.simplecityapps.fakes.FakeQueueOperations
+import com.simplecityapps.fakes.FakeSortPreferences
 import com.simplecityapps.mediaprovider.M3uWriter
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.sorting.PlaylistSongSortOrder
+import com.simplecityapps.shuttle.sorting.SongListSort
 import com.simplecityapps.shuttle.ui.actions.ExportPlaylist
 import com.simplecityapps.shuttle.ui.actions.ObserveCurrentSong
 import com.simplecityapps.shuttle.ui.actions.PlaylistFileWriter
+import com.simplecityapps.shuttle.ui.actions.ShuffleAlbums
 import io.kotest.matchers.shouldBe
+import kotlin.random.Random
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -45,11 +52,16 @@ class PlaylistDetailViewModelTest {
     private var fileWriteResult: ExportPlaylist.Result = ExportPlaylist.Result.Success
     private val exportPlaylist = ExportPlaylist(M3uWriter(), PlaylistFileWriter { _, _ -> fileWriteResult })
 
+    private val viewPreferences = LibraryViewPreferences(FakeSortPreferences(), FakeAlbumListPreferences(), FakeArtistListPreferences())
+
     private fun createViewModel(playlistId: Long): PlaylistDetailViewModel = PlaylistDetailViewModel(
         playlistId,
         playlistRepository,
         exportPlaylist,
         ObserveCurrentSong(FakeQueueOperations()),
+        ShuffleAlbums(FakeQueueOperations(), FakePlaybackOperations(), Random(0)),
+        ReadLibraryViewSetting(viewPreferences),
+        SaveLibraryViewSetting(viewPreferences),
     )
 
     private fun viewModel(playlist: Playlist = createPlaylist(id = 7)): PlaylistDetailViewModel {
@@ -77,27 +89,78 @@ class PlaylistDetailViewModelTest {
     }
 
     @Test
-    fun `sorting by anything but position turns reordering off`() = runTest {
+    fun `a view sort reorders the list without touching the stored order and turns reordering off`() = runTest {
         val viewModel = viewModel()
         collect(viewModel)
 
-        viewModel.onSortOrderSelected(PlaylistSongSortOrder.SongName)
+        viewModel.onSortSelected(SongListSort.SongTitle)
         advanceUntilIdle()
 
-        viewModel.uiState.value.playlist?.sortOrder shouldBe PlaylistSongSortOrder.SongName
+        viewModel.uiState.value.sort shouldBe SongListSort.SongTitle
         viewModel.uiState.value.canReorder shouldBe false
         viewModel.uiState.value.songs.map { it.song.name } shouldBe listOf("One", "Three", "Two")
+        viewModel.uiState.value.playlist?.sortOrder shouldBe PlaylistSongSortOrder.Position
     }
 
     @Test
-    fun `a descending position sort cannot be reordered`() = runTest {
-        val viewModel = viewModel()
+    fun `the stored order shows whatever sort the playlist row records`() = runTest {
+        val viewModel = viewModel(createPlaylist(id = 7, sortOrder = PlaylistSongSortOrder.SongName, sortDescending = true))
         collect(viewModel)
 
-        viewModel.onSortDescendingChanged(true)
+        viewModel.uiState.value.songs.map { it.song.name } shouldBe listOf("One", "Two", "Three")
+        viewModel.uiState.value.canReorder shouldBe true
+    }
+
+    @Test
+    fun `the chosen sort is saved for that playlist alone`() = runTest {
+        val first = viewModel()
+        collect(first)
+        first.onSortSelected(SongListSort.AlbumTitle)
+
+        val reopened = viewModel()
+        collect(reopened)
+        reopened.uiState.value.sort shouldBe SongListSort.AlbumTitle
+
+        val other = viewModel(createPlaylist(id = 8))
+        collect(other)
+        other.uiState.value.sort shouldBe SongListSort.PlaylistOrder
+    }
+
+    @Test
+    fun `an album sort groups the entries under their albums and plays them in that order`() = runTest {
+        val grouped = listOf(
+            createSong(id = 1, name = "Late B", album = "Zinc", track = 2),
+            createSong(id = 2, name = "Early", album = "Amber", track = 1),
+            createSong(id = 3, name = "Late A", album = "Zinc", track = 1),
+        )
+        val playlist = createPlaylist(id = 7)
+        playlistRepository.setPlaylists(listOf(playlist))
+        playlistRepository.setSongsForPlaylist(playlist, grouped)
+        val viewModel = createViewModel(playlist.id)
+        collect(viewModel)
+
+        viewModel.onSortSelected(SongListSort.AlbumTitle)
         advanceUntilIdle()
 
-        viewModel.uiState.value.canReorder shouldBe false
+        val state = viewModel.uiState.value
+        state.sections.map { it.album?.name to it.songs.map { song -> song.name } } shouldBe
+            listOf("Amber" to listOf("Early"), "Zinc" to listOf("Late A", "Late B"))
+        state.songs.map { it.song.name } shouldBe listOf("Early", "Late A", "Late B")
+        state.expandedAlbums.size shouldBe 2
+    }
+
+    @Test
+    fun `a move outside the stored order is ignored`() = runTest {
+        val viewModel = viewModel()
+        collect(viewModel)
+        viewModel.onSortSelected(SongListSort.SongTitle)
+        advanceUntilIdle()
+        val (first, _, third) = viewModel.uiState.value.songs
+
+        viewModel.onMove(first.id, third.id)
+        advanceUntilIdle()
+
+        viewModel.uiState.value.songs.map { it.song.name } shouldBe listOf("One", "Three", "Two")
     }
 
     @Test

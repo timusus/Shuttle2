@@ -5,6 +5,7 @@ import com.simplecityapps.shuttle.sorting.AlbumArtistSortOrder
 import com.simplecityapps.shuttle.sorting.AlbumSortOrder
 import com.simplecityapps.shuttle.sorting.ArtistSongSortOrder
 import com.simplecityapps.shuttle.sorting.GenreSortOrder
+import com.simplecityapps.shuttle.sorting.SongListSort
 import com.simplecityapps.shuttle.sorting.SongSortOrder
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.ArtistListPreferences
 import com.simplecityapps.shuttle.ui.screens.library.albums.AlbumListPreferences
@@ -21,6 +22,9 @@ sealed class LibraryViewSetting<T>(
     data object GenreSort : LibraryViewSetting<GenreSortOrder>({ sort.sortOrderGenreList }, { sort.sortOrderGenreList = it })
     data object ArtistSort : LibraryViewSetting<AlbumArtistSortOrder>({ sort.sortOrderArtistList }, { sort.sortOrderArtistList = it })
     data object ArtistDetailSort : LibraryViewSetting<ArtistSongSortOrder>({ sort.sortOrderArtistDetail }, { sort.sortOrderArtistDetail = it })
+
+    /** One playlist's sort, keyed by [com.simplecityapps.shuttle.sorting.PlaylistSortKey]; null until chosen. */
+    data class PlaylistDetailSort(val key: String) : LibraryViewSetting<SongListSort?>({ sort.playlistSort(key) }, { value -> value?.let { sort.setPlaylistSort(key, it) } })
     data object AlbumViewMode : LibraryViewSetting<ViewMode>({ albumList.albumListViewMode }, { albumList.albumListViewMode = it })
     data object ArtistViewMode : LibraryViewSetting<ViewMode>({ artistList.artistListViewMode }, { artistList.artistListViewMode = it })
 }

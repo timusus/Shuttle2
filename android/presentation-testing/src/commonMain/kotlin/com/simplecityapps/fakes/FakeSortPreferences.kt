@@ -5,6 +5,7 @@ import com.simplecityapps.shuttle.sorting.AlbumArtistSortOrder
 import com.simplecityapps.shuttle.sorting.AlbumSortOrder
 import com.simplecityapps.shuttle.sorting.ArtistSongSortOrder
 import com.simplecityapps.shuttle.sorting.GenreSortOrder
+import com.simplecityapps.shuttle.sorting.SongListSort
 import com.simplecityapps.shuttle.sorting.SongSortOrder
 import com.simplecityapps.shuttle.ui.screens.library.SortPreferences
 
@@ -15,4 +16,11 @@ class FakeSortPreferences : SortPreferences {
     override var sortOrderGenreList: GenreSortOrder = GenreSortOrder.Default
     override var sortOrderArtistList: AlbumArtistSortOrder = AlbumArtistSortOrder.Default
     override var sortOrderArtistDetail: ArtistSongSortOrder = ArtistSongSortOrder.Default
+    val playlistSorts = mutableMapOf<String, SongListSort>()
+
+    override fun playlistSort(key: String): SongListSort? = playlistSorts[key]
+
+    override fun setPlaylistSort(key: String, sort: SongListSort) {
+        playlistSorts[key] = sort
+    }
 }
