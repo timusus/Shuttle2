@@ -30,7 +30,8 @@ struct CarPlayOfflineIndex {
         case .genreItem(let it):
             genres.contains(it.genre.name)
         case .smartPlaylistItem(let it):
-            playable.contains { it.smartPlaylistId.songQuery.predicate($0).boolValue }
+            // A ranked playlist has no predicate; it is playable when any song is
+            it.smartPlaylistId.songQuery.map { query in playable.contains { query.predicate($0).boolValue } } ?? !playable.isEmpty
         case .playlistItem(let it):
             playablePlaylists?.contains(it.playlist.id) ?? true
         }

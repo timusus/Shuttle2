@@ -3,6 +3,7 @@ package com.simplecityapps.shuttle.sorting
 import com.simplecityapps.shuttle.model.SmartPlaylistId
 import com.simplecityapps.shuttle.sorting.SongListSort.AlbumNewest
 import com.simplecityapps.shuttle.sorting.SongListSort.AlbumNewestAdded
+import com.simplecityapps.shuttle.sorting.SongListSort.AlbumRanked
 import com.simplecityapps.shuttle.sorting.SongListSort.AlbumTitle
 import com.simplecityapps.shuttle.sorting.SongListSort.Artist
 import com.simplecityapps.shuttle.sorting.SongListSort.NewestAdded
@@ -21,6 +22,9 @@ enum class PlaylistKind(val defaultSort: SongListSort, val sorts: List<SongListS
     RecentlyAdded(AlbumNewestAdded, albumSorts + listOf(NewestAdded, SongTitle, Artist)),
     RecentReleases(AlbumNewest, albumSorts + listOf(NewestAdded, SongTitle, Artist)),
     Downloaded(AlbumTitle, albumSorts + listOf(NewestAdded, SongTitle, Artist)),
+
+    /** Rediscover and Heavy rotation: albums in the order they rank. */
+    Ranked(AlbumRanked, listOf(AlbumRanked) + albumSorts + listOf(SongTitle, Artist)),
 
     /** Ordered by when each song was favourited, newest first. */
     Favourites(PlaylistOrder, listOf(PlaylistOrder, SongTitle, Artist) + albumSorts),
@@ -42,6 +46,7 @@ enum class PlaylistKind(val defaultSort: SongListSort, val sorts: List<SongListS
             SmartPlaylistId.Favourites -> Favourites
             SmartPlaylistId.RecentlyAdded -> RecentlyAdded
             SmartPlaylistId.RecentReleases -> RecentReleases
+            SmartPlaylistId.Rediscover, SmartPlaylistId.HeavyRotation -> Ranked
             SmartPlaylistId.MostPlayed -> MostPlayed
             SmartPlaylistId.History -> History
             SmartPlaylistId.Downloaded -> Downloaded

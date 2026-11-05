@@ -57,6 +57,8 @@ val SmartPlaylistId.nameKey: StringKey
         SmartPlaylistId.MostPlayed -> MediaActionString.PLAYLIST_TITLE_MOST_PLAYED
         SmartPlaylistId.History -> MediaActionString.PLAYLIST_TITLE_HISTORY
         SmartPlaylistId.Downloaded -> MediaActionString.PLAYLIST_TITLE_DOWNLOADED
+        SmartPlaylistId.Rediscover -> MediaActionString.PLAYLIST_TITLE_REDISCOVER
+        SmartPlaylistId.HeavyRotation -> MediaActionString.PLAYLIST_TITLE_HEAVY_ROTATION
     }
 
 val Album.route: AlbumRoute get() = AlbumRoute(albumKey = groupKey?.key, albumArtistKey = groupKey?.albumArtistGroupKey?.key, albumIdentity = groupKey?.identity)

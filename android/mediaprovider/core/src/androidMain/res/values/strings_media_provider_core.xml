@@ -74,6 +74,10 @@
     <string name="playlist_title_history">History</string>
     <!-- 'Downloaded' playlist name - playlist of songs downloaded to the device -->
     <string name="playlist_title_downloaded">Downloaded</string>
+    <!-- 'Rediscover' playlist name - albums played a lot but not for a while -->
+    <string name="playlist_title_rediscover">Rediscover</string>
+    <!-- 'Heavy rotation' playlist name - albums and artists played most in recent weeks -->
+    <string name="playlist_title_heavy_rotation">Heavy rotation</string>
     <!-- Error message shown when a remote media provider (jellyfin/emby/plex) fails to authenticate -->
     <string name="media_provider_authentication_error">Failed to authenticate</string>
     <!-- Error message shown when the server address is missing for a remote media provider (jellyfin/emby/plex) -->

@@ -67,7 +67,7 @@ class TestMediaActions(
     /** Which MediaStore songs' files delete; the user confirms the system's request for all of them by default. */
     var mediaStoreDeleter: MediaStoreSongDeleter = MediaStoreSongDeleter { songs, _ -> songs.toSet() }
 
-    val resolveSongs = ResolveSongs(songRepository, genreRepository, playlistRepository, queueOperations, ResolveFolderSongs(songRepository), offline.statusSource)
+    val resolveSongs = ResolveSongs(songRepository, genreRepository, playlistRepository, queueOperations, ResolveFolderSongs(songRepository), offline.statusSource, fakeObserveSmartPlaylistSongs(songRepository, offline))
     val playSongs = PlaySongs(queueOperations, playbackOperations)
     val shuffleSongs = ShuffleSongs(playbackOperations)
     val shuffleWorks = ShuffleWorks(queueOperations, playbackOperations)

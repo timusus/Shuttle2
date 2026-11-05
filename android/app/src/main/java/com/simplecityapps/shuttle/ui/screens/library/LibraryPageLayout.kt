@@ -73,6 +73,8 @@ internal val SmartPlaylist.placeholder: ArtworkPlaceholder
         SmartPlaylistId.MostPlayed -> ArtworkPlaceholder.MostPlayed
         SmartPlaylistId.History -> ArtworkPlaceholder.History
         SmartPlaylistId.Downloaded -> ArtworkPlaceholder.Downloaded
+        SmartPlaylistId.Rediscover -> ArtworkPlaceholder.Rediscover
+        SmartPlaylistId.HeavyRotation -> ArtworkPlaceholder.HeavyRotation
     }
 
 /**

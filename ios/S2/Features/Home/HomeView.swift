@@ -197,6 +197,8 @@ struct HomeContent: View {
         let title = Self.title(section.title)
         let subtitle = section.subtitle?.localized()
         let header = switch section.id {
+        case .heavyRotation: SectionHeader(title, subtitle: subtitle, opens: .smartPlaylist(id: "heavy-rotation"))
+        case .rediscover: SectionHeader(title, subtitle: subtitle, opens: .smartPlaylist(id: "rediscover"))
         case .recentlyAdded: SectionHeader(title, subtitle: subtitle, opens: .smartPlaylist(id: "recently-added"))
         case .recentReleases: SectionHeader(title, subtitle: subtitle, opens: .smartPlaylist(id: "recent-releases"))
         case .genrePicks: SectionHeader(title, subtitle: subtitle, opens: .libraryCategory(.genres))

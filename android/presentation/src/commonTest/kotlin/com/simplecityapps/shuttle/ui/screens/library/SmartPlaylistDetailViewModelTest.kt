@@ -8,14 +8,12 @@ import com.simplecityapps.fakes.FakePlaybackOperations
 import com.simplecityapps.fakes.FakeQueueOperations
 import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.fakes.FakeSortPreferences
+import com.simplecityapps.fakes.fakeObserveSmartPlaylistSongs
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.SmartPlaylistId
 import com.simplecityapps.shuttle.sorting.SongListSort
 import com.simplecityapps.shuttle.ui.actions.DownloadStatuses
 import com.simplecityapps.shuttle.ui.actions.ObserveCurrentSong
-import com.simplecityapps.shuttle.ui.actions.ObserveDownloadedSongs
-import com.simplecityapps.shuttle.ui.actions.ObserveSmartPlaylistSongs
-import com.simplecityapps.shuttle.ui.actions.ObserveSongs
 import com.simplecityapps.shuttle.ui.actions.ShuffleAlbums
 import com.simplecityapps.shuttle.ui.actions.SongDownloadStatus
 import io.kotest.matchers.shouldBe
@@ -60,7 +58,7 @@ class SmartPlaylistDetailViewModelTest {
     private fun TestScope.viewModel(id: String): SmartPlaylistDetailViewModel {
         val viewModel = SmartPlaylistDetailViewModel(
             id,
-            ObserveSmartPlaylistSongs(ObserveSongs(songRepository, offline.filter), ObserveDownloadedSongs(songRepository, offline.statusSource)),
+            fakeObserveSmartPlaylistSongs(songRepository, offline),
             ObserveCurrentSong(FakeQueueOperations()),
             ShuffleAlbums(FakeQueueOperations(), FakePlaybackOperations(), Random(0)),
             ReadLibraryViewSetting(viewPreferences),

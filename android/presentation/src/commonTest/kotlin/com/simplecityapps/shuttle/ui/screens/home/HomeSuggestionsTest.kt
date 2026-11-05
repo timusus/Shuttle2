@@ -75,7 +75,7 @@ class HomeSuggestionsTest {
         HomeItem.AlbumItem(blue).playAction() shouldBe MediaAction.Play(MediaSelection.Albums(blue))
         HomeItem.GenreItem(jazz).playAction() shouldBe MediaAction.Shuffle(MediaSelection.Genres(jazz))
         HomeItem.SmartPlaylistItem(SmartPlaylistId.MostPlayed).playAction() shouldBe
-            MediaAction.Play(MediaSelection.SongsMatching(SmartPlaylistId.MostPlayed.songQuery), context = PlayContext.SmartPlaylist(SmartPlaylistId.MostPlayed))
+            MediaAction.Play(MediaSelection.SmartPlaylistSongs(SmartPlaylistId.MostPlayed), context = PlayContext.SmartPlaylist(SmartPlaylistId.MostPlayed))
     }
 
     @Test
@@ -112,8 +112,8 @@ class HomeSuggestionsTest {
         playHistory.albumDays = listOf(day(blue.groupKey, today, 3), day(blue.groupKey, today - 1, 5), day(blue.groupKey, today - 9, 12), day(blue.groupKey, today - 2, 2))
 
         HeavyRotation(playHistory, resolve)(now) shouldBe listOf(
-            HeavyRotationCandidate(HomeItem.AlbumItem(blue), days = 3, lastPlayedAt = now),
-            HeavyRotationCandidate(HomeItem.ArtistItem(joni), days = 3, lastPlayedAt = now),
+            HeavyRotationCandidate(HomeItem.AlbumItem(blue), days = 3, lastPlayedAt = now, playedAlbums = listOf(blue.groupKey!!)),
+            HeavyRotationCandidate(HomeItem.ArtistItem(joni), days = 3, lastPlayedAt = now, playedAlbums = listOf(blue.groupKey!!)),
         )
         playHistory.queries shouldBe listOf("albumDays(${now - 28.days})")
     }
@@ -153,8 +153,8 @@ class HomeSuggestionsTest {
         )
 
         HeavyRotation(playHistory, resolve)(now) shouldBe listOf(
-            HeavyRotationCandidate(HomeItem.ArtistItem(joni), days = 2, lastPlayedAt = now),
-            HeavyRotationCandidate(HomeItem.AlbumItem(kidA), days = 1, lastPlayedAt = now - 5.days),
+            HeavyRotationCandidate(HomeItem.ArtistItem(joni), days = 2, lastPlayedAt = now, playedAlbums = listOf(blue.groupKey!!, court.groupKey!!)),
+            HeavyRotationCandidate(HomeItem.AlbumItem(kidA), days = 1, lastPlayedAt = now - 5.days, playedAlbums = listOf(kidA.groupKey!!)),
         )
     }
 
@@ -167,9 +167,9 @@ class HomeSuggestionsTest {
         playHistory.albumDays = listOf(day(split.groupKey, today, 3).copy(albumArtistKeys = split.albumArtistKeys))
 
         HeavyRotation(playHistory, resolve)(now) shouldBe listOf(
-            HeavyRotationCandidate(HomeItem.AlbumItem(split), days = 1, lastPlayedAt = now),
-            HeavyRotationCandidate(HomeItem.ArtistItem(joni), days = 1, lastPlayedAt = now),
-            HeavyRotationCandidate(HomeItem.ArtistItem(radiohead), days = 1, lastPlayedAt = now),
+            HeavyRotationCandidate(HomeItem.AlbumItem(split), days = 1, lastPlayedAt = now, playedAlbums = listOf(split.groupKey!!)),
+            HeavyRotationCandidate(HomeItem.ArtistItem(joni), days = 1, lastPlayedAt = now, playedAlbums = listOf(split.groupKey!!)),
+            HeavyRotationCandidate(HomeItem.ArtistItem(radiohead), days = 1, lastPlayedAt = now, playedAlbums = listOf(split.groupKey!!)),
         )
     }
 

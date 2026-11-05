@@ -75,7 +75,15 @@ class PlaylistKindTest {
             SmartPlaylistId.MostPlayed to PlaylistKind.MostPlayed,
             SmartPlaylistId.History to PlaylistKind.History,
             SmartPlaylistId.Downloaded to PlaylistKind.Downloaded,
+            SmartPlaylistId.Rediscover to PlaylistKind.Ranked,
+            SmartPlaylistId.HeavyRotation to PlaylistKind.Ranked,
         )
+    }
+
+    @Test
+    fun `a ranked playlist opens in its rank order and offers the album and song sorts`() {
+        PlaylistKind.Ranked.defaultSort shouldBe SongListSort.AlbumRanked
+        PlaylistKind.Ranked.sorts shouldBe listOf(SongListSort.AlbumRanked, AlbumNewestAdded, AlbumTitle, AlbumNewest, SongTitle, Artist)
     }
 
     @Test

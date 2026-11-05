@@ -96,7 +96,7 @@ class MediaActionHandlerTest {
         songRepository.setSongs(listOf(song, saved, streamed))
         actions.offline.statuses.value = DownloadStatuses(mapOf("remote://3" to SongDownloadStatus.Downloaded, "remote://4" to SongDownloadStatus.Downloading))
 
-        handler.handle(MediaAction.Play(MediaSelection.SongsMatching(SmartPlaylistId.Downloaded.songQuery))) shouldBe MediaActionResult.None
+        handler.handle(MediaAction.Play(MediaSelection.SmartPlaylistSongs(SmartPlaylistId.Downloaded))) shouldBe MediaActionResult.None
 
         queueOperations.lastSetQueue shouldBe listOf(saved)
     }

@@ -12,6 +12,7 @@ import androidx.compose.material.icons.automirrored.rounded.TrendingUp
 import androidx.compose.material.icons.rounded.Album
 import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.material.icons.rounded.DownloadDone
+import androidx.compose.material.icons.rounded.Explore
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.Folder
 import androidx.compose.material.icons.rounded.History
@@ -20,6 +21,7 @@ import androidx.compose.material.icons.rounded.LibraryMusic
 import androidx.compose.material.icons.rounded.MusicNote
 import androidx.compose.material.icons.rounded.NewReleases
 import androidx.compose.material.icons.rounded.Person
+import androidx.compose.material.icons.rounded.Whatshot
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -77,6 +79,8 @@ enum class ArtworkPlaceholder(internal val icon: ImageVector) {
     MostPlayed(Icons.AutoMirrored.Rounded.TrendingUp),
     History(Icons.Rounded.History),
     Downloaded(Icons.Rounded.DownloadDone),
+    Rediscover(Icons.Rounded.Explore),
+    HeavyRotation(Icons.Rounded.Whatshot),
     Genre(Icons.Rounded.LibraryMusic),
     Folder(Icons.Rounded.Folder),
 }

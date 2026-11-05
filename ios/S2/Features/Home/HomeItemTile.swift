@@ -61,7 +61,7 @@ extension HomeItem {
         case .albumItem(let it): MediaSelectionAlbums(album: it.album)
         case .artistItem(let it): MediaSelectionAlbumArtists(albumArtist: it.albumArtist)
         case .playlistItem(let it): MediaSelectionPlaylists(playlist: it.playlist)
-        case .smartPlaylistItem(let it): MediaSelectionSongsMatching(query: it.smartPlaylistId.songQuery)
+        case .smartPlaylistItem(let it): MediaSelectionSmartPlaylistSongs(id: it.smartPlaylistId)
         case .genreItem(let it): MediaSelectionGenres(genre: it.genre)
         }
     }

@@ -6,6 +6,7 @@ import com.simplecityapps.fakes.FakeOfflineSongs
 import com.simplecityapps.fakes.FakePlaylistRepository
 import com.simplecityapps.fakes.FakeQueueOperations
 import com.simplecityapps.fakes.FakeSongRepository
+import com.simplecityapps.fakes.fakeObserveSmartPlaylistSongs
 import com.simplecityapps.shuttle.ui.screens.library.folders.ResolveFolderSongs
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.flow.first
@@ -14,7 +15,7 @@ import org.junit.Test
 
 class FavouriteSongsTest {
     private val songRepository = FakeSongRepository()
-    private val resolveSongs = ResolveSongs(songRepository, FakeGenreRepository(), FakePlaylistRepository(), FakeQueueOperations(), ResolveFolderSongs(songRepository), FakeOfflineSongs().statusSource)
+    private val resolveSongs = ResolveSongs(songRepository, FakeGenreRepository(), FakePlaylistRepository(), FakeQueueOperations(), ResolveFolderSongs(songRepository), FakeOfflineSongs().statusSource, fakeObserveSmartPlaylistSongs(songRepository))
     private val favouriteSongs = FavouriteSongs(songRepository, resolveSongs)
     private val toggleFavourite = ToggleFavourite(songRepository)
 

@@ -75,6 +75,8 @@ extension SmartPlaylistId {
         case "recent-releases": "Recent Releases"
         case "most-played": "Most Played"
         case "history": "History"
+        case "rediscover": "Rediscover"
+        case "heavy-rotation": "Heavy Rotation"
         default: "Playlist"
         }
     }
@@ -87,6 +89,8 @@ extension SmartPlaylistId {
         case "recent-releases": "sparkles"
         case "most-played": "flame.fill"
         case "history": "clock.arrow.circlepath"
+        case "rediscover": "safari.fill"
+        case "heavy-rotation": "waveform"
         default: "music.note.list"
         }
     }

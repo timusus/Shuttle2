@@ -6,6 +6,7 @@ import com.simplecityapps.shuttle.model.Genre
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.PlayContext
 import com.simplecityapps.shuttle.model.Playlist
+import com.simplecityapps.shuttle.model.SmartPlaylistId
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.model.playContext
 import com.simplecityapps.shuttle.query.SongQuery
@@ -41,6 +42,9 @@ sealed interface MediaSelection {
     /** Resolved when the action runs, so nothing holds the song list before it's played. */
     data class SongsMatching(val query: SongQuery) : MediaSelection
 
+    /** A built-in smart playlist's songs, the same ones its detail screen lists ([ObserveSmartPlaylistSongs]). */
+    data class SmartPlaylistSongs(val id: SmartPlaylistId) : MediaSelection
+
     data object Queue : MediaSelection
 
     /** The providers the selection's items come from, where known without resolving its songs; null when not. */
@@ -51,7 +55,7 @@ sealed interface MediaSelection {
             is AlbumArtists -> albumArtists.flatMap { it.mediaProviders }.distinct()
             is Genres -> genres.flatMap { it.mediaProviders }.distinct()
             is Playlists -> playlists.map { it.mediaProvider }.distinct()
-            is SongsMatching, is Folders, is Queue -> null
+            is SongsMatching, is SmartPlaylistSongs, is Folders, is Queue -> null
         }
 
     /**
@@ -64,7 +68,7 @@ sealed interface MediaSelection {
             is AlbumArtists -> albumArtists.singleOrNull()?.playContext
             is Genres -> genres.singleOrNull()?.playContext
             is Playlists -> playlists.singleOrNull()?.playContext
-            is Songs, is SongsMatching, is Folders, is Queue -> null
+            is Songs, is SongsMatching, is SmartPlaylistSongs, is Folders, is Queue -> null
         } ?: PlayContext.None
 
     /** How many items the selection holds, for messages like "3 albums added to queue"; null for the queue. */
@@ -76,6 +80,6 @@ sealed interface MediaSelection {
             is Genres -> genres.size
             is Playlists -> playlists.size
             is Folders -> paths.size
-            is SongsMatching, is Queue -> null
+            is SongsMatching, is SmartPlaylistSongs, is Queue -> null
         }
 }

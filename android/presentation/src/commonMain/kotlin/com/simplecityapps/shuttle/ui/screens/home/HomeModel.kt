@@ -120,7 +120,7 @@ sealed interface HomeItem {
     data class SmartPlaylistItem(val smartPlaylistId: SmartPlaylistId) : HomeItem {
         override val playContext: PlayContext get() = PlayContext.SmartPlaylist(smartPlaylistId)
 
-        override fun playAction(): MediaAction = MediaAction.Play(MediaSelection.SongsMatching(smartPlaylistId.songQuery), context = playContext)
+        override fun playAction(): MediaAction = MediaAction.Play(MediaSelection.SmartPlaylistSongs(smartPlaylistId), context = playContext)
     }
 
     /** A genre tile shuffles the genre. */

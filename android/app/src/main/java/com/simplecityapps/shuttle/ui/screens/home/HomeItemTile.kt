@@ -10,6 +10,7 @@ import androidx.compose.material.icons.automirrored.rounded.ArrowForward
 import androidx.compose.material.icons.automirrored.rounded.QueueMusic
 import androidx.compose.material.icons.automirrored.rounded.TrendingUp
 import androidx.compose.material.icons.rounded.DownloadDone
+import androidx.compose.material.icons.rounded.Explore
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.History
 import androidx.compose.material.icons.rounded.LibraryAdd
@@ -17,6 +18,7 @@ import androidx.compose.material.icons.rounded.LibraryMusic
 import androidx.compose.material.icons.rounded.NewReleases
 import androidx.compose.material.icons.rounded.Replay
 import androidx.compose.material.icons.rounded.Shuffle
+import androidx.compose.material.icons.rounded.Whatshot
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.remember
@@ -89,7 +91,7 @@ val HomeItem.selection: MediaSelection
         is HomeItem.AlbumItem -> MediaSelection.Albums(album)
         is HomeItem.ArtistItem -> MediaSelection.AlbumArtists(albumArtist)
         is HomeItem.PlaylistItem -> MediaSelection.Playlists(playlist)
-        is HomeItem.SmartPlaylistItem -> MediaSelection.SongsMatching(smartPlaylistId.songQuery)
+        is HomeItem.SmartPlaylistItem -> MediaSelection.SmartPlaylistSongs(smartPlaylistId)
         is HomeItem.GenreItem -> MediaSelection.Genres(genre)
     }
 
@@ -193,6 +195,8 @@ private val SmartPlaylistId.icon: ImageVector
         SmartPlaylistId.MostPlayed -> Icons.AutoMirrored.Rounded.TrendingUp
         SmartPlaylistId.History -> Icons.Rounded.History
         SmartPlaylistId.Downloaded -> Icons.Rounded.DownloadDone
+        SmartPlaylistId.Rediscover -> Icons.Rounded.Explore
+        SmartPlaylistId.HeavyRotation -> Icons.Rounded.Whatshot
     }
 
 /** Long-press and TalkBack actions for a Home tile; a [resumes] tile plays on from where its queue was left. */

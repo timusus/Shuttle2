@@ -175,6 +175,8 @@ val HomeSectionId.seeAllPlaylist: SmartPlaylistId?
     get() = when (this) {
         HomeSectionId.RecentlyAdded -> SmartPlaylistId.RecentlyAdded
         HomeSectionId.RecentReleases -> SmartPlaylistId.RecentReleases
+        HomeSectionId.HeavyRotation -> SmartPlaylistId.HeavyRotation
+        HomeSectionId.Rediscover -> SmartPlaylistId.Rediscover
         else -> null
     }
 

@@ -29,6 +29,7 @@ class ResolveSongs(
     private val queueOperations: QueueOperations,
     private val resolveFolderSongs: ResolveFolderSongs,
     private val downloadStatuses: DownloadStatusSource,
+    private val observeSmartPlaylistSongs: ObserveSmartPlaylistSongs,
     private val defaultDispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) {
     suspend operator fun invoke(selection: MediaSelection): List<Song> = when (selection) {
@@ -77,6 +78,11 @@ class ResolveSongs(
             // The Downloaded query is built with no paths: they are the download state's, read here.
             val query = if (selection.query is SongQuery.Downloaded) SongQuery.Downloaded(downloadStatuses.observeDownloadedPaths().first()) else selection.query
             songRepository.loadSongs(query).sortedWith(query.sortOrder.comparator)
+        }
+
+        is MediaSelection.SmartPlaylistSongs -> {
+            val query = selection.id.songQuery
+            if (query == null) observeSmartPlaylistSongs(selection.id).first() else invoke(MediaSelection.SongsMatching(query))
         }
 
         is MediaSelection.Folders -> resolveFolderSongs(selection.paths)

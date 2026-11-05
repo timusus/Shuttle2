@@ -12,12 +12,19 @@ import kotlin.time.Instant
  */
 enum class SmartPlaylistId(
     val id: String,
-    val songQuery: SongQuery,
+    /** Null for a ranked one, whose songs come from play history, not a predicate over songs. */
+    val songQuery: SongQuery?,
 ) {
     /** Every favourite, most recently made one first. */
     Favourites("favourites", SongQuery.Favourites),
     RecentlyAdded("recently-added", SongQuery.RecentlyAdded()),
     RecentReleases("recent-releases", SongQuery.ReleasedSince()),
+
+    /** Albums not played for a while, best-loved first. */
+    Rediscover("rediscover", null),
+
+    /** Albums, and the albums of artists, listened to on the most days lately. */
+    HeavyRotation("heavy-rotation", null),
     MostPlayed("most-played", SongQuery.PlayCount(2, SongSortOrder.PlayCount)),
 
     /** Every song that has played to the end, most recent first. */

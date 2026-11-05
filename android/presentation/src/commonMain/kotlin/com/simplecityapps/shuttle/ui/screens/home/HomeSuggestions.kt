@@ -5,6 +5,7 @@ import com.simplecityapps.mediaprovider.repository.playhistory.PlayHistoryReposi
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistQuery
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
 import com.simplecityapps.mediaprovider.repository.suggestions.SuggestionsRepository
+import com.simplecityapps.shuttle.model.AlbumGroupKey
 import com.simplecityapps.shuttle.model.Genre
 import com.simplecityapps.shuttle.model.PlayContext
 import com.simplecityapps.shuttle.model.Playlist
@@ -139,6 +140,8 @@ data class HeavyRotationCandidate(
     val item: HomeItem,
     val days: Int,
     val lastPlayedAt: Instant,
+    /** The albums the window's plays were of, most recently completed first: the item's own for an album, the artist's for an artist. */
+    val playedAlbums: List<AlbumGroupKey> = emptyList(),
 )
 
 /** Ranks by distinct listening days, so one long sitting counts once. */
@@ -150,6 +153,7 @@ class HeavyRotation @Inject constructor(
         val context: PlayContext,
         val days: Int,
         val lastPlayedAt: Instant,
+        val playedAlbums: List<AlbumGroupKey>,
     )
 
     suspend operator fun invoke(
@@ -158,7 +162,7 @@ class HeavyRotation @Inject constructor(
     ): List<HeavyRotationCandidate> {
         val albumDays = playHistoryRepository.albumDays(since = now - WINDOW_DAYS.days)
         val albums = albumDays.groupBy { it.groupKey }.map { (key, days) ->
-            Tally(PlayContext.Album(key), days.count { it.counts }, days.maxOf { it.lastCompletedAt })
+            Tally(PlayContext.Album(key), days.count { it.counts }, days.maxOf { it.lastCompletedAt }, listOf(key))
         }
         // A day of an album of several album artists is a day of each of them, as playing any of them plays it
         val artists = albumDays
@@ -166,14 +170,15 @@ class HeavyRotation @Inject constructor(
             .groupBy({ (key, _) -> key }, { (_, albumDay) -> albumDay })
             .map { (key, albums) ->
                 val days = albums.groupBy { it.day }.values.count { day -> day.sumOf { it.songs } >= MIN_SONGS_A_DAY || day.any { it.counts } }
-                Tally(PlayContext.AlbumArtist(key), days, albums.maxOf { it.lastCompletedAt })
+                val playedAlbums = albums.sortedByDescending { it.lastCompletedAt }.map { it.groupKey }.distinct()
+                Tally(PlayContext.AlbumArtist(key), days, albums.maxOf { it.lastCompletedAt }, playedAlbums)
             }
         val tallies = (albums + artists)
             .filter { it.days > 0 }
             .sortedWith(compareByDescending<Tally> { it.days }.thenByDescending { it.lastPlayedAt })
             .take(CANDIDATES)
         val items = resolveHomeItems(tallies.map { it.context }, reads)
-        return tallies.mapNotNull { tally -> items[tally.context]?.let { HeavyRotationCandidate(it, tally.days, tally.lastPlayedAt) } }
+        return tallies.mapNotNull { tally -> items[tally.context]?.let { HeavyRotationCandidate(it, tally.days, tally.lastPlayedAt, tally.playedAlbums) } }
     }
 
     /** Whether this day's listening to the album counts as a day of it. */

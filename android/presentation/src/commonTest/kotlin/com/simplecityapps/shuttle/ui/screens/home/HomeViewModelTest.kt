@@ -11,6 +11,7 @@ import com.simplecityapps.fakes.FakeQueueOperations
 import com.simplecityapps.fakes.FakeSongImportStateProvider
 import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.fakes.FakeSuggestionsRepository
+import com.simplecityapps.fakes.fakeObserveSmartPlaylistSongs
 import com.simplecityapps.fakes.importComplete
 import com.simplecityapps.mediaprovider.repository.playhistory.ContextDays
 import com.simplecityapps.mediaprovider.repository.playhistory.RecentContext
@@ -123,7 +124,7 @@ class HomeViewModelTest {
             ReadSetting(settingsStore),
             SaveSetting(settingsStore),
             LoadHomeCovers(FakePlaylistRepository(), genres),
-            PlayHomeSection(ResolveSongs(songRepository, genres, FakePlaylistRepository(), FakeQueueOperations(), ResolveFolderSongs(songRepository), FakeOfflineSongs().statusSource)),
+            PlayHomeSection(ResolveSongs(songRepository, genres, FakePlaylistRepository(), FakeQueueOperations(), ResolveFolderSongs(songRepository), FakeOfflineSongs().statusSource, fakeObserveSmartPlaylistSongs(songRepository))),
             PickRandomShuffle(songRepository, Random(0)),
         ).also { viewModel ->
             backgroundScope.launch { viewModel.uiState.collect {} }

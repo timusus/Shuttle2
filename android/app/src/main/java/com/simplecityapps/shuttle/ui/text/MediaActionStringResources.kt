@@ -21,6 +21,8 @@ val MediaActionString.resId: Int
         MediaActionString.PLAYLIST_TITLE_MOST_PLAYED -> MediaProviderR.string.playlist_title_most_played
         MediaActionString.PLAYLIST_TITLE_HISTORY -> MediaProviderR.string.playlist_title_history
         MediaActionString.PLAYLIST_TITLE_DOWNLOADED -> MediaProviderR.string.playlist_title_downloaded
+        MediaActionString.PLAYLIST_TITLE_REDISCOVER -> MediaProviderR.string.playlist_title_rediscover
+        MediaActionString.PLAYLIST_TITLE_HEAVY_ROTATION -> MediaProviderR.string.playlist_title_heavy_rotation
         MediaActionString.DIALOG_DELETE_MESSAGE -> R.string.dialog_delete_message
         MediaActionString.ERROR_UNKNOWN -> R.string.error_unknown
     }
