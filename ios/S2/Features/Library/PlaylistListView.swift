@@ -72,6 +72,7 @@ extension SmartPlaylistId {
         switch id {
         case "favourites": "Favourites"
         case "recently-added": "Recently Added"
+        case "recent-releases": "Recent Releases"
         case "most-played": "Most Played"
         case "history": "History"
         default: "Playlist"
@@ -83,6 +84,7 @@ extension SmartPlaylistId {
         switch id {
         case "favourites": "heart.fill"
         case "recently-added": "calendar.badge.plus"
+        case "recent-releases": "sparkles"
         case "most-played": "flame.fill"
         case "history": "clock.arrow.circlepath"
         default: "music.note.list"

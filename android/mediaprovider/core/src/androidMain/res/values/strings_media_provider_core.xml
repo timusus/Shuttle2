@@ -68,6 +68,8 @@
     <string name="playlist_title_most_played">Most Played</string>
     <!-- 'Recently Added' playlist name - playlist of songs which have been recently added -->
     <string name="playlist_title_recently_added">Recently Added</string>
+    <!-- 'Recent Releases' playlist name - playlist of songs released this year or last -->
+    <string name="playlist_title_recent_releases">Recent Releases</string>
     <!-- 'History' playlist name - playlist of songs which have been recently played -->
     <string name="playlist_title_history">History</string>
     <!-- 'Downloaded' playlist name - playlist of songs downloaded to the device -->

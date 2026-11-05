@@ -191,13 +191,14 @@ struct HomeContent: View {
     }
 
     /// The Podcasts-style header, tappable only where a screen holds the whole of what the section samples. Recent
-    /// Releases has none: no existing screen lists exactly this year's and last year's albums.
+    /// Releases opens the built-in playlist of this year's and last year's songs.
     @ViewBuilder
     private func header(_ section: HomeSection) -> some View {
         let title = Self.title(section.title)
         let subtitle = section.subtitle?.localized()
         let header = switch section.id {
         case .recentlyAdded: SectionHeader(title, subtitle: subtitle, opens: .smartPlaylist(id: "recently-added"))
+        case .recentReleases: SectionHeader(title, subtitle: subtitle, opens: .smartPlaylist(id: "recent-releases"))
         case .genrePicks: SectionHeader(title, subtitle: subtitle, opens: .libraryCategory(.genres))
         default: SectionHeader(title, subtitle: subtitle)
         }

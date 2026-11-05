@@ -17,6 +17,7 @@ val MediaActionString.resId: Int
         MediaActionString.PLAYLIST_MENU_CREATE_PLAYLIST_FAILURE -> R.string.playlist_menu_create_playlist_failure
         MediaActionString.PLAYLIST_TITLE_FAVORITES -> MediaProviderR.string.playlist_title_favorites
         MediaActionString.PLAYLIST_TITLE_RECENTLY_ADDED -> MediaProviderR.string.playlist_title_recently_added
+        MediaActionString.PLAYLIST_TITLE_RECENT_RELEASES -> MediaProviderR.string.playlist_title_recent_releases
         MediaActionString.PLAYLIST_TITLE_MOST_PLAYED -> MediaProviderR.string.playlist_title_most_played
         MediaActionString.PLAYLIST_TITLE_HISTORY -> MediaProviderR.string.playlist_title_history
         MediaActionString.PLAYLIST_TITLE_DOWNLOADED -> MediaProviderR.string.playlist_title_downloaded

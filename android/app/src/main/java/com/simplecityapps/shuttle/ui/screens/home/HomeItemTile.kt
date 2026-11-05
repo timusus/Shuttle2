@@ -14,6 +14,7 @@ import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.History
 import androidx.compose.material.icons.rounded.LibraryAdd
 import androidx.compose.material.icons.rounded.LibraryMusic
+import androidx.compose.material.icons.rounded.NewReleases
 import androidx.compose.material.icons.rounded.Replay
 import androidx.compose.material.icons.rounded.Shuffle
 import androidx.compose.runtime.Composable
@@ -188,6 +189,7 @@ private val SmartPlaylistId.icon: ImageVector
     get() = when (this) {
         SmartPlaylistId.Favourites -> Icons.Rounded.Favorite
         SmartPlaylistId.RecentlyAdded -> Icons.Rounded.LibraryAdd
+        SmartPlaylistId.RecentReleases -> Icons.Rounded.NewReleases
         SmartPlaylistId.MostPlayed -> Icons.AutoMirrored.Rounded.TrendingUp
         SmartPlaylistId.History -> Icons.Rounded.History
         SmartPlaylistId.Downloaded -> Icons.Rounded.DownloadDone

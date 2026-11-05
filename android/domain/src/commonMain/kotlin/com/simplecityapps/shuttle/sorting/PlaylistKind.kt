@@ -19,6 +19,7 @@ private val everySongSort = listOf(PlaylistOrder, NewestAdded, SongTitle, Artist
  */
 enum class PlaylistKind(val defaultSort: SongListSort, val sorts: List<SongListSort>) {
     RecentlyAdded(AlbumNewestAdded, albumSorts + listOf(NewestAdded, SongTitle, Artist)),
+    RecentReleases(AlbumNewest, albumSorts + listOf(NewestAdded, SongTitle, Artist)),
     Downloaded(AlbumTitle, albumSorts + listOf(NewestAdded, SongTitle, Artist)),
 
     /** Ordered by when each song was favourited, newest first. */
@@ -40,6 +41,7 @@ enum class PlaylistKind(val defaultSort: SongListSort, val sorts: List<SongListS
         fun of(id: SmartPlaylistId): PlaylistKind = when (id) {
             SmartPlaylistId.Favourites -> Favourites
             SmartPlaylistId.RecentlyAdded -> RecentlyAdded
+            SmartPlaylistId.RecentReleases -> RecentReleases
             SmartPlaylistId.MostPlayed -> MostPlayed
             SmartPlaylistId.History -> History
             SmartPlaylistId.Downloaded -> Downloaded

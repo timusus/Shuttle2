@@ -58,6 +58,7 @@ import com.simplecityapps.shuttle.designsystem.component.SectionHeaderStyle
 import com.simplecityapps.shuttle.designsystem.theme.S2ShelfTileWidth
 import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
 import com.simplecityapps.shuttle.designsystem.theme.isLargeText
+import com.simplecityapps.shuttle.model.SmartPlaylistId
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.ui.actions.MediaAction
 import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsTarget
@@ -167,7 +168,15 @@ val HomeUiState.Content.coldStart: Boolean
 
 /** Whether a section's header offers "See all": only where there's a page of the whole list to open. */
 val HomeSectionId.hasSeeAll: Boolean
-    get() = this == HomeSectionId.RecentlyAdded
+    get() = seeAllPlaylist != null
+
+/** The built-in smart playlist a section's "See all" opens. */
+val HomeSectionId.seeAllPlaylist: SmartPlaylistId?
+    get() = when (this) {
+        HomeSectionId.RecentlyAdded -> SmartPlaylistId.RecentlyAdded
+        HomeSectionId.RecentReleases -> SmartPlaylistId.RecentReleases
+        else -> null
+    }
 
 @Composable
 private fun HomeContent(

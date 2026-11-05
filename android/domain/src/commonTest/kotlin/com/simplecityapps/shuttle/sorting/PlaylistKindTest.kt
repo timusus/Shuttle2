@@ -71,6 +71,7 @@ class PlaylistKindTest {
         SmartPlaylistId.entries.associateWith { PlaylistKind.of(it) } shouldBe mapOf(
             SmartPlaylistId.Favourites to PlaylistKind.Favourites,
             SmartPlaylistId.RecentlyAdded to PlaylistKind.RecentlyAdded,
+            SmartPlaylistId.RecentReleases to PlaylistKind.RecentReleases,
             SmartPlaylistId.MostPlayed to PlaylistKind.MostPlayed,
             SmartPlaylistId.History to PlaylistKind.History,
             SmartPlaylistId.Downloaded to PlaylistKind.Downloaded,

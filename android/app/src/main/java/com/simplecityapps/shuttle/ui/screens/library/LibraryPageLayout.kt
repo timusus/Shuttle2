@@ -69,6 +69,7 @@ internal val SmartPlaylist.placeholder: ArtworkPlaceholder
     get() = when (id) {
         SmartPlaylistId.Favourites -> ArtworkPlaceholder.Favorites
         SmartPlaylistId.RecentlyAdded -> ArtworkPlaceholder.RecentlyAdded
+        SmartPlaylistId.RecentReleases -> ArtworkPlaceholder.RecentReleases
         SmartPlaylistId.MostPlayed -> ArtworkPlaceholder.MostPlayed
         SmartPlaylistId.History -> ArtworkPlaceholder.History
         SmartPlaylistId.Downloaded -> ArtworkPlaceholder.Downloaded

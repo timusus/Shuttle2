@@ -18,6 +18,7 @@ import androidx.compose.material.icons.rounded.History
 import androidx.compose.material.icons.rounded.LibraryAdd
 import androidx.compose.material.icons.rounded.LibraryMusic
 import androidx.compose.material.icons.rounded.MusicNote
+import androidx.compose.material.icons.rounded.NewReleases
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
@@ -72,6 +73,7 @@ enum class ArtworkPlaceholder(internal val icon: ImageVector) {
     SmartPlaylist(Icons.Rounded.AutoAwesome),
     Favorites(Icons.Rounded.Favorite),
     RecentlyAdded(Icons.Rounded.LibraryAdd),
+    RecentReleases(Icons.Rounded.NewReleases),
     MostPlayed(Icons.AutoMirrored.Rounded.TrendingUp),
     History(Icons.Rounded.History),
     Downloaded(Icons.Rounded.DownloadDone),

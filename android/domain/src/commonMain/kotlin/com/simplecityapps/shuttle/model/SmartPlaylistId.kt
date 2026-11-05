@@ -17,6 +17,7 @@ enum class SmartPlaylistId(
     /** Every favourite, most recently made one first. */
     Favourites("favourites", SongQuery.Favourites),
     RecentlyAdded("recently-added", SongQuery.RecentlyAdded()),
+    RecentReleases("recent-releases", SongQuery.ReleasedSince()),
     MostPlayed("most-played", SongQuery.PlayCount(2, SongSortOrder.PlayCount)),
 
     /** Every song that has played to the end, most recent first. */

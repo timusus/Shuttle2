@@ -13,6 +13,8 @@ import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 
 sealed class SongQuery(
     open val predicate: (Song) -> Boolean,
@@ -142,5 +144,13 @@ sealed class SongQuery(
         SongQuery(
             predicate = { song -> song.dateAdded?.let { it > clock.now().minus(days.days) } ?: false },
             sortOrder = SongSortOrder.DateAdded
+        )
+
+    /** The songs released this calendar year or last (Home's Recent releases), newest release first. */
+    @OptIn(ExperimentalTime::class)
+    data class ReleasedSince(val clock: Clock = Clock.System) :
+        SongQuery(
+            predicate = { song -> song.date?.let { it.year >= clock.now().toLocalDateTime(TimeZone.currentSystemDefault()).year - 1 } ?: false },
+            sortOrder = SongSortOrder.Year
         )
 }

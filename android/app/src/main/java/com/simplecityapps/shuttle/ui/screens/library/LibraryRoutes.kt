@@ -53,6 +53,7 @@ val SmartPlaylistId.nameKey: StringKey
     get() = when (this) {
         SmartPlaylistId.Favourites -> MediaActionString.PLAYLIST_TITLE_FAVORITES
         SmartPlaylistId.RecentlyAdded -> MediaActionString.PLAYLIST_TITLE_RECENTLY_ADDED
+        SmartPlaylistId.RecentReleases -> MediaActionString.PLAYLIST_TITLE_RECENT_RELEASES
         SmartPlaylistId.MostPlayed -> MediaActionString.PLAYLIST_TITLE_MOST_PLAYED
         SmartPlaylistId.History -> MediaActionString.PLAYLIST_TITLE_HISTORY
         SmartPlaylistId.Downloaded -> MediaActionString.PLAYLIST_TITLE_DOWNLOADED

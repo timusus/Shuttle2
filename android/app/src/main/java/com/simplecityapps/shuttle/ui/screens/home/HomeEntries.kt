@@ -17,7 +17,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
 import com.simplecityapps.shuttle.R
-import com.simplecityapps.shuttle.model.SmartPlaylistId
 import com.simplecityapps.shuttle.ui.actions.NavigationTarget
 import com.simplecityapps.shuttle.ui.common.ConsumeEvents
 import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsHost
@@ -110,10 +109,7 @@ private fun HomeDestination(
                 onRefresh = viewModel::refresh,
                 onAction = actions::dispatch,
                 onShowActions = actions::showActions,
-                onSeeAll = { section ->
-                    // Only Recently added has a See all (HomeSectionId.hasSeeAll): the smart playlist of the same name.
-                    if (section == HomeSectionId.RecentlyAdded) onOpen(SmartPlaylistRoute(SmartPlaylistId.RecentlyAdded.id))
-                },
+                onSeeAll = { section -> section.seeAllPlaylist?.let { onOpen(SmartPlaylistRoute(it.id)) } },
             ),
             emptyContent = (emptyState as? LibraryAvailability.Empty)?.let { empty ->
                 @Composable { modifier: Modifier ->

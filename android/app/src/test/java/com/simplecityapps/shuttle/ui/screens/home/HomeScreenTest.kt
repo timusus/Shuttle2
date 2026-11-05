@@ -310,13 +310,14 @@ class HomeScreenTest {
     }
 
     @Test
-    fun `recently added offers see all, and the other sections don't`() {
+    fun `recently added and recent releases offer see all, and the other sections don't`() {
         robot.setContent(HomeScenarios.content)
 
         robot.tapText("See all")
 
         robot.seeAlls shouldContainExactly listOf(HomeSectionId.RecentlyAdded)
-        HomeSectionId.entries.filter { it.hasSeeAll } shouldContainExactly listOf(HomeSectionId.RecentlyAdded)
+        HomeSectionId.entries.filter { it.hasSeeAll } shouldContainExactly listOf(HomeSectionId.RecentlyAdded, HomeSectionId.RecentReleases)
+        HomeSectionId.RecentReleases.seeAllPlaylist?.id shouldBe "recent-releases"
     }
 
     @Test
