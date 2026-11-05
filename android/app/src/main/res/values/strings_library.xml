@@ -151,6 +151,24 @@
     <string name="artist_detail_album_expanded">Expanded</string>
     <!-- Artist detail: an album row's state when its songs are folded away (spoken by screen readers) -->
     <string name="artist_detail_album_collapsed">Collapsed</string>
+    <!-- Playlist detail sort menu: songs grouped under their albums, the most recently added album first -->
+    <string name="playlist_sort_album_recently_added">Album, recently added</string>
+    <!-- Playlist detail sort button label: the current sort in a word or two (Album, recently added) -->
+    <string name="playlist_sort_short_album_recently_added">New albums</string>
+    <!-- Playlist detail sort menu: every song in one list, the most recently added first -->
+    <string name="playlist_sort_recently_added">Recently added</string>
+    <!-- Playlist detail sort menu: every song in one list, by artist A to Z -->
+    <string name="playlist_sort_artist">Artist</string>
+    <!-- Playlist detail sort button label: the current sort in a word or two (Artist) -->
+    <string name="playlist_sort_short_artist">Artist A–Z</string>
+    <!-- Favourites sort menu: the playlist's own order, the most recently favourited song first -->
+    <string name="playlist_sort_recently_favourited">Recently favourited</string>
+    <!-- History sort menu: the playlist's own order, the most recently played song first -->
+    <string name="playlist_sort_recently_played">Recently played</string>
+    <!-- Smart playlist sort menu: the order the playlist's rules give -->
+    <string name="playlist_sort_playlist_order">Playlist order</string>
+    <!-- Playlist detail sort button label: a most-recent-first sort in a word (Recently added, favourited or played) -->
+    <string name="playlist_sort_short_recent">Recent</string>
     <string name="album_detail_more_by_artist">More by this artist</string>
     <string name="album_detail_more_by">More by <xliff:g example="Artist name" id="artist">%1$s</xliff:g></string>
     <!-- Classical album page: opens the other albums in the library that hold a recording of this work; the number is how many albums -->

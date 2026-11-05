@@ -20,6 +20,8 @@ import com.simplecityapps.shuttle.model.SmartPlaylist
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.sorting.ArtistSongComparator
 import com.simplecityapps.shuttle.sorting.ArtistSongSortOrder
+import com.simplecityapps.shuttle.sorting.SongListSort
+import com.simplecityapps.shuttle.sorting.songSections
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.detail.AlbumArtistDetailUiState
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.detail.AlbumArtistDetailUiState.SongSection
 import com.simplecityapps.shuttle.ui.screens.library.albums.detail.AlbumDetailUiState
@@ -207,7 +209,24 @@ fun readyPlaylistDetail(
     songs: List<PlaylistSong> = playlistEntries(),
     selectedIds: Set<Long> = emptySet(),
     currentSong: Song? = null,
-) = PlaylistDetailUiState(playlist = playlist, songs = songs, selectedIds = selectedIds, currentSong = currentSong, loading = false)
+    sort: SongListSort = SongListSort.PlaylistOrder,
+    expandedAlbums: Set<AlbumGroupKey> = emptySet(),
+): PlaylistDetailUiState {
+    val sections = songSections(songs.map { it.song }, sort)
+    // The entries in the sections' order, as the ViewModel lists them
+    val remaining = songs.toMutableList()
+    val ordered = sections.flatMap { it.songs }.map { song -> remaining.first { it.song === song }.also { remaining.remove(it) } }
+    return PlaylistDetailUiState(
+        playlist = playlist,
+        songs = ordered,
+        selectedIds = selectedIds,
+        currentSong = currentSong,
+        loading = false,
+        sort = sort,
+        sections = sections,
+        expandedAlbums = expandedAlbums,
+    )
+}
 
 val loadingPlaylistDetail = PlaylistDetailUiState(loading = true)
 
@@ -215,6 +234,19 @@ fun readySmartPlaylistDetail(
     smartPlaylist: SmartPlaylist = createSmartPlaylist(),
     songs: List<Song> = phaseGardenSongs(),
     currentSong: Song? = null,
-) = SmartPlaylistDetailUiState(smartPlaylist = smartPlaylist, songs = songs, currentSong = currentSong, loading = false)
+    sort: SongListSort = SongListSort.PlaylistOrder,
+    expandedAlbums: Set<AlbumGroupKey> = emptySet(),
+): SmartPlaylistDetailUiState {
+    val sections = songSections(songs, sort)
+    return SmartPlaylistDetailUiState(
+        smartPlaylist = smartPlaylist,
+        songs = sections.flatMap { it.songs },
+        currentSong = currentSong,
+        loading = false,
+        sort = sort,
+        sections = sections,
+        expandedAlbums = expandedAlbums,
+    )
+}
 
 val missingSmartPlaylistDetail = SmartPlaylistDetailUiState(smartPlaylist = null, loading = false)

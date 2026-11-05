@@ -10,6 +10,7 @@ import com.simplecityapps.shuttle.fixtures.SampleLibrary
 import com.simplecityapps.shuttle.model.SmartPlaylistId
 import com.simplecityapps.shuttle.persistence.LibraryTab
 import com.simplecityapps.shuttle.sorting.ArtistSongSortOrder
+import com.simplecityapps.shuttle.sorting.SongListSort
 import com.simplecityapps.shuttle.ui.DocsDesignRoborazziOptions
 import com.simplecityapps.shuttle.ui.SampleArtworkCoil
 import com.simplecityapps.shuttle.ui.preview.sampleSongs
@@ -469,12 +470,29 @@ class LibraryScreenshotTest {
         shot("phone-smart-playlist-detail")
     }
 
-    private fun roadTrip(selectedIds: Set<Long> = emptySet()): PlaylistDetailUiState {
+    @Test
+    @Config(qualifiers = "w411dp-h891dp-xhdpi")
+    fun phoneSmartPlaylistGrouped() {
+        val state = readySmartPlaylistDetail(smartPlaylist = SmartPlaylistId.RecentlyAdded.smartPlaylist, songs = sampleSongs(8), sort = SongListSort.AlbumNewestAdded)
+        detail.setSmartPlaylist(state.copy(expandedAlbums = setOfNotNull(state.sections.first().album?.groupKey)))
+        shot("phone-smart-playlist-grouped")
+    }
+
+    @Test
+    @Config(qualifiers = "w411dp-h891dp-xhdpi")
+    fun phonePlaylistGrouped() {
+        val state = roadTrip(sort = SongListSort.AlbumTitle)
+        detail.setPlaylist(state.copy(expandedAlbums = setOfNotNull(state.sections.first().album?.groupKey)))
+        shot("phone-playlist-grouped")
+    }
+
+    private fun roadTrip(selectedIds: Set<Long> = emptySet(), sort: SongListSort = SongListSort.PlaylistOrder): PlaylistDetailUiState {
         val playlist = SampleLibrary.playlist("Road Trip")
         return readyPlaylistDetail(
             playlist = playlist.toPlaylist(id = 7),
             songs = playlistEntries(playlist.songs.map { it.toSong() }),
             selectedIds = selectedIds,
+            sort = sort,
         )
     }
 

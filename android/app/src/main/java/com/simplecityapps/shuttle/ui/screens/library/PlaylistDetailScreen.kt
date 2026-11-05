@@ -8,11 +8,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.PlaylistAdd
 import androidx.compose.material.icons.automirrored.rounded.QueueMusic
-import androidx.compose.material.icons.automirrored.rounded.Sort
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.FileDownload
 import androidx.compose.material.icons.rounded.PlayArrow
@@ -31,21 +31,24 @@ import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation3.runtime.NavKey
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.designsystem.component.ArtworkPlaceholder
 import com.simplecityapps.shuttle.designsystem.component.ArtworkSize
 import com.simplecityapps.shuttle.designsystem.component.QueueRow
 import com.simplecityapps.shuttle.designsystem.component.S2Action
 import com.simplecityapps.shuttle.designsystem.component.S2IconButton
-import com.simplecityapps.shuttle.designsystem.component.S2Menu
 import com.simplecityapps.shuttle.designsystem.component.S2SelectionToolbar
 import com.simplecityapps.shuttle.designsystem.component.S2Text
+import com.simplecityapps.shuttle.designsystem.component.S2Tooltip
 import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
 import com.simplecityapps.shuttle.format.formatDuration
+import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.PlaylistSong
 import com.simplecityapps.shuttle.model.Song
-import com.simplecityapps.shuttle.sorting.PlaylistSongSortOrder
+import com.simplecityapps.shuttle.sorting.PlaylistKind
+import com.simplecityapps.shuttle.sorting.SongListSort
 import com.simplecityapps.shuttle.ui.actions.MediaAction
 import com.simplecityapps.shuttle.ui.actions.MediaActionType
 import com.simplecityapps.shuttle.ui.actions.MediaSelection
@@ -61,22 +64,11 @@ import dev.zacsweers.metrox.viewmodel.assistedMetroViewModel
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
 
-/** The sorts a playlist offers, in menu order; Position is the playlist's own order, labelled Custom. */
-private val PlaylistSorts = listOf(
-    PlaylistSongSortOrder.Position to R.string.menu_title_sort_custom,
-    PlaylistSongSortOrder.SongName to R.string.menu_title_sort_song_name,
-    PlaylistSongSortOrder.ArtistGroupKey to R.string.menu_title_sort_artist_name,
-    PlaylistSongSortOrder.AlbumGroupKey to R.string.menu_title_sort_album_name,
-    PlaylistSongSortOrder.Year to R.string.menu_title_sort_year,
-    PlaylistSongSortOrder.Duration to R.string.menu_title_sort_duration,
-    PlaylistSongSortOrder.LastModified to R.string.menu_title_sort_date_modified,
-)
-
 /**
- * Playlist detail (inventory §1): the playlist's songs in its sort. Sorted by Custom, each row has a drag handle;
- * otherwise a hint says how to get back to reordering. Long press starts a multi-selection whose toolbar removes
- * the entries (with Undo) or hands them to the shared actions. Sort, export and rename / clear / delete sit in the
- * top bar.
+ * Playlist detail (inventory §1): the playlist's songs in its view sort, folded under album headers when the sort
+ * groups by album. Sorted by Custom, each row has a drag handle; otherwise a hint says how to get back to
+ * reordering. In a flat list, long press starts a multi-selection whose toolbar removes the entries (with Undo) or
+ * hands them to the shared actions. Export sits in the top bar, rename / clear / delete in the playlist's sheet.
  */
 @Composable
 fun PlaylistDetailScreen(
@@ -90,13 +82,17 @@ fun PlaylistDetailScreen(
     onClearSelection: () -> Unit,
     onRemoveSelected: () -> Unit,
     onSelectionAction: (MediaActionType) -> Unit,
-    onSortOrderSelected: (PlaylistSongSortOrder) -> Unit,
-    onSortDescendingChanged: (Boolean) -> Unit,
+    onSortSelected: (SongListSort) -> Unit,
     onExport: () -> Unit,
     onMove: (fromId: Long, toId: Long) -> Unit,
     onMoveFinished: () -> Unit,
     modifier: Modifier = Modifier,
     covers: List<Song> = emptyList(),
+    onToggleAlbum: (Album) -> Unit = {},
+    onOpenAlbum: (Album) -> Unit = {},
+    onAlbumMore: (Album) -> Unit = {},
+    onExpandAll: () -> Unit = {},
+    onCollapseAll: () -> Unit = {},
 ) {
     val playlist = uiState.playlist
     val state = when {
@@ -115,6 +111,23 @@ fun PlaylistDetailScreen(
         if (fromId != null && toId != null) onMove(fromId, toId)
     }
     BackHandler(enabled = selecting, onBack = onClearSelection)
+    val unknown = stringResource(com.simplecityapps.core.R.string.unknown)
+    val albumSections = remember(uiState.sections) { uiState.sections.mapNotNull { section -> section.album?.let { AlbumSongs(it, section.songs) } } }
+    val unfoldedSections = remember(albumSections, uiState.expandedAlbums) { albumSections.unfoldedByKey(uiState.expandedAlbums) }
+    val albumHeader: @Composable (AlbumSongs, Modifier) -> Unit = { section, headerModifier ->
+        AlbumSectionHeader(
+            album = section.album,
+            songCount = section.songs.size,
+            expanded = section.album.groupKey in uiState.expandedAlbums,
+            unknown = unknown,
+            onToggle = { onToggleAlbum(section.album) },
+            onOpen = { onOpenAlbum(section.album) },
+            onMore = { onAlbumMore(section.album) },
+            modifier = headerModifier,
+        )
+    }
+    val grouped = albumSections.isNotEmpty()
+    val sortChoices = PlaylistKind.User.sortChoices
 
     Box(modifier.testTag("playlist-detail")) {
         LibraryDetailScaffold(
@@ -129,15 +142,18 @@ fun PlaylistDetailScreen(
             onShuffle = onShuffle,
             onMore = { playlist?.let(onPlaylistMore) },
             listState = listState,
+            overlay = { topInset -> PinnedAlbumHeader(listState, topInset, unfoldedSections, "playlist-pinned-album", albumHeader) },
             actions = {
                 if (playlist != null) {
-                    PlaylistSortMenu(playlist, onSortOrderSelected, onSortDescendingChanged, onExport)
+                    S2Tooltip(stringResource(R.string.playlist_menu_export)) {
+                        S2IconButton(icon = Icons.Rounded.FileDownload, contentDescription = stringResource(R.string.playlist_menu_export), onClick = onExport)
+                    }
                 }
             },
             header = {
                 DownloadStatusHeader(songs, Modifier.padding(top = S2Spacing.smallMedium))
                 if (playlist != null && !uiState.canReorder && uiState.songs.isNotEmpty()) {
-                    val sortLabel = stringResource(PlaylistSorts.firstOrNull { it.first == playlist.sortOrder }?.second ?: R.string.menu_title_sort_custom)
+                    val sortLabel = stringResource((sortChoices.firstOrNull { it.value == uiState.sort } ?: sortChoices.first()).label)
                     S2Text(
                         text = stringResource(R.string.playlist_detail_reorder_hint, sortLabel),
                         style = MaterialTheme.typography.bodySmall,
@@ -147,21 +163,57 @@ fun PlaylistDetailScreen(
                 }
             },
         ) {
-            uiState.songs.forEachIndexed { index, entry ->
-                item(key = entry.id, contentType = "song") {
-                    ReorderableItem(reorderState, key = entry.id, enabled = reorderable) { dragging ->
-                        PlaylistEntryRow(
-                            entry = entry,
-                            reorderable = reorderable,
-                            selecting = selecting,
-                            selected = entry.id in uiState.selectedIds,
-                            playing = entry.song.id == uiState.currentSong?.id,
-                            dragging = dragging,
-                            dragHandleModifier = Modifier.draggableHandle(onDragStopped = onMoveFinished),
-                            onPlay = { onPlay(songs, index) },
-                            onToggleSelected = onToggleSelected,
-                            onSongMore = onSongMore,
+            if (playlist != null && uiState.songs.isNotEmpty()) {
+                item(key = "songs-header", contentType = "header") {
+                    SongsHeader(
+                        title = stringResource(if (grouped) R.string.artist_detail_albums else R.string.artist_detail_songs),
+                        sort = uiState.sort,
+                        choices = sortChoices,
+                        allExpanded = uiState.allAlbumsExpanded.takeIf { grouped },
+                        onSortSelected = onSortSelected,
+                        onExpandAll = onExpandAll,
+                        onCollapseAll = onCollapseAll,
+                        sortTag = "playlist-sort",
+                    )
+                }
+            }
+            if (grouped) {
+                // Album sections show plain song rows: drag and multi-selection belong to the flat list
+                songSectionRows(
+                    sections = uiState.sections,
+                    expanded = uiState.expandedAlbums,
+                    currentSong = uiState.currentSong,
+                    unknown = unknown,
+                    header = albumHeader,
+                    onPlay = { onPlay(songs, it) },
+                    onSongMore = { onSongMore(uiState.songs[it]) },
+                ) { looseSongs, startIndex ->
+                    itemsIndexed(looseSongs, key = { index, song -> "loose-${startIndex + index}-${song.id}" }, contentType = { _, _ -> "song" }) { index, song ->
+                        LibrarySongRow(
+                            song = song,
+                            onClick = { onPlay(songs, startIndex + index) },
+                            playing = song.id == uiState.currentSong?.id,
+                            onMore = { onSongMore(uiState.songs[startIndex + index]) },
                         )
+                    }
+                }
+            } else {
+                uiState.songs.forEachIndexed { index, entry ->
+                    item(key = entry.id, contentType = "song") {
+                        ReorderableItem(reorderState, key = entry.id, enabled = reorderable) { dragging ->
+                            PlaylistEntryRow(
+                                entry = entry,
+                                reorderable = reorderable,
+                                selecting = selecting,
+                                selected = entry.id in uiState.selectedIds,
+                                playing = entry.song.id == uiState.currentSong?.id,
+                                dragging = dragging,
+                                dragHandleModifier = Modifier.draggableHandle(onDragStopped = onMoveFinished),
+                                onPlay = { onPlay(songs, index) },
+                                onToggleSelected = onToggleSelected,
+                                onSongMore = onSongMore,
+                            )
+                        }
                     }
                 }
             }
@@ -251,33 +303,11 @@ private fun PlaylistSelectionToolbar(
     )
 }
 
-/** The top bar's sort button: the seven sorts, Descending, and Export as m3u. */
-@Composable
-private fun PlaylistSortMenu(
-    playlist: Playlist,
-    onSortOrderSelected: (PlaylistSongSortOrder) -> Unit,
-    onSortDescendingChanged: (Boolean) -> Unit,
-    onExport: () -> Unit,
-) {
-    var open by remember { mutableStateOf(false) }
-    Box {
-        S2IconButton(icon = Icons.AutoMirrored.Rounded.Sort, contentDescription = stringResource(R.string.menu_title_sort_by), onClick = { open = true })
-        S2Menu(
-            expanded = open,
-            onDismissRequest = { open = false },
-            groups = listOf(
-                sortOptions(playlist.sortOrder, PlaylistSorts) { onSortOrderSelected(it) },
-                listOf(S2Action(stringResource(R.string.menu_title_sort_descending), { onSortDescendingChanged(!playlist.sortDescending) }, selected = playlist.sortDescending)),
-                listOf(S2Action(stringResource(R.string.playlist_menu_export), onExport, Icons.Rounded.FileDownload)),
-            ),
-        )
-    }
-}
-
 @Composable
 fun PlaylistDetailDestination(
     route: PlaylistRoute,
     onNavigateUp: () -> Unit,
+    onOpen: (NavKey) -> Unit,
     onNavigate: (NavigationTarget) -> Unit,
 ) {
     val viewModel = assistedMetroViewModel<PlaylistDetailViewModel, PlaylistDetailViewModel.Factory> { create(route.playlistId) }
@@ -304,6 +334,10 @@ fun PlaylistDetailDestination(
             is PlaylistDetailEvent.ExportFailed -> snackbarHostState.showSnackbar(
                 resources.getString(R.string.playlist_export_failed, event.error),
             )
+
+            is PlaylistDetailEvent.ShuffleAlbumsFailed -> snackbarHostState.showSnackbar(
+                resources.getString(R.string.shuffle_albums_failed, event.reason ?: resources.getString(R.string.error_unknown)),
+            )
         }
     }
 
@@ -320,7 +354,8 @@ fun PlaylistDetailDestination(
                         subtitle = null,
                         selection = MediaSelection.Playlists(playlist),
                         placeholder = ArtworkPlaceholder.Playlist,
-                        extraActions = playlistManageActions(resources, playlist) { dialog = it },
+                        extraActions = shuffleAlbumsActions(uiState.sort, resources.getString(R.string.detail_shuffle_albums), viewModel::onShuffleAlbums) +
+                            playlistManageActions(resources, playlist) { dialog = it },
                     ),
                 )
             },
@@ -350,12 +385,16 @@ fun PlaylistDetailDestination(
                 actions.perform(type, MediaSelection.Songs(uiState.selectedEntries.map { it.song }))
                 viewModel.onClearSelection()
             },
-            onSortOrderSelected = viewModel::onSortOrderSelected,
-            onSortDescendingChanged = viewModel::onSortDescendingChanged,
+            onSortSelected = viewModel::onSortSelected,
             onExport = viewModel::onExport,
             onMove = viewModel::onMove,
             onMoveFinished = viewModel::onMoveFinished,
             covers = covers,
+            onToggleAlbum = viewModel::onToggleAlbum,
+            onOpenAlbum = { album -> onOpen(album.route) },
+            onAlbumMore = { album -> actions.showActions(albumMoreTarget(album, resources.getString(R.string.menu_title_view_album)) { onOpen(album.route) }) },
+            onExpandAll = viewModel::onExpandAll,
+            onCollapseAll = viewModel::onCollapseAll,
         )
         PlaylistDialogHost(
             dialog = dialog,

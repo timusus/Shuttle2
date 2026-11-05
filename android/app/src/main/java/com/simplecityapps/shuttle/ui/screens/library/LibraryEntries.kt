@@ -28,8 +28,8 @@ fun EntryProviderScope<NavKey>.libraryEntries(navigator: AppNavigator) {
     entry<AlbumArtistRoute>(metadata = detail) { route -> AlbumArtistDetailDestination(route, onNavigateUp = onNavigateUp, onOpen = navigator::open, onNavigate = onNavigate) }
     entry<ComposerRoute>(metadata = detail) { route -> ComposerDetailDestination(route, onNavigateUp = onNavigateUp, onOpen = navigator::open, onNavigate = onNavigate) }
     entry<GenreRoute>(metadata = detail) { route -> GenreDetailDestination(route, onNavigateUp = onNavigateUp, onOpen = navigator::open, onNavigate = onNavigate) }
-    entry<PlaylistRoute>(metadata = detail) { route -> PlaylistDetailDestination(route, onNavigateUp = onNavigateUp, onNavigate = onNavigate) }
-    entry<SmartPlaylistRoute>(metadata = detail) { route -> SmartPlaylistDetailDestination(route, onNavigateUp = onNavigateUp, onNavigate = onNavigate) }
+    entry<PlaylistRoute>(metadata = detail) { route -> PlaylistDetailDestination(route, onNavigateUp = onNavigateUp, onOpen = navigator::open, onNavigate = onNavigate) }
+    entry<SmartPlaylistRoute>(metadata = detail) { route -> SmartPlaylistDetailDestination(route, onNavigateUp = onNavigateUp, onOpen = navigator::open, onNavigate = onNavigate) }
 }
 
 /**

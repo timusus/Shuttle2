@@ -1,63 +1,26 @@
 package com.simplecityapps.shuttle.ui.screens.library
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxScope
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyListScope
-import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Shuffle
-import androidx.compose.material.icons.rounded.SwapVert
-import androidx.compose.material.icons.rounded.UnfoldLess
-import androidx.compose.material.icons.rounded.UnfoldMore
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clipToBounds
-import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.hideFromAccessibility
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.stateDescription
-import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.IntOffset
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavKey
 import com.simplecityapps.shuttle.R
-import com.simplecityapps.shuttle.designsystem.component.AlbumRow
 import com.simplecityapps.shuttle.designsystem.component.ArtworkPlaceholder
 import com.simplecityapps.shuttle.designsystem.component.ArtworkSize
 import com.simplecityapps.shuttle.designsystem.component.S2Action
-import com.simplecityapps.shuttle.designsystem.component.S2Button
-import com.simplecityapps.shuttle.designsystem.component.S2ButtonStyle
-import com.simplecityapps.shuttle.designsystem.component.S2IconButton
-import com.simplecityapps.shuttle.designsystem.component.S2Menu
-import com.simplecityapps.shuttle.designsystem.component.S2Tooltip
 import com.simplecityapps.shuttle.designsystem.component.SectionHeader
 import com.simplecityapps.shuttle.designsystem.component.SongRow
 import com.simplecityapps.shuttle.designsystem.theme.ArtworkTheme
-import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
-import com.simplecityapps.shuttle.designsystem.theme.S2TouchTarget
-import com.simplecityapps.shuttle.designsystem.theme.isLargeText
 import com.simplecityapps.shuttle.format.formatDuration
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumArtist
@@ -75,7 +38,6 @@ import com.simplecityapps.shuttle.ui.screens.library.albumartists.detail.AlbumAr
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.detail.AlbumArtistDetailViewModel
 import com.simplecityapps.shuttle.ui.shell.LocalShellSnackbarHostState
 import dev.zacsweers.metrox.viewmodel.assistedMetroViewModel
-import kotlin.math.min
 
 /** Artist detail: album headers fold their tracks inline, and Appears On and Other Songs follow the albums. */
 @Composable
@@ -106,7 +68,8 @@ fun AlbumArtistDetailScreen(
     val appearsOnTitle = stringResource(R.string.artist_detail_appears_on)
     val listState = rememberLazyListState()
     // The unfolded album sections, by the key of each of their rows, for the header pinned over the list
-    val unfoldedSections = remember(uiState.sections, uiState.expandedAlbums) { unfoldedSectionsByKey(uiState) }
+    val albumSections = remember(uiState.sections) { uiState.sections.mapNotNull { section -> section.album?.let { AlbumSongs(it, section.songs) } } }
+    val unfoldedSections = remember(albumSections, uiState.expandedAlbums) { albumSections.unfoldedByKey(uiState.expandedAlbums) }
     val albumHeader: @Composable (AlbumSongs, Modifier) -> Unit = { section, headerModifier ->
         AlbumSectionHeader(
             album = section.album,
@@ -141,7 +104,7 @@ fun AlbumArtistDetailScreen(
             onMore = { artist?.let(onArtistMore) },
             modifier = modifier.testTag("artist-detail"),
             listState = listState,
-            overlay = { topInset -> PinnedAlbumHeader(listState, topInset, unfoldedSections, albumHeader) },
+            overlay = { topInset -> PinnedAlbumHeader(listState, topInset, unfoldedSections, "artist-pinned-album", albumHeader) },
         ) {
             val appearsOn: LazyListScope.() -> Unit = {
                 if (uiState.appearsOn.isNotEmpty()) {
@@ -159,12 +122,14 @@ fun AlbumArtistDetailScreen(
                 item(key = "songs-header", contentType = "header") {
                     SongsHeader(
                         title = stringResource(if (uiState.hasAlbumSections) R.string.artist_detail_albums else R.string.artist_detail_songs),
-                        sortOrder = uiState.sortOrder,
+                        sort = uiState.sortOrder,
+                        choices = ArtistSorts,
                         // An album order with no album sections, only Other Songs, has nothing to fold
                         allExpanded = uiState.allAlbumsExpanded.takeIf { uiState.hasAlbumSections },
-                        onSortOrderSelected = onSortOrderSelected,
+                        onSortSelected = onSortOrderSelected,
                         onExpandAll = onExpandAll,
                         onCollapseAll = onCollapseAll,
+                        sortTag = "artist-sort",
                     )
                 }
             }
@@ -175,22 +140,16 @@ fun AlbumArtistDetailScreen(
                 offset += section.songs.size
                 val album = section.album
                 if (album != null) {
-                    val albumSongs = AlbumSongs(album, section.songs)
-                    item(key = albumSongs.headerKey, contentType = "album") { albumHeader(albumSongs, Modifier) }
-                    if (album.groupKey in uiState.expandedAlbums) {
-                        itemsIndexed(section.songs, key = { _, song -> albumSongs.songKey(song) }, contentType = { _, _ -> "song" }) { index, song ->
-                            SongRow(
-                                title = song.name ?: unknown,
-                                subtitle = song.artistUnlessAlbumArtist(album),
-                                onClick = { onPlay(uiState.songs, startIndex + index) },
-                                trackNumber = song.track,
-                                duration = formatDuration(song.duration.toLong()),
-                                playing = song.id == uiState.currentSong?.id,
-                                offlineState = song.offlineState(),
-                                onMore = { onSongMore(song) },
-                            )
-                        }
-                    }
+                    albumSection(
+                        section = AlbumSongs(album, section.songs),
+                        expanded = album.groupKey in uiState.expandedAlbums,
+                        startIndex = startIndex,
+                        currentSong = uiState.currentSong,
+                        unknown = unknown,
+                        header = albumHeader,
+                        onPlay = { onPlay(uiState.songs, it) },
+                        onSongMore = { onSongMore(uiState.songs[it]) },
+                    )
                 } else {
                     if (uiState.hasAlbumSections) {
                         appearsOn()
@@ -216,175 +175,14 @@ fun AlbumArtistDetailScreen(
     }
 }
 
-/** An album section of the song list: [album]'s header and its [songs], keyed apart from the page's other rows. */
-private class AlbumSongs(val album: Album, val songs: List<Song>) {
-    val headerKey: String get() = "album-${album.groupKey}"
-
-    fun songKey(song: Song): String = "album-${album.groupKey}-song-${song.id}"
-}
-
-/** Every unfolded album section of [uiState]'s song list, by the key of its header and of each of its song rows. */
-private fun unfoldedSectionsByKey(uiState: AlbumArtistDetailUiState): Map<Any, AlbumSongs> = buildMap {
-    uiState.sections.forEach { section ->
-        val album = section.album ?: return@forEach
-        if (album.groupKey !in uiState.expandedAlbums) return@forEach
-        val albumSongs = AlbumSongs(album, section.songs)
-        put(albumSongs.headerKey, albumSongs)
-        section.songs.forEach { put(albumSongs.songKey(it), albumSongs) }
-    }
-}
-
-/**
- * An album section's header: the album, its year and song count; a tap folds or unfolds its songs, the thumbnail opens
- * the album, and a long press or the overflow opens its actions.
- */
-@Composable
-private fun AlbumSectionHeader(
-    album: Album,
-    songCount: Int,
-    expanded: Boolean,
-    unknown: String,
-    onToggle: () -> Unit,
-    onOpen: () -> Unit,
-    onMore: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val foldState = stringResource(if (expanded) R.string.artist_detail_album_expanded else R.string.artist_detail_album_collapsed)
-    AlbumRow(
-        title = album.name ?: unknown,
-        artist = listOfNotNull(album.year?.toString(), pluralString(R.plurals.songsPlural, songCount)).joinToString(" · "),
-        onClick = onToggle,
-        // Inset so the unfolded album's selection container sits on the content inset, like the rows below it
-        modifier = modifier.padding(horizontal = S2Spacing.small).semantics { stateDescription = foldState },
-        edgeInset = S2Spacing.small,
-        artwork = {
-            val openAlbumLabel = stringResource(R.string.artist_detail_open_album, album.name ?: unknown)
-            // The thumbnail opens the album; its description alone announces that, so it isn't read twice.
-            LibraryArtwork(
-                album,
-                ArtworkPlaceholder.Album,
-                Modifier
-                    .semantics { contentDescription = openAlbumLabel }
-                    .clickable(onClick = onOpen),
-                size = ArtworkSize.Medium,
-            )
-        },
-        selected = expanded,
-        onLongClick = onMore,
-        onMore = onMore,
-    )
-}
-
-/** Pins the unfolded album's header below the bar; a LazyColumn sticky header would scroll out of sight behind it. */
-@Composable
-private fun BoxScope.PinnedAlbumHeader(
-    listState: LazyListState,
-    topInset: Dp,
-    sectionsByKey: Map<Any, AlbumSongs>,
-    header: @Composable (AlbumSongs, Modifier) -> Unit,
-) {
-    val obscuredPx = with(LocalDensity.current) { topInset.roundToPx() }
-    val pinned by remember(listState, sectionsByKey, obscuredPx) {
-        derivedStateOf { listState.pinnedSection(sectionsByKey, obscuredPx) }
-    }
-    var heightPx by remember { mutableIntStateOf(0) }
-    val (section, nextOffset) = pinned ?: return
-    Box(
-        Modifier
-            .padding(top = topInset)
-            .fillMaxWidth()
-            // Pushed up, it slides under the bar's lower edge rather than over the bar
-            .clipToBounds()
-            // A copy of the header in the list, which screen readers already have
-            .semantics { hideFromAccessibility() }
-            .testTag("artist-pinned-album"),
-    ) {
-        header(
-            section,
-            Modifier
-                .onSizeChanged { heightPx = it.height }
-                .offset { IntOffset(0, nextOffset?.let { min(0, it - obscuredPx - heightPx) } ?: 0) }
-                .background(MaterialTheme.colorScheme.surface),
-        )
-    }
-}
-
-/**
- * The unfolded section in [sectionsByKey] whose rows are under the bar ([obscuredPx] from the top of the list), with the
- * offset of the first row after it on screen, if any; null while that section's own header is still in full view.
- */
-private fun LazyListState.pinnedSection(sectionsByKey: Map<Any, AlbumSongs>, obscuredPx: Int): Pair<AlbumSongs, Int?>? {
-    val visible = layoutInfo.visibleItemsInfo
-    val under = visible.firstOrNull { it.offset + it.size > obscuredPx } ?: return null
-    val section = sectionsByKey[under.key] ?: return null
-    if (under.key == section.headerKey && under.offset >= obscuredPx) return null
-    val next = visible.firstOrNull { it.index > under.index && sectionsByKey[it.key] !== section }
-    return section to next?.offset
-}
-
-/** The artist sorts in menu order: each with its menu label and the sort button's short one. */
-private enum class ArtistSort(val order: ArtistSongSortOrder, val label: Int, val shortLabel: Int) {
-    AlbumNewest(ArtistSongSortOrder.AlbumNewest, R.string.artist_sort_album_newest, R.string.artist_sort_short_album_newest),
-    AlbumOldest(ArtistSongSortOrder.AlbumOldest, R.string.artist_sort_album_oldest, R.string.artist_sort_short_album_oldest),
-    AlbumTitle(ArtistSongSortOrder.AlbumTitle, R.string.artist_sort_album_title, R.string.artist_sort_short_album_title),
-    SongTitle(ArtistSongSortOrder.SongTitle, R.string.artist_sort_song_title, R.string.artist_sort_short_song_title),
-    MostPlayed(ArtistSongSortOrder.MostPlayed, R.string.artist_sort_most_played, R.string.artist_sort_most_played),
-}
-
-/** Titled "Albums" while album sections stand in for the songs; carries the sort menu and any expand-all toggle. */
-@Composable
-private fun SongsHeader(
-    title: String,
-    sortOrder: ArtistSongSortOrder,
-    allExpanded: Boolean?,
-    onSortOrderSelected: (ArtistSongSortOrder) -> Unit,
-    onExpandAll: () -> Unit,
-    onCollapseAll: () -> Unit,
-) {
-    SectionHeader(title = title) {
-        Box {
-            var sorting by remember { mutableStateOf(false) }
-            val current = ArtistSort.entries.firstOrNull { it.order == sortOrder } ?: ArtistSort.AlbumNewest
-            val description = stringResource(R.string.library_sort_current, stringResource(current.label))
-            // At large text the label gives way to the icon alone, as on the library tabs
-            if (isLargeText()) {
-                S2IconButton(
-                    icon = Icons.Rounded.SwapVert,
-                    contentDescription = description,
-                    onClick = { sorting = true },
-                    modifier = Modifier.testTag("artist-sort"),
-                )
-            } else {
-                S2Button(
-                    text = stringResource(current.shortLabel),
-                    onClick = { sorting = true },
-                    style = S2ButtonStyle.Text,
-                    icon = Icons.Rounded.SwapVert,
-                    modifier = Modifier
-                        .heightIn(min = S2TouchTarget.minimum)
-                        .semantics { contentDescription = description }
-                        .testTag("artist-sort"),
-                )
-            }
-            S2Menu(
-                expanded = sorting,
-                onDismissRequest = { sorting = false },
-                groups = listOf(sortOptions(sortOrder, ArtistSort.entries.map { it.order to it.label }, onSortOrderSelected)),
-            )
-        }
-        if (allExpanded != null) {
-            val label = stringResource(if (allExpanded) R.string.artist_detail_collapse_all else R.string.artist_detail_expand_all)
-            Spacer(Modifier.width(S2Spacing.small))
-            S2Tooltip(label) {
-                S2IconButton(
-                    icon = if (allExpanded) Icons.Rounded.UnfoldLess else Icons.Rounded.UnfoldMore,
-                    contentDescription = label,
-                    onClick = if (allExpanded) onCollapseAll else onExpandAll,
-                )
-            }
-        }
-    }
-}
+/** The artist sorts in menu order. */
+private val ArtistSorts = listOf(
+    SortChoice(ArtistSongSortOrder.AlbumNewest, R.string.artist_sort_album_newest, R.string.artist_sort_short_album_newest),
+    SortChoice(ArtistSongSortOrder.AlbumOldest, R.string.artist_sort_album_oldest, R.string.artist_sort_short_album_oldest),
+    SortChoice(ArtistSongSortOrder.AlbumTitle, R.string.artist_sort_album_title, R.string.artist_sort_short_album_title),
+    SortChoice(ArtistSongSortOrder.SongTitle, R.string.artist_sort_song_title, R.string.artist_sort_short_song_title),
+    SortChoice(ArtistSongSortOrder.MostPlayed, R.string.artist_sort_most_played),
+)
 
 @Composable
 fun AlbumArtistDetailDestination(

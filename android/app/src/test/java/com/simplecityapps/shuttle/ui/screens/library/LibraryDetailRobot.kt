@@ -32,7 +32,7 @@ import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.PlaylistSong
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.sorting.ArtistSongSortOrder
-import com.simplecityapps.shuttle.sorting.PlaylistSongSortOrder
+import com.simplecityapps.shuttle.sorting.SongListSort
 import com.simplecityapps.shuttle.ui.actions.MediaActionType
 import com.simplecityapps.shuttle.ui.common.downloads.LocalDownloadOfflineStates
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.detail.AlbumArtistDetailUiState
@@ -75,9 +75,9 @@ class LibraryDetailRobot(private val rule: ComposeContentTestRule) {
         private set
     var lastSelectionAction: MediaActionType? = null
         private set
-    var lastSortOrder: PlaylistSongSortOrder? = null
-        private set
-    var lastDescending: Boolean? = null
+
+    /** The sort picked from a playlist's songs header. */
+    var lastPlaylistSort: SongListSort? = null
         private set
 
     /** The sort picked from an artist's songs header, and whether its Expand all / Collapse all was tapped. */
@@ -142,17 +142,34 @@ class LibraryDetailRobot(private val rule: ComposeContentTestRule) {
                 onClearSelection = { selectionCleared = true },
                 onRemoveSelected = { removedSelected = true },
                 onSelectionAction = { lastSelectionAction = it },
-                onSortOrderSelected = { lastSortOrder = it },
-                onSortDescendingChanged = { lastDescending = it },
+                onSortSelected = { lastPlaylistSort = it },
                 onExport = { exported = true },
                 onMove = { _, _ -> },
                 onMoveFinished = {},
+                onToggleAlbum = { lastAlbumToggled = it },
+                onOpenAlbum = { lastAlbumClicked = it },
+                onAlbumMore = ::more,
+                onExpandAll = { expandedAll = true },
+                onCollapseAll = { collapsedAll = true },
             )
         }
     }
 
     fun setSmartPlaylist(uiState: SmartPlaylistDetailUiState) = render {
-        SmartPlaylistDetailScreen(uiState, onNavigateUp = ::up, onPlay = ::play, onShuffle = ::shuffle, onPlaylistMore = { lastMore = uiState.smartPlaylist }, onSongMore = ::more)
+        SmartPlaylistDetailScreen(
+            uiState,
+            onNavigateUp = ::up,
+            onPlay = ::play,
+            onShuffle = ::shuffle,
+            onPlaylistMore = { lastMore = uiState.smartPlaylist },
+            onSongMore = ::more,
+            onSortSelected = { lastPlaylistSort = it },
+            onToggleAlbum = { lastAlbumToggled = it },
+            onOpenAlbum = { lastAlbumClicked = it },
+            onAlbumMore = ::more,
+            onExpandAll = { expandedAll = true },
+            onCollapseAll = { collapsedAll = true },
+        )
     }
 
     private fun render(compactHeight: Boolean = false, fontScale: Float = 1f, content: @Composable () -> Unit) {
@@ -292,7 +309,18 @@ class LibraryDetailRobot(private val rule: ComposeContentTestRule) {
         rule.waitForIdle()
     }
 
-    fun openSortMenu() = clickContentDescription("Sort by")
+    /** Opens a playlist's sort menu, from its songs header. */
+    fun openPlaylistSortMenu() {
+        scrollToTag("playlist-sort")
+        rule.onNodeWithTag("playlist-sort").performClick()
+        rule.waitForIdle()
+    }
+
+    /** Whether the sort button is in a playlist's songs header. */
+    fun assertPlaylistSortShown(shown: Boolean) {
+        val found = rule.onAllNodes(hasTestTag("playlist-sort")).fetchSemanticsNodes().isNotEmpty()
+        check(found == shown) { if (shown) "no sort button" else "a sort button is shown" }
+    }
 
     /** Opens an artist's sort menu, from its songs header, labelled with the current sort. */
     fun openArtistSortMenu() {
