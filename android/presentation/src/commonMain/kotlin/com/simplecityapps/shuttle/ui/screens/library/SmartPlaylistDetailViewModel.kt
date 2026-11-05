@@ -14,8 +14,6 @@ import com.simplecityapps.shuttle.sorting.PlaylistKind
 import com.simplecityapps.shuttle.sorting.PlaylistSortKey
 import com.simplecityapps.shuttle.sorting.SongListSort
 import com.simplecityapps.shuttle.sorting.SongSection
-import com.simplecityapps.shuttle.sorting.albumsOf
-import com.simplecityapps.shuttle.sorting.songSections
 import com.simplecityapps.shuttle.ui.actions.ObserveCurrentSong
 import com.simplecityapps.shuttle.ui.actions.ObserveDownloadedSongs
 import com.simplecityapps.shuttle.ui.actions.ObserveSongs
@@ -34,7 +32,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -80,7 +77,7 @@ class SmartPlaylistDetailViewModel @AssistedInject constructor(
     observeSongs: ObserveSongs,
     observeDownloadedSongs: ObserveDownloadedSongs,
     observeCurrentSong: ObserveCurrentSong,
-    private val shuffleAlbums: ShuffleAlbums,
+    shuffleAlbums: ShuffleAlbums,
     readSetting: ReadLibraryViewSetting,
     saveSetting: SaveLibraryViewSetting,
 ) : ViewModel() {
@@ -93,60 +90,62 @@ class SmartPlaylistDetailViewModel @AssistedInject constructor(
 
     private val smartPlaylist = SmartPlaylistId.fromId(smartPlaylistId)?.smartPlaylist
 
-    private val options = smartPlaylist?.let { PlaylistViewOptions(PlaylistKind.of(it.id), PlaylistSortKey.of(it.id), readSetting, saveSetting) }
-
     private val events = PendingEvents<SmartPlaylistDetailEvent>()
 
-    private val songs = smartPlaylist
-        ?.let { playlist ->
-            val songs = if (playlist.id == SmartPlaylistId.Downloaded) observeDownloadedSongs() else observeSongs(playlist.songQuery)
-            songs.map { it.sortedWith(playlist.songQuery.sortOrder.comparator) }
-                .onEach { if (it.isNotEmpty()) options?.expansion?.onLoaded(albumsOf(it)) }
-        }
-        ?: flowOf(emptyList())
+    private val collection = smartPlaylist?.let { playlist ->
+        val songs = if (playlist.id == SmartPlaylistId.Downloaded) observeDownloadedSongs() else observeSongs(playlist.songQuery)
+        SongCollection(
+            items = songs.map { it.sortedWith(playlist.songQuery.sortOrder.comparator) },
+            songOf = { it },
+            kind = PlaylistKind.of(playlist.id),
+            key = PlaylistSortKey.of(playlist.id),
+            readSetting = readSetting,
+            saveSetting = saveSetting,
+            shuffleAlbums = shuffleAlbums,
+        )
+    }
+
+    private val view = collection?.view
+        ?: flowOf(SongCollection.View(emptyList(), emptyList<Song>(), SongListSort.PlaylistOrder, emptySet()))
 
     val uiState: StateFlow<SmartPlaylistDetailUiState> = combine(
-        songs,
-        options?.sort ?: flowOf(SongListSort.PlaylistOrder),
-        options?.expansion?.flow ?: flowOf(emptySet()),
+        view,
         observeCurrentSong(),
         events.flow,
-    ) { songs, sort, expanded, currentSong, events ->
-        val sections = songSections(songs, sort)
+    ) { view, currentSong, events ->
         SmartPlaylistDetailUiState(
             smartPlaylist = smartPlaylist,
-            songs = sections.flatMap { it.songs },
+            songs = view.items,
             currentSong = currentSong,
             loading = false,
-            sort = sort,
-            sections = sections,
-            expandedAlbums = sections.expandedAmong(expanded),
+            sort = view.sort,
+            sections = view.sections,
+            expandedAlbums = view.expandedAlbums,
             events = events,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SmartPlaylistDetailUiState())
 
     fun onSortSelected(sort: SongListSort) {
-        options?.select(sort)
+        collection?.select(sort)
     }
 
     fun onToggleAlbum(album: Album) {
-        options?.expansion?.toggle(album, uiState.value.sections.mapNotNull { it.album })
+        collection?.toggleAlbum(album, uiState.value.sections)
     }
 
     fun onExpandAll() {
-        options?.expansion?.expandAll(uiState.value.sections.mapNotNull { it.album })
+        collection?.expandAll(uiState.value.sections)
     }
 
     fun onCollapseAll() {
-        options?.expansion?.collapseAll()
+        collection?.collapseAll()
     }
 
     fun onShuffleAlbums() {
+        val collection = collection ?: return
         viewModelScope.launch {
-            val songs = uiState.value.songs
-            if (songs.isEmpty()) return@launch
-            val result = shuffleAlbums(songs)
-            if (result is ShuffleAlbums.Result.Failure) events.post(SmartPlaylistDetailEvent.ShuffleAlbumsFailed(result.message))
+            val failure = collection.shuffle(uiState.value.songs) ?: return@launch
+            events.post(SmartPlaylistDetailEvent.ShuffleAlbumsFailed(failure.message))
         }
     }
 

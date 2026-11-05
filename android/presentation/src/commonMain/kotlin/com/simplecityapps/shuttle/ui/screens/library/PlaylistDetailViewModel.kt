@@ -15,8 +15,6 @@ import com.simplecityapps.shuttle.sorting.PlaylistKind
 import com.simplecityapps.shuttle.sorting.PlaylistSortKey
 import com.simplecityapps.shuttle.sorting.SongListSort
 import com.simplecityapps.shuttle.sorting.SongSection
-import com.simplecityapps.shuttle.sorting.albumsOf
-import com.simplecityapps.shuttle.sorting.songSections
 import com.simplecityapps.shuttle.ui.actions.ExportPlaylist
 import com.simplecityapps.shuttle.ui.actions.ObserveCurrentSong
 import com.simplecityapps.shuttle.ui.actions.ShuffleAlbums
@@ -114,7 +112,7 @@ class PlaylistDetailViewModel @AssistedInject constructor(
     private val playlistRepository: PlaylistRepository,
     private val exportPlaylist: ExportPlaylist,
     observeCurrentSong: ObserveCurrentSong,
-    private val shuffleAlbums: ShuffleAlbums,
+    shuffleAlbums: ShuffleAlbums,
     readSetting: ReadLibraryViewSetting,
     saveSetting: SaveLibraryViewSetting,
 ) : ViewModel() {
@@ -134,63 +132,64 @@ class PlaylistDetailViewModel @AssistedInject constructor(
 
     private val playlist = playlistRepository.getPlaylists(PlaylistQuery.PlaylistId(playlistId)).map { it.firstOrNull() }
 
-    private val options = PlaylistViewOptions(PlaylistKind.User, PlaylistSortKey.user(playlistId), readSetting, saveSetting)
-
     /** The entries in their stored order, whatever sort the playlist row itself records. */
-    private val songs = playlist
+    private val persisted = playlist
         .distinctUntilChanged { old, new -> old?.id == new?.id }
         .flatMapLatest { playlist -> playlist?.let { playlistRepository.getSongsForPlaylist(it) } ?: flowOf(emptyList()) }
         .map { entries -> entries.sortedBy { it.sortOrder } }
-        .onEach { entries ->
-            draggedOrder.value = null
-            if (entries.isNotEmpty()) options.expansion.onLoaded(albumsOf(entries.map { it.song }))
-        }
+        .onEach { draggedOrder.value = null }
+
+    private val collection = SongCollection(
+        items = combine(persisted, draggedOrder) { persisted, dragged -> dragged ?: persisted },
+        songOf = { it.song },
+        kind = PlaylistKind.User,
+        key = PlaylistSortKey.user(playlistId),
+        readSetting = readSetting,
+        saveSetting = saveSetting,
+        shuffleAlbums = shuffleAlbums,
+    )
 
     val uiState: StateFlow<PlaylistDetailUiState> = combine(
-        combine(playlist, options.sort, ::Pair),
-        combine(songs, draggedOrder) { persisted, dragged -> dragged ?: persisted },
-        combine(selectedIds, options.expansion.flow, ::Pair),
+        playlist,
+        collection.view,
+        selectedIds,
         observeCurrentSong(),
         events.flow,
-    ) { (playlist, sort), entries, (selected, expanded), currentSong, events ->
-        val sections = songSections(entries.map { it.song }, sort)
-        val shown = entriesInOrder(entries, sections)
+    ) { playlist, view, selected, currentSong, events ->
         PlaylistDetailUiState(
             playlist = playlist,
-            songs = shown,
-            selectedIds = selected.filterTo(mutableSetOf()) { id -> shown.any { it.id == id } },
+            songs = view.items,
+            selectedIds = selected.filterTo(mutableSetOf()) { id -> view.items.any { it.id == id } },
             currentSong = currentSong,
             loading = false,
             events = events,
-            sort = sort,
-            sections = sections,
-            expandedAlbums = sections.expandedAmong(expanded),
+            sort = view.sort,
+            sections = view.sections,
+            expandedAlbums = view.expandedAlbums,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), PlaylistDetailUiState())
 
     fun onSortSelected(sort: SongListSort) {
         draggedOrder.value = null
-        options.select(sort)
+        collection.select(sort)
     }
 
     fun onToggleAlbum(album: Album) {
-        options.expansion.toggle(album, uiState.value.sections.mapNotNull { it.album })
+        collection.toggleAlbum(album, uiState.value.sections)
     }
 
     fun onExpandAll() {
-        options.expansion.expandAll(uiState.value.sections.mapNotNull { it.album })
+        collection.expandAll(uiState.value.sections)
     }
 
     fun onCollapseAll() {
-        options.expansion.collapseAll()
+        collection.collapseAll()
     }
 
     fun onShuffleAlbums() {
         viewModelScope.launch {
-            val songs = uiState.value.songs.map { it.song }
-            if (songs.isEmpty()) return@launch
-            val result = shuffleAlbums(songs)
-            if (result is ShuffleAlbums.Result.Failure) events.post(PlaylistDetailEvent.ShuffleAlbumsFailed(result.message))
+            val failure = collection.shuffle(uiState.value.songs.map { it.song }) ?: return@launch
+            events.post(PlaylistDetailEvent.ShuffleAlbumsFailed(failure.message))
         }
     }
 
@@ -257,12 +256,4 @@ class PlaylistDetailViewModel @AssistedInject constructor(
     }
 
     fun onEventHandled(id: Long) = events.consume(id)
-
-    private companion object {
-        /** [entries] in the order [sections] list their songs; a song added twice keeps its entries apart. */
-        fun entriesInOrder(entries: List<PlaylistSong>, sections: List<SongSection>): List<PlaylistSong> {
-            val bySong = entries.groupBy { it.song.id }.mapValues { ArrayDeque(it.value) }
-            return sections.flatMap { it.songs }.map { bySong.getValue(it.id).removeFirst() }
-        }
-    }
 }
