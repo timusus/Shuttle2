@@ -14,6 +14,7 @@ import com.simplecityapps.shuttle.sorting.SongListSort
 import com.simplecityapps.shuttle.ui.actions.DownloadStatuses
 import com.simplecityapps.shuttle.ui.actions.ObserveCurrentSong
 import com.simplecityapps.shuttle.ui.actions.ObserveDownloadedSongs
+import com.simplecityapps.shuttle.ui.actions.ObserveSmartPlaylistSongs
 import com.simplecityapps.shuttle.ui.actions.ObserveSongs
 import com.simplecityapps.shuttle.ui.actions.ShuffleAlbums
 import com.simplecityapps.shuttle.ui.actions.SongDownloadStatus
@@ -59,8 +60,7 @@ class SmartPlaylistDetailViewModelTest {
     private fun TestScope.viewModel(id: String): SmartPlaylistDetailViewModel {
         val viewModel = SmartPlaylistDetailViewModel(
             id,
-            ObserveSongs(songRepository, offline.filter),
-            ObserveDownloadedSongs(songRepository, offline.statusSource),
+            ObserveSmartPlaylistSongs(ObserveSongs(songRepository, offline.filter), ObserveDownloadedSongs(songRepository, offline.statusSource)),
             ObserveCurrentSong(FakeQueueOperations()),
             ShuffleAlbums(FakeQueueOperations(), FakePlaybackOperations(), Random(0)),
             ReadLibraryViewSetting(viewPreferences),

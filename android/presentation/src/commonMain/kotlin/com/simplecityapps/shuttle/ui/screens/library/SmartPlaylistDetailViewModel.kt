@@ -2,7 +2,6 @@ package com.simplecityapps.shuttle.ui.screens.library
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.simplecityapps.mediaprovider.repository.songs.comparator
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumGroupKey
 import com.simplecityapps.shuttle.model.PlayContext
@@ -15,8 +14,7 @@ import com.simplecityapps.shuttle.sorting.PlaylistSortKey
 import com.simplecityapps.shuttle.sorting.SongListSort
 import com.simplecityapps.shuttle.sorting.SongSection
 import com.simplecityapps.shuttle.ui.actions.ObserveCurrentSong
-import com.simplecityapps.shuttle.ui.actions.ObserveDownloadedSongs
-import com.simplecityapps.shuttle.ui.actions.ObserveSongs
+import com.simplecityapps.shuttle.ui.actions.ObserveSmartPlaylistSongs
 import com.simplecityapps.shuttle.ui.actions.ShuffleAlbums
 import com.simplecityapps.shuttle.ui.common.PendingEvent
 import com.simplecityapps.shuttle.ui.common.PendingEvents
@@ -74,8 +72,7 @@ sealed interface SmartPlaylistDetailEvent {
  */
 class SmartPlaylistDetailViewModel @AssistedInject constructor(
     @Assisted smartPlaylistId: String,
-    observeSongs: ObserveSongs,
-    observeDownloadedSongs: ObserveDownloadedSongs,
+    observeSmartPlaylistSongs: ObserveSmartPlaylistSongs,
     observeCurrentSong: ObserveCurrentSong,
     shuffleAlbums: ShuffleAlbums,
     readSetting: ReadLibraryViewSetting,
@@ -93,9 +90,8 @@ class SmartPlaylistDetailViewModel @AssistedInject constructor(
     private val events = PendingEvents<SmartPlaylistDetailEvent>()
 
     private val collection = smartPlaylist?.let { playlist ->
-        val songs = if (playlist.id == SmartPlaylistId.Downloaded) observeDownloadedSongs() else observeSongs(playlist.songQuery)
         SongCollection(
-            items = songs.map { it.sortedWith(playlist.songQuery.sortOrder.comparator) },
+            items = observeSmartPlaylistSongs(playlist.id),
             songOf = { it },
             kind = PlaylistKind.of(playlist.id),
             key = PlaylistSortKey.of(playlist.id),
