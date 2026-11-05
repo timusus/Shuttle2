@@ -155,6 +155,10 @@
     <string name="playlist_sort_album_recently_added">Album, recently added</string>
     <!-- Playlist detail sort button label: the current sort in a word or two (Album, recently added) -->
     <string name="playlist_sort_short_album_recently_added">New albums</string>
+    <!-- Playlist detail sort menu: songs grouped under their albums, the best-ranked album first -->
+    <string name="playlist_sort_album_ranked">Album, most relevant</string>
+    <!-- Playlist detail sort button label: the current sort in a word or two (Album, most relevant) -->
+    <string name="playlist_sort_short_album_ranked">Ranked</string>
     <!-- Playlist detail sort menu: every song in one list, the most recently added first -->
     <string name="playlist_sort_recently_added">Recently added</string>
     <!-- Playlist detail sort menu: every song in one list, by artist A to Z -->

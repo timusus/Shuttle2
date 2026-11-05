@@ -19,6 +19,7 @@ private extension SongListSort {
         case .albumNewest: ("Album, Newest First", "Newest")
         case .albumOldest: ("Album, Oldest First", "Oldest")
         case .albumTitle: ("Album Title", "Album A–Z")
+        case .albumRanked: ("Album, Most Relevant", "Ranked")
         case .playlistOrder:
             switch kind {
             case .user: ("Custom", "Custom")

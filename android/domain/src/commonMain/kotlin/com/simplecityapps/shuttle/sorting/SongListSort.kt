@@ -19,6 +19,9 @@ enum class SongListSort {
     AlbumOldest,
     AlbumTitle,
 
+    /** Albums in the order each first appears in the incoming songs, for lists ranked by play history. */
+    AlbumRanked,
+
     /** The order the songs arrive in: a playlist's stored order or its query's own sort. */
     PlaylistOrder,
     NewestAdded,
@@ -36,13 +39,14 @@ enum class SongListSort {
             AlbumNewest -> ArtistSongComparator.albumNewest
             AlbumOldest -> ArtistSongComparator.albumOldest
             AlbumTitle -> ArtistSongComparator.albumTitle
+            AlbumRanked -> SongListComparator.arrivalOrder
             PlaylistOrder, NewestAdded, SongTitle, Artist, MostPlayed -> null
         }
 
     /** The order of songs within an album section, or of the whole flat list; null keeps the order they arrive in. */
     val songComparator: Comparator<Song>?
         get() = when (this) {
-            AlbumNewestAdded, AlbumNewest, AlbumOldest, AlbumTitle -> ArtistSongComparator.trackOrder
+            AlbumNewestAdded, AlbumNewest, AlbumOldest, AlbumTitle, AlbumRanked -> ArtistSongComparator.trackOrder
             PlaylistOrder -> null
             NewestAdded -> SongComparator.dateAddedComparator
             SongTitle -> ArtistSongComparator.songTitle
@@ -99,6 +103,9 @@ fun albumsOf(songs: List<Song>): List<Album> = songs.groupBy { it.albumGroupKey 
 }
 
 object SongListComparator {
+    /** Ties every pair, so the stable sort in [songSections] keeps the albums in the order they arrive. */
+    val arrivalOrder: Comparator<Album> = Comparator { _, _ -> 0 }
+
     /** Most recently added first; albums without a date last, then by title. */
     val albumNewestAdded: Comparator<Album> by lazy {
         compareBy<Album, Instant?>(nullsLast(reverseOrder())) { it.dateAdded }.then(ArtistSongComparator.albumTitle)

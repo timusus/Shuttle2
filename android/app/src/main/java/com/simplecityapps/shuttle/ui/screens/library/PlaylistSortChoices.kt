@@ -17,6 +17,8 @@ private fun SongListSort.choice(kind: PlaylistKind): SortChoice<SongListSort> = 
 
     SongListSort.AlbumTitle -> SortChoice(this, R.string.artist_sort_album_title, R.string.artist_sort_short_album_title)
 
+    SongListSort.AlbumRanked -> SortChoice(this, R.string.playlist_sort_album_ranked, R.string.playlist_sort_short_album_ranked)
+
     SongListSort.PlaylistOrder -> when (kind) {
         PlaylistKind.User -> SortChoice(this, R.string.menu_title_sort_custom)
         PlaylistKind.Favourites -> SortChoice(this, R.string.playlist_sort_recently_favourited, R.string.playlist_sort_short_recent)

@@ -80,9 +80,19 @@ class SongListSortTest {
     }
 
     @Test
+    fun `album ranked keeps albums in the order they first arrive with songs in track order`() {
+        val arriving = listOf(songs[2], songs[1], songs[0], songs[3])
+
+        songSections(arriving, SongListSort.AlbumRanked).layout() shouldBe listOf(
+            "Old Coat" to listOf("Ash", "Rain"),
+            "New Leaf" to listOf("Glass", "Moss"),
+        )
+    }
+
+    @Test
     fun `only the album sorts group`() {
         SongListSort.entries.filter { it.groupsByAlbum } shouldBe
-            listOf(SongListSort.AlbumNewestAdded, SongListSort.AlbumNewest, SongListSort.AlbumOldest, SongListSort.AlbumTitle)
+            listOf(SongListSort.AlbumNewestAdded, SongListSort.AlbumNewest, SongListSort.AlbumOldest, SongListSort.AlbumTitle, SongListSort.AlbumRanked)
     }
 
     private fun song(name: String, album: String, track: Int, added: Long, year: Int) = Song(
