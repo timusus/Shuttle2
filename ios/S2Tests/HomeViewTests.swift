@@ -379,10 +379,12 @@ struct HomeViewTests {
             section(.recentReleases, .recentReleases, [HomeItemAlbumItem(album: album("Hail to the Thief"))]),
         ]))
         let links = try sut.inspect().findAll(ViewType.NavigationLink.self)
-        #expect(links.count == 1)
+        #expect(links.count == 2)
         #expect((try? links[0].find(text: "Recently Added")) != nil)
         #expect(try links[0].labelView().accessibilityHint().string() == "See all")
-        #expect((try? sut.inspect().find(text: "Recent Releases")) != nil)
+        #expect((try? links[1].find(text: "Recent Releases")) != nil)
+        #expect(try links[1].labelView().accessibilityHint().string() == "See all")
+        #expect((try? sut.inspect().find(text: "Heavy Rotation")) != nil)
     }
 
     @Test func menuActionsCarryTheItemsContext() {
