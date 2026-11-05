@@ -375,16 +375,17 @@ struct HomeViewTests {
     @Test func onlySectionsWithADestinationHaveATappableHeader() throws {
         let sut = HomeContent(state: content([
             section(.heavyRotation, .heavyRotation, [HomeItemAlbumItem(album: album("Kid A"))]),
+            section(.rediscover, .rediscover, [HomeItemAlbumItem(album: album("Pablo Honey"))]),
             section(.recentlyAdded, .recentlyAdded, [HomeItemAlbumItem(album: album("Amnesiac"))]),
             section(.recentReleases, .recentReleases, [HomeItemAlbumItem(album: album("Hail to the Thief"))]),
+            section(.jumpBackIn, .jumpBackIn, [HomeItemAlbumItem(album: album("OK Computer"))]),
         ]))
         let links = try sut.inspect().findAll(ViewType.NavigationLink.self)
-        #expect(links.count == 2)
-        #expect((try? links[0].find(text: "Recently Added")) != nil)
-        #expect(try links[0].labelView().accessibilityHint().string() == "See all")
-        #expect((try? links[1].find(text: "Recent Releases")) != nil)
-        #expect(try links[1].labelView().accessibilityHint().string() == "See all")
-        #expect((try? sut.inspect().find(text: "Heavy Rotation")) != nil)
+        #expect(links.count == 4)
+        for (link, title) in zip(links, ["Heavy Rotation", "Rediscover", "Recently Added", "Recent Releases"]) {
+            #expect((try? link.find(text: title)) != nil)
+            #expect(try link.labelView().accessibilityHint().string() == "See all")
+        }
     }
 
     @Test func menuActionsCarryTheItemsContext() {
