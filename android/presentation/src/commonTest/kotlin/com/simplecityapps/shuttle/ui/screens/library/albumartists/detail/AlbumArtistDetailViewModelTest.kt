@@ -326,8 +326,8 @@ class AlbumArtistDetailViewModelTest {
 
         val hero = viewModel.uiState.value.hero
         hero?.artist?.name shouldBe "The Tin Orchards"
-        // Untagged with a MusicBrainz id, so the online lookup isn't trusted; nothing played, so the newest album
-        hero?.onlineLookup shouldBe false
+        // Named and not Various Artists, so every named artist gets the online lookup; nothing played, so the newest album
+        hero?.onlineLookup shouldBe true
         hero?.fallbackAlbum?.name shouldBe "Loose Change"
         viewModel.uiState.value.seed shouldBe ArtworkSeed.Available(RED)
         seededHeroes shouldBe listOf(hero)
