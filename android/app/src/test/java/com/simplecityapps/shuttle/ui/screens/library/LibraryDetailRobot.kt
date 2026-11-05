@@ -212,6 +212,11 @@ class LibraryDetailRobot(private val rule: ComposeContentTestRule) {
         rule.onAllNodesWithText(text, substring = substring)[0].assertIsDisplayed()
     }
 
+    /** [text] shown inside the hero, apart from the same words in an album header below it. */
+    fun assertHeroTextDisplayed(text: String) {
+        rule.onNode(hasText(text, substring = true) and hasAnyAncestor(hasTestTag("detail-hero"))).assertIsDisplayed()
+    }
+
     fun assertTextNotDisplayed(text: String, substring: Boolean = false) {
         check(rule.onAllNodesWithText(text, substring = substring).fetchSemanticsNodes().isEmpty()) { "\"$text\" is shown" }
     }
@@ -247,7 +252,7 @@ class LibraryDetailRobot(private val rule: ComposeContentTestRule) {
             check(pinned.isEmpty()) { "an album header is pinned" }
         } else {
             check(pinned.size == 1) { "no album header is pinned" }
-            rule.onNode(hasText(albumTitle) and hasAnyAncestor(hasTestTag("artist-pinned-album"))).assertExists()
+            rule.onNode(hasText(albumTitle) and hasAnyAncestor(hasTestTag("artist-pinned-album"))).assertIsDisplayed()
         }
     }
 

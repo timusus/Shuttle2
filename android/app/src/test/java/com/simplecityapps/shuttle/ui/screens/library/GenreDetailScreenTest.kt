@@ -28,6 +28,22 @@ class GenreDetailScreenTest {
     }
 
     @Test
+    fun `the hero subtitle gives the song count and duration`() {
+        robot.setGenre(readyGenreDetail())
+
+        robot.assertHeroTextDisplayed("3\u00a0songs · 12:00")
+    }
+
+    @Test
+    fun `an album header's thumbnail opens the album`() {
+        robot.setGenre(readyGenreDetail())
+
+        robot.clickOpenAlbum("Phase Garden")
+
+        robot.lastAlbumClicked?.name shouldBe "Phase Garden"
+    }
+
+    @Test
     fun `an album header folds and a song plays from its position`() {
         val state = readyGenreDetail()
         robot.setGenre(state)
