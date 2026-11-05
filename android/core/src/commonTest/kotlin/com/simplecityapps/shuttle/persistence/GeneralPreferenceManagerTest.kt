@@ -35,6 +35,28 @@ class GeneralPreferenceManagerTest {
     }
 
     @Test
+    fun `library tabs default to Apple Music order and a saved order is kept`() {
+        preferences.allLibraryTabs shouldBe listOf(
+            LibraryTab.Playlists,
+            LibraryTab.Artists,
+            LibraryTab.Albums,
+            LibraryTab.Songs,
+            LibraryTab.Genres,
+            LibraryTab.Folders
+        )
+
+        preferences.allLibraryTabs = listOf(LibraryTab.Songs, LibraryTab.Albums, LibraryTab.Artists)
+        preferences.allLibraryTabs shouldBe listOf(
+            LibraryTab.Songs,
+            LibraryTab.Albums,
+            LibraryTab.Artists,
+            LibraryTab.Playlists,
+            LibraryTab.Genres,
+            LibraryTab.Folders
+        )
+    }
+
+    @Test
     fun `each value is saved under the key and in the form it always was`() {
         preferences.previousVersionCode = 26092701
         preferences.showChangelogOnLaunch = false

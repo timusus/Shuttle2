@@ -170,10 +170,10 @@ class GeneralPreferenceManager @Inject constructor(
 }
 
 enum class LibraryTab {
-    Songs,
-    Albums,
-    Artists,
     Playlists,
+    Artists,
+    Albums,
+    Songs,
     Genres,
     Folders;
 

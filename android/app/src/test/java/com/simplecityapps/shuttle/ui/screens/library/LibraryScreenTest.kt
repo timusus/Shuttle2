@@ -46,7 +46,7 @@ class LibraryScreenTest {
 
         robot.assertTextDisplayed("Library")
         robot.assertTextDisplayed("12 songs")
-        robot.tabLabels() shouldBe listOf("Songs", "Albums", "Artists", "Playlists", "Genres")
+        robot.tabLabels() shouldBe listOf("Playlists", "Artists", "Albums", "Songs", "Genres")
     }
 
     @Test
@@ -124,9 +124,9 @@ class LibraryScreenTest {
 
         robot.swipeToNextPage()
 
-        robot.assertTabSelected("Playlists")
-        robot.assertTextDisplayed("page:Playlists")
-        robot.lastTabSelected shouldBe LibraryTab.Playlists
+        robot.assertTabSelected("Albums")
+        robot.assertTextDisplayed("page:Albums")
+        robot.lastTabSelected shouldBe LibraryTab.Albums
     }
 
     @Test
@@ -312,7 +312,7 @@ class LibraryScreenTest {
         robot.lastTabsChanged shouldBe (LibraryTab.entries to LibraryTab.defaultEnabled.toSet() - LibraryTab.Genres)
 
         robot.moveTabUp(1)
-        robot.lastTabsChanged!!.first shouldBe listOf(LibraryTab.Albums, LibraryTab.Songs) + LibraryTab.entries.drop(2)
+        robot.lastTabsChanged!!.first shouldBe listOf(LibraryTab.Artists, LibraryTab.Playlists) + LibraryTab.entries.drop(2)
     }
 
     // -- Selection --

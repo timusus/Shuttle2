@@ -4,11 +4,11 @@ import Foundation
 /// local files land). Order matches the
 /// compact root's list and the sidebar's `TabSection` on regular and wide (`AppShell`).
 enum LibraryCategory: String, Hashable, Codable, CaseIterable {
-    case songs
-    case albums
-    case albumArtists
-    case genres
     case playlists
+    case albumArtists
+    case albums
+    case songs
+    case genres
 
     var title: String {
         switch self {
