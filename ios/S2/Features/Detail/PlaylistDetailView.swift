@@ -5,6 +5,7 @@ import SwiftUI
 struct PlaylistDetailView: View {
     let id: Int64
 
+    @Environment(Navigator.self) private var navigator: Navigator?
     @Environment(\.appServices) private var appServices
     private var services: AppServices { appServices.required }
 
@@ -26,15 +27,27 @@ struct PlaylistDetailView: View {
                     onShuffle: {
                         models.actions.send(MediaActionShuffle(selection: MediaSelectionSongs(songs: state.songs.map(\.song)), context: state.playContext), intent: services.playIntent)
                     },
-                    onPlayNext: { song in
-                        models.actions.send(MediaActionPlayNext(selection: MediaSelectionSongs(song: song)), intent: services.playIntent)
+                    onPlayNext: { songs in
+                        models.actions.send(MediaActionPlayNext(selection: MediaSelectionSongs(songs: songs)), intent: services.playIntent)
                     },
-                    onAddToQueue: { song in
-                        models.actions.send(MediaActionAddToQueue(selection: MediaSelectionSongs(song: song)), intent: services.playIntent)
+                    onAddToQueue: { songs in
+                        models.actions.send(MediaActionAddToQueue(selection: MediaSelectionSongs(songs: songs)), intent: services.playIntent)
                     },
                     onExclude: { song in
                         models.actions.send(MediaActionExclude(selection: MediaSelectionSongs(song: song)), intent: services.playIntent)
                     },
+                    onPlaySongs: { songs in
+                        models.actions.send(MediaActionPlay(selection: MediaSelectionSongs(songs: songs), position: 0, context: state.playContext), intent: services.playIntent)
+                    },
+                    onShuffleSongs: { songs in
+                        models.actions.send(MediaActionShuffle(selection: MediaSelectionSongs(songs: songs), context: state.playContext), intent: services.playIntent)
+                    },
+                    onOpenAlbum: { navigator.openAsserting(.album($0)) },
+                    onSortSelected: { models.playlist.onSortSelected(sort: $0) },
+                    onToggleAlbum: { models.playlist.onToggleAlbum(album: $0) },
+                    onExpandAll: { models.playlist.onExpandAll() },
+                    onCollapseAll: { models.playlist.onCollapseAll() },
+                    onShuffleAlbums: { models.playlist.onShuffleAlbums() },
                     onMove: { from, to in models.playlist.onMove(fromId: from, toId: to) },
                     onMoveFinished: { models.playlist.onMoveFinished() },
                     onRemove: { entry in
@@ -77,9 +90,17 @@ struct PlaylistDetailContent: View {
     var isPlaying: Bool = false
     var onPlay: (Int) -> Void = { _ in }
     var onShuffle: () -> Void = {}
-    var onPlayNext: (Song) -> Void = { _ in }
-    var onAddToQueue: (Song) -> Void = { _ in }
+    var onPlayNext: ([Song]) -> Void = { _ in }
+    var onAddToQueue: ([Song]) -> Void = { _ in }
     var onExclude: (Song) -> Void = { _ in }
+    var onPlaySongs: ([Song]) -> Void = { _ in }
+    var onShuffleSongs: ([Song]) -> Void = { _ in }
+    var onOpenAlbum: (Album) -> Void = { _ in }
+    var onSortSelected: (SongListSort) -> Void = { _ in }
+    var onToggleAlbum: (Album) -> Void = { _ in }
+    var onExpandAll: () -> Void = {}
+    var onCollapseAll: () -> Void = {}
+    var onShuffleAlbums: () -> Void = {}
     var onMove: (Int64, Int64) -> Void = { _, _ in }
     var onMoveFinished: () -> Void = {}
     var onRemove: (PlaylistSong) -> Void = { _ in }
@@ -89,6 +110,8 @@ struct PlaylistDetailContent: View {
     var downloads = DetailDownloads()
 
     @State private var songInfo: SongInfoTarget?
+    @Environment(\.layoutTier) private var layoutTier
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @State private var editMode: EditMode = .inactive
     @State private var isRenaming = false
@@ -113,35 +136,43 @@ struct PlaylistDetailContent: View {
                         .frame(width: points, height: points)
                 }
             } rows: {
-                Section {
-                    ForEach(state.songs, id: \.id) { entry in
-                        Button {
-                            if let index = state.songs.firstIndex(where: { $0.id == entry.id }) { onPlay(index) }
-                        } label: {
-                            SongRow(song: entry.song, playback: rowPlayback(entry.song, current: state.currentSong, isPlaying: isPlaying))
-                        }
-                        .buttonStyle(.plain)
-                        .rowSeparator(.none)
-                        .contextMenu {
-                            SongRowMenu(song: entry.song, onPlayNext: onPlayNext, onAddToQueue: onAddToQueue, onExclude: onExclude, onSongInfo: { songInfo = SongInfoTarget(songID: $0.id) }, downloads: downloads)
-                            Button("Remove from Playlist", systemImage: "minus.circle", role: .destructive) { onRemove(entry) }
-                        }
-                        .swipeActions(edge: .trailing) {
-                            Button(role: .destructive) { onRemove(entry) } label: {
-                                Label("Remove", systemImage: "minus.circle")
-                            }
-                        }
+                if !state.songs.isEmpty {
+                    songsHeader
+                }
+                if state.sections.hasAlbumSections {
+                    PlaylistSongSections(
+                        sections: state.sections,
+                        expandedAlbums: state.expandedAlbums,
+                        onToggleAlbum: onToggleAlbum,
+                        onPlaySection: onPlaySongs,
+                        onShuffleSection: onShuffleSongs,
+                        onPlayNext: onPlayNext,
+                        onAddToQueue: onAddToQueue,
+                        onOpenAlbum: onOpenAlbum
+                    ) { _, index, numbered in
+                        // Grouped, a row is the entry at its place in the displayed order
+                        entryRow(state.songs[index], index: index, numbered: numbered)
                     }
-                    .onMove { source, destination in move(source, to: destination) }
+                } else {
+                    Section {
+                        ForEach(Array(state.songs.enumerated()), id: \.element.id) { index, entry in
+                            entryRow(entry, index: index, numbered: false)
+                        }
+                        .onMove(perform: state.canReorder ? { source, destination in move(source, to: destination) } : nil)
+                    }
                 }
             }
             .songInfoSheet($songInfo)
+            .animation(Motion.disclosure.reduced(reduceMotion), value: state.expandedAlbums)
             .environment(\.editMode, $editMode)
             .toolbar {
                 if state.canReorder {
                     EditButton()
                 }
                 Menu {
+                    if state.sort.groupsByAlbum {
+                        Button("Shuffle by Album", systemImage: "square.stack", action: onShuffleAlbums)
+                    }
                     Button("Rename", systemImage: "pencil") {
                         renameText = playlist.name
                         isRenaming = true
@@ -167,6 +198,56 @@ struct PlaylistDetailContent: View {
             }
         } else {
             EmptyState("Playlist Not Found", systemImage: "music.note.list")
+        }
+    }
+
+    private var songsHeader: some View {
+        let inset = AdaptiveLayout.contentInset(layoutTier)
+        let choices = PlaylistKind.user.sortChoices
+        return Section {
+            SongListHeader(
+                sort: state.sort,
+                choices: choices,
+                showsAlbums: state.sections.hasAlbumSections,
+                allExpanded: state.allAlbumsExpanded,
+                idPrefix: "playlistDetail",
+                onSortSelected: onSortSelected,
+                onExpandAll: onExpandAll,
+                onCollapseAll: onCollapseAll
+            )
+            .rowSeparator(.none)
+            .listRowInsets(EdgeInsets(top: 0, leading: inset, bottom: 0, trailing: max(0, inset - Spacing.smallMedium)))
+            if !state.canReorder {
+                let label = choices.first { $0.sort == state.sort }?.title ?? ""
+                Text("Sorted by \(label). Choose Custom to reorder.")
+                    .font(.footnote)
+                    .foregroundStyle(.s2TextSecondary)
+                    .rowSeparator(.none)
+                    .accessibilityIdentifier("playlistDetail.reorderHint")
+            }
+        }
+        .listSectionSpacing(0)
+    }
+
+    private func entryRow(_ entry: PlaylistSong, index: Int, numbered: Bool) -> some View {
+        Button { onPlay(index) } label: {
+            let playback = rowPlayback(entry.song, current: state.currentSong, isPlaying: isPlaying)
+            if numbered {
+                TrackRow(number: entry.song.track.map { Int($0.intValue) }, title: entry.song.name ?? "Unknown", durationMs: Int64(entry.song.duration), playback: playback)
+            } else {
+                SongRow(song: entry.song, playback: playback)
+            }
+        }
+        .buttonStyle(.plain)
+        .rowSeparator(numbered ? .system : .none)
+        .contextMenu {
+            SongRowMenu(song: entry.song, onPlayNext: { onPlayNext([$0]) }, onAddToQueue: { onAddToQueue([$0]) }, onExclude: onExclude, onSongInfo: { songInfo = SongInfoTarget(songID: $0.id) }, downloads: downloads)
+            Button("Remove from Playlist", systemImage: "minus.circle", role: .destructive) { onRemove(entry) }
+        }
+        .swipeActions(edge: .trailing) {
+            Button(role: .destructive) { onRemove(entry) } label: {
+                Label("Remove", systemImage: "minus.circle")
+            }
         }
     }
 
@@ -196,10 +277,11 @@ private struct PlaylistDetailEventsModifier: ViewModifier {
     @Environment(\.dismiss) private var dismiss
 
     func body(content: Content) -> some View {
-        content.consumeEvents(events, handled: handled) { event in
-            if event is PlaylistDetailEventDeleted {
-                dismiss()
-            }
-        }
+        content.modifier(ShuffleAlbumsFailedAlert(
+            events: events,
+            handled: handled,
+            failure: { ($0 as? PlaylistDetailEventShuffleAlbumsFailed).map { $0.reason } },
+            onOther: { if $0 is PlaylistDetailEventDeleted { dismiss() } }
+        ))
     }
 }
