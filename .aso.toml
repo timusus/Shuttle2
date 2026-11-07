@@ -31,7 +31,11 @@ brand = "shuttle"
 zone = "shuttlemusicplayer.com"
 hosts = ["shuttlemusicplayer.com", "www.shuttlemusicplayer.com"]
 
-# No [app] section yet: it needs a PostHog personal API key scoped to Shuttle Music's project.
+# Shuttle Music sends no playback event, so finishing onboarding stands in for activation.
+[app]
+project = 284842
+host = "https://eu.posthog.com"
+activation_event = "onboarding_completed"
 
 # The Cloudflare token is account-wide and lives under the podcasts repo's Keychain entries.
 [secrets]
