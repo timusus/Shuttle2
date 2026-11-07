@@ -23,7 +23,7 @@
 # the last two only through verify_failed_cmd) reruns just those tests in
 # unit-tests, architecture and ios-tests; a name that maps to no test source runs its phases whole.
 # LAND_RETRY=1 compiles Kotlin non-incrementally (land's retry after an incremental-cache
-# flake). S2_LAND_SIM_UDID overrides the simulator ("S2 Land iPhone", created on first use).
+# flake). The iOS tests run on the `sim` pool's simulator (`sim ensure`).
 # shellcheck disable=SC2329 # phase functions are run by name from run_phase
 set -uo pipefail
 
@@ -293,28 +293,9 @@ lint_changed() {
     return "$rc"
 }
 
-# The simulator for iOS tests. Inside the verify lease only one verify runs, so one fixed device
-# suffices; it is cloned from the iOS 18.5 iPhone 16 the ios-sim pool bases its leases on (a beta
-# runtime fails tests a release passes). Highest 18.x by version, since the runtime dict has no order.
-land_sim() {
-    local name="S2 Land iPhone" udid runtime
-    [ -n "${S2_LAND_SIM_UDID:-}" ] && { echo "$S2_LAND_SIM_UDID"; return 0; }
-    udid=$(xcrun simctl list devices available | sed -nE "s/^ +$name \(([0-9A-F-]{36})\).*/\1/p" | head -1)
-    if [ -z "$udid" ]; then
-        runtime=$(xcrun simctl list -j devices available | python3 -I -c '
-import json, sys
-found = []
-for rt, devs in json.load(sys.stdin)["devices"].items():
-    if any(d["name"] == "iPhone 16" for d in devs) and "iOS-18-" in rt:
-        found.append((tuple(int(p) for p in rt.rsplit("iOS-", 1)[1].split("-") if p.isdigit()), rt))
-if found:
-    print(max(found)[1])')
-        [ -n "$runtime" ] || { echo "land-verify: no iOS 18 iPhone 16 simulator to base $name on" >&2; return 1; }
-        udid=$(xcrun simctl create "$name" "iPhone 16" "$runtime") || return 1
-        echo "land-verify: created simulator $name ($udid)" >&2
-    fi
-    echo "$udid"
-}
+# The shared `sim` pool hands this shell an exclusive simulator, so no other run clones it away; a
+# beta runtime fails tests a release passes, hence the pinned iOS 18.5.
+land_sim() { SIM_RUNTIME=18.5 sim ensure; }
 
 # Counted against other simulator users: the verify lease's LEASE_HELD would let it skip the queue.
 on_device() {

@@ -22,9 +22,8 @@
 # so the frames show real-looking artwork with nothing commercial in them; nothing needs the debug generated-artwork
 # switch, which swaps every cover for a muted placeholder-style tile.
 #
-# Simulators: the iPhone is leased from the shared ios-sim pool (lease-sim.sh, holder $S2_SIM_HOLDER, default
-# store-screenshots) and released at the end, as is every status-bar override, by the EXIT trap; the iPad is
-# the project's own "S2 iPad". Neither is ever created.
+# Simulators: the iPhone comes from the devtools `sim` pool (held until this script exits); the iPad is
+# the project's own "S2 iPad", never created. Every status-bar override is cleared by the EXIT trap.
 # The iPhone 16 is 1179x2556 and the iPad Pro 11-inch is 1668x2420: render.py frames them for the 6.9", 6.5" and
 # 13" canvases, so the raw size only needs to be at least as large as the framed screen.
 #
@@ -38,7 +37,6 @@ SLOTS="$HERE/slots.json"
 RAW="$HERE/raw"
 LIBRARY="$HERE/library"
 IPAD_NAME="S2 iPad"
-export S2_SIM_HOLDER="${S2_SIM_HOLDER:-store-screenshots}"
 
 SKIP_BUILD=0
 SKIP_SETUP=0
@@ -58,10 +56,8 @@ done
 
 log() { printf '[capture] %s\n' "$*" >&2; }
 
-# Whatever happened — success, a failed step, Ctrl-C — undo what this run did: clear every status-bar
-# override and entitlement override we set and release the iPhone lease if we took one. A lease somebody else holds (a run that
-# failed before the lease, or a pre-existing holder) is never released.
-LEASE_TAKEN=0
+# Whatever happened — success, a failed step, Ctrl-C — clear every status-bar and entitlement override this run set.
+# The pool simulator frees itself when this shell exits.
 STATUS_BAR_UDIDS=()
 
 cleanup() {
@@ -72,10 +68,6 @@ cleanup() {
     # clearState: left behind, every later debug run on this pool simulator refuses server streams (#502)
     xcrun simctl spawn "$udid" defaults delete "$BUNDLE_ID" debug.entitlementOverride >/dev/null 2>&1 || true
   done
-  if [ "$LEASE_TAKEN" = 1 ]; then
-    CLAUDE_CODE_SESSION_ID="$("$IOS_DIR/scripts/lease-sim.sh" --holder)" \
-      ~/.claude/scripts/ios-sim/sim-lease.sh release >&2 || true
-  fi
 }
 trap cleanup EXIT
 
@@ -182,7 +174,7 @@ for s in ([] if $PAYWALL_ONLY else data['slots']) + extras:
 BUILT=0
 for device in $DEVICES; do
   case "$device" in
-    iphone) udid="$("$IOS_DIR/scripts/lease-sim.sh")"; LEASE_TAKEN=1 ;;
+    iphone) udid="$(sim ensure)" ;;
     ipad) udid="$(ipad_udid)" ;;
     *) log "unknown device '$device' (iphone|ipad)"; exit 2 ;;
   esac

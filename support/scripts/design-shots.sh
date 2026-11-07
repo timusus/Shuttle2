@@ -9,8 +9,8 @@
 #                                   [--apk <path>] [--remote-build] [--no-ios-build]
 #                                   [--ios-source local|jellyfin] [--ios-profile ios26|default] [--no-history]
 #
-#     --platform         android (a remote-emu.sh lane), ios (a simulator leased from the shared pool,
-#                        S2_SIM_HOLDER, never `simctl create`), or both (one after the other)
+#     --platform         android (a remote-emu.sh lane), ios (a simulator from the devtools `sim` pool,
+#                        never `simctl create`), or both (one after the other)
 #     --screens a,b      only these screens (default: all). Names:
 #                          home  library-songs  library-albums  library-artists  album-detail
 #                          artist-detail  now-playing  queue  mini-player  search  settings
@@ -453,7 +453,6 @@ ios_reset_appearance() {
 }
 
 ios_release() {
-    local holder
     [ "$SIM_LEASED" = "1" ] || [ -n "$IPAD_BOOTED_UDID" ] || return 0
     ios_reset_appearance
     if [ -n "$IPAD_BOOTED_UDID" ]; then
@@ -461,10 +460,8 @@ ios_release() {
         IPAD_BOOTED_UDID=""
     fi
     if [ "$SIM_LEASED" = "1" ]; then
-        echo "design-shots: releasing simulator ..."
-        holder="$(ios/scripts/lease-sim.sh --holder)"
-        CLAUDE_CODE_SESSION_ID="$holder" "$HOME/.claude/scripts/ios-sim/sim-lease.sh" release >>"$LOG" 2>&1 \
-            || echo "design-shots: WARNING: sim release failed, check ~/.claude/scripts/ios-sim/sim-lease.sh status" >&2
+        echo "design-shots: shutting down the pool simulator ..."
+        sim shutdown >>"$LOG" 2>&1 || echo "design-shots: WARNING: sim shutdown failed, check sim list" >&2
         SIM_LEASED=0
     fi
 }
@@ -546,15 +543,14 @@ ios_run_device() { # label udid
 ios_phase() {
     local udid ipad dev lease_out="${WORK}/lease.out"
     echo "design-shots: == iOS =="
-    export S2_SIM_HOLDER="${S2_SIM_HOLDER:-design-shots-$$}"
     # Maestro's XCTest driver can take longer than its default to start on a loaded Mac.
     export MAESTRO_DRIVER_STARTUP_TIMEOUT="${MAESTRO_DRIVER_STARTUP_TIMEOUT:-120000}"
-    # lease-sim.sh leases ios26 under "<holder>-ios26"; ios_release's `--holder` reads the same variable.
-    if [ "$IOS_PROFILE" = ios26 ]; then export S2_SIM_PROFILE=ios26; else unset S2_SIM_PROFILE; fi
-    run_with_timeout 300 ios/scripts/lease-sim.sh >"$lease_out" 2>>"$LOG"
+    # The profile picks the runtime: iOS 26 has tab-bar-minimise behaviour the 18.5 pool lacks.
+    if [ "$IOS_PROFILE" = ios26 ]; then export SIM_RUNTIME=26.5; else export SIM_RUNTIME=18.5; fi
+    run_with_timeout 300 sim ensure >"$lease_out" 2>>"$LOG"
     udid="$(tail -1 "$lease_out" 2>/dev/null)"
     if [ -z "$udid" ]; then
-        record_fail ios setup - "lease a simulator (ios/scripts/lease-sim.sh, profile ${IOS_PROFILE})" "no simulator leased within 5 minutes (pool missing or full)"
+        record_fail ios setup - "sim ensure (profile ${IOS_PROFILE})" "no simulator from the sim pool within 5 minutes (pool full)"
         return
     fi
     SIM_LEASED=1

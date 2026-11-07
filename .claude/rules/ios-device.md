@@ -34,7 +34,7 @@ them). The session is saved in the Keychain.
 
 ```bash
 # Build, install and launch on the simulator. BUILD=0 skips the build; RESET=1 wipes the simulator keychain first;
-# S2_SIMULATOR_UDID picks the simulator (default this session's leased device)
+# S2_SIMULATOR_UDID picks the simulator (default the `sim` pool's simulator)
 ios/scripts/run-sim-server.sh
 S2_SIMULATOR_UDID=<simulator> ios/scripts/maestro-sim.sh   # poc-play.yaml, or name another flow
 ```

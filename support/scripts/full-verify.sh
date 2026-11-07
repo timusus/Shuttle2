@@ -19,7 +19,7 @@
 # `git checkout --detach`, build outputs kept) under `lease --class verify`: testDebugUnitTest,
 # assembleDebug and both verifyRoborazziDebug, then the iOS framework build, `iosSimulatorArm64Test` (every KMP module's commonTest on
 # Kotlin/Native, #821) + the whole `test.sh`
-# (simulator leased as S2_SIM_HOLDER=full-verify, released afterwards), then `test.sh --package`.
+# (simulator from the `sim` pool), then `test.sh --package`.
 # An explicit <sha> must be an ancestor of origin/main. On a pass the sha is written atomically to
 # $(git rev-parse --git-common-dir)/s2-full-verified (shared by every worktree), but only if it
 # descends from the current watermark (never regresses). On a test failure a `bug` GitHub issue
@@ -66,18 +66,16 @@ if [ "${1:-}" = "--steps" ]; then
     :android:app:verifyRoborazziDebug :android:designsystem:verifyRoborazziDebug
   step "ios: framework build + KMP commonTest (iosSimulatorArm64Test), one Gradle invocation"
   (cd ios && xcodegen -q)
-  # Lease the pool's simulator (held through the test.sh step below, released after it) instead of letting the
+  # The pool's simulator, held by this shell through the test.sh step below, instead of letting the
   # Kotlin/Native task boot its own.
-  udid="$(S2_SIM_HOLDER=full-verify ios/scripts/lease-sim.sh)" || udid=""
+  udid="$(sim ensure)" || udid=""
   rc=0
   # build-framework.sh hands extra arguments to the same ./gradlew call as the link task.
   (cd ios && scripts/build-framework.sh iosSimulatorArm64Test ${udid:+-Ps2.iosSimulatorUdid="$udid"}) || rc=$?
   if [ "$rc" -eq 0 ]; then
     step "ios: full test.sh"
-    (cd ios && S2_SIM_HOLDER=full-verify scripts/test.sh) || rc=$?
+    (cd ios && S2_SIMULATOR_UDID="$udid" scripts/test.sh) || rc=$?
   fi
-  CLAUDE_CODE_SESSION_ID="$(S2_SIM_HOLDER=full-verify ios/scripts/lease-sim.sh --holder)" \
-    "$HOME/.claude/scripts/ios-sim/sim-lease.sh" release || true
   [ "$rc" -eq 0 ] || exit "$rc"
   step "ios: Playback package tests"
   (cd ios && scripts/test.sh --package)

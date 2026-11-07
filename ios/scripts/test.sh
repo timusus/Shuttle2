@@ -5,13 +5,9 @@
 #   ios/scripts/test.sh               # the S2 scheme (S2Tests) on an available iPhone simulator
 #   ios/scripts/test.sh --package     # `swift test` in ios/Playback, on the Mac (no simulator)
 #
-# The simulator is $S2_SIMULATOR_UDID if set; else, if the shared lease pool's device.sh exists, this
-# session's leased device (set $S2_SIM_HOLDER to lease as a different holder, e.g. for a parallel
-# worker, or $S2_SIM_PROFILE=ios26 to lease from the iOS 26 pool — see ios/scripts/lease-sim.sh;
-# an unknown profile aborts with exit 2 before anything builds); else an iPhone on a released iOS
-# runtime, a booted one first, else the newest (a beta only when there's no other). Other arguments go to
-# xcodebuild or `swift test` (e.g. `-only-testing:S2Tests/NowPlayingPlayerTests`,
-# `--filter StreamWarmUpTests`).
+# The simulator is $S2_SIMULATOR_UDID if set, else the devtools `sim` pool's (`sim destination`;
+# SIM_RUNTIME=26.5 picks the iOS 26 one). Other arguments go to xcodebuild or `swift test`
+# (e.g. `-only-testing:S2Tests/NowPlayingPlayerTests`, `--filter StreamWarmUpTests`).
 set -euo pipefail
 
 ios_dir="$(cd "$(dirname "$0")/.." && pwd)"
@@ -20,7 +16,7 @@ args=()
 for arg in "$@"; do
   case "$arg" in
     --package) package=1 ;;
-    -h|--help) sed -n '2,14p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -h|--help) sed -n '2,10p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *) args+=("$arg") ;;
   esac
 done
@@ -36,58 +32,26 @@ if [[ ! -d "$ios_dir/../shared/build/bin/iosSimulatorArm64/debugFramework/Shared
   exit 1
 fi
 
-# A beta runtime's build ends in a letter (27.2 beta is 24B5084k) and fails tests a release passes (#601),
-# so a released runtime's iPhone wins even over a booted beta one; a beta only when there's no other.
-pick_simulator() {
-  xcrun simctl list -j devices available runtimes | python3 -c '
-import json, re, sys
-listing = json.load(sys.stdin)
-beta = {r["identifier"]: r["buildversion"][-1:].isalpha() for r in listing["runtimes"]}
-def version(runtime):
-    m = re.search(r"iOS-(\d+)-(\d+)", runtime)
-    return (int(m.group(1)), int(m.group(2))) if m else None
-candidates = []
-for runtime, entries in listing["devices"].items():
-    v = version(runtime)
-    if v is None:
-        continue
-    for d in entries:
-        if d["name"].startswith("iPhone"):
-            candidates.append((not beta.get(runtime, False), d["state"] == "Booted", v, d["name"], d["udid"]))
-if not candidates:
-    sys.exit("no available iPhone simulator; create one in Xcode > Devices and Simulators")
-released, booted, v, name, udid = max(candidates)
-print(udid)
-notes = ("" if released else ", beta") + (", booted" if booted else "")
-print(f"==> simulator: {name} (iOS {v[0]}.{v[1]}{notes})", file=sys.stderr)
-'
-}
-
 "$ios_dir/scripts/build-app.sh"
 # The exact xctestrun the build recorded in its stamp, never a glob.
 xctestrun="$(sed -n 's/^xctestrun=//p' "$ios_dir/build/DerivedData/.s2-build-stamp")"
 [[ -n "$xctestrun" && -f "$xctestrun" ]] || { echo "ERROR: no xctestrun recorded by build-app.sh" >&2; exit 1; }
 
-lease_rc=0
-udid="${S2_SIMULATOR_UDID:-}"
-if [ -z "$udid" ]; then
-  udid="$("$ios_dir/scripts/lease-sim.sh")" || lease_rc=$?
-  if [ "$lease_rc" -eq 2 ]; then
-    exit 2 # unknown S2_SIM_PROFILE; lease-sim.sh already said why
-  elif [ "$lease_rc" -ne 0 ]; then
-    udid="$(pick_simulator)"
-  fi
+if [ -n "${S2_SIMULATOR_UDID:-}" ]; then
+  destination="id=$S2_SIMULATOR_UDID"
+else
+  destination="$(sim destination)" || { echo "ERROR: no simulator from the sim pool" >&2; exit 1; }
 fi
 
 cd "$ios_dir"
-echo "==> xcodebuild test-without-building -xctestrun ${xctestrun##*/} -destination id=$udid ${args[*]+"${args[*]}"}"
+echo "==> xcodebuild test-without-building -xctestrun ${xctestrun##*/} -destination $destination ${args[*]+"${args[*]}"}"
 # -quiet drops Swift Testing issue lines, so the reasons are read back from a result bundle (a fresh path:
 # xcodebuild refuses an existing one).
 bundle="${LAND_ARTIFACT_DIR:-$PWD/build}/ios-tests-$(date +%Y%m%d-%H%M%S)-$$.xcresult"
 mkdir -p "$(dirname "$bundle")"
 test_rc=0
-xcodebuild test-without-building -xctestrun "$xctestrun" -destination "id=$udid" \
-  -derivedDataPath build/DerivedData -collect-test-diagnostics never -resultBundlePath "$bundle" -quiet \
+xcodebuild test-without-building -xctestrun "$xctestrun" -destination "$destination" \
+  -parallel-testing-enabled NO -derivedDataPath build/DerivedData -collect-test-diagnostics never -resultBundlePath "$bundle" -quiet \
   ${args[@]+"${args[@]}"} || test_rc=$?
 if [ "$test_rc" -ne 0 ]; then
   echo "==> result bundle: $bundle" >&2

@@ -3,8 +3,8 @@
 # content milestone, then median/min/max per milestone (docs/performance/ios-startup.md "Method").
 #
 # usage: ios/scripts/startup-bench.sh (--sim [UDID] | --device UDID) [-n 5] [--bundle <id>] [--append] [-- <launch args>]
-#   --sim [UDID]    a simulator: UDID, else $S2_SIMULATOR_UDID, else leased from the shared ios-sim pool and
-#                   released on exit (S2_SIM_HOLDER leases as another holder; gives up after 5 minutes)
+#   --sim [UDID]    a simulator: UDID, else $S2_SIMULATOR_UDID, else the devtools `sim` pool's, held
+#                   until this script exits
 #   --device UDID   a physical device: launched with devicectl, logs streamed with idevicesyslog (libimobiledevice);
 #                   nothing is installed, the app must already be on the phone. idevicesyslog prints no category, so
 #                   it streams the app's process ("S2") and only the known milestone/step/Home/Database lines are kept
@@ -51,7 +51,6 @@ done
 [[ "$runs" =~ ^[1-9][0-9]*$ ]] || { echo "startup-bench: -n wants a positive number" >&2; exit 2; }
 
 work="$(mktemp -d)"
-leased=0
 stream_pid=""
 marker="startup-bench-$$" # makes this run's in-simulator `log stream` findable for cleanup
 stop_stream() {
@@ -63,30 +62,13 @@ stop_stream() {
 }
 cleanup() {
   stop_stream
-  if [ "$leased" = 1 ]; then
-    CLAUDE_CODE_SESSION_ID="$("$ios_dir/scripts/lease-sim.sh" --holder)" ~/.claude/scripts/ios-sim/sim-lease.sh release >/dev/null 2>&1 || true
-  fi
   rm -rf "$work"
 }
 trap cleanup EXIT
 
 if [ "$mode" = sim ] && [ -z "$udid" ]; then
   udid="${S2_SIMULATOR_UDID:-}"
-  if [ -z "$udid" ]; then
-    leased=1 # the lease can land just as the timeout fires; releasing when none is held is harmless
-    "$ios_dir/scripts/lease-sim.sh" >"$work/lease" 2>/dev/null &
-    lease_pid=$!
-    for _ in $(seq 300); do kill -0 "$lease_pid" 2>/dev/null || break; sleep 1; done
-    if kill -0 "$lease_pid" 2>/dev/null; then
-      # Kill the queued child too: left alive, it can acquire a lease after cleanup has released.
-      pkill -P "$lease_pid" 2>/dev/null || true
-      kill "$lease_pid" 2>/dev/null || true
-      echo "startup-bench: no simulator lease within 5 minutes; skipping" >&2
-      exit 1
-    fi
-    wait "$lease_pid" || { echo "startup-bench: no leased simulator available; pass a UDID or set \$S2_SIMULATOR_UDID" >&2; exit 1; }
-    udid="$(cat "$work/lease")"
-  fi
+  [ -n "$udid" ] || udid="$(sim ensure)" || { echo "startup-bench: no simulator from the sim pool; pass a UDID or set \$S2_SIMULATOR_UDID" >&2; exit 1; }
 fi
 
 # Swift logs under com.simplecityapps.shuttle, Kotlin (os.Logger sink) under com.simplecityapps.shuttle2.

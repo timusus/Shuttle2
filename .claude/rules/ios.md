@@ -64,8 +64,8 @@ ios/scripts/generate-strings.py
 #    shared/ changed). Workers call this, never raw xcodebuild. --force rebuilds and relinks regardless
 ios/scripts/build-app.sh
 
-# 4. Tests: the S2 scheme (swift-testing + ViewInspector) on this session's leased simulator, else an iPhone on a
-#    released runtime. S2_SIMULATOR_UDID=<udid> picks one; extra args go to xcodebuild (-only-testing:S2Tests/AppShellTests)
+# 4. Tests: the S2 scheme (swift-testing + ViewInspector) on the `sim` pool's simulator.
+#    S2_SIMULATOR_UDID=<udid> picks one; extra args go to xcodebuild (-only-testing:S2Tests/AppShellTests)
 ios/scripts/test.sh
 ios/scripts/test.sh --package                  # swift test in ios/Playback on the Mac (extra args: --filter ...)
 ```
@@ -84,13 +84,11 @@ the cache on, `build-app.sh` retries once with it off and says so. Deleting `~/L
 S2Tests scheme `parallelizable`: Swift Testing already runs in parallel in-process, and cloning made the suite slower
 and flaky.
 
-`test.sh`, `run-sim-server.sh` and `maestro-sim.sh` lease their simulator from the shared ios-sim pool
-(`~/.claude/scripts/ios-sim/device.sh`); `$S2_SIM_HOLDER` leases as a different holder for parallel workers.
-`S2_SIM_PROFILE=ios26` (via `ios/scripts/lease-sim.sh`) leases from the `S2 iPhone iOS 26` pool (runtime 26.5; needed for
-tab-bar-minimise and bottom-accessory behaviour) under a `-ios26` holder; release with
-`CLAUDE_CODE_SESSION_ID="$(ios/scripts/lease-sim.sh --holder)" ~/.claude/scripts/ios-sim/sim-lease.sh release`.
-Default pool is iPhone 16 on iOS 18.5. On an iPhone with the iOS 27.2 beta `AppShellTests`' two TabView lookups fail, so
-`test.sh`'s no-pool fallback skips beta runtimes unless nothing else has an iPhone (#601). ViewInspector can't see into
+`test.sh`, `run-sim-server.sh` and `maestro-sim.sh` take their simulator from the devtools `sim` pool (`sim ensure`,
+`sim destination`; `docs/sim.md` in devtools): exclusive to the calling shell, freed when it exits, never targeted by name.
+`SIM_RUNTIME=26.5` picks the iOS 26 runtime (needed for tab-bar-minimise and bottom-accessory behaviour), `SIM_RUNTIME=18.5`
+the iOS 18.5 one `land-verify` pins. On an iPhone with the iOS 27.2 beta `AppShellTests`' two TabView lookups fail (#601), so
+pin a released runtime. ViewInspector can't see into
 iOS 26's `safeAreaBar`, so a pinned bar is its own property for tests (`LibraryRootContent.categoryRail`,
 `SearchContentView.typeChips`), and its `findAll` skips what's inside an iOS 26 `LibraryRowLink`: use
 `findAllBreadthFirst` (`S2Tests`).
@@ -100,7 +98,7 @@ on a simulator lease after ~5 minutes. `land-verify` (when the picked commits to
 `android/domain|presentation|core`) rebuilds the framework, builds the app and runs `test.sh -only-testing:` for the
 `S2Tests` classes mapped from the changed files (`ios/S2Tests/Foo*Tests.swift` runs itself; `ios/S2/**/Foo.swift` runs
 `S2Tests/Foo*Tests`; `support/scripts/ios-tests-for <files>` dry-checks); no mapped class means build only, no lease. The
-whole scheme runs in `full-verify.sh`. `full-verify.sh` leases as its own holder (`S2_SIM_HOLDER=full-verify`).
+whole scheme runs in `full-verify.sh`. `full-verify.sh` takes its own pool simulator.
 
 ## Layout
 

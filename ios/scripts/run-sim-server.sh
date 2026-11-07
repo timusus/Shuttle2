@@ -6,12 +6,8 @@
 # usage: ios/scripts/run-sim-server.sh
 #
 # env:
-#   S2_SIMULATOR_UDID  the simulator: $S2_SIMULATOR_UDID if set, else the shared lease pool's
-#                      device.sh if present (set S2_SIM_HOLDER to lease as a different holder), else
-#                      this session has no simulator and the script fails
-#   S2_SIM_HOLDER      leases the pool device as this holder instead of the current session
-#   S2_SIM_PROFILE     ios26 leases from the iOS 26 pool instead (see ios/scripts/lease-sim.sh;
-#                      an unknown value aborts with exit 2)
+#   S2_SIMULATOR_UDID  the simulator: $S2_SIMULATOR_UDID if set, else the devtools `sim` pool's
+#                      (SIM_RUNTIME=26.5 picks the iOS 26 one)
 #   BUILD              1 (default) or 0 to install and launch the last build
 #   RESET              1 to erase the app's saved session first (the simulator keychain), so it starts
 #                      signed out
@@ -23,14 +19,7 @@ ios_dir="$(cd "$(dirname "$0")/.." && pwd)"
 if [ -n "${S2_SIMULATOR_UDID:-}" ]; then
   udid="$S2_SIMULATOR_UDID"
 else
-  lease_rc=0
-  udid="$("$ios_dir/scripts/lease-sim.sh")" || lease_rc=$?
-  if [ "$lease_rc" -eq 2 ]; then
-    exit 2 # unknown S2_SIM_PROFILE; lease-sim.sh already said why
-  elif [ "$lease_rc" -ne 0 ]; then
-    echo "run-sim-server: no leased simulator available; set \$S2_SIMULATOR_UDID" >&2
-    exit 1
-  fi
+  udid="$(sim ensure)" || { echo "run-sim-server: no simulator from the sim pool; set \$S2_SIMULATOR_UDID" >&2; exit 1; }
 fi
 bundle_id="com.simplecityapps.shuttle.dev"
 app="$ios_dir/build/DerivedData/Build/Products/Debug-iphonesimulator/S2.app"
