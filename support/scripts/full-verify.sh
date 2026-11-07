@@ -68,7 +68,7 @@ if [ "${1:-}" = "--steps" ]; then
   (cd ios && xcodegen -q)
   # The pool's simulator, held by this shell through the test.sh step below, instead of letting the
   # Kotlin/Native task boot its own.
-  udid="$(sim ensure)" || udid=""
+  udid="$(SIM_RUNTIME="${SIM_RUNTIME:-18.5}" sim ensure)" || udid=""
   rc=0
   # build-framework.sh hands extra arguments to the same ./gradlew call as the link task.
   (cd ios && scripts/build-framework.sh iosSimulatorArm64Test ${udid:+-Ps2.iosSimulatorUdid="$udid"}) || rc=$?

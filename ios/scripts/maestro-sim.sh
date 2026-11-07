@@ -10,7 +10,7 @@
 #
 # env:
 #   S2_SIMULATOR_UDID  the simulator: $S2_SIMULATOR_UDID if set, else the devtools `sim` pool's
-#                      (SIM_RUNTIME=26.5 picks the iOS 26 one)
+#                      (iOS 18.5 unless SIM_RUNTIME says otherwise, e.g. 26.5)
 #   SERVER_USER        the Jellyfin user Quick Connect is approved for (default: shuttle-test)
 #   OUT                Maestro's output dir (default: /tmp/s2-ios-e2e/maestro); screenshots under <timestamp>/
 set -euo pipefail
@@ -29,7 +29,7 @@ maestro_bin="$(command -v maestro || echo "$HOME/.maestro/bin/maestro")"
 
 udid="${S2_SIMULATOR_UDID:-}"
 if [ -z "$udid" ]; then
-  udid="$(sim ensure)" || { echo "maestro-sim: no simulator from the sim pool" >&2; exit 1; }
+  udid="$(SIM_RUNTIME="${SIM_RUNTIME:-18.5}" sim ensure)" || { echo "maestro-sim: no simulator from the sim pool" >&2; exit 1; }
 fi
 [ -f "$flow" ] || { echo "maestro-sim: no flow at $flow" >&2; exit 2; }
 

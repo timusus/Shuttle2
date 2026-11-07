@@ -174,7 +174,7 @@ for s in ([] if $PAYWALL_ONLY else data['slots']) + extras:
 BUILT=0
 for device in $DEVICES; do
   case "$device" in
-    iphone) udid="$(sim ensure)" ;;
+    iphone) udid="$(SIM_RUNTIME="${SIM_RUNTIME:-18.5}" sim ensure)" ;;
     ipad) udid="$(ipad_udid)" ;;
     *) log "unknown device '$device' (iphone|ipad)"; exit 2 ;;
   esac

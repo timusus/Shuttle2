@@ -6,7 +6,7 @@
 #   ios/scripts/test.sh --package     # `swift test` in ios/Playback, on the Mac (no simulator)
 #
 # The simulator is $S2_SIMULATOR_UDID if set, else the devtools `sim` pool's (`sim destination`;
-# SIM_RUNTIME=26.5 picks the iOS 26 one). Other arguments go to xcodebuild or `swift test`
+# iOS 18.5 unless SIM_RUNTIME says otherwise, e.g. 26.5; betas are never picked by default). Other arguments go to xcodebuild or `swift test`
 # (e.g. `-only-testing:S2Tests/NowPlayingPlayerTests`, `--filter StreamWarmUpTests`).
 set -euo pipefail
 
@@ -40,7 +40,7 @@ xctestrun="$(sed -n 's/^xctestrun=//p' "$ios_dir/build/DerivedData/.s2-build-sta
 if [ -n "${S2_SIMULATOR_UDID:-}" ]; then
   destination="id=$S2_SIMULATOR_UDID"
 else
-  destination="$(sim destination)" || { echo "ERROR: no simulator from the sim pool" >&2; exit 1; }
+  destination="$(SIM_RUNTIME="${SIM_RUNTIME:-18.5}" sim destination)" || { echo "ERROR: no simulator from the sim pool" >&2; exit 1; }
 fi
 
 cd "$ios_dir"
