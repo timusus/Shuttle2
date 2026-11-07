@@ -40,4 +40,5 @@ ios/scripts/generate-telemetry-config.sh
 # The Last.fm API key and secret, from the environment, local.properties or ~/.config/s2-lastfm/ios.env
 ios/scripts/generate-lastfm-config.sh
 echo "==> ./gradlew ${tasks[*]}"
-./gradlew "${tasks[@]}" ${gradle_args[@]+"${gradle_args[@]}"}
+# Scripts get no bash-rewrite hook, so the build lease is taken here.
+lease build -- ./gradlew "${tasks[@]}" ${gradle_args[@]+"${gradle_args[@]}"}
