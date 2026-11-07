@@ -359,7 +359,7 @@ class SettingsViewModelTest {
 
     @Test
     fun `exporting asks for a save location, then builds and writes the backup`() = runTest(mainDispatcherRule.testDispatcher) {
-        val fakeClock = FakeClock(Instant.parse("${TODAY_ISO_STRING}T10:00:00Z"))
+        val fakeClock = FakeClock(Instant.parse("${TODAY}T10:00:00Z"))
         val viewModel = viewModel(clock = fakeClock, timeZone = TimeZone.UTC)
         backgroundScope.launch { viewModel.uiState.collect {} }
         runCurrent()
@@ -370,7 +370,7 @@ class SettingsViewModelTest {
         runCurrent()
 
         events(viewModel) shouldBe listOf(
-            SettingsUiEvent.BackupExportRequested("shuttle-library-backup-$TODAY_ISO_STRING.json"),
+            SettingsUiEvent.BackupExportRequested("shuttle-library-backup-$TODAY.json"),
             SettingsUiEvent.BackupExportSaved,
         )
         backupFlow.written shouldBe mapOf("content://dest" to "{\"staged\":true}")
@@ -434,6 +434,6 @@ class SettingsViewModelTest {
 
         events(viewModel) shouldBe emptyList()
     }
-
-    private val TODAY_ISO_STRING = "2026-10-18"
 }
+
+private const val TODAY = "2026-10-18"

@@ -20,6 +20,7 @@ import com.simplecityapps.shuttle.ui.screens.settings.model.AndroidSettingsCatal
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsDestination
 import com.simplecityapps.testing.MainDispatcherRule
 import io.kotest.matchers.shouldBe
+import kotlin.time.Clock
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -60,7 +61,8 @@ class SettingsIntegrationTest {
             effects,
             AndroidSettingsCatalog,
             backupFlow,
-            TryUseProFeature { true }
+            TryUseProFeature { true },
+            Clock.System,
         )
     }
 

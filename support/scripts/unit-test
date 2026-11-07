@@ -54,8 +54,8 @@ report_test_failures() {
 # Preserves Gradle's exit code.
 run_and_report() {
   local marker outfile rc
-  marker="$(mktemp unit-test-markerXXX)"
-  outfile="$(mktemp unit-test-outputXXX)"
+  marker="$(mktemp "${TMPDIR:-/tmp}/unit-test-marker.XXXXXX")"
+  outfile="$(mktemp "${TMPDIR:-/tmp}/unit-test-output.XXXXXX")"
 
   set +e
   "${GRADLE_RUNNER[@]}" "$@" 2>&1 | tee "${outfile}"
