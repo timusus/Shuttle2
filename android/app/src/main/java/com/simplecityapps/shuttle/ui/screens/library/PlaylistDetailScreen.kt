@@ -40,7 +40,6 @@ import com.simplecityapps.shuttle.designsystem.component.S2Action
 import com.simplecityapps.shuttle.designsystem.component.S2IconButton
 import com.simplecityapps.shuttle.designsystem.component.S2SelectionToolbar
 import com.simplecityapps.shuttle.designsystem.component.S2Text
-import com.simplecityapps.shuttle.designsystem.component.S2Tooltip
 import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
 import com.simplecityapps.shuttle.format.formatDuration
 import com.simplecityapps.shuttle.model.Album
@@ -145,9 +144,7 @@ fun PlaylistDetailScreen(
             overlay = { topInset -> PinnedAlbumHeader(listState, topInset, unfoldedSections, "playlist-pinned-album", albumHeader) },
             actions = {
                 if (playlist != null) {
-                    S2Tooltip(stringResource(R.string.playlist_menu_export)) {
-                        S2IconButton(icon = Icons.Rounded.FileDownload, contentDescription = stringResource(R.string.playlist_menu_export), onClick = onExport)
-                    }
+                    S2IconButton(icon = Icons.Rounded.FileDownload, contentDescription = stringResource(R.string.playlist_menu_export), onClick = onExport)
                 }
             },
             header = {

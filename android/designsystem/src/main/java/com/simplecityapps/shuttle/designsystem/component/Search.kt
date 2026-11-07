@@ -2,6 +2,7 @@ package com.simplecityapps.shuttle.designsystem.component
 
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -155,7 +156,10 @@ fun SearchTopResult(
                 )
             }
             if (onMore != null) {
-                RowMoreButton(onClick = onMore, modifier = Modifier.align(Alignment.Top), edgeInset = S2Spacing.small)
+                // The button's tooltip box hides a scope modifier from the Row, so align the box
+                Box(Modifier.align(Alignment.Top)) {
+                    RowMoreButton(onClick = onMore, edgeInset = S2Spacing.small)
+                }
             }
         }
     }

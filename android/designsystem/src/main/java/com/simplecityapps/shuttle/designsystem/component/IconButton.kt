@@ -74,9 +74,7 @@ fun S2IconButton(
         Icon(icon, contentDescription, Modifier.size(size.iconSize))
     }
 
-    S2Tooltip(
-        text = contentDescription ?: ""
-    ) {
+    val button: @Composable () -> Unit = {
         when (style) {
             S2IconButtonStyle.Standard -> IconButton(onClick, shapes, sizedModifier, enabled, interactionSource = interactionSource, content = content)
             S2IconButtonStyle.Filled -> FilledIconButton(onClick, shapes, sizedModifier, enabled, interactionSource = interactionSource, content = content)
@@ -84,6 +82,10 @@ fun S2IconButton(
             S2IconButtonStyle.Outlined -> OutlinedIconButton(onClick, shapes, sizedModifier, enabled, interactionSource = interactionSource, content = content)
         }
     }
+
+    // A null description means a labelled parent supplies the name, so a tooltip would double it.
+    // The tooltip's Box sits between the button and its parent, so scope modifiers (align, weight) in [modifier] don't reach the parent.
+    if (contentDescription == null) button() else S2Tooltip(text = contentDescription, content = button)
 }
 
 /**

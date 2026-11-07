@@ -274,14 +274,17 @@ fun HomeShelfTile(
             Box(Modifier.fillMaxSize()) {
                 HomeItemArtwork(item, covers, ArtworkSize.Grid, Modifier.fillMaxSize())
                 if (item is HomeItem.GenreItem) {
-                    S2IconButton(
-                        icon = Icons.Rounded.Shuffle,
-                        contentDescription = stringResource(R.string.home_shuffle_item, item.title()),
-                        onClick = { callbacks.onAction(item.playAction()) },
-                        modifier = Modifier.align(Alignment.BottomEnd).padding(S2Spacing.small).testTag(GENRE_SHUFFLE_TAG),
-                        style = S2IconButtonStyle.Filled,
-                        size = S2IconButtonSize.Small,
-                    )
+                    // The button's tooltip box hides a scope modifier from the parent, so align the box
+                    Box(Modifier.align(Alignment.BottomEnd).padding(S2Spacing.small)) {
+                        S2IconButton(
+                            icon = Icons.Rounded.Shuffle,
+                            contentDescription = stringResource(R.string.home_shuffle_item, item.title()),
+                            onClick = { callbacks.onAction(item.playAction()) },
+                            modifier = Modifier.testTag(GENRE_SHUFFLE_TAG),
+                            style = S2IconButtonStyle.Filled,
+                            size = S2IconButtonSize.Small,
+                        )
+                    }
                 }
             }
         },
