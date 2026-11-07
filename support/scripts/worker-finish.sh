@@ -3,11 +3,10 @@
 #
 #   support/scripts/worker-finish.sh [--no-test] [--dry-run] [--record-screenshots] "<commit message>"
 #
-# Steps: lint -F, native test names, the architecture tests (when a .kt under android/ or shared/
-# changed), `unit-test --changed-tests`, then Roborazzi for the modules whose UI changed (verify, or
-# re-record with --record-screenshots), then commit. Anything wider (dependents' test compile, the
-# other modules' screenshots) is the landing verify's job
-# (support/scripts/land-verify). The iOS test target is compiled when the diff touches what Swift sees.
+# Steps: lint -F, native test names, `unit-test --changed-tests`, then Roborazzi for the modules whose
+# UI changed (verify, or re-record with --record-screenshots), then commit. Anything wider (architecture
+# tests, the iOS build, dependents' test compile, the other modules' screenshots) is the landing
+# verify's job (support/scripts/land-verify).
 # Roborazzi runs for a module that applies the plugin when its main source (src/main, src/androidMain,
 # src/commonMain) or tests/snapshots (src/test) changed, for :android:designsystem when
 # docs/design/catalog changed, for :android:app when other docs/design changed, and for :android:app
@@ -178,14 +177,6 @@ EOF3
 }
 
 if [ "$run_tests" = 1 ]; then
-  if printf '%s\n' "$changed" | grep -Eq '^(android|shared)/.*\.kt$'; then
-    start=$SECONDS
-    if ! support/scripts/remote-build.sh --local -q :android:architecture-tests:testDebugUnitTest >"$log" 2>&1; then
-      fail "architecture tests"
-    fi
-    echo "architecture tests: ok ($((SECONDS - start))s)"
-  fi
-
   start=$SECONDS
   if ! support/scripts/unit-test --changed-tests >"$log" 2>&1; then
     fail tests
@@ -257,16 +248,6 @@ elif [ "${#shot_tasks[@]}" -gt 0 ]; then
   exit 2
 else
   echo "tests: skipped (--no-test)"
-fi
-
-# iOS test-target compile, only when a file the Swift side sees changed. Cheap next to a failed land verify.
-ios_touch="$(printf '%s\n' "$changed" | grep -E '^(ios/(S2|S2Tests|S2Widgets|SystemSurfaces|Config|project\.yml)|shared/.*\.kt$|android/(domain|presentation|core)/.*\.kt$)' || true)"
-if [ "$run_tests" = 1 ] && [ -n "$ios_touch" ] && command -v xcodebuild >/dev/null 2>&1 && command -v xcodegen >/dev/null 2>&1; then
-  start=$SECONDS
-  if ! { (cd ios && xcodegen -q) && ios/scripts/build-framework.sh && ios/scripts/build-app.sh; } >"$log" 2>&1; then
-    fail "ios test compile"
-  fi
-  echo "ios test compile: ok ($((SECONDS - start))s)"
 fi
 
 if [ "$dry_run" = 1 ]; then
