@@ -1,6 +1,6 @@
 # Shuttle Music ASO and SEO plan (2026-11-02)
 
-Living doc for Play search, the site and off-store acquisition. Tooling: `scripts/aso/README.md`. Baseline data:
+Living doc for Play search, the site and off-store acquisition. Tooling: the shared `aso` command (devtools `docs/aso.md`), configured by `.aso.toml`; keywords in `docs/growth/aso/keywords.txt`; `/growth-report` for the weekly read. Baseline data:
 `baseline-2026-11-02/`. Listing text is code in `android/app/src/main/play/listings/`; every change is a commit plus a
 row in `experiments.md`.
 

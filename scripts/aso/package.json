@@ -1,7 +1,0 @@
-{
-  "name": "shuttle-aso",
-  "private": true,
-  "dependencies": {
-    "google-play-scraper": "10.1.4"
-  }
-}

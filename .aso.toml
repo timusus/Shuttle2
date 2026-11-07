@@ -1,0 +1,40 @@
+# Config for the shared `aso` tool (devtools/aso). Paths are relative to this repo.
+name = "Shuttle Music"
+package = "com.simplecityapps.shuttle"
+data_dir = "~/.local/share/shuttle-music-aso"
+keywords = "docs/growth/aso/keywords.txt"
+listings = "android/app/src/main/play/listings"
+competitors = [
+  "app.symfonik.music.player", "com.unicornsonlsd.finamp", "com.maxmpz.audioplayer", "in.krosbits.musicolet",
+  "tv.plex.labs.plexamp", "com.ghenry22.substream2", "org.moire.ultrasonic", "com.rhmsoft.pulsar",
+  "com.piyush.music", "code.name.monkey.retromusic",
+]
+runs = [
+  ["us", "en"], ["gb", "en"], ["gb", "en-GB"], ["au", "en"], ["au", "en-AU"], ["ca", "en"], ["in", "en"],
+  ["us", "es"], ["mx", "es"], ["br", "pt"], ["ru", "ru"], ["fr", "fr"], ["de", "de"],
+]
+
+[launchd]
+label = "com.simplecity.music-aso-track"
+hour = 7
+minute = 43
+
+# Same Play developer account as Shuttle Podcasts, so the same bulk-report bucket; files are filtered by package.
+[bulk]
+bucket = "pubsite_prod_rev_04915875223811481712"
+
+[seo]
+sites = ["sc-domain:shuttlemusicplayer.com", "https://shuttlemusicplayer.com/"]
+brand = "shuttle"
+
+[web]
+zone = "shuttlemusicplayer.com"
+hosts = ["shuttlemusicplayer.com", "www.shuttlemusicplayer.com"]
+
+# No [app] section yet: it needs a PostHog personal API key scoped to Shuttle Music's project.
+
+# The Cloudflare token is account-wide and lives under the podcasts repo's Keychain entries.
+[secrets]
+repo = "shuttle2"
+CLOUDFLARE_API_TOKEN = "podcasts/CLOUDFLARE_API_TOKEN"
+CLOUDFLARE_ACCOUNT_ID = "podcasts/CLOUDFLARE_ACCOUNT_ID"
