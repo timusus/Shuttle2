@@ -294,8 +294,9 @@ lint_changed() {
 }
 
 # The shared `sim` pool hands this shell an exclusive simulator, so no other run clones it away; a
-# beta runtime fails tests a release passes, hence the pinned iOS 18.5.
-land_sim() { SIM_RUNTIME=18.5 sim ensure; }
+# beta runtime fails tests a release passes, hence the pinned iOS 18.5. sim's default iPhone (17)
+# can't run 18.5, so the device is pinned too.
+land_sim() { SIM_RUNTIME=18.5 SIM_DEVICE_TYPE=com.apple.CoreSimulator.SimDeviceType.iPhone-16 sim ensure; }
 
 # Counted against other simulator users: the verify lease's LEASE_HELD would let it skip the queue.
 on_device() {
