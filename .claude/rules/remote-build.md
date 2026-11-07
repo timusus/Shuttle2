@@ -27,10 +27,10 @@ Different worktrees build side by side; two calls from one worktree queue on a l
 `support/scripts/unit-test` goes through it by default; `--local` (or `S2_REMOTE_BUILD=0`) as its first argument keeps Gradle on
 the Mac under a build lease. `emu-verify.sh` opts in with `--remote-build`. Line for briefs:
 
-> Build with `support/scripts/unit-test [module]`, `support/scripts/emu-verify.sh --remote-build ...`, or
+> Compile and run the tests for the files you changed with `support/scripts/unit-test --changed-tests`, or
 > `support/scripts/remote-build.sh <tasks>` for anything else (foreground, generous timeout): it picks the Mac or the box
-> itself. The landing verify is one Mac invocation: `support/scripts/remote-build.sh --local -q testDebugUnitTest
-> :android:app:assembleDebug :android:app:verifyRoborazziDebug :android:designsystem:verifyRoborazziDebug`.
+> itself. Never run the whole suite: the one full verify is `land`'s (`support/scripts/land-verify`), and the by-hand
+> full run is `support/scripts/full-verify.sh`.
 
 **Roborazzi record and compare stay on the Mac; verify runs on the box.** The wrapper sets `REMOTE_GRADLE_MAC_ONLY` to keep
 `record*` and `compare*` local, since the `docs/design/**` goldens are Mac-recorded. Verify passes on the box against them

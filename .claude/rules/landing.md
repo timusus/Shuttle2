@@ -9,8 +9,8 @@ paths:
 
 - **Workers verify narrowly; the landing queue verifies lightly; a full verify runs behind a watermark.**
   A worker verifies via `worker-finish.sh`: `unit-test --changed-tests`, plus `verifyRoborazziDebug` for the
-  changed screenshot modules (`--record-screenshots` re-records them); architecture tests and the iOS test compile
-  wait for the landing verify — no full suite,
+  changed screenshot modules (`--record-screenshots` re-records them); architecture tests and the iOS build
+  wait for the landing verify, the one full verify — no full suite,
   no emulator/simulator lease unless the brief needs a screenshot.
 - **Landing is the shared `land` tool** (`land --help`; config `.claude/land.conf`, verify `support/scripts/land-verify`).
   Run it from the landing worktree (`git worktree add --detach .claude/worktrees/landing origin/main`, once), as a detached job,
@@ -29,7 +29,7 @@ paths:
   (including `iosSimulatorArm64Test`) at `origin/main` and records the sha as the watermark; `--status` shows how far main
   is past it, SessionStart prints the same, and `/deploy-android` runs it before tagging if the watermark isn't the release commit.
 - **Worker worktree pool (#923).** `worktree-pool lease <name>` (devtools; on PATH) hands a worker one of `S2_WORKTREE_POOL_SIZE`
-  (default 5) locked, reusable slots `.claude/worktrees/pool-<k>` on a fresh `worktree-<name>` branch at `origin/main`, so the Gradle
+  (default 6) locked, reusable slots `.claude/worktrees/pool-<k>` on a fresh `worktree-<name>` branch at `origin/main`, so the Gradle
   configuration cache, `build/`, `ios/build/DerivedData` and Shared.framework stay warm (tracked changes and untracked non-ignored
   files are discarded at lease; ignored files stay). It prints the slot dir on stdout; exit 3 means every slot is leased, so the caller
   falls back to a plain new worktree. Re-leasing a branch already in a slot returns that slot untouched. `land` calls `release`

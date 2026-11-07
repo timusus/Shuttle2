@@ -25,13 +25,12 @@ Delegation, worker tiers and `worker`/`worker-brief` are in the global `~/.claud
 
 ## Build commands
 
-From the repo root. `unit-test` and `remote-emu.sh install` use [`build-brief`](https://bb.staticvar.dev/) when on PATH.
+From the repo root. Workers compile and run the tests for changed files only; `land` is the one full verify. `unit-test` and `remote-emu.sh install` use [`build-brief`](https://bb.staticvar.dev/) when on PATH.
 
 ```bash
 ./gradlew :android:app:assembleDebug
-./support/scripts/unit-test                                   # all unit tests
+./support/scripts/unit-test --changed-tests                   # workers: current diff -> test classes (the full verify is land's)
 ./support/scripts/unit-test playback --tests '*SleepTimerTest*'   # one module / filter
-./support/scripts/unit-test --changed-tests                   # fastest loop: current diff -> test classes
 ./support/scripts/remote-build.sh -q :android:app:assembleDebug   # Mac unless loaded, else a free WSL box slot
 ./support/scripts/lint [-F] [--all]                           # KTLint: changed files vs merge-base, --all for the tree
 ./gradlew :android:app:bundleRelease
