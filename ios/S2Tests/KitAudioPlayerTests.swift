@@ -4,6 +4,7 @@ import PlaybackPlayer
 import PlaybackRender
 import PlaybackStreaming
 @testable import S2
+import S2Playback
 import S2PlaybackTestSupport
 import Shared
 import Testing
@@ -105,6 +106,48 @@ struct KitAudioPlayerTests {
         sut.skipToNext(playWhenReady: false)
 
         #expect(await pumpUntil { listener.lastState == "12 paused" })
+    }
+
+    /// #1120: the decode executor is serial, so a stale open still waiting on Kotlin would hold the skip behind it.
+    @Test func aSkipWhileTheCurrentItemsResolveIsBlockedReachesTheNextAtOnce() async {
+        final class Flags: @unchecked Sendable {
+            var asked = false
+            var openReturned = false
+        }
+        let flags = Flags()
+        let rig = PlayerTestRig<KitAudioPlayer.QueueKey> { key in
+            guard key.uid == 11 else {
+                return FakeItemSource(format: PCMFormat(sampleRate: 8, channelCount: 1), frames: 80, chunkFrames: 2)
+            }
+            return TimeOffsetItemSource { startMs in
+                // Kotlin never answers.
+                ResolvingByteReader(uid: key.uid, startMs: startMs, faults: ReaderFaults()) { _, _, _ in flags.asked = true }
+            }
+        }
+        let sut = KitAudioPlayer(player: rig.player)
+        sut.setListener(listener: listener)
+        sut.setItems(order: entries([11, 12]), currentIndex: 0, startMs: 0, playWhenReady: true)
+        rig.settle()
+        let executor = rig.executor
+        DispatchQueue.global().async {
+            executor.runNext()
+            flags.openReturned = true
+        }
+        #expect(await waitUntil { flags.asked })
+
+        sut.skipToNext(playWhenReady: true)
+        rig.settle()
+
+        #expect(await waitUntil { flags.openReturned })
+        #expect(await pumpUntil(rig) { listener.lastState == "12 playing" })
+    }
+
+    private func waitUntil(_ condition: () -> Bool) async -> Bool {
+        let deadline = Date().addingTimeInterval(2)
+        while Date() < deadline, !condition() {
+            try? await Task.sleep(nanoseconds: 10_000_000)
+        }
+        return condition()
     }
 
     @Test func movingOnPausedFromAFailedItemPreparesTheOneMovedTo() async {

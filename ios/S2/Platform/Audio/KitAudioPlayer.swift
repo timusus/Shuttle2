@@ -478,8 +478,21 @@ final class ResolvingByteReader: TimeOffsetByteReader, @unchecked Sendable {
     }
 
     private func opened() throws -> StreamByteReader {
+        if let inner = condition.withLock({ inner }) { return try inner.get() }
+        let answer = try awaitAnswer()
+        // Built outside the lock: its file and cache lookups must not hold up an interrupt or cancel, which never block.
+        let result = Result { try Self.reader(answer.stream, error: answer.error) }
+        return try condition.withLock {
+            inner = result
+            let reader = try result.get()
+            if cancelled { reader.cancel() }
+            if interrupted { reader.interrupt() }
+            return reader
+        }
+    }
+
+    private func awaitAnswer() throws -> (stream: IosStream?, error: String?) {
         try condition.withLock {
-            if let inner { return try inner.get() }
             if !requested {
                 requested = true
                 DispatchQueue.main.async {
@@ -499,9 +512,7 @@ final class ResolvingByteReader: TimeOffsetByteReader, @unchecked Sendable {
             if cancelled { throw StreamByteReaderError.cancelled }
             if interrupted { throw StreamByteReaderError.interrupted }
             guard let answer else { preconditionFailure("the wait ends only on an answer, a cancel or an interrupt") }
-            let result = Result { try Self.reader(answer.stream, error: answer.error) }
-            inner = result
-            return try result.get()
+            return answer
         }
     }
 

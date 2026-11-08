@@ -40,13 +40,19 @@ public final class TimeOffsetItemSource: ItemSource, @unchecked Sendable {
     /// The media frame the next chunk starts at, and the frames still to drop before it after a re-open.
     private var position: Int64 = 0
     private var framesToDrop: Int64 = 0
+    /// The whole second the transcode was opened at, until a chunk is read or it re-opens.
+    private var openedAtSecond: Int64?
     private var framesSinceReopen: Int64 = 0
     private var reopensLeft = reopenBudget
     private var ended = false
 
     public var currentFormat: PCMFormat? { lock.withLock { inner?.currentFormat } }
 
-    public init(open: @escaping Open) {
+    private let startMs: Int64
+
+    /// `startMs`: where the item's playback starts, which the transport seeks to once it is open.
+    public init(startMs: Int64 = 0, open: @escaping Open) {
+        self.startMs = startMs
         openReader = open
     }
 
@@ -58,12 +64,16 @@ public final class TimeOffsetItemSource: ItemSource, @unchecked Sendable {
     }
 
     public func open() throws -> PCMFormat {
-        let reader = openReader(0)
+        // Asked at the start, so the server's first answer is already there; a stream served as stored ignores it.
+        let startSeconds = startMs / 1000
+        let reader = openReader(startSeconds * 1000)
         let source = attach(reader)
         let format = try source.open()
         self.format = format
         if let durationMs = reader.transcodeDurationMs {
             isTranscode = true
+            openedAtSecond = startSeconds
+            position = frames(seconds: Double(startSeconds))
             // Unknown, there is nothing to clamp a seek to or tell a short end by, and its bytes can't be seeked in.
             frameCount = durationMs > 0 ? frames(seconds: Double(durationMs) / 1000) : nil
             isSeekable = durationMs > 0
@@ -82,12 +92,19 @@ public final class TimeOffsetItemSource: ItemSource, @unchecked Sendable {
             ended = true
             return frame
         }
+        // The transport's seek to the start the stream was opened at: drop up to it rather than ask the server again.
+        if let openedAtSecond, let format, Int64(Double(frame) / format.sampleRate) == openedAtSecond {
+            position = frame
+            framesToDrop = frame - frames(seconds: Double(openedAtSecond))
+            return frame
+        }
         try reopen(at: frame)
         return frame
     }
 
     public func nextChunk() throws -> [Float]? {
         guard isTranscode else { return try current().nextChunk() }
+        openedAtSecond = nil
         while !ended {
             let chunk: [Float]?
             do {
@@ -163,6 +180,7 @@ public final class TimeOffsetItemSource: ItemSource, @unchecked Sendable {
         framesToDrop = max(0, frame - frames(seconds: startSeconds))
         framesSinceReopen = 0
         ended = false
+        openedAtSecond = nil
     }
 
     /// Makes `reader`'s source the current one, with this epoch and any interrupt aimed at it, and releases the last.

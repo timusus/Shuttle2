@@ -35,10 +35,10 @@ final class TimeOffsetItemSourceTests: XCTestCase {
 
     /// A rig whose items stream from the loopback origin, asked for at `?offset=<seconds>`; a transcode when
     /// `transcodeDurationMs` is set.
-    private func makeRig(transcodeDurationMs: Int64?) -> PlayerTestRig<Int> {
+    private func makeRig(transcodeDurationMs: Int64?, startMs: Int64 = 0) -> PlayerTestRig<Int> {
         let (server, store) = (server!, store!)
         return PlayerTestRig { _ in
-            TimeOffsetItemSource { startMs in
+            TimeOffsetItemSource(startMs: startMs) { startMs in
                 let url = URL(string: "\(server.url.absoluteString)?offset=\(startMs / 1000)")!
                 // swiftlint:disable:next force_try
                 let reader = try! StreamStore.reader(url: url, headers: [:], store: store)
@@ -80,6 +80,22 @@ final class TimeOffsetItemSourceTests: XCTestCase {
         XCTAssertEqual(offsetsAskedFor, ["offset=0", "offset=12"])
         XCTAssertEqual(rig.player.position, 13.5, accuracy: 0.3)
         XCTAssertFalse(adjusted, "the frames up to the target are dropped, so the seek lands where it was asked")
+    }
+
+    /// #1120: opened at 0 and re-opened at the start, a server answering the second request from 0 left the reported
+    /// position that far ahead of the audio.
+    func testATranscodeResumedPartwayIsAskedForOnceAtItsStart() {
+        let rig = makeRig(transcodeDurationMs: 20_000, startMs: 12_500)
+        var adjusted = false
+        rig.onEvent = { if case .seekAdjusted = $0 { adjusted = true } }
+        rig.player.setItems([1], startPosition: 12.5)
+        rig.player.play()
+
+        rig.run(for: 1)
+
+        XCTAssertEqual(offsetsAskedFor, ["offset=12"])
+        XCTAssertEqual(rig.player.position, 13.5, accuracy: 0.3)
+        XCTAssertFalse(adjusted)
     }
 
     func testADroppedTranscodeReOpensAtItsPosition() {
