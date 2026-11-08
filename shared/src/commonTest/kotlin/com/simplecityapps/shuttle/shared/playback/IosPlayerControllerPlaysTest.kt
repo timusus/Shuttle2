@@ -144,6 +144,23 @@ class IosPlayerControllerPlaysTest : IosPlayerControllerTestBase() {
     }
 
     @Test
+    fun `a next song whose pre-warm failed transiently plays on the gapless join with no late reload`() = test { controller ->
+        val failures = collect(controller.playbackFailureFlow)
+        unresolvable += b.id
+        controller.start(listOf(a, b, c))
+        unresolvable -= b.id
+
+        engine.finishTrack()
+        engine.settle()
+
+        controller.currentSong shouldBe b
+        engine.current?.url shouldBe url(b)
+        failures shouldBe emptyList()
+        controller.playbackState() shouldBe PlaybackState.Playing
+        engine.calls.filter { it.startsWith("skip to") } shouldBe emptyList()
+    }
+
+    @Test
     fun `a song refused before StoreKit answers stays current - and plays when asked again`() = test { controller ->
         server += a.id
         serverAccess = { _, _ -> ServerAccess.Undecided }

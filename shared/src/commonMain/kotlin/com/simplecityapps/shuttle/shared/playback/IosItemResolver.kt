@@ -88,8 +88,9 @@ class IosItemResolver internal constructor(
         onResult: (IosStream?, String?) -> Unit
     ) {
         val item = order[uid] ?: return onResult(null, "song $uid is no longer queued")
-        // A refusal made before StoreKit answered isn't the answer: ask again now the player wants the stream.
-        playId(item, retryFailed = (failure(uid) as? ServerStreamNotAllowedException)?.undecided == true)
+        // A pre-warm's transient failure, or a refusal made before StoreKit answered, isn't the answer: ask again now the player wants the stream.
+        val failure = failure(uid)
+        playId(item, retryFailed = failure != null && !(failure is ServerStreamNotAllowedException && !failure.undecided))
         val entry = entries.getValue(uid)
         scope.launch(start = CoroutineStart.UNDISPATCHED) {
             val result = try {
