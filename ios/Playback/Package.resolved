@@ -5,8 +5,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/timusus/AudioPlaybackKit.git",
       "state" : {
-        "revision" : "7d6d05c3b3ec13c92e40e7c302852feea86c4daa",
-        "version" : "0.20.2"
+        "revision" : "a18b898db34b9b319e6a38d8f795c105523654e1",
+        "version" : "0.21.0"
       }
     }
   ],

@@ -80,8 +80,8 @@ final class KitAudioPlayer: NSObject, IosAudioPlayer {
     static func live(resolve: @escaping ResolvingByteReader.Resolve) -> KitAudioPlayer {
         let replayGain = ReplayGainProcessor()
         let readerFaults = ReaderFaults()
-        let player = Player<QueueKey>(makeSource: { key in
-            TimeOffsetItemSource { startMs in
+        let player = Player<QueueKey>(makeSource: { key, startPosition in
+            TimeOffsetItemSource(startMs: Int64((startPosition * 1000).rounded())) { startMs in
                 ResolvingByteReader(uid: key.uid, startMs: startMs, faults: readerFaults) { uid, startMs, completion in
                     resolve(uid, startMs) { stream, error in
                         if let stream {
