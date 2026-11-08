@@ -13,6 +13,9 @@ internal class IosFeed(
 
     var failed = false
 
+    /** The player reported a position in it: until then its position and duration are still the previous item's. */
+    var opened = false
+
     /** Where the player was told to load it from, until it seeks: loading it there again before it's ready is a no-op. */
     var loadingFrom: Int? = null
 

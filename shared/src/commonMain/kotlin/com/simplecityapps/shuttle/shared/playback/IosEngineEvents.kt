@@ -85,7 +85,8 @@ internal class IosEngineEvents(
         trackId: String,
         positionMs: Long
     ) {
-        if (trackId != feeder.current?.id) return
+        val feed = feeder.current?.takeIf { it.id == trackId } ?: return
+        feed.opened = true
         feeder.publishProgress(positionMs.toInt())
     }
 

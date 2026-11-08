@@ -113,8 +113,7 @@ internal class IosEngineFeeder(
         current = feed(item, current = true)
         upcoming = null
         engineState = IosAudioPlayerState.Loading
-        // The player still holds the previous item, so its duration isn't this song's yet.
-        flows.progress.value = PlaybackProgress(startMs, item.song.duration)
+        publishProgress(startMs)
         publishState()
     }
 
@@ -235,18 +234,19 @@ internal class IosEngineFeeder(
         }
     }
 
-    /** Publishes [positionMs] into the current item; its duration is the song's tagged one until the player knows it. */
+    /** Publishes [positionMs] into the current item. */
     fun publishProgress(positionMs: Int) {
-        val currentFeed = current ?: return
-        val duration = currentDuration() ?: currentFeed.item.song.duration
+        val duration = currentDuration() ?: return
         flows.progress.value = PlaybackProgress(positionMs, duration)
     }
 
-    fun currentDuration(): Int? = current?.let { player.durationMs().takeIf { it > 0 }?.toInt() }
+    /** The current item's duration: the song's tagged one until the player has opened it and knows its own. */
+    fun currentDuration(): Int? = current?.let { feed -> player.durationMs().takeIf { feed.opened && it > 0 }?.toInt() ?: feed.item.song.duration }
 
+    /** The current item's position: where it was loaded or sought to until the player has opened it. */
     fun progress(): Int? {
         if (queue.size == 0) return null
-        val live = current?.let { player.positionMs().takeIf { it >= 0 }?.toInt() }
+        val live = current?.takeIf { it.opened }?.let { player.positionMs().takeIf { it >= 0 }?.toInt() }
         return live ?: flows.progress.value?.position ?: 0
     }
 }

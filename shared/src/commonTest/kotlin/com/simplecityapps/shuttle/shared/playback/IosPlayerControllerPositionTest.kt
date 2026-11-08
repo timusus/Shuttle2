@@ -66,9 +66,26 @@ class IosPlayerControllerPositionTest : IosPlayerControllerTestBase() {
         val progress = collect(controller.progressFlow)
 
         controller.skipTo(1)
+        controller.getDuration() shouldBe 120_000
         engine.settle()
 
-        progress.filterNotNull().map { it.duration }.distinct() shouldBe listOf(199_000, 120_000)
+        progress.last()?.duration shouldBe 120_000
+        controller.getDuration() shouldBe 120_000
+    }
+
+    @Test
+    fun `a pause while the next song opens reports it at its start not where the previous one was`() = test { controller ->
+        val pauses = collect(controller.pausePositionFlow)
+        controller.start(listOf(a, b))
+        engine.tick(50_000)
+
+        controller.skipTo(1)
+        controller.pause()
+        controller.getProgress() shouldBe 0
+        engine.settle()
+
+        pauses.last() shouldBe SongPosition(b, 0)
+        controller.getProgress() shouldBe 0
     }
 
     @Test

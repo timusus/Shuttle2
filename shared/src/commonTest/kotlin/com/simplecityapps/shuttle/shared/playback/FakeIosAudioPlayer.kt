@@ -48,6 +48,9 @@ class FakeIosAudioPlayer : IosAudioPlayer {
 
     var duration = -1L
 
+    /** Where the item opening starts: until it opens, the player's times are still the previous item's. */
+    private var openingAt = 0L
+
     private var phase = Phase.Idle
 
     private var failed = false
@@ -131,8 +134,7 @@ class FakeIosAudioPlayer : IosAudioPlayer {
         }
         val stopped = !failed && phase == Phase.Idle
         index = target
-        position = startMs
-        if (!stopped) openCurrent(startMs)
+        if (stopped) position = startMs else openCurrent(startMs)
     }
 
     override fun setRepeatMode(mode: RepeatMode) {
@@ -199,7 +201,7 @@ class FakeIosAudioPlayer : IosAudioPlayer {
 
     private fun seekTo(positionMs: Long) {
         val uid = currentUid ?: return
-        position = positionMs
+        if (phase == Phase.Loading) openingAt = positionMs else position = positionMs
         if (phase == Phase.Ended) openCurrent(positionMs)
         post { listener?.onPosition("$uid", positionMs) }
     }
@@ -367,9 +369,9 @@ class FakeIosAudioPlayer : IosAudioPlayer {
         phase = Phase.Loading
         failed = false
         stream = null
-        position = startMs
         report()
         // The player asks from its decode thread, after the call that opened the item has returned.
+        openingAt = startMs
         post { open(uid, opened(serial, uid)) }
     }
 
@@ -383,6 +385,7 @@ class FakeIosAudioPlayer : IosAudioPlayer {
                 phase = Phase.Idle
                 post { listener?.onFailed("$uid", IosFailureKind.Other, error ?: "Can't open ${opened?.url}") }
             } else {
+                position = openingAt
                 stream = opened
                 phase = Phase.Ready
                 report()

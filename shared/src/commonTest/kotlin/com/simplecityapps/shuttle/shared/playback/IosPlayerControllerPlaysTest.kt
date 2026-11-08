@@ -157,7 +157,8 @@ class IosPlayerControllerPlaysTest : IosPlayerControllerTestBase() {
         engine.current?.url shouldBe url(b)
         failures shouldBe emptyList()
         controller.playbackState() shouldBe PlaybackState.Playing
-        engine.calls.filter { it.startsWith("skip to") } shouldBe emptyList()
+        controller.itemResolver.failure(controller.queueOperations.getQueue()[1].uid) shouldBe null
+        resolved.count { it == b.id } shouldBe 2
     }
 
     @Test
