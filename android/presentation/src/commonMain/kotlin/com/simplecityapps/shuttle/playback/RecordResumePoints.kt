@@ -90,7 +90,7 @@ class RecordResumePoints(
                     outgoing?.let { save(it) }
                     current = item?.let { Current(it.uid, it.song) }
                     // The next song takes the point at once: a pause before its first tick would leave the point at the outgoing song's end.
-                    if (outgoing?.playedThrough == true) {
+                    if (outgoing?.playedThrough == true && queueOperations.playContext == outgoing.context) {
                         current?.let {
                             it.context = outgoing.context
                             it.positionMs = 0
@@ -120,6 +120,8 @@ class RecordResumePoints(
                 // A restored queue gets its context back after its current item, and a song only settles by playing on.
                 val settles = tick && point.context == null
                 if (tick) point.context = queueOperations.playContext
+                // Playing on after its end means it repeated. Not cleared on the wrap itself: Android publishes the next item's 0 before its queue moves on.
+                if (tick) point.playedThrough = false
                 val due = lastSavedAt?.let { now() - it >= SAVE_INTERVAL } ?: true
                 if (!tick || settles || due) save(point)
             }
@@ -133,7 +135,7 @@ class RecordResumePoints(
         }
         appCoroutineScope.launch(Dispatchers.Main.immediate) {
             playbackStateSource.trackEndedFlow.collect { end ->
-                val point = current?.takeIf { it.song.id == end.song.id } ?: return@collect
+                val point = current?.takeIf { it.uid == end.uid } ?: return@collect
                 val state = queueOperations.queueStateFlow.value
                 if (state.currentPosition == state.items.lastIndex && queueOperations.getRepeatMode() == RepeatMode.Off) {
                     point.finished = true

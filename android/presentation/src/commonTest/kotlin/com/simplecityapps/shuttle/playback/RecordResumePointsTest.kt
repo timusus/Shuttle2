@@ -132,6 +132,34 @@ class RecordResumePointsTest {
     }
 
     @Test
+    fun `a song repeated then left for another album leaves the old album's point where it got to`() {
+        recordResumePoints.start()
+        setCurrent(1)
+        playThroughOnRepeatOne(1)
+
+        queueOperations.playContext = otherAlbum
+        setCurrent(0, queue = otherSongs)
+        playbackOperations.playbackStateFlow.value = PlaybackState.Paused
+        dispatcher.scheduler.advanceUntilIdle()
+
+        playHistory.resumePoints[album] shouldBe point(track = 1, positionMs = 30_000)
+        playHistory.resumePoints[otherAlbum] shouldBe null
+    }
+
+    @Test
+    fun `a song repeated then skipped keeps its point until the next song plays`() {
+        recordResumePoints.start()
+        setCurrent(1)
+        playThroughOnRepeatOne(1)
+
+        setCurrent(2)
+        playbackOperations.playbackStateFlow.value = PlaybackState.Paused
+        dispatcher.scheduler.advanceUntilIdle()
+
+        playHistory.resumePoints[album] shouldBe point(track = 1, positionMs = 30_000)
+    }
+
+    @Test
     fun `a finished context restored at launch stays finished`() {
         val finished = point(track = 3, positionMs = 200_000).copy(finished = true)
         playHistory.resumePoints[album] = finished
@@ -230,6 +258,15 @@ class RecordResumePointsTest {
     ) {
         val items = queue.mapIndexed { i, song -> QueueItem(uid = song.id * 100 + i, song = song, isCurrent = i == index) }
         queueOperations.queueStateFlow.value = QueueState(items = items, currentItem = items[index], currentPosition = index, shuffleMode = shuffleMode)
+    }
+
+    /** The current song plays to its end and, on repeat one, from its start again to 30 s. */
+    private fun playThroughOnRepeatOne(index: Int) {
+        queueOperations.repeatModeFlow.value = RepeatMode.One
+        playTo(190_000, from = 180_000)
+        playbackOperations.trackEndedFlow.tryEmit(TrackEnd(songs[index].id * 100 + index, songs[index]))
+        playTo(30_000)
+        dispatcher.scheduler.advanceUntilIdle()
     }
 
     private fun playTo(
