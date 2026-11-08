@@ -41,4 +41,4 @@ ios/scripts/generate-telemetry-config.sh
 ios/scripts/generate-lastfm-config.sh
 echo "==> ./gradlew ${tasks[*]}"
 # Scripts get no bash-rewrite hook, so the build lease is taken here.
-lease build -- ./gradlew "${tasks[@]}" ${gradle_args[@]+"${gradle_args[@]}"}
+lease --class build -- ./gradlew "${tasks[@]}" ${gradle_args[@]+"${gradle_args[@]}"}
