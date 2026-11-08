@@ -49,6 +49,7 @@ class RecordResumePoints(
     ) {
         var positionMs: Int? = null
         var finished = false
+        var playedThrough = false
 
         /** The queue's context as the song last played; null until it plays, and nothing is saved before then. */
         var context: PlayContext? = null
@@ -85,8 +86,20 @@ class RecordResumePoints(
             queueOperations.queueStateFlow.collect { state ->
                 val item = state.currentItem
                 if (item?.uid != current?.uid) {
-                    current?.let { save(it) }
+                    val outgoing = current
+                    outgoing?.let { save(it) }
                     current = item?.let { Current(it.uid, it.song) }
+                    // The next song takes the point at once: a pause before its first tick would leave the point at the outgoing song's end.
+                    if (outgoing?.playedThrough == true) {
+                        current?.let {
+                            it.context = outgoing.context
+                            it.positionMs = 0
+                            it.track = state.currentPosition
+                            it.trackCount = state.items.size
+                            it.shuffled = state.shuffleMode == ShuffleMode.On
+                            save(it, promptly = true)
+                        }
+                    }
                 }
                 current?.apply {
                     track = state.currentPosition
@@ -125,6 +138,8 @@ class RecordResumePoints(
                 if (state.currentPosition == state.items.lastIndex && queueOperations.getRepeatMode() == RepeatMode.Off) {
                     point.finished = true
                     save(point, promptly = true)
+                } else {
+                    point.playedThrough = true
                 }
             }
         }

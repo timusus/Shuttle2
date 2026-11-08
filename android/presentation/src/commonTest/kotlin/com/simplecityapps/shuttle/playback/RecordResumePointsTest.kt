@@ -119,6 +119,19 @@ class RecordResumePointsTest {
     }
 
     @Test
+    fun `a song playing through into the next leaves the next song at its start if paused before it ticks`() {
+        recordResumePoints.start()
+        setCurrent(1)
+        playTo(190_000, from = 180_000)
+
+        playbackOperations.trackEndedFlow.tryEmit(TrackEnd(songs[1].id * 100 + 1, songs[1]))
+        setCurrent(2)
+        playbackOperations.playbackStateFlow.value = PlaybackState.Paused
+
+        playHistory.resumePoints[album] shouldBe point(track = 2, positionMs = 0)
+    }
+
+    @Test
     fun `a finished context restored at launch stays finished`() {
         val finished = point(track = 3, positionMs = 200_000).copy(finished = true)
         playHistory.resumePoints[album] = finished

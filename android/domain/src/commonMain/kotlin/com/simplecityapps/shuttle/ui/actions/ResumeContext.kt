@@ -22,6 +22,10 @@ class ResumeContext(
     private val filterPlayableSongs: FilterPlayableSongs,
     private val random: Random,
 ) {
+    private companion object {
+        const val NEAR_END_MS = 5_000
+    }
+
     sealed interface Result {
         data object Resumed : Result
 
@@ -59,8 +63,10 @@ class ResumeContext(
             queueOperations.setShuffleMode(shuffleMode, reshuffle = false)
             return Result.Failure(null)
         }
+        // A point at the song's end would play it with the seekbar already full.
+        val seekPosition = if (song.duration > 0 && point.positionMs > song.duration - NEAR_END_MS) 0 else point.positionMs.toInt()
         return suspendCancellableCoroutine { cont ->
-            playbackOperations.load(seekPosition = point.positionMs.toInt(), playWhenReady = true) { result ->
+            playbackOperations.load(seekPosition = seekPosition, playWhenReady = true) { result ->
                 result.onSuccess { cont.resume(Result.Resumed) }
                 result.onFailure { error ->
                     // A later load replaced this one: the play it was for was dropped, not failed.

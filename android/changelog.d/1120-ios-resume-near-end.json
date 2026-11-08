@@ -1,0 +1,1 @@
+{ "type": "fixes", "text": "iOS: resuming a playlist or album no longer shows the position at the end of the song.", "commits": [] }

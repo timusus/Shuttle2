@@ -29,7 +29,7 @@ class ResumeContextTest {
     private val resumeContext = actions.resumeContext
 
     private val album = PlayContext.Album(AlbumGroupKey("album", AlbumArtistGroupKey("artist")))
-    private val songs = (1L..5L).map { createSong(id = it, path = "/music/$it.flac") }
+    private val songs = (1L..5L).map { createSong(id = it, duration = 200_000, path = "/music/$it.flac") }
     private val selection = MediaSelection.Songs(songs)
 
     @Test
@@ -76,6 +76,16 @@ class ResumeContextTest {
         playbackOperations.loadedPositions shouldBe listOf(45_000)
         playbackOperations.loadedPlayWhenReady shouldBe listOf(true)
         playbackOperations.calls shouldBe listOf("play()")
+    }
+
+    @Test
+    fun `a point near the end of its song starts that song over`() = runTest {
+        playHistory.resumePoints[album] = point(track = 2, positionMs = songs[2].duration - 2_000L)
+
+        resumeContext(selection, album) shouldBe ResumeContext.Result.Resumed
+
+        queueOperations.lastSetQueuePosition shouldBe 2
+        playbackOperations.loadedPositions shouldBe listOf(0)
     }
 
     @Test
