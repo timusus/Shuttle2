@@ -58,6 +58,20 @@ class IosPlayerControllerPositionTest : IosPlayerControllerTestBase() {
     }
 
     @Test
+    fun `a song becoming current publishes its own duration not the previous song's`() = test { controller ->
+        val shorter = song(10, duration = 120_000)
+        controller.start(listOf(a, shorter))
+        engine.duration = 199_000
+        engine.tick(2_000)
+        val progress = collect(controller.progressFlow)
+
+        controller.skipTo(1)
+        engine.settle()
+
+        progress.filterNotNull().map { it.duration }.distinct() shouldBe listOf(199_000, 120_000)
+    }
+
+    @Test
     fun `pausing reports the song and where it paused`() = test { controller ->
         val pauses = collect(controller.pausePositionFlow)
         controller.start(listOf(a, b))

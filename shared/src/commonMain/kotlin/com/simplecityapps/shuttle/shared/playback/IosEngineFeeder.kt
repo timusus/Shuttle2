@@ -113,7 +113,8 @@ internal class IosEngineFeeder(
         current = feed(item, current = true)
         upcoming = null
         engineState = IosAudioPlayerState.Loading
-        publishProgress(startMs)
+        // The player still holds the previous item, so its duration isn't this song's yet.
+        flows.progress.value = PlaybackProgress(startMs, item.song.duration)
         publishState()
     }
 
