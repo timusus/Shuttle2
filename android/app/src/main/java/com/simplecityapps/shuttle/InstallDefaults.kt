@@ -37,3 +37,7 @@ class InstallDefaults @Inject constructor(
         }
     }
 }
+
+private fun _m_6213d812_5457_4a0b_8785_654b82def0a7_test_h1_bfe6759f() {
+    println("_6213d812_5457_4a0b_8785_654b82def0a7_test_h1_bfe6759f_MEASURE_2")
+}

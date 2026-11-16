@@ -1,39 +1,53 @@
 # gradle-profiler scenarios for the Gradle heap / GC / workers / test-fork benchmark (devtools #15).
-# Run through support/bench/gradle-bench.sh, which takes one build lease per invocation:
-#   support/bench/gradle-bench.sh <scenario>...
-# Names are <edit>-<config>. Configs vary one knob from "base" (the machine-wide ~/.gradle settings:
-# Gradle 5g ParallelGC, Kotlin daemon 3g ParallelGC, 5 workers, 2 test forks). Command-line -D/-P/--max-workers
-# beat ~/.gradle/gradle.properties, so no file is touched.
+# Run through support/bench/gradle-bench-all.sh (or gradle-bench.sh <scenario>...). Names are <edit>-<config>.
+# Configs vary one knob from "base" (the machine-wide ~/.gradle settings: Gradle 5g ParallelGC, Kotlin daemon 3g
+# ParallelGC, 5 workers, 2 test forks at 2g). Command-line -D/-P/--max-workers beat ~/.gradle/gradle.properties.
+# GC logs for the Gradle and Kotlin daemons go to /tmp/gradle-bench/gc/.
 
-_abi {
-  tasks = [":android:app:assembleDebug"]
-  apply-abi-change-to = "android/domain/src/commonMain/kotlin/com/simplecityapps/mediaprovider/Progress.kt"
-}
-_nonabi {
-  tasks = [":android:app:assembleDebug"]
-  apply-non-abi-change-to = "android/domain/src/commonMain/kotlin/com/simplecityapps/mediaprovider/Progress.kt"
-}
-_test {
-  tasks = [":android:app:testDebugUnitTest"]
-  apply-non-abi-change-to = "android/app/src/main/java/com/simplecityapps/shuttle/InstallDefaults.kt"
-}
-_noop {
-  tasks = [":android:app:testDebugUnitTest"]
-}
+_abi { tasks = [":android:app:assembleDebug"], apply-abi-change-to = "android/domain/src/commonMain/kotlin/com/simplecityapps/mediaprovider/Progress.kt" }
+_nonabi { tasks = [":android:app:assembleDebug"], apply-non-abi-change-to = "android/domain/src/commonMain/kotlin/com/simplecityapps/mediaprovider/Progress.kt" }
+_test { tasks = [":android:app:testDebugUnitTest"], apply-non-abi-change-to = "android/app/src/main/java/com/simplecityapps/shuttle/InstallDefaults.kt" }
+_noop { tasks = [":android:app:testDebugUnitTest"] }
 
-abi-base = ${_abi} { gradle-args = ["--max-workers=5", "-Dorg.gradle.jvmargs=-Xmx5g -XX:+UseParallelGC -XX:MaxMetaspaceSize=1g -Dfile.encoding=UTF-8", "-Pkotlin.daemon.jvmargs=-Xmx3g -XX:+UseParallelGC"] }
-abi-heap4 = ${_abi} { gradle-args = ["--max-workers=5", "-Dorg.gradle.jvmargs=-Xmx4g -XX:+UseParallelGC -XX:MaxMetaspaceSize=1g -Dfile.encoding=UTF-8", "-Pkotlin.daemon.jvmargs=-Xmx3g -XX:+UseParallelGC"] }
-abi-heap6 = ${_abi} { gradle-args = ["--max-workers=5", "-Dorg.gradle.jvmargs=-Xmx6g -XX:+UseParallelGC -XX:MaxMetaspaceSize=1g -Dfile.encoding=UTF-8", "-Pkotlin.daemon.jvmargs=-Xmx4g -XX:+UseParallelGC"] }
-abi-g1 = ${_abi} { gradle-args = ["--max-workers=5", "-Dorg.gradle.jvmargs=-Xmx5g -XX:+UseG1GC -XX:MaxMetaspaceSize=1g -Dfile.encoding=UTF-8", "-Pkotlin.daemon.jvmargs=-Xmx3g -XX:+UseG1GC"] }
-abi-w4 = ${_abi} { gradle-args = ["--max-workers=4", "-Dorg.gradle.jvmargs=-Xmx5g -XX:+UseParallelGC -XX:MaxMetaspaceSize=1g -Dfile.encoding=UTF-8", "-Pkotlin.daemon.jvmargs=-Xmx3g -XX:+UseParallelGC"] }
-abi-w6 = ${_abi} { gradle-args = ["--max-workers=6", "-Dorg.gradle.jvmargs=-Xmx5g -XX:+UseParallelGC -XX:MaxMetaspaceSize=1g -Dfile.encoding=UTF-8", "-Pkotlin.daemon.jvmargs=-Xmx3g -XX:+UseParallelGC"] }
-abi-w8 = ${_abi} { gradle-args = ["--max-workers=8", "-Dorg.gradle.jvmargs=-Xmx5g -XX:+UseParallelGC -XX:MaxMetaspaceSize=1g -Dfile.encoding=UTF-8", "-Pkotlin.daemon.jvmargs=-Xmx3g -XX:+UseParallelGC"] }
+w4 = ["--max-workers=4"]
+w5 = ["--max-workers=5"]
+w6 = ["--max-workers=6"]
+w8 = ["--max-workers=8"]
+par5 = ["-Dorg.gradle.jvmargs=-Xmx5g -XX:+UseParallelGC -XX:MaxMetaspaceSize=1g -Dfile.encoding=UTF-8 -Xlog:gc:file=/tmp/gradle-bench/gc/gradle-par5-%p.log"]
+par4 = ["-Dorg.gradle.jvmargs=-Xmx4g -XX:+UseParallelGC -XX:MaxMetaspaceSize=1g -Dfile.encoding=UTF-8"]
+par6 = ["-Dorg.gradle.jvmargs=-Xmx6g -XX:+UseParallelGC -XX:MaxMetaspaceSize=1g -Dfile.encoding=UTF-8"]
+g1 = ["-Dorg.gradle.jvmargs=-Xmx5g -XX:+UseG1GC -XX:MaxMetaspaceSize=1g -Dfile.encoding=UTF-8 -Xlog:gc:file=/tmp/gradle-bench/gc/gradle-g1-%p.log"]
+k3par = ["-Pkotlin.daemon.jvmargs=-Xmx3g -XX:+UseParallelGC -Xlog:gc:file=/tmp/gradle-bench/gc/kotlin-par3-%p.log"]
+k3par_nolog = ["-Pkotlin.daemon.jvmargs=-Xmx3g -XX:+UseParallelGC"]
+k4par = ["-Pkotlin.daemon.jvmargs=-Xmx4g -XX:+UseParallelGC"]
+k3g1 = ["-Pkotlin.daemon.jvmargs=-Xmx3g -XX:+UseG1GC -Xlog:gc:file=/tmp/gradle-bench/gc/kotlin-g1-%p.log"]
+par5_nolog = ["-Dorg.gradle.jvmargs=-Xmx5g -XX:+UseParallelGC -XX:MaxMetaspaceSize=1g -Dfile.encoding=UTF-8"]
 
-nonabi-base = ${_nonabi} { gradle-args = ["--max-workers=5", "-Dorg.gradle.jvmargs=-Xmx5g -XX:+UseParallelGC -XX:MaxMetaspaceSize=1g -Dfile.encoding=UTF-8", "-Pkotlin.daemon.jvmargs=-Xmx3g -XX:+UseParallelGC"] }
-nonabi-g1 = ${_nonabi} { gradle-args = ["--max-workers=5", "-Dorg.gradle.jvmargs=-Xmx5g -XX:+UseG1GC -XX:MaxMetaspaceSize=1g -Dfile.encoding=UTF-8", "-Pkotlin.daemon.jvmargs=-Xmx3g -XX:+UseG1GC"] }
+abi-base = ${_abi} { gradle-args = ${w5} ${par5} ${k3par} }
+abi-heap4 = ${_abi} { gradle-args = ${w5} ${par4} ${k3par_nolog} }
+abi-heap6 = ${_abi} { gradle-args = ${w5} ${par6} ${k4par} }
+abi-g1 = ${_abi} { gradle-args = ${w5} ${g1} ${k3g1} }
+abi-w4 = ${_abi} { gradle-args = ${w4} ${par5_nolog} ${k3par_nolog} }
+abi-w6 = ${_abi} { gradle-args = ${w6} ${par5_nolog} ${k3par_nolog} }
+abi-w8 = ${_abi} { gradle-args = ${w8} ${par5_nolog} ${k3par_nolog} }
 
-test-f1 = ${_test} { gradle-args = ["--max-workers=5", "-Ps2.testForks=1", "-Dorg.gradle.jvmargs=-Xmx5g -XX:+UseParallelGC -XX:MaxMetaspaceSize=1g -Dfile.encoding=UTF-8", "-Pkotlin.daemon.jvmargs=-Xmx3g -XX:+UseParallelGC"] }
-test-f2 = ${_test} { gradle-args = ["--max-workers=5", "-Ps2.testForks=2", "-Dorg.gradle.jvmargs=-Xmx5g -XX:+UseParallelGC -XX:MaxMetaspaceSize=1g -Dfile.encoding=UTF-8", "-Pkotlin.daemon.jvmargs=-Xmx3g -XX:+UseParallelGC"] }
-test-f3 = ${_test} { gradle-args = ["--max-workers=5", "-Ps2.testForks=3", "-Dorg.gradle.jvmargs=-Xmx5g -XX:+UseParallelGC -XX:MaxMetaspaceSize=1g -Dfile.encoding=UTF-8", "-Pkotlin.daemon.jvmargs=-Xmx3g -XX:+UseParallelGC"] }
+nonabi-base = ${_nonabi} { gradle-args = ${w5} ${par5} ${k3par} }
+nonabi-heap4 = ${_nonabi} { gradle-args = ${w5} ${par4} ${k3par_nolog} }
+nonabi-heap6 = ${_nonabi} { gradle-args = ${w5} ${par6} ${k4par} }
+nonabi-g1 = ${_nonabi} { gradle-args = ${w5} ${g1} ${k3g1} }
+nonabi-w4 = ${_nonabi} { gradle-args = ${w4} ${par5_nolog} ${k3par_nolog} }
+nonabi-w6 = ${_nonabi} { gradle-args = ${w6} ${par5_nolog} ${k3par_nolog} }
+nonabi-w8 = ${_nonabi} { gradle-args = ${w8} ${par5_nolog} ${k3par_nolog} }
 
-noop-base = ${_noop} { gradle-args = ["--max-workers=5", "-Dorg.gradle.jvmargs=-Xmx5g -XX:+UseParallelGC -XX:MaxMetaspaceSize=1g -Dfile.encoding=UTF-8", "-Pkotlin.daemon.jvmargs=-Xmx3g -XX:+UseParallelGC"] }
+# test forks / test heap (:android:app only; -Ps2.testHeap needs the temporary build.gradle.kts edit)
+test-f1 = ${_test} { gradle-args = ${w5} ${par5_nolog} ${k3par_nolog} ["-Ps2.testForks=1"] }
+test-f2 = ${_test} { gradle-args = ${w5} ${par5_nolog} ${k3par_nolog} ["-Ps2.testForks=2"] }
+test-f3 = ${_test} { gradle-args = ${w5} ${par5_nolog} ${k3par_nolog} ["-Ps2.testForks=3"] }
+test-h1 = ${_test} { gradle-args = ${w5} ${par5_nolog} ${k3par_nolog} ["-Ps2.testHeap=1g"] }
+test-h15 = ${_test} { gradle-args = ${w5} ${par5_nolog} ${k3par_nolog} ["-Ps2.testHeap=1536m"] }
+test-g1 = ${_test} { gradle-args = ${w5} ${g1} ${k3g1} }
+
+noop-base = ${_noop} { gradle-args = ${w5} ${par5_nolog} ${k3par_nolog} }
+noop-g1 = ${_noop} { gradle-args = ${w5} ${g1} ${k3g1} }
+noop-heap4 = ${_noop} { gradle-args = ${w5} ${par4} ${k3par_nolog} }
+noop-w4 = ${_noop} { gradle-args = ${w4} ${par5_nolog} ${k3par_nolog} }

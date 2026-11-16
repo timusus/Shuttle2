@@ -60,7 +60,7 @@ subprojects {
         // Robolectric's NATIVE graphics/sqlite modes need more than the 512m default heap; pure-JVM
         // modules fit in 512m. :android:app keeps 2g for the Roborazzi boards.
         maxHeapSize = when (projectPath) {
-            ":android:app" -> "2g"
+            ":android:app" -> providers.gradleProperty("s2.testHeap").getOrElse("2g")
             in robolectricModules -> "1536m"
             else -> "512m"
         }
