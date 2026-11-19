@@ -3,8 +3,7 @@
 
 // Flip to true once Shuttle Music is live on the App Store. Until then the App Store badge shows
 // "Coming soon to the App Store" and isn't a link. When true, every App Store badge links to the
-// listing, iPhone Safari gets its Smart App Banner (apple-itunes-app), and the iOS app's structured
-// data gains its download link. See server/README.md.
+// listing and iPhone Safari gets its Smart App Banner (apple-itunes-app). See server/README.md.
 const APP_STORE_LIVE = false;
 const APP_STORE_ID = "6818057709";
 const APP_STORE_URL = "https://apps.apple.com/app/id" + APP_STORE_ID;
@@ -80,12 +79,6 @@ const APP_STORE_URL = "https://apps.apple.com/app/id" + APP_STORE_ID;
         link.appendChild(badge);
         soon.replaceWith(link);
       });
-      const ld = document.getElementById("ld-ios");
-      if (ld) {
-        const app = JSON.parse(ld.textContent);
-        app.downloadUrl = APP_STORE_URL;
-        ld.textContent = JSON.stringify(app);
-      }
     }
   });
 })();
