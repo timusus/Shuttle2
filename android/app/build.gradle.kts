@@ -164,7 +164,6 @@ android {
         // Material
         implementation(libs.google.material)
 
-
         // Constraint Layout
         implementation(libs.androidx.constraintlayout)
 
@@ -271,7 +270,6 @@ android {
         // Remote config
         implementation(project(":android:remote-config"))
 
-
         testImplementation(libs.junit)
 
         // WorkManager
@@ -292,32 +290,26 @@ apply(plugin = "com.google.gms.google-services")
 /**
  * Retrieves an Environment Variable, or throws [MissingEnvVarException]
  */
-fun getEnv(name: String): String {
-    return System.getenv(name) ?: throw MissingEnvVarException(name)
+fun getEnv(name: String): String = System.getenv(name) ?: throw MissingEnvVarException(name)
+
+fun isCiBuild(): Boolean = try {
+    getEnv("CI").toBoolean()
+} catch (e: MissingEnvVarException) {
+    println("'CI' Environment Variable not found. This build is presumed to be a non-CI build.")
+    false
 }
 
-fun isCiBuild(): Boolean {
-    return try {
-        getEnv("CI").toBoolean()
-    } catch (e: MissingEnvVarException) {
-        println("'CI' Environment Variable not found. This build is presumed to be a non-CI build.")
-        false
-    }
-}
-
-fun isReleaseBuild(): Boolean {
-    return try {
-        getEnv("CONFIGURATION") == "Release"
-    } catch (e: MissingEnvVarException) {
-        println("'CONFIGURATION' Environment Variable not found. This build is presumed to be a Debug build.")
-        false
-    }
+fun isReleaseBuild(): Boolean = try {
+    getEnv("CONFIGURATION") == "Release"
+} catch (e: MissingEnvVarException) {
+    println("'CONFIGURATION' Environment Variable not found. This build is presumed to be a Debug build.")
+    false
 }
 
 // Hardcoded date-based version for the 1.0.10 hotfix: the internal track already has 26101301.
-fun versionName(): String = "2026.11.03"
+fun versionName(): String = "2026.11.19"
 
-fun versionCode(): Int = 26110301
+fun versionCode(): Int = 26111901
 
 class MissingEnvVarException(private val name: String) : Exception() {
     override val message: String

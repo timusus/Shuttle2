@@ -1,5 +1,21 @@
 [
   {
+    "versionName": "2026.11.19",
+    "releaseDate": "19/11/2026",
+    "features": [
+
+    ],
+    "fixes": [
+      "After the trial, playback no longer changes pitch when it speeds up"
+    ],
+    "improvements": [
+      "The post-trial speed-up is now capped at 1.15x, and the trial text explains it plainly",
+      "Added an 'Already bought? Restore' button to the trial-expired dialog"
+    ],
+    "notes": [
+    ]
+  },
+  {
     "versionName": "2026.11.03",
     "releaseDate": "03/11/2026",
     "features": [
