@@ -1,12 +1,12 @@
-Shuttle Music Player is a music player for the songs on your phone and the music on your own Jellyfin, Plex or Emby server. No ads, no account with me, and one library for all of it.
+Shuttle Music Player is an offline music player for the songs on your phone and the music on your own Jellyfin, Plex or Emby server. No ads, no account with me, and one library for all of it.
 
-Play MP3, FLAC, Opus, AAC, Ogg and more straight from your device, offline. Or sign in to your media server and stream your whole collection with its artwork and playlists.
+Use it as an MP3 player or a FLAC player: MP3, FLAC, Opus, AAC, Ogg and more play straight from your device, offline, with gapless playback between tracks. Or sign in to your media server and stream your whole collection with its artwork and playlists.
 
 WHY SHUTTLE
 
 • Local and server music in one app. Your offline files and your Jellyfin, Plex or Emby library sit side by side.
 • Its own tag reader, so your library is built from the tags in your files, from the folders you choose.
-• Built-in Opus and FLAC decoders, so they play the same on every phone.
+• Built-in Opus and FLAC decoders, so lossless files play the same on every phone, gaplessly.
 • A 10-band equalizer with presets and a frequency response graph, plus ReplayGain for a steady volume between tracks and albums.
 • A tag editor that edits one song or a whole album at once.
 
@@ -14,15 +14,20 @@ JELLYFIN, PLEX AND EMBY
 
 Shuttle is a music client for self-hosted media servers. Add your Jellyfin or Emby server with its address and your login, or sign in to Plex with your Plex account. Browse your server's albums, artists, genres and playlists, search it, and play to your phone, your car with Android Auto, or your speakers with Chromecast.
 
+ANDROID AUTO AND CHROMECAST
+
+As an Android Auto music player, Shuttle puts your library on the car display, from files on your phone or from your server. As a Chromecast music player, it sends what's playing to your speakers or TV, so you can keep listening around the house.
+
 FEATURES
 
-• Offline music player for the files on your phone
+• Offline music player and MP3 player for the files on your phone
+• Gapless playback, FLAC and Opus
 • Stream from Jellyfin, Plex and Emby media servers
 • 10-band equalizer, presets and preamp
 • ReplayGain (track and album modes)
 • Batch tag editor
-• Android Auto
-• Chromecast
+• Android Auto music player
+• Chromecast music player
 • Sleep timer
 • Album shuffle and a queue you control
 • Playlists, smart playlists and M3U import

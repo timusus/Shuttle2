@@ -3,21 +3,21 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Jellyfin music player for Android | Shuttle Music</title>
+  <title>Jellyfin client for Android: a music app | Shuttle Music</title>
   <meta name="description" content="Stream your Jellyfin music library on Android with Shuttle Music: FLAC, gapless playback, equalizer, Android Auto and Chromecast.">
   <link rel="canonical" href="https://shuttlemusicplayer.com/jellyfin-music-player">
   <meta name="theme-color" content="#f7f9fb" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#0b0d10" media="(prefers-color-scheme: dark)">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Shuttle Music">
-  <meta property="og:title" content="Jellyfin music player for Android | Shuttle Music">
+  <meta property="og:title" content="Jellyfin client for Android: a music app | Shuttle Music">
   <meta property="og:description" content="Stream your Jellyfin music library on Android with Shuttle Music: FLAC, gapless playback, equalizer, Android Auto and Chromecast.">
   <meta property="og:url" content="https://shuttlemusicplayer.com/jellyfin-music-player">
   <meta property="og:image" content="https://shuttlemusicplayer.com/og-image.png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Jellyfin music player for Android | Shuttle Music">
+  <meta name="twitter:title" content="Jellyfin client for Android: a music app | Shuttle Music">
   <meta name="twitter:description" content="Stream your Jellyfin music library on Android with Shuttle Music: FLAC, gapless playback, equalizer, Android Auto and Chromecast.">
   <meta name="twitter:image" content="https://shuttlemusicplayer.com/og-image.png">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
@@ -70,7 +70,7 @@
     <div class="page-head">
       <div class="wrap narrow">
         <nav class="crumbs" aria-label="Breadcrumb"><a href="/">Shuttle Music</a> › Jellyfin music player</nav>
-        <h1>A Jellyfin music player for Android</h1>
+        <h1>A Jellyfin client and music app for Android</h1>
         <p>Stream your own Jellyfin library, next to the music on your phone.</p>
       </div>
     </div>
@@ -104,11 +104,29 @@
           <li>Your phone's own files alongside the server, in one library.</li>
         </ul>
 
+        <h2>Tips for a good first sync</h2>
+        <ul>
+          <li>Use an address your phone can reach. At home that can be the server's local IP address; away from home it needs to be a public address or a VPN you already run.</li>
+          <li>If you use <code>https://</code> with a reverse proxy, enter the proxy's address and port, not the server's internal one.</li>
+          <li>A large library takes a few minutes to sync the first time. After that Shuttle Music keeps it up to date, and you can browse while it finishes.</li>
+          <li>Albums with missing or inconsistent tags show up as your server has them, so fix them in Jellyfin first, or use the <a href="/tag-editor">tag editor</a> for the files on your phone.</li>
+        </ul>
+
+        <h2>Why use a dedicated music app for Jellyfin</h2>
+        <p>Apps that cover everything Jellyfin serves, video included, can't be tuned for music alone. A music-first client gives you a library tuned for albums and artists, a queue you can reorder, ReplayGain to even out loud and quiet records, an equalizer, a sleep timer, and playback that carries on in the car through <a href="/android-auto">Android Auto</a> or on your speakers through Chromecast. Shuttle Music also plays the files already on your phone, so there is one place to go for everything you listen to.</p>
+        <p>It isn't the only choice. For an honest side-by-side with other Android apps, read <a href="/best-jellyfin-music-app-android">the best Jellyfin music app for Android</a>.</p>
+
+        <h2>Pricing</h2>
+        <p>Shuttle Music is free to download and comes with a 14-day trial of every feature, no card needed. After the trial, unlock it with a one-time purchase or a yearly plan. If you don't, playback gradually speeds up until you do.</p>
+
         <h2>Questions</h2>
         <h3>Does it work when I'm away from home?</h3>
         <p>Yes, as long as your phone can reach the server's address, for example through a reverse proxy or a VPN you already run.</p>
         <h3>Do I need an account with Shuttle Music?</h3>
         <p>No. You sign in to your own server, and Shuttle Music has no account of its own.</p>
+
+        <h3>Can I play FLAC from Jellyfin?</h3>
+        <p>Yes. FLAC and Opus play through Shuttle Music's own decoders, gaplessly. See the <a href="/flac-player">FLAC player</a> page.</p>
 
         <h2>More from Shuttle Music</h2>
         <p>Also works with <a href="/plex-music-player">Plex</a> and <a href="/emby-music-player">Emby</a>. See the <a href="/flac-player">FLAC player</a> and <a href="/tag-editor">tag editor</a>, or go back to the <a href="/">home page</a>.</p>
