@@ -1,18 +1,18 @@
-Shuttle Music Player is an offline music player for the songs on your phone and the music on your own Jellyfin, Plex or Emby server. No ads, no account with me, and one library for all of it.
+Shuttle Music Player is an offline music player for the songs on your phone and the music on your own Jellyfin, Plex or Emby server. One library for all of it, with no account to create.
 
-Use it as an MP3 player or a FLAC player: MP3, FLAC, Opus, AAC, Ogg and more play straight from your device, offline, with gapless playback between tracks. Or sign in to your media server and stream your whole collection with its artwork and playlists.
+Use it as an MP3 player or a FLAC player: MP3, FLAC, Opus, AAC, Ogg and more play straight from your device, offline, with gapless playback between tracks. Or sign in to your media server and stream your whole collection with its artwork and playlists. If you're looking for a Plex music player that also plays your local files, this is it.
 
 WHY SHUTTLE
 
 • Local and server music in one app. Your offline files and your Jellyfin, Plex or Emby library sit side by side.
 • Its own tag reader, so your library is built from the tags in your files, from the folders you choose.
 • Built-in Opus and FLAC decoders, so lossless files play the same on every phone, gaplessly.
-• A 10-band equalizer with presets and a frequency response graph, plus ReplayGain for a steady volume between tracks and albums.
+• A music player with equalizer: 10 bands with presets and a frequency response graph, plus ReplayGain for a steady volume between tracks and albums.
 • A tag editor that edits one song or a whole album at once.
 
 JELLYFIN, PLEX AND EMBY
 
-Shuttle is a music client for self-hosted media servers. Add your Jellyfin or Emby server with its address and your login, or sign in to Plex with your Plex account. Browse your server's albums, artists, genres and playlists, search it, and play to your phone, your car with Android Auto, or your speakers with Chromecast.
+Shuttle is a Jellyfin client and Plex music player for self-hosted media servers, and it works with Emby too. Add your Jellyfin or Emby server with its address and your login, or sign in to Plex with your Plex account. Browse your server's albums, artists, genres and playlists, search it, and play to your phone, your car with Android Auto, or your speakers with Chromecast.
 
 ANDROID AUTO AND CHROMECAST
 
@@ -22,7 +22,7 @@ FEATURES
 
 • Offline music player and MP3 player for the files on your phone
 • Gapless playback, FLAC and Opus
-• Stream from Jellyfin, Plex and Emby media servers
+• Plex music player, plus streaming from Jellyfin and Emby media servers
 • 10-band equalizer, presets and preamp
 • ReplayGain (track and album modes)
 • Batch tag editor
@@ -38,7 +38,7 @@ FEATURES
 
 FREE TRIAL, THEN UNLOCK
 
-Shuttle Music Player is a paid app with a 14-day free trial of every feature. No card is needed to start. After the trial, unlock it with a one-time purchase or a yearly plan. If you don't unlock it, playback gradually speeds up until you do.
+Shuttle Music Player is a paid app with a 14-day free trial of every feature. No purchase is needed to start. After the trial, unlock it with a one-time purchase or a yearly plan. If you don't unlock it, playback gradually speeds up until you do.
 
 MADE BY ONE DEVELOPER
 
