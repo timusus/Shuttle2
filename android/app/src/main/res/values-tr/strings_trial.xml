@@ -5,7 +5,7 @@
     <!-- The heading of the 'free trial' dialog -->
     <string name="trial_heading_trial">Ücretsiz Deneme</string>
     <!-- Message shown when user is starting a trial. Note: This is meant to be friendly/fun! It doesn't have to say 'until you lose your mind' -->
-    <string name="trial_description_trial">Denemeden sonra, aklınızı kaybedene kadar oynatma hızı her gün küçük bir miktar artacaktır.</string>
+    <string name="trial_description_trial">Deneme süresince tüm özellikleri ücretsiz kullanın. Süre bittiğinde, yükseltme yapana kadar oynatma hızı her gün kademeli olarak artar ve en fazla 1,15x olur. Yükseltme yaptığınızda hız artışı hemen durur.</string>
     <!-- Shows how many days are left in the free trial-->
     <plurals name="trial_days_remaining">
         <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> gün kaldı</item>
@@ -14,7 +14,10 @@
     <!-- Shown when the user's trial has expired -->
     <string name="trial_heading_expired">Deneme süresi sona erdi</string>
     <!-- Message shown when trial has expired. Note: This is meant to be friendly/fun! It doesn't have to say 'until you lose your mind' -->
-    <string name="trial_description_expired">Aklınızı kaybedene kadar oynatma hızı her gün küçük bir miktar artacaktır.</string>
+    <string name="trial_description_expired">Deneme süreniz sona erdi, bu yüzden yükseltme yapana kadar oynatma hızı her gün kademeli olarak artar ve en fazla 1,15x olur. Yükseltme yaptığınızda hız artışı hemen durur.</string>
+    <string name="trial_button_restore">Zaten satın aldınız mı? Geri yükle</string>
+    <string name="trial_restore_checking">Satın alımlar kontrol ediliyor…</string>
+    <string name="trial_restore_not_found">Önceki bir satın alım bulunamadı</string>
     <!-- When a trial ends, the playback speed is increased by a small amount each day. This text shows the current playback speed -->
     <string name="trial_playback_speed"><xliff:g example="1.4x" id="speed">{speed}</xliff:g> çalma hızı</string>
     <!-- Button to upgrade from the trial version to a paid version -->

@@ -5,7 +5,7 @@
     <!-- The heading of the 'free trial' dialog -->
     <string name="trial_heading_trial">Kostenlose Probezeit</string>
     <!-- Message shown when user is starting a trial. Note: This is meant to be friendly/fun! It doesn't have to say 'until you lose your mind' -->
-    <string name="trial_description_trial">Nach der Probezeit wird die Wiedergabegeschwindigkeit jeden Tag etwas erhöht, bis Du den Verstand verlierst.</string>
+    <string name="trial_description_trial">Teste während der Probezeit alle Funktionen kostenlos. Danach wird die Wiedergabe jeden Tag schrittweise schneller, höchstens auf 1,15x, bis Du upgradest. Mit dem Upgrade endet die Beschleunigung sofort.</string>
     <!-- Shows how many days are left in the free trial-->
     <plurals name="trial_days_remaining">
         <item quantity="one">Noch 
@@ -18,7 +18,10 @@
     <!-- Shown when the user's trial has expired -->
     <string name="trial_heading_expired">Probezeit abgelaufen</string>
     <!-- Message shown when trial has expired. Note: This is meant to be friendly/fun! It doesn't have to say 'until you lose your mind' -->
-    <string name="trial_description_expired">Die Wiedergabegeschwindigkeit wird jeden Tag etwas erhöht, bis Du den Verstand verlierst.</string>
+    <string name="trial_description_expired">Deine Probezeit ist abgelaufen, daher wird die Wiedergabe jeden Tag schrittweise schneller, höchstens auf 1,15x, bis Du upgradest. Mit dem Upgrade endet die Beschleunigung sofort.</string>
+    <string name="trial_button_restore">Schon gekauft? Wiederherstellen</string>
+    <string name="trial_restore_checking">Käufe werden geprüft …</string>
+    <string name="trial_restore_not_found">Kein früherer Kauf gefunden</string>
     <!-- When a trial ends, the playback speed is increased by a small amount each day. This text shows the current playback speed -->
     <string name="trial_playback_speed">Wiedergabegeschwindigkeit: 
     <xliff:g example="1.4x" id="speed">{speed}</xliff:g></string>

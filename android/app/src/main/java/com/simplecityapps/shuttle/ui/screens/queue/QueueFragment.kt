@@ -187,7 +187,7 @@ class QueueFragment :
                     is TrialState.Expired -> {
                         trialMenuItem.isVisible = true
                         val daysRemainingText: TextView = trialMenuItem.actionView!!.findViewById(R.id.daysRemaining)
-                        daysRemainingText.text = String.format("%.1fx", trialState.multiplier())
+                        daysRemainingText.text = String.format("%.2fx", trialState.multiplier())
                         val progress: CircularProgressView = trialMenuItem.actionView!!.findViewById(R.id.progress)
                         progress.setProgress(0f)
                     }

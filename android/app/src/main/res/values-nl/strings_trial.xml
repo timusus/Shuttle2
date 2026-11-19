@@ -5,7 +5,7 @@
     <!-- The heading of the 'free trial' dialog -->
     <string name="trial_heading_trial">Gratis proefperiode</string>
     <!-- Message shown when user is starting a trial. Note: This is meant to be friendly/fun! It doesn't have to say 'until you lose your mind' -->
-    <string name="trial_description_trial">Na de proefperiode zal de afspeelsnelheid elke dag een klein beetje toenemen, totdat je er gek van wordt.</string>
+    <string name="trial_description_trial">Probeer tijdens de proefperiode alle functies gratis uit. Zodra die afloopt, gaat het afspelen elke dag geleidelijk sneller, tot maximaal 1,15x, totdat je upgradet. Upgraden stopt de versnelling meteen.</string>
     <!-- Shows how many days are left in the free trial-->
     <plurals name="trial_days_remaining">
         <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
@@ -16,7 +16,10 @@
     <!-- Shown when the user's trial has expired -->
     <string name="trial_heading_expired">Proefperiode verlopen</string>
     <!-- Message shown when trial has expired. Note: This is meant to be friendly/fun! It doesn't have to say 'until you lose your mind' -->
-    <string name="trial_description_expired">De afspeelsnelheid neemt elke dag een klein beetje toe, totdat je er gek van wordt.</string>
+    <string name="trial_description_expired">Je proefperiode is afgelopen, dus het afspelen gaat elke dag geleidelijk sneller, tot maximaal 1,15x, totdat je upgradet. Upgraden stopt de versnelling meteen.</string>
+    <string name="trial_button_restore">Al gekocht? Herstellen</string>
+    <string name="trial_restore_checking">Aankopen controleren…</string>
+    <string name="trial_restore_not_found">Geen eerdere aankoop gevonden</string>
     <!-- When a trial ends, the playback speed is increased by a small amount each day. This text shows the current playback speed -->
     <string name="trial_playback_speed">Afspeelsnelheid: 
     <xliff:g example="1.4x" id="speed">{speed}</xliff:g></string>

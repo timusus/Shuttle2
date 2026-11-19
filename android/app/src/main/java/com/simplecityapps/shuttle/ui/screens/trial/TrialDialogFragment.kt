@@ -9,6 +9,7 @@ import android.view.View
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
+import android.widget.Toast
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.FragmentManager
 import androidx.lifecycle.lifecycleScope
@@ -78,7 +79,15 @@ class TrialDialogFragment : DialogFragment() {
 
         // A successful restore flips the trial state to Paid, which dismisses this dialog.
         val restoreButton: Button = view.findViewById(R.id.restoreButton)
-        restoreButton.setOnClickListener { billingManager.queryPurchases() }
+        restoreButton.setOnClickListener {
+            val context = requireContext().applicationContext
+            Toast.makeText(context, R.string.trial_restore_checking, Toast.LENGTH_SHORT).show()
+            billingManager.queryPurchases { paid ->
+                if (!paid) {
+                    Toast.makeText(context, R.string.trial_restore_not_found, Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
 
         val heading: TextView = view.findViewById(R.id.heading)
         val subheading: TextView = view.findViewById(R.id.subheading)
@@ -98,7 +107,7 @@ class TrialDialogFragment : DialogFragment() {
                     is TrialState.Expired -> {
                         restoreButton.visibility = View.VISIBLE
                         heading.text = getString(R.string.trial_heading_expired)
-                        subheading.text = Phrase.from(requireContext(), R.string.trial_playback_speed).put("speed", String.format("%.1fx", trialState.multiplier())).format()
+                        subheading.text = Phrase.from(requireContext(), R.string.trial_playback_speed).put("speed", String.format("%.2fx", trialState.multiplier())).format()
                         description.text = getString(R.string.trial_description_expired)
                     }
 

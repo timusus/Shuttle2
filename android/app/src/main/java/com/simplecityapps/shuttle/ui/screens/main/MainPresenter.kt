@@ -72,10 +72,12 @@ constructor(
 
                 is TrialState.Trial -> {
                     // Show the trial dialog once every 3 days
-                    if (preferenceManager.lastViewedTrialDialogDate == null || preferenceManager.lastViewedTrialDialogDate?.before(Date(Date().time - 4 * 24 * 60 * 60 * 1000)) == true) {
+                    val showDialog = preferenceManager.lastViewedTrialDialogDate == null || preferenceManager.lastViewedTrialDialogDate?.before(Date(Date().time - 4 * 24 * 60 * 60 * 1000)) == true
+                    if (showDialog) {
                         this.view?.showTrialDialog()
                     }
-                    if (isEngagedTrialUser(trialState)) {
+                    // Don't stack the review sheet on the upsell dialog, nor spend the review cap on it
+                    if (!showDialog && isEngagedTrialUser(trialState)) {
                         requestReviewIfDue()
                     }
                 }

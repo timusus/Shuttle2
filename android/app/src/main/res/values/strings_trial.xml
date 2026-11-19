@@ -17,6 +17,10 @@
     <string name="trial_description_expired">Your trial has ended, so playback gradually speeds up each day, to at most 1.15x, until you upgrade. Upgrading stops the speed-up straight away.</string>
     <!-- Button on the trial-expired dialog for users who already purchased, to re-check their purchase with Google Play -->
     <string name="trial_button_restore">Already bought? Restore</string>
+    <!-- Toast shown right after tapping the Restore button -->
+    <string name="trial_restore_checking">Checking for purchases…</string>
+    <!-- Toast shown when the Restore check finds no purchase -->
+    <string name="trial_restore_not_found">No previous purchase found</string>
     <!-- When a trial ends, the playback speed is increased by a small amount each day. This text shows the current playback speed -->
     <string name="trial_playback_speed">Playback speed: <xliff:g example="1.4x" id="speed">{speed}</xliff:g></string>
     <!-- Button to upgrade from the trial version to a paid version -->

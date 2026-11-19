@@ -90,12 +90,15 @@ class BillingManager(
                     Timber.v("onPurchasesUpdated: found ${purchases.orEmpty().size} purchases")
                     processPurchases(purchases.orEmpty())
                 }
+
                 BillingClient.BillingResponseCode.USER_CANCELED -> {
                     Timber.v("onPurchasesUpdated: User canceled the purchase")
                 }
+
                 BillingClient.BillingResponseCode.ITEM_ALREADY_OWNED -> {
                     Timber.v("onPurchasesUpdated: The user already owns this item")
                 }
+
                 BillingClient.BillingResponseCode.DEVELOPER_ERROR -> {
                     Timber.e("onPurchasesUpdated: Developer error means that Google Play does not recognize the configuration. If you are just getting started, make sure you have configured the application correctly in the Google Play Console. The SKU product ID must match and the APK you are using must be signed with release keys.")
                 }
@@ -180,6 +183,7 @@ class BillingManager(
                             .sortedByDescending { it.productType } // Show subs first
                             .toSet()
                 }
+
                 BillingClient.BillingResponseCode.SERVICE_DISCONNECTED,
                 BillingClient.BillingResponseCode.SERVICE_UNAVAILABLE,
                 BillingClient.BillingResponseCode.BILLING_UNAVAILABLE,
@@ -189,6 +193,7 @@ class BillingManager(
                 -> {
                     Timber.e("onProductDetailsResponse: ${productDetailsResult.billingResult.responseCode} ${productDetailsResult.billingResult.debugMessage}")
                 }
+
                 BillingClient.BillingResponseCode.USER_CANCELED,
                 BillingClient.BillingResponseCode.FEATURE_NOT_SUPPORTED,
                 BillingClient.BillingResponseCode.ITEM_ALREADY_OWNED,
@@ -201,16 +206,22 @@ class BillingManager(
         }
     }
 
-    fun queryPurchases() {
+    /** [onComplete] runs on the main thread once both queries finish (or immediately if billing isn't ready), with whether the user is paid. */
+    fun queryPurchases(onComplete: ((paid: Boolean) -> Unit)? = null) {
         if (!billingClient.isReady) {
             // If the billing client isn't ready, querying it potentially crashes the billing service.
             // We've got an update listener for when billing is established anyway, so this function will be called again via that
+            onComplete?.invoke(false)
             return
         }
+        var pending = 2
         val purchaseResponseListener =
             PurchasesResponseListener { billingResult, purchases ->
                 if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
                     processPurchases(purchases)
+                }
+                if (--pending == 0) {
+                    onComplete?.invoke(billingState.value == BillingState.Paid)
                 }
             }
 
