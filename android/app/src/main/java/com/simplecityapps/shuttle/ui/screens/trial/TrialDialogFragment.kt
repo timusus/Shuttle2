@@ -5,6 +5,7 @@ import android.app.Dialog
 import android.os.Bundle
 import android.text.InputType
 import android.view.MotionEvent
+import android.view.View
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
@@ -15,6 +16,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.ui.common.dialog.EditTextAlertDialog
+import com.simplecityapps.trial.BillingManager
 import com.simplecityapps.trial.TrialManager
 import com.simplecityapps.trial.TrialState
 import com.squareup.phrase.Phrase
@@ -32,6 +34,9 @@ class TrialDialogFragment : DialogFragment() {
 
     @Inject
     lateinit var preferenceManager: GeneralPreferenceManager
+
+    @Inject
+    lateinit var billingManager: BillingManager
 
     @SuppressLint("ClickableViewAccessibility")
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
@@ -71,6 +76,10 @@ class TrialDialogFragment : DialogFragment() {
             PurchaseDialogFragment.newInstance().show(parentFragmentManager)
         }
 
+        // A successful restore flips the trial state to Paid, which dismisses this dialog.
+        val restoreButton: Button = view.findViewById(R.id.restoreButton)
+        restoreButton.setOnClickListener { billingManager.queryPurchases() }
+
         val heading: TextView = view.findViewById(R.id.heading)
         val subheading: TextView = view.findViewById(R.id.subheading)
         val description: TextView = view.findViewById(R.id.description)
@@ -79,16 +88,20 @@ class TrialDialogFragment : DialogFragment() {
             trialManager.trialState.collect { trialState ->
                 when (trialState) {
                     is TrialState.Trial -> {
+                        restoreButton.visibility = View.GONE
                         val daysRemaining = TimeUnit.MILLISECONDS.toDays(trialState.timeRemaining).toInt()
                         heading.text = getString(R.string.trial_heading_trial)
                         subheading.text = Phrase.fromPlural(requireContext(), R.plurals.trial_days_remaining, daysRemaining).put("count", daysRemaining).format()
                         description.text = getString(R.string.trial_description_trial)
                     }
+
                     is TrialState.Expired -> {
+                        restoreButton.visibility = View.VISIBLE
                         heading.text = getString(R.string.trial_heading_expired)
                         subheading.text = Phrase.from(requireContext(), R.string.trial_playback_speed).put("speed", String.format("%.1fx", trialState.multiplier())).format()
                         description.text = getString(R.string.trial_description_expired)
                     }
+
                     is TrialState.Unknown, is TrialState.Pretrial, is TrialState.Paid -> {
                         dismissAllowingStateLoss()
                     }
