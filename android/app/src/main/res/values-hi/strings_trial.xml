@@ -28,5 +28,5 @@
     <!-- Title of dialog shown after user has completed a purchase-->
     <string name="dialog_title_purchase_complete">धन्यवाद</string>
     <!-- Message shown in dialog after user has completed a purchase. Note: This is informal, but should reflect sincere appreciation (not just a generic 'thank you')-->
-    <string name="dialog_message_purchase_complete">आपने S2 के पूर्ण संस्करण में सफलतापूर्वक अपग्रेड कर लिया है। ऐप को सपोर्ट करने के लिए आपका बहुत-बहुत धन्यवाद।</string>
+    <string name="dialog_message_purchase_complete">आपने Shuttle Music के पूर्ण संस्करण में सफलतापूर्वक अपग्रेड कर लिया है। ऐप को सपोर्ट करने के लिए आपका बहुत-बहुत धन्यवाद।</string>
 </resources>

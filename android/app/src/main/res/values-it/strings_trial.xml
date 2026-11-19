@@ -28,5 +28,5 @@
     <!-- Title of dialog shown after user has completed a purchase-->
     <string name="dialog_title_purchase_complete">Grazie</string>
     <!-- Message shown in dialog after user has completed a purchase. Note: This is informal, but should reflect sincere appreciation (not just a generic 'thank you')-->
-    <string name="dialog_message_purchase_complete">Hai eseguito con successo l\'aggiornamento alla versione completa di S2. Grazie mille per aver supportato l\'app.</string>
+    <string name="dialog_message_purchase_complete">Hai eseguito con successo l\'aggiornamento alla versione completa di Shuttle Music. Grazie mille per aver supportato l\'app.</string>
 </resources>
