@@ -29,8 +29,9 @@ While it is `false`, every page shows the badge unlinked with "Coming soon to th
 redeploy, and every page then:
 
 - links the badge to `https://apps.apple.com/app/id6818057709` (`APP_STORE_ID`, next to the flag);
-- adds the `apple-itunes-app` Smart App Banner meta;
-- adds `downloadUrl` to the iOS `MobileApplication` JSON-LD (`#ld-ios` in `index.html`).
+- adds the `apple-itunes-app` Smart App Banner meta.
+
+At launch, also add an iOS `MobileApplication` JSON-LD block to `index.html` with that `downloadUrl`.
 
 The script sits at `/site.js` rather than under `/js/`, because nginx returns 410 for the old `/js/` and `/images/`
 paths.

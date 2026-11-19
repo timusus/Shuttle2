@@ -266,6 +266,10 @@ section.alt { background: var(--surface); border-block: 1px solid var(--border);
 .platform { display: flex; flex-direction: column; background: var(--bg); border: 1px solid var(--border); border-radius: 24px; padding: var(--s4); overflow: hidden; }
 .platform p { color: var(--text-2); }
 .platform .shot { width: 62%; max-width: 280px; margin: auto auto 0; padding-top: var(--s3); }
+/* One platform until the iPhone app ships: text beside the shot rather than half the grid empty. */
+.platforms:has(> .platform:only-child) { grid-template-columns: 1fr; }
+.platform:only-child { display: grid; grid-template-columns: 1fr 1fr; column-gap: var(--s4); align-content: center; }
+.platform:only-child .shot { grid-column: 2; grid-row: 1 / span 3; width: 100%; margin: 0 auto; padding-top: 0; }
 
 /* Pro */
 .pro-card {
@@ -367,6 +371,8 @@ details > p:first-of-type { margin-top: 0; }
   .site-nav .wide { display: none; }
   .sources,
   .platforms { grid-template-columns: 1fr; }
+  .platform:only-child { display: flex; }
+  .platform:only-child .shot { width: 62%; margin: auto auto 0; padding-top: var(--s3); }
   .specs div { grid-template-columns: 1fr; gap: 2px; }
   .pro-card { padding: var(--s4) var(--s3); }
   .feature + .feature { margin-top: var(--s8); }
