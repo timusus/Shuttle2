@@ -3,22 +3,22 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Jellyfin client for Android: a music app | Shuttle Music</title>
-  <meta name="description" content="Stream your Jellyfin music library on Android with Shuttle Music: FLAC, gapless playback, equalizer, Android Auto and Chromecast.">
+  <title>Jellyfin music app for Android: EQ, gapless | Shuttle Music</title>
+  <meta name="description" content="Stream your Jellyfin music library on Android with a 10-band equalizer, gapless playback, Android Auto and Chromecast. 14-day trial.">
   <link rel="canonical" href="https://shuttlemusicplayer.com/jellyfin-music-player">
   <meta name="theme-color" content="#f7f9fb" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#0b0d10" media="(prefers-color-scheme: dark)">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Shuttle Music">
-  <meta property="og:title" content="Jellyfin client for Android: a music app | Shuttle Music">
-  <meta property="og:description" content="Stream your Jellyfin music library on Android with Shuttle Music: FLAC, gapless playback, equalizer, Android Auto and Chromecast.">
+  <meta property="og:title" content="Jellyfin music app for Android: EQ, gapless | Shuttle Music">
+  <meta property="og:description" content="Stream your Jellyfin music library on Android with a 10-band equalizer, gapless playback, Android Auto and Chromecast. 14-day trial.">
   <meta property="og:url" content="https://shuttlemusicplayer.com/jellyfin-music-player">
   <meta property="og:image" content="https://shuttlemusicplayer.com/og-image.png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Jellyfin client for Android: a music app | Shuttle Music">
-  <meta name="twitter:description" content="Stream your Jellyfin music library on Android with Shuttle Music: FLAC, gapless playback, equalizer, Android Auto and Chromecast.">
+  <meta name="twitter:title" content="Jellyfin music app for Android: EQ, gapless | Shuttle Music">
+  <meta name="twitter:description" content="Stream your Jellyfin music library on Android with a 10-band equalizer, gapless playback, Android Auto and Chromecast. 14-day trial.">
   <meta name="twitter:image" content="https://shuttlemusicplayer.com/og-image.png">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="icon" href="/favicon-32x32.png" sizes="32x32" type="image/png">
@@ -42,7 +42,10 @@
     "@type": "FAQPage",
     "mainEntity": [
       { "@type": "Question", "name": "Does it work when I'm away from home?", "acceptedAnswer": { "@type": "Answer", "text": "Yes, as long as your phone can reach the server's address, for example through a reverse proxy or a VPN you already run." } },
-      { "@type": "Question", "name": "Do I need an account with Shuttle Music?", "acceptedAnswer": { "@type": "Answer", "text": "No. You sign in to your own server, and Shuttle Music has no account of its own." } }
+      { "@type": "Question", "name": "Do I need an account with Shuttle Music?", "acceptedAnswer": { "@type": "Answer", "text": "No. You sign in to your own server, and Shuttle Music has no account of its own." } },
+      { "@type": "Question", "name": "Does the equalizer work with Jellyfin music?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. The 10-band equalizer applies to streamed Jellyfin music and to files on your phone." } },
+      { "@type": "Question", "name": "Is Jellyfin playback gapless?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. Tracks streamed from Jellyfin play gaplessly." } },
+      { "@type": "Question", "name": "Can I play Jellyfin music in Android Auto?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. Your Jellyfin library can be browsed and played from the car's display through Android Auto." } }
     ]
   }
   </script>
@@ -77,7 +80,7 @@
 
     <div class="prose">
       <div class="wrap narrow">
-        <p>Shuttle Music is an Android music player that connects straight to your Jellyfin server. Your albums, artists and playlists show up in the same library as the files on your phone, so you don't switch apps to switch sources. I make it on my own, and it has no ads and no account of its own.</p>
+        <p>Shuttle Music is an Android music player that connects straight to your Jellyfin server. Your albums, artists and playlists show up in the same library as the files on your phone, so you don't switch apps to switch sources. I make it on my own, and it has no account of its own.</p>
 
         <div class="badges">
           <a href="https://play.google.com/store/apps/details?id=com.simplecityapps.shuttle" rel="noopener">
@@ -104,6 +107,15 @@
           <li>Your phone's own files alongside the server, in one library.</li>
         </ul>
 
+        <h2>Jellyfin equalizer</h2>
+        <p>The <a href="/equalizer">10-band equalizer</a> applies to music streamed from your Jellyfin server as well as to files on your phone. Pick a preset or set the bands yourself, and lower the preamp a little if you boost the bass, so peaks don't clip.</p>
+
+        <h2>Gapless playback from Jellyfin</h2>
+        <p>Albums streamed from Jellyfin play <a href="/gapless-music-player">gaplessly</a>, so live records, mixes and classical movements run on without a pause. A steady connection to your server keeps the next track ready in time.</p>
+
+        <h2>Jellyfin in the car with Android Auto</h2>
+        <p>Your Jellyfin library shows up in <a href="/android-auto">Android Auto</a>: browse albums, artists and playlists on the car's display and play them. Open the app and sign in to your server on the phone first, and keep the phone connected to the server while you drive.</p>
+
         <h2>Tips for a good first sync</h2>
         <ul>
           <li>Use an address your phone can reach. At home that can be the server's local IP address; away from home it needs to be a public address or a VPN you already run.</li>
@@ -117,7 +129,7 @@
         <p>It isn't the only choice. For an honest side-by-side with other Android apps, read <a href="/best-jellyfin-music-app-android">the best Jellyfin music app for Android</a>.</p>
 
         <h2>Pricing</h2>
-        <p>Shuttle Music is free to download and comes with a 14-day trial of every feature, no purchase needed to start. After the trial, unlock it with a one-time purchase or a yearly plan. If you don't, playback gradually speeds up until you do.</p>
+        <p>Shuttle Music comes with a 14-day trial of every feature, no purchase needed to start. After the trial, unlock it with a one-time purchase or a yearly plan. If you don't, playback gradually speeds up until you do.</p>
 
         <h2>Questions</h2>
         <h3>Does it work when I'm away from home?</h3>
@@ -125,11 +137,17 @@
         <h3>Do I need an account with Shuttle Music?</h3>
         <p>No. You sign in to your own server, and Shuttle Music has no account of its own.</p>
 
+        <h3>Does the equalizer work with Jellyfin music?</h3>
+        <p>Yes. The 10-band equalizer applies to streamed Jellyfin music and to files on your phone.</p>
+        <h3>Is Jellyfin playback gapless?</h3>
+        <p>Yes. Tracks streamed from Jellyfin play gaplessly.</p>
+        <h3>Can I play Jellyfin music in Android Auto?</h3>
+        <p>Yes. Your Jellyfin library can be browsed and played from the car's display through Android Auto.</p>
         <h3>Can I play FLAC from Jellyfin?</h3>
         <p>Yes. FLAC and Opus play through Shuttle Music's own decoders, gaplessly. See the <a href="/flac-player">FLAC player</a> page.</p>
 
         <h2>More from Shuttle Music</h2>
-        <p>Also works with <a href="/plex-music-player">Plex</a> and <a href="/emby-music-player">Emby</a>. See the <a href="/flac-player">FLAC player</a> and <a href="/tag-editor">tag editor</a>, or go back to the <a href="/">home page</a>.</p>
+        <p>Also works with <a href="/plex-music-player">Plex</a> and <a href="/emby-music-player">Emby</a>. See the <a href="/flac-player">FLAC player</a>, <a href="/gapless-music-player">gapless playback</a>, <a href="/offline-music-player">offline playback</a> and <a href="/tag-editor">tag editor</a>, or go back to the <a href="/">home page</a>.</p>
       </div>
     </div>
   </main>
@@ -142,6 +160,8 @@
         <a href="/plex-music-player">Plex</a>
         <a href="/emby-music-player">Emby</a>
         <a href="/flac-player">FLAC</a>
+        <a href="/offline-music-player">Offline</a>
+        <a href="/gapless-music-player">Gapless</a>
         <a href="/equalizer">Equalizer</a>
         <a href="/android-auto">Android Auto</a>
         <a href="/tag-editor">Tag editor</a>

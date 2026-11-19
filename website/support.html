@@ -41,21 +41,19 @@
     "@context": "https://schema.org",
     "@type": "FAQPage",
     "mainEntity": [
-      { "@type": "Question", "name": "Which servers does Shuttle Music work with?", "acceptedAnswer": { "@type": "Answer", "text": "Jellyfin, Emby and Plex, on both Android and iPhone." } },
+      { "@type": "Question", "name": "Which servers does Shuttle Music work with?", "acceptedAnswer": { "@type": "Answer", "text": "Jellyfin, Emby and Plex, on Android. The iPhone app is coming soon." } },
       { "@type": "Question", "name": "Can I use my phone's music and a server together?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. Add each place your music lives in Settings > Sources, and they play side by side." } },
       { "@type": "Question", "name": "Where does my server login go?", "acceptedAnswer": { "@type": "Answer", "text": "It stays on your device and is only ever sent to your server. There's no account with us, and Plex sign-in goes through your plex.tv account." } },
-      { "@type": "Question", "name": "Can I choose the streaming quality?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. Stream the original file, or cap it at 320, 192 or 128 kbps, with separate settings for Wi-Fi and mobile data." } },
       { "@type": "Question", "name": "Does Shuttle Music come with music?", "acceptedAnswer": { "@type": "Answer", "text": "No. It plays your own audio files, or music from a Jellyfin, Emby or Plex server that you run or have access to. It isn't a streaming service." } },
-      { "@type": "Question", "name": "Which audio formats play?", "acceptedAnswer": { "@type": "Answer", "text": "On Android: FLAC, MP3, AAC and M4A, Ogg Vorbis, Opus and WAV. On iPhone and iPad: all of those, plus ALAC and AIFF." } },
-      { "@type": "Question", "name": "Is playback gapless?", "acceptedAnswer": { "@type": "Answer", "text": "Yes, on both Android and iPhone, so albums that run from one track into the next play without a break." } },
-      { "@type": "Question", "name": "Can I listen offline?", "acceptedAnswer": { "@type": "Answer", "text": "Music stored on your device always plays offline. You can also download albums from your server to play without a connection, on Android and on iPhone." } },
-      { "@type": "Question", "name": "Does it work in the car?", "acceptedAnswer": { "@type": "Answer", "text": "Yes: Android Auto on Android, and CarPlay on iPhone." } },
-      { "@type": "Question", "name": "Is Shuttle Music free?", "acceptedAnswer": { "@type": "Answer", "text": "It is free to download and comes with a 14-day trial of every feature. After the trial you unlock it with a one-time purchase or a yearly plan." } },
-      { "@type": "Question", "name": "How do I restore a purchase?", "acceptedAnswer": { "@type": "Answer", "text": "On Android, sign in to Google Play with the account you bought Pro with, then tap Restore purchases on the Shuttle Music Pro screen in Settings. On iPhone and iPad, use the same Apple Account and tap Restore purchases on the Pro screen or in Settings." } },
-      { "@type": "Question", "name": "Does a purchase carry over between Android and iPhone?", "acceptedAnswer": { "@type": "Answer", "text": "No. Google Play and the App Store keep purchases separate, so Pro bought on one doesn't unlock the other." } },
-      { "@type": "Question", "name": "How do I get a refund or cancel the yearly plan?", "acceptedAnswer": { "@type": "Answer", "text": "Google Play and the App Store handle payment, so refunds and cancellations go through them: in the Play Store under Payments & subscriptions, and for the App Store at reportaproblem.apple.com." } },
+      { "@type": "Question", "name": "Which audio formats play?", "acceptedAnswer": { "@type": "Answer", "text": "FLAC, MP3, AAC and M4A, Ogg Vorbis, Opus and WAV." } },
+      { "@type": "Question", "name": "Is playback gapless?", "acceptedAnswer": { "@type": "Answer", "text": "Yes, so albums that run from one track into the next play without a break." } },
+      { "@type": "Question", "name": "Can I listen offline?", "acceptedAnswer": { "@type": "Answer", "text": "Music stored on your phone plays with no connection. Music from a Jellyfin, Emby or Plex server streams, so it needs a connection to your server." } },
+      { "@type": "Question", "name": "Does it work in the car?", "acceptedAnswer": { "@type": "Answer", "text": "Yes, through Android Auto." } },
+      { "@type": "Question", "name": "How much does Shuttle Music cost?", "acceptedAnswer": { "@type": "Answer", "text": "It comes with a 14-day trial of every feature. After the trial you unlock it with a one-time purchase or a yearly plan." } },
+      { "@type": "Question", "name": "How do I restore a purchase?", "acceptedAnswer": { "@type": "Answer", "text": "Sign in to Google Play with the account you bought Pro with, then tap Restore purchases on the Shuttle Music Pro screen in Settings." } },
+      { "@type": "Question", "name": "How do I get a refund or cancel the yearly plan?", "acceptedAnswer": { "@type": "Answer", "text": "Google Play handles payment, so refunds and cancellations go through it, in the Play Store under Payments & subscriptions." } },
       { "@type": "Question", "name": "My server won't connect. What should I check?", "acceptedAnswer": { "@type": "Answer", "text": "Make sure your phone can reach the server: try the same address in your phone's browser. Include the port (8096 for Jellyfin and Emby, by default) and http:// or https:// as your server uses. Plain http:// addresses on your home network are fine." } },
-      { "@type": "Question", "name": "Some songs on my phone are missing. Why?", "acceptedAnswer": { "@type": "Answer", "text": "On Android, check that Shuttle Music has access to your music and, if you picked folders, that the songs are inside them. On iPhone and iPad, songs have to be in Shuttle Music's folder in the Files app, or in a folder you picked." } },
+      { "@type": "Question", "name": "Some songs on my phone are missing. Why?", "acceptedAnswer": { "@type": "Answer", "text": "Check that Shuttle Music has access to your music and, if you picked folders, that the songs are inside them." } },
       { "@type": "Question", "name": "Is this the original Shuttle Music Player?", "acceptedAnswer": { "@type": "Answer", "text": "Shuttle Music is a separate app from the original Shuttle Music Player, with its own Google Play listing." } }
     ]
   }
@@ -99,6 +97,7 @@
             <li><a href="#playback">Playback</a></li>
             <li><a href="#purchases">Pro and purchases</a></li>
             <li><a href="#troubleshooting">Troubleshooting</a></li>
+            <li><a href="#guides">Guides</a></li>
             <li><a href="#contact">Contact</a></li>
           </ul>
         </nav>
@@ -108,8 +107,8 @@
 
         <h3 id="device">Music on your device</h3>
         <ul>
-          <li><strong>Android:</strong> allow access to your music when asked, and Shuttle Music finds the songs on your phone. You can also pick the folders it reads.</li>
-          <li><strong>iPhone and iPad:</strong> choose <em>Use this device</em>, then add songs to Shuttle Music's folder with the Files app or with Finder on a Mac, or pick a folder you already have.</li>
+          <li>Allow access to your music when asked, and Shuttle Music finds the songs on your phone. You can also pick the folders it reads.</li>
+          <li>The iPhone app is coming soon.</li>
         </ul>
 
         <h3 id="jellyfin">Jellyfin</h3>
@@ -130,7 +129,7 @@
         <h2 id="servers">Servers</h2>
         <details>
           <summary>Which servers does Shuttle Music work with?</summary>
-          <p>Jellyfin, Emby and Plex, on both Android and iPhone.</p>
+          <p>Jellyfin, Emby and Plex, on Android. The iPhone app is coming soon.</p>
         </details>
         <details>
           <summary>Can I use my phone's music and a server together?</summary>
@@ -140,10 +139,6 @@
           <summary>Where does my server login go?</summary>
           <p>It stays on your device and is only ever sent to your server. There's no account with us, and Plex sign-in goes through your plex.tv account. The <a href="/privacy">privacy policy</a> has the details.</p>
         </details>
-        <details>
-          <summary>Can I choose the streaming quality?</summary>
-          <p>Yes. Stream the original file, or cap it at 320, 192 or 128 kbps, with separate settings for Wi-Fi and mobile data.</p>
-        </details>
 
         <h2 id="playback">Playback</h2>
         <details>
@@ -152,37 +147,33 @@
         </details>
         <details>
           <summary>Which audio formats play?</summary>
-          <p>On Android: FLAC, MP3, AAC and M4A, Ogg Vorbis, Opus and WAV. On iPhone and iPad: all of those, plus ALAC and AIFF.</p>
+          <p>FLAC, MP3, AAC and M4A, Ogg Vorbis, Opus and WAV.</p>
         </details>
         <details>
           <summary>Is playback gapless?</summary>
-          <p>Yes, on both Android and iPhone, so albums that run from one track into the next play without a break.</p>
+          <p>Yes, so albums that run from one track into the next play without a break.</p>
         </details>
         <details>
           <summary>Can I listen offline?</summary>
-          <p>Music stored on your device always plays offline. You can also download albums from your server to play without a connection, on Android and on iPhone.</p>
+          <p>Music stored on your phone plays with no connection. Music from a Jellyfin, Emby or Plex server streams, so it needs a connection to your server.</p>
         </details>
         <details>
           <summary>Does it work in the car?</summary>
-          <p>Yes: Android Auto on Android, and CarPlay on iPhone.</p>
+          <p>Yes, through Android Auto.</p>
         </details>
 
         <h2 id="purchases">Pro and purchases</h2>
         <details>
-          <summary>Is Shuttle Music free?</summary>
-          <p>It is free to download and comes with a 14-day trial of every feature. After the trial you unlock it with a one-time purchase or a yearly plan.</p>
+          <summary>How much does Shuttle Music cost?</summary>
+          <p>It comes with a 14-day trial of every feature. After the trial you unlock it with a one-time purchase or a yearly plan.</p>
         </details>
         <details>
           <summary>How do I restore a purchase?</summary>
-          <p><strong>Android:</strong> sign in to Google Play with the account you bought Pro with, then tap <strong>Restore purchases</strong> on the Shuttle Music Pro screen (in Settings). <strong>iPhone and iPad:</strong> use the same Apple Account, then tap <strong>Restore purchases</strong> on the Pro screen or in Settings.</p>
-        </details>
-        <details>
-          <summary>Does a purchase carry over between Android and iPhone?</summary>
-          <p>No. Google Play and the App Store keep purchases separate, so Pro bought on one doesn't unlock the other.</p>
+          <p>Sign in to Google Play with the account you bought Pro with, then tap <strong>Restore purchases</strong> on the Shuttle Music Pro screen (in Settings).</p>
         </details>
         <details>
           <summary>How do I get a refund or cancel the yearly plan?</summary>
-          <p>Google Play and the App Store handle payment, so refunds and cancellations go through them: in the Play Store, <em>Payments &amp; subscriptions</em>; for the App Store, <a href="https://reportaproblem.apple.com/">reportaproblem.apple.com</a>.</p>
+          <p>Google Play handles payment, so refunds and cancellations go through it, in the Play Store under <em>Payments &amp; subscriptions</em>.</p>
         </details>
 
         <h2 id="troubleshooting">Troubleshooting</h2>
@@ -196,12 +187,19 @@
         </details>
         <details>
           <summary>Some songs on my phone are missing. Why?</summary>
-          <p>On Android, check that Shuttle Music has access to your music and, if you picked folders, that the songs are inside them. On iPhone and iPad, songs have to be in Shuttle Music's folder in the Files app, or in a folder you picked.</p>
+          <p>Check that Shuttle Music has access to your music and, if you picked folders, that the songs are inside them.</p>
         </details>
         <details>
           <summary>Is this the original Shuttle Music Player?</summary>
           <p>Shuttle Music is a separate app from the original Shuttle Music Player, with its own Google Play listing.</p>
         </details>
+
+        <h2 id="guides">Guides</h2>
+        <ul>
+          <li><a href="/jellyfin-music-player">Jellyfin music player</a>, <a href="/plex-music-player">Plex</a> and <a href="/emby-music-player">Emby</a></li>
+          <li><a href="/offline-music-player">Offline music player</a> and <a href="/gapless-music-player">gapless playback</a></li>
+          <li><a href="/flac-player">FLAC player</a>, <a href="/equalizer">equalizer</a>, <a href="/android-auto">Android Auto</a> and <a href="/tag-editor">tag editor</a></li>
+        </ul>
 
         <h2 id="contact">Contact</h2>
         <p>Email <a href="mailto:support@simplecityapps.com">support@simplecityapps.com</a> with bugs, questions about purchases, or ideas. It helps to include your device, the app version (in Settings), and which server you use. You can also find other Shuttle users on <a href="https://discord.gg/YkhSuHJ">Discord</a>.</p>
