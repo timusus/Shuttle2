@@ -17,6 +17,10 @@ sealed class TrialState {
     data class Trial(val timeRemaining: Long) : TrialState()
 
     data class Expired(val timeSince: Long) : TrialState() {
-        fun multiplier(): Float = min(1 + ((timeSince / TimeUnit.DAYS.toMillis(1)) * 0.02f), 1.5f)
+        fun multiplier(): Float = min(1 + ((timeSince / TimeUnit.DAYS.toMillis(1)) * 0.02f), MAX_MULTIPLIER)
+
+        companion object {
+            const val MAX_MULTIPLIER = 1.15f
+        }
     }
 }

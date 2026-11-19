@@ -22,6 +22,7 @@ import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.queue.QueueWatcher
 import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.query.SongQuery
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
@@ -46,6 +47,7 @@ constructor(
     private val queueManager: QueueManager,
     private val queueWatcher: QueueWatcher,
     private val playbackPreferenceManager: PlaybackPreferenceManager,
+    private val generalPreferenceManager: GeneralPreferenceManager,
     @Suppress("unused") private val castSessionManager: CastSessionManager,
     @Suppress("unused") private val mediaSessionManager: MediaSessionManager,
     @Suppress("unused") private val noiseManager: NoiseManager,
@@ -56,6 +58,8 @@ constructor(
     private var progress = 0
 
     private var initTime = 0L
+
+    private var countedSession = false
 
     @SuppressLint("BinaryOperationInTimber")
     override fun init(application: Application) {
@@ -160,6 +164,10 @@ constructor(
     override fun onPlaybackStateChanged(playbackState: PlaybackState) {
         when (playbackState) {
             is PlaybackState.Playing -> {
+                if (!countedSession) {
+                    countedSession = true
+                    generalPreferenceManager.playbackSessionCount += 1
+                }
                 try {
                     ContextCompat.startForegroundService(context, Intent(context, PlaybackService::class.java))
                 } catch (e: IllegalStateException) {
@@ -170,6 +178,7 @@ constructor(
                     }
                 }
             }
+
             is PlaybackState.Paused -> {
                 playbackPreferenceManager.playbackPosition = playbackManager.getProgress()
 
@@ -182,6 +191,7 @@ constructor(
                     }
                 }
             }
+
             else -> {
                 // Nothing to do
             }

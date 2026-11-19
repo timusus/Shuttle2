@@ -69,6 +69,13 @@ class GeneralPreferenceManager(
             return null
         }
 
+    // Number of app launches in which music was played; used to gauge engagement for the review prompt.
+    var playbackSessionCount: Int
+        set(value) {
+            sharedPreferences.put("playback_session_count", value)
+        }
+        get() = sharedPreferences.getInt("playback_session_count", 0)
+
     var hasSeenThankYouDialog: Boolean
         set(value) {
             sharedPreferences.put("thank_you_dialog_viewed", value)

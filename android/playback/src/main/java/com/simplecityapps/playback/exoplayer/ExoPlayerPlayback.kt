@@ -55,8 +55,10 @@ class ExoPlayerPlayback(
                 when (playbackState) {
                     ExoPlaybackState.Idle -> {
                     }
+
                     ExoPlaybackState.Buffering -> {
                     }
+
                     ExoPlaybackState.Ready -> {
                         isPlaybackReady = true
                         if (player.playWhenReady) {
@@ -65,6 +67,7 @@ class ExoPlayerPlayback(
                             callback?.onPlaybackStateChanged(PlaybackState.Paused)
                         }
                     }
+
                     ExoPlaybackState.Ended -> {
                         if (isPlaybackReady) {
                             player.playWhenReady = false
@@ -73,6 +76,7 @@ class ExoPlayerPlayback(
                             isPlaybackReady = false
                         }
                     }
+
                     ExoPlaybackState.Unknown -> {
                     }
                 }
@@ -89,7 +93,9 @@ class ExoPlayerPlayback(
 
                 when (transitionReason) {
                     TransitionReason.Repeat -> callback?.onTrackEnded(true)
+
                     TransitionReason.Auto -> callback?.onTrackEnded(true)
+
                     TransitionReason.Seek,
                     TransitionReason.PlaylistChanged,
                     TransitionReason.Unknown
@@ -256,7 +262,7 @@ class ExoPlayerPlayback(
     }
 
     override fun setPlaybackSpeed(multiplier: Float) {
-        player.setPlaybackParameters(PlaybackParameters(multiplier, multiplier))
+        player.setPlaybackParameters(PlaybackParameters(multiplier, 1.0f))
     }
 
     override fun getPlaybackSpeed(): Float = player.playbackParameters.speed

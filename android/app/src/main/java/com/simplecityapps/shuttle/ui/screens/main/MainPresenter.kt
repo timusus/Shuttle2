@@ -75,6 +75,9 @@ constructor(
                     if (preferenceManager.lastViewedTrialDialogDate == null || preferenceManager.lastViewedTrialDialogDate?.before(Date(Date().time - 4 * 24 * 60 * 60 * 1000)) == true) {
                         this.view?.showTrialDialog()
                     }
+                    if (isEngagedTrialUser(trialState)) {
+                        requestReviewIfDue()
+                    }
                 }
 
                 is TrialState.Expired -> {
@@ -94,12 +97,21 @@ constructor(
 
         // If it's been a week since the app was purchased
         if (preferenceManager.appPurchasedDate?.before(Date(System.currentTimeMillis() - TimeUnit.DAYS.toMillis(7))) == true) {
-            if (preferenceManager.lastViewedRatingFlow == null || preferenceManager.lastViewedRatingFlow?.before(Date(System.currentTimeMillis() - TimeUnit.DAYS.toMillis(30))) == true) {
-                // If the rating dialog hasn't been shown before, or it's been 30 days since it was shown
-                preferenceManager.lastViewedRatingFlow = Date()
-                this.view?.launchReviewFlow()
-            }
+            requestReviewIfDue()
         }
+    }
+
+    // If the rating dialog hasn't been shown before, or it's been 30 days since it was shown
+    private fun requestReviewIfDue() {
+        if (preferenceManager.lastViewedRatingFlow == null || preferenceManager.lastViewedRatingFlow?.before(Date(System.currentTimeMillis() - TimeUnit.DAYS.toMillis(30))) == true) {
+            preferenceManager.lastViewedRatingFlow = Date()
+            this.view?.launchReviewFlow()
+        }
+    }
+
+    private fun isEngagedTrialUser(trialState: TrialState.Trial): Boolean {
+        val trialDay = TimeUnit.MILLISECONDS.toDays(trialManager.trialLength - trialState.timeRemaining) + 1
+        return trialDay >= MIN_TRIAL_DAY_FOR_REVIEW && preferenceManager.playbackSessionCount >= MIN_SESSIONS_FOR_REVIEW
     }
 
     override fun unbindView() {
@@ -117,5 +129,10 @@ constructor(
     override fun onCrashReportingToggled(enabled: Boolean) {
         preferenceManager.crashReportingEnabled = enabled
         Firebase.crashlytics.setCrashlyticsCollectionEnabled(enabled)
+    }
+
+    private companion object {
+        const val MIN_TRIAL_DAY_FOR_REVIEW = 5
+        const val MIN_SESSIONS_FOR_REVIEW = 3
     }
 }
